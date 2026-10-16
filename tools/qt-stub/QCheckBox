@@ -1,0 +1,18 @@
+#pragma once
+
+#include "QString"
+#include "QWidget"
+
+/* Stub minimo de QCheckBox (apenas para checagem de compilacao do dock). */
+class QCheckBox : public QWidget {
+public:
+	explicit QCheckBox(const QString &text, QWidget *parent = nullptr) : QWidget(parent) { (void)text; }
+
+	void setChecked(bool v) { checked_ = v; }
+	bool isChecked() const { return checked_; }
+
+	void stateChanged(int); /* signal */
+
+private:
+	bool checked_ = false;
+};

@@ -1,0 +1,12 @@
+#pragma once
+
+#include "QObject"
+
+/* Stub minimo de QWidget (apenas para checagem de compilacao do dock). */
+class QWidget : public QObject {
+public:
+	explicit QWidget(QWidget *parent = nullptr) { (void)parent; }
+
+	void setEnabled(bool) {}
+	void setVisible(bool) {}
+};

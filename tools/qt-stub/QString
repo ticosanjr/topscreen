@@ -1,0 +1,45 @@
+#pragma once
+
+#include <string>
+
+/* Stub minimo de QString (apenas para checagem de compilacao do dock). */
+class QString {
+public:
+	QString() = default;
+	QString(const char *s) : s_(s ? s : "") {}
+	QString(const std::string &s) : s_(s) {}
+
+	QString arg(const QString &a) const
+	{
+		QString r = *this;
+		const auto pos = r.s_.find("%1");
+		if (pos != std::string::npos)
+			r.s_.replace(pos, 2, a.s_);
+		return r;
+	}
+
+	static QString fromStdString(const std::string &s) { return QString(s); }
+	static QString number(int v) { return QString(std::to_string(v)); }
+
+	const std::string &toStdString() const { return s_; }
+
+private:
+	std::string s_;
+};
+
+inline QString operator+(const QString &a, const QString &b)
+{
+	return QString(a.toStdString() + b.toStdString());
+}
+inline QString operator+(const QString &a, const char *b)
+{
+	return QString(a.toStdString() + std::string(b ? b : ""));
+}
+inline QString operator+(const char *a, const QString &b)
+{
+	return QString(std::string(a ? a : "") + b.toStdString());
+}
+
+#ifndef QStringLiteral
+#define QStringLiteral(x) QString(x)
+#endif

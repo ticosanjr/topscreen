@@ -105,6 +105,7 @@ set(TOPSCREEN_SOURCES
     src/ts-settings.cpp
     src/ts-properties.cpp
     src/ts-presets.cpp
+    src/ts-registry.cpp
     src/render/ts-compositor.cpp
     src/input/ts-input.cpp
     src/input/ts-input-platform.cpp

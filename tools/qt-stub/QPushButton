@@ -1,0 +1,12 @@
+#pragma once
+
+#include "QString"
+#include "QWidget"
+
+/* Stub minimo de QPushButton (apenas para checagem de compilacao do dock). */
+class QPushButton : public QWidget {
+public:
+	explicit QPushButton(const QString &text, QWidget *parent = nullptr) : QWidget(parent) { (void)text; }
+
+	void clicked(); /* signal */
+};

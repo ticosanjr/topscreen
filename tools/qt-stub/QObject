@@ -1,0 +1,17 @@
+#pragma once
+
+/* Stub minimo de QObject (connect descartado: apenas checagem de compilacao). */
+class QObject {
+public:
+	virtual ~QObject() = default;
+
+	template <typename Sender, typename Signal, typename Fn>
+	static void connect(Sender, Signal, Fn)
+	{
+	}
+
+	template <typename Sender, typename Signal, typename Ctx, typename Fn>
+	static void connect(Sender, Signal, Ctx, Fn)
+	{
+	}
+};

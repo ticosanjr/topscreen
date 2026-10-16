@@ -2,17 +2,36 @@
 
 #include "audio/ts-click-sound.hpp"
 #include "core/coord.hpp"
+#include "core/keys.hpp"
 #include "hotkeys/ts-hotkeys.hpp"
 #include "input/ts-input.hpp"
 #include "render/ts-compositor.hpp"
 #include "render/ts-frame.hpp"
 #include "ts-presets.hpp"
 #include "ts-properties.hpp"
+#include "ts-registry.hpp"
 #include "ts-settings.hpp"
+
+#include <atomic>
+#include <string>
 
 using namespace topscreen;
 
 namespace {
+
+/* Acoes enfileiradas por hotkeys (thread de hotkey) e pelo dock (thread da UI).
+ * Sao consumidas no video_tick, garantindo acesso single-thread aos modelos. */
+enum ActionBits : uint32_t {
+	A_TOGGLE_EFFECTS = 1u << 0,
+	A_SET_EFFECTS = 1u << 1,
+	A_TOGGLE_BG = 1u << 2,
+	A_ZOOM_IN = 1u << 3,
+	A_ZOOM_OUT = 1u << 4,
+	A_RESET_ZOOM = 1u << 5,
+	A_NEXT_PRESET = 1u << 6,
+	A_PREV_PRESET = 1u << 7,
+	A_APPLY_PRESET = 1u << 8,
+};
 
 double clamp01(double v)
 {
@@ -50,13 +69,14 @@ void disable_parent_cursor(obs_source_t *parent)
 }
 
 /**
- * Estado de uma instancia do filtro TopScreen.
+ * Instancia do filtro TopScreen.
  *
- * Implementa HotkeyContext para que os atalhos registrados no OBS alterem a
- * configuracao em tempo real. Mantem os modelos de dynamics/effects do nucleo
- * e monta o FrameState consumido pelo compositor.
+ * Concorrencia:
+ *  - cfg/modelos: somente a thread de video (tick/render) apos o create.
+ *  - hotkeys/UI: enfileiram acoes (atomico); o tick aplica.
+ *  - update(): apenas marca "reload"; o tick recarrega do obs_data.
  */
-struct ts_filter_ctx final : public HotkeyContext {
+struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 	obs_source_t *source = nullptr;
 	core::Config cfg;
 	Compositor compositor;
@@ -76,18 +96,45 @@ struct ts_filter_ctx final : public HotkeyContext {
 	bool loaded = false;
 	bool parent_cursor_checked = false;
 
+	std::atomic<uint32_t> actions_{0};
+	std::atomic<int> pending_effects_{-1};
+	std::atomic<int> pending_preset_{-1};
+	std::atomic<bool> pending_reload_{false};
+	std::atomic<bool> effects_cache_{true};
+	std::atomic<int> preset_cache_{-1};
+	std::atomic<int> input_tier_cache_{0};
+
 	void push_settings();
 	void reconfigure_models();
-	void apply_preset(int index);
+	void request_preset(int index);
+	void process_actions();
+	void reload_from_settings();
 
-	/* ---- HotkeyContext ---- */
-	void toggle_effects() override;
-	void toggle_background() override;
-	void zoom_in() override;
-	void zoom_out() override;
-	void reset_zoom() override;
-	void next_preset() override;
-	void prev_preset() override;
+	/* ---- HotkeyContext (thread de hotkey: apenas enfileira) ---- */
+	void toggle_effects() override { actions_.fetch_or(A_TOGGLE_EFFECTS); }
+	void toggle_background() override { actions_.fetch_or(A_TOGGLE_BG); }
+	void zoom_in() override { actions_.fetch_or(A_ZOOM_IN); }
+	void zoom_out() override { actions_.fetch_or(A_ZOOM_OUT); }
+	void reset_zoom() override { actions_.fetch_or(A_RESET_ZOOM); }
+	void next_preset() override { actions_.fetch_or(A_NEXT_PRESET); }
+	void prev_preset() override { actions_.fetch_or(A_PREV_PRESET); }
+
+	/* ---- FilterControl (thread da UI: apenas enfileira / le atomico) ---- */
+	bool effects_enabled() const override { return effects_cache_.load(); }
+	void set_effects_enabled(bool on) override
+	{
+		pending_effects_.store(on ? 1 : 0);
+		actions_.fetch_or(A_SET_EFFECTS);
+	}
+	int preset_count() const override { return presets.count(); }
+	std::string preset_name(int index) const override { return presets.name(index); }
+	int current_preset() const override { return preset_cache_.load(); }
+	void apply_preset(int index) override
+	{
+		pending_preset_.store(index);
+		actions_.fetch_or(A_APPLY_PRESET);
+	}
+	int input_tier() const override { return input_tier_cache_.load(); }
 };
 
 void ts_filter_ctx::push_settings()
@@ -106,52 +153,66 @@ void ts_filter_ctx::reconfigure_models()
 	clicks.set_right(cfg.click_right);
 }
 
-void ts_filter_ctx::apply_preset(int index)
+void ts_filter_ctx::request_preset(int index)
 {
 	if (index < 0)
 		return;
-	if (!presets.apply(index, &cfg))
+
+	std::string err;
+	if (!presets.apply(index, &cfg)) {
+		blog(LOG_WARNING, "[TopScreen] preset invalido (%d)", index);
 		return;
+	}
+
 	reconfigure_models();
 	push_settings();
 	blog(LOG_INFO, "[TopScreen] preset aplicado: %s", presets.name(index).c_str());
 }
 
-void ts_filter_ctx::toggle_effects()
+void ts_filter_ctx::reload_from_settings()
 {
-	cfg.effects_enabled = !cfg.effects_enabled;
-	push_settings();
+	obs_data_t *s = obs_source_get_settings(source);
+	config_load(s, &cfg);
+	obs_data_release(s);
+	reconfigure_models();
 }
 
-void ts_filter_ctx::toggle_background()
+void ts_filter_ctx::process_actions()
 {
-	cfg.bg.enabled = !cfg.bg.enabled;
-	push_settings();
-}
+	const uint32_t act = actions_.exchange(0);
+	if (act == 0)
+		return;
 
-void ts_filter_ctx::zoom_in()
-{
-	zoom.manual_step(1.25);
-}
-
-void ts_filter_ctx::zoom_out()
-{
-	zoom.manual_step(0.8);
-}
-
-void ts_filter_ctx::reset_zoom()
-{
-	zoom.set_manual(1.0);
-}
-
-void ts_filter_ctx::next_preset()
-{
-	apply_preset(presets.next());
-}
-
-void ts_filter_ctx::prev_preset()
-{
-	apply_preset(presets.prev());
+	if (act & A_TOGGLE_EFFECTS) {
+		cfg.effects_enabled = !cfg.effects_enabled;
+		push_settings();
+	}
+	if (act & A_SET_EFFECTS) {
+		const int v = pending_effects_.exchange(-1);
+		if (v >= 0) {
+			cfg.effects_enabled = (v != 0);
+			push_settings();
+		}
+	}
+	if (act & A_TOGGLE_BG) {
+		cfg.bg.enabled = !cfg.bg.enabled;
+		push_settings();
+	}
+	if (act & A_ZOOM_IN)
+		zoom.manual_step(1.25);
+	if (act & A_ZOOM_OUT)
+		zoom.manual_step(0.8);
+	if (act & A_RESET_ZOOM)
+		zoom.set_manual(1.0);
+	if (act & A_NEXT_PRESET)
+		request_preset(presets.next());
+	if (act & A_PREV_PRESET)
+		request_preset(presets.prev());
+	if (act & A_APPLY_PRESET) {
+		const int i = pending_preset_.exchange(-1);
+		if (i >= 0)
+			request_preset(i);
+	}
 }
 
 /* ------------------------------------------------------------------ */
@@ -179,11 +240,14 @@ void *ts_filter_create(obs_data_t *settings, obs_source_t *source)
 	ctx->cursor.reset(0.5, 0.5, 0.0);
 	ctx->zoom.reset(0.0);
 
+	ctx->effects_cache_.store(ctx->cfg.effects_enabled);
+
 	ctx->hotkeys.register_all(source, ctx);
 	ctx->input.start(source);
 
-	blog(LOG_INFO, "[TopScreen] filtro criado (presets=%d, input tier=%d)", ctx->presets.count(),
-	     ctx->input.tier());
+	registry_add(ctx);
+
+	blog(LOG_INFO, "[TopScreen] filtro criado (presets=%d)", ctx->presets.count());
 
 	return ctx;
 }
@@ -192,6 +256,7 @@ void ts_filter_destroy(void *data)
 {
 	auto *ctx = static_cast<ts_filter_ctx *>(data);
 
+	registry_remove(ctx);
 	ctx->input.stop();
 	ctx->hotkeys.unregister_all();
 	ctx->click_sound.release();
@@ -202,15 +267,21 @@ void ts_filter_destroy(void *data)
 
 void ts_filter_update(void *data, obs_data_t *settings)
 {
+	UNUSED_PARAMETER(settings);
 	auto *ctx = static_cast<ts_filter_ctx *>(data);
-	config_load(settings, &ctx->cfg);
-	ctx->reconfigure_models();
+	/* Nao mexe no cfg aqui (thread da UI); o tick recarrega. */
+	ctx->pending_reload_.store(true);
 }
 
 void ts_filter_tick(void *data, float seconds)
 {
 	auto *ctx = static_cast<ts_filter_ctx *>(data);
 	ctx->time_ms += static_cast<double>(seconds) * 1000.0;
+
+	if (ctx->pending_reload_.exchange(false))
+		ctx->reload_from_settings();
+
+	ctx->process_actions();
 
 	ctx->input.poll();
 
@@ -245,6 +316,11 @@ void ts_filter_tick(void *data, float seconds)
 	ctx->frame.cursor = ctx->cursor.render();
 	ctx->frame.zoom = ctx->zoom.render();
 	ctx->frame.click_count = ctx->clicks.collect(ctx->time_ms, ctx->frame.clicks, kShaderClickSlots);
+
+	/* Publica estado para o dock (thread da UI). */
+	ctx->effects_cache_.store(ctx->cfg.effects_enabled);
+	ctx->preset_cache_.store(ctx->presets.current());
+	ctx->input_tier_cache_.store(ctx->input.tier());
 }
 
 void ts_filter_render(void *data, gs_effect_t *effect)

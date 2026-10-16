@@ -1,0 +1,19 @@
+#pragma once
+
+#include "QString"
+
+#include <vector>
+
+/* Stub minimo de QStringList (apenas para checagem de compilacao do dock). */
+class QStringList {
+public:
+	QStringList &operator<<(const QString &s)
+	{
+		items_.push_back(s);
+		return *this;
+	}
+	const std::vector<QString> &items() const { return items_; }
+
+private:
+	std::vector<QString> items_;
+};

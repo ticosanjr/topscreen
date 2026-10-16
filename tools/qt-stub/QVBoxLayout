@@ -1,0 +1,12 @@
+#pragma once
+
+class QWidget;
+
+/* Stub minimo de QVBoxLayout (apenas para checagem de compilacao do dock). */
+class QVBoxLayout {
+public:
+	explicit QVBoxLayout(QWidget *parent = nullptr) { (void)parent; }
+
+	void addWidget(QWidget *) {}
+	void addStretch(int) {}
+};

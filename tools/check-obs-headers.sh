@@ -6,13 +6,16 @@
 # Pega erros de API/assinatura/tipos/ordem de campos que os testes do nucleo
 # nao pegam. Roda tambem no CI (ver .github/workflows/check-obs-headers.yml).
 #
+# O dock (src/ui) e checado com Qt6 real quando disponivel; caso contrario usa
+# o stub minimo em tools/qt-stub.
+#
 # Uso:
 #   tools/check-obs-headers.sh
 #
 # Variaveis:
-#   OBS_REF            referencia do OBS (default: master)
+#   OBS_REF             referencia do OBS (default: master)
 #   TOPSCREEN_CHECK_DIR diretorio de trabalho/cache (default: $TMPDIR/topscreen-obscheck)
-#   CXX                compilador (default: g++)
+#   CXX                 compilador (default: g++)
 #
 set -uo pipefail
 
@@ -20,6 +23,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 WORK="${TOPSCREEN_CHECK_DIR:-${TMPDIR:-/tmp}/topscreen-obscheck}"
 OBS_REF="${OBS_REF:-master}"
 CXX="${CXX:-g++}"
+QT_STUB="$ROOT/tools/qt-stub"
 
 mkdir -p "$WORK"
 OBS="$WORK/obs-src"
@@ -53,7 +57,7 @@ cat > "$STUB/obsconfig.h" <<'EOF'
 #define OBS_BETA 0
 EOF
 
-INC=(-I"$ROOT/src" -I"$STUB" -I"$OBS/libobs" -I"$SIMDE")
+BASE_INC=(-I"$ROOT/src" -I"$STUB" -I"$OBS/libobs" -I"$SIMDE" -I"$OBS/frontend/api")
 DEF=(-DTOPSCREEN_VERSION='"0.0.0-check"')
 
 if [ -f /usr/include/X11/Xlib.h ]; then
@@ -63,6 +67,21 @@ else
     echo "X11 ausente: backend X11 NAO sera checado."
 fi
 
+# Qt (real se disponivel, senao stub) para checar o dock.
+QT_INC=()
+if pkg-config --exists Qt6Widgets 2>/dev/null; then
+    # shellcheck disable=SC2207
+    QT_INC=($(pkg-config --cflags Qt6Widgets))
+    DEF+=(-DTOPSCREEN_HAVE_QT)
+    echo "Qt6 detectado: dock sera checado com Qt real."
+elif [ -d "$QT_STUB" ]; then
+    QT_INC=(-I"$QT_STUB")
+    DEF+=(-DTOPSCREEN_HAVE_QT)
+    echo "Qt6 ausente: dock sera checado com stub (tools/qt-stub)."
+else
+    echo "Qt ausente e sem stub: dock NAO sera checado."
+fi
+
 cd "$ROOT" || exit 2
 
 fail=0
@@ -70,15 +89,16 @@ count=0
 while IFS= read -r f; do
     case "$f" in
     src/ui/*)
-        # O dock exige Qt6 + obs-frontend-api; ver workflow separado.
-        continue
+        if [ "${#QT_INC[@]}" -eq 0 ]; then
+            continue
+        fi
         ;;
     esac
     count=$((count + 1))
     # -Wno-missing-field-initializers: os structs do OBS sao inicializados por
     # designated initializers, deixando campos opcionais de fora (intencional).
     if "$CXX" -std=c++20 -fsyntax-only -Wall -Wextra -Wno-missing-field-initializers \
-        "${INC[@]}" "${DEF[@]}" "$f"; then
+        "${BASE_INC[@]}" "${QT_INC[@]}" "${DEF[@]}" "$f"; then
         echo "OK   $f"
     else
         echo "FAIL $f"
@@ -88,7 +108,7 @@ done < <(find src -name '*.cpp' | sort)
 
 echo
 if [ "$fail" -eq 0 ]; then
-    echo "Checagem OK: $count arquivos compilam contra os headers do OBS."
+    echo "Checagem OK: $count arquivos compilam contra os headers do OBS/Qt."
 else
     echo "Checagem FALHOU."
 fi

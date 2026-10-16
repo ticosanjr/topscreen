@@ -72,7 +72,7 @@ Estes itens dependem de `libobs`/GPU/OS em execução e não rodam aqui:
 | Shader `topscreen.effect` | precisa de contexto OpenGL/D3D do OBS | carregar o filtro no OBS e conferir visualmente |
 | Integração `obs_source_info` | precisa do OBS em execução | `obs --verbose` e checar o log do TopScreen |
 | Backends de input | precisam de WinAPI/X11 reais | testar cursor/cliques no OBS |
-| Dock Qt | precisa de Qt6 + frontend | abrir o dock no OBS |
+| Dock Qt | **compila** (stub/Qt real), mas o runtime precisa do OBS | abrir o dock no OBS |
 | Som de clique | ainda é stub (T3.6) | — |
 
 > A **compilação** do plugin contra os headers do OBS é checada (camada 2);

@@ -1,0 +1,14 @@
+#pragma once
+
+#include "QObject"
+
+/* Stub minimo de QTimer (apenas para checagem de compilacao do dock). */
+class QTimer : public QObject {
+public:
+	explicit QTimer(QObject *parent = nullptr) { (void)parent; }
+
+	void start(int) {}
+	void stop() {}
+
+	void timeout(); /* signal */
+};

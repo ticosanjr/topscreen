@@ -1,0 +1,26 @@
+#pragma once
+
+#include "QString"
+#include "QStringList"
+#include "QWidget"
+
+#include <vector>
+
+/* Stub minimo de QComboBox (apenas para checagem de compilacao do dock). */
+class QComboBox : public QWidget {
+public:
+	explicit QComboBox(QWidget *parent = nullptr) : QWidget(parent) {}
+
+	void addItem(const QString &s) { items_.push_back(s); }
+	void addItems(const QStringList &l) { items_ = l.items(); }
+	void clear() { items_.clear(); }
+	int count() const { return static_cast<int>(items_.size()); }
+	int currentIndex() const { return current_; }
+	void setCurrentIndex(int index) { current_ = index; }
+
+	void currentIndexChanged(int); /* signal */
+
+private:
+	std::vector<QString> items_;
+	int current_ = -1;
+};

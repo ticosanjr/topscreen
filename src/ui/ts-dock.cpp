@@ -5,13 +5,17 @@
 #include <obs-frontend-api.h>
 #include <obs-module.h>
 
-#include <QComboBox>
 #include <QCheckBox>
+#include <QComboBox>
 #include <QLabel>
+#include <QObject>
+#include <QPushButton>
 #include <QString>
-#include <QStringList>
+#include <QTimer>
 #include <QVBoxLayout>
 #include <QWidget>
+
+#include "ts-registry.hpp"
 
 namespace topscreen {
 namespace {
@@ -19,8 +23,8 @@ namespace {
 /**
  * Dock do TopScreen.
  *
- * Fase inicial (T1.6 - parcial): controles de preset/toggle e status de input.
- * T1.8 liga estes controles ao filtro TopScreen selecionado.
+ * Operacoes do usuario sao enfileiradas no FilterControl (registro), que as
+ * aplica na thread de video. O estado e atualizado por um QTimer.
  */
 class TopScreenDock : public QWidget {
 public:
@@ -28,28 +32,92 @@ public:
 	{
 		auto *root = new QVBoxLayout(this);
 
-		auto *info = new QLabel(obs_module_text("Dock.Info"), this);
-		info->setWordWrap(true);
-		root->addWidget(info);
+		info_ = new QLabel(obs_module_text("Dock.Info"), this);
+		info_->setWordWrap(true);
+		root->addWidget(info_);
 
-		auto *enabled = new QCheckBox(obs_module_text("Dock.EffectsEnabled"), this);
-		enabled->setChecked(true);
-		enabled->setEnabled(false); // TODO(T1.8): ligar ao filtro selecionado
-		root->addWidget(enabled);
+		effects_ = new QCheckBox(obs_module_text("Dock.EffectsEnabled"), this);
+		QObject::connect(effects_, &QCheckBox::stateChanged, this, [this](int state) {
+			if (syncing_)
+				return;
+			if (FilterControl *c = registry_first())
+				c->set_effects_enabled(state != 0);
+		});
+		root->addWidget(effects_);
 
-		auto *presetLabel = new QLabel(obs_module_text("Dock.Preset"), this);
-		root->addWidget(presetLabel);
+		root->addWidget(new QLabel(obs_module_text("Dock.Preset"), this));
 
-		auto *preset = new QComboBox(this);
-		preset->addItems(QStringList() << "demo" << "tutorial" << "apresentacao");
-		preset->setEnabled(false); // TODO(T1.8): aplicar preset ao vivo
-		root->addWidget(preset);
+		preset_ = new QComboBox(this);
+		QObject::connect(preset_, &QComboBox::currentIndexChanged, this, [this](int index) {
+			if (syncing_ || index < 0)
+				return;
+			if (FilterControl *c = registry_first())
+				c->apply_preset(index);
+		});
+		root->addWidget(preset_);
 
-		auto *status = new QLabel(QStringLiteral("%1: -").arg(obs_module_text("Dock.Input")), this);
-		root->addWidget(status);
+		status_ = new QLabel(this);
+		root->addWidget(status_);
+
+		auto *refresh = new QPushButton(obs_module_text("Dock.Refresh"), this);
+		QObject::connect(refresh, &QPushButton::clicked, this, [this]() { refresh_ui(); });
+		root->addWidget(refresh);
 
 		root->addStretch(1);
+
+		timer_ = new QTimer(this);
+		QObject::connect(timer_, &QTimer::timeout, this, [this]() { refresh_ui(); });
+		timer_->start(500);
+
+		refresh_ui();
 	}
+
+private:
+	void rebuild_presets(FilterControl *c)
+	{
+		preset_->clear();
+		if (c) {
+			for (int i = 0; i < c->preset_count(); ++i)
+				preset_->addItem(QString::fromStdString(c->preset_name(i)));
+		}
+	}
+
+	void refresh_ui()
+	{
+		FilterControl *c = registry_first();
+		const bool has = (c != nullptr);
+
+		syncing_ = true;
+		effects_->setEnabled(has);
+		preset_->setEnabled(has);
+
+		if (!has) {
+			rebuild_presets(nullptr);
+		} else {
+			if (preset_->count() != c->preset_count())
+				rebuild_presets(c);
+
+			effects_->setChecked(c->effects_enabled());
+			const int cur = c->current_preset();
+			if (cur >= 0 && cur < preset_->count())
+				preset_->setCurrentIndex(cur);
+		}
+		syncing_ = false;
+
+		if (has) {
+			status_->setText(QString(obs_module_text("Dock.Input")) + ": " +
+					 QString::number(c->input_tier()));
+		} else {
+			status_->setText(QString(obs_module_text("Dock.NoFilter")));
+		}
+	}
+
+	QLabel *info_ = nullptr;
+	QCheckBox *effects_ = nullptr;
+	QComboBox *preset_ = nullptr;
+	QLabel *status_ = nullptr;
+	QTimer *timer_ = nullptr;
+	bool syncing_ = false;
 };
 
 TopScreenDock *g_dock = nullptr;

@@ -1,0 +1,14 @@
+#pragma once
+
+#include "QString"
+#include "QWidget"
+
+/* Stub minimo de QLabel (apenas para checagem de compilacao do dock). */
+class QLabel : public QWidget {
+public:
+	explicit QLabel(const QString &text, QWidget *parent = nullptr) : QWidget(parent) { (void)text; }
+	explicit QLabel(QWidget *parent = nullptr) : QWidget(parent) {}
+
+	void setText(const QString &) {}
+	void setWordWrap(bool) {}
+};

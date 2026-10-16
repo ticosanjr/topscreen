@@ -28,9 +28,9 @@ Status: ✅ feito · 🟡 parcial · ⬜ pendente.
 | T1.3 | `ts-compositor`: carregar efeito + cache de parâmetros | ✅ |
 | T1.4 | Shader: fundo sólido/gradiente, cantos SDF, padding, sombra aprox. | ✅ |
 | T1.5 | Zoom/pan por parâmetros no shader | ✅ |
-| T1.6 | Dock Qt inicial (presets/toggles) | 🟡 |
+| T1.6 | Dock Qt inicial (presets/toggles) | ✅ |
 | T1.7 | Presets embutidos JSON + carregador (`ts-presets`) | ✅ |
-| T1.8 | Dock: aplicar preset e refletir estado ao vivo | ⬜ |
+| T1.8 | Dock: aplicar preset e refletir estado ao vivo | ✅ |
 
 ## F2 — Cursor
 

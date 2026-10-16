@@ -22,3 +22,8 @@ jobs:
         run: |
           chmod +x tools/check-obs-headers.sh
           TOPSCREEN_CHECK_DIR="$RUNNER_TEMP/obscheck" ./tools/check-obs-headers.sh
+
+      - name: Integration tests (fake libobs)
+        run: |
+          chmod +x tests/run-integration.sh
+          TOPSCREEN_CHECK_DIR="$RUNNER_TEMP/obscheck" ./tests/run-integration.sh

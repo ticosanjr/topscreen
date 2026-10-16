@@ -30,6 +30,7 @@ set(TOPSCREEN_CORE_SOURCES
     src/core/zoom.cpp
     src/core/json.cpp
     src/core/preset.cpp
+    src/core/key_overlay.cpp
 )
 
 # ---------------------------------------------------------------------------

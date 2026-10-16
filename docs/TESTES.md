@@ -55,11 +55,12 @@ vive toda a matemática e a lógica de estado — o que de fato precisa estar ce
 | `test_shader_params.cpp` | `data/effects/topscreen.effect` | presença dos uniforms que o compositor busca por nome + técnica `Draw` (pega divergência silenciosa) |
 | `test_preset_all_keys.cpp` | `core/preset.*` | todas as chaves de config são mapeadas (garante preset completo) |
 | `test_locale_keys.cpp` | `data/locale/*.ini` | toda chave usada em `obs_module_text()` existe no `en-US.ini` + paridade pt/en |
+| `test_key_overlay.cpp` | `core/key_overlay.*` | fila de teclas, TTL, repetição, filtro de modificadores, limite, formatação de combos |
 
 ## Números atuais
 
 ```
-50 testes | 848 verificações | 0 falhas
+59 testes | 890 verificações | 0 falhas
 ```
 
 ## O que NÃO é coberto (e por quê)

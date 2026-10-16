@@ -74,6 +74,7 @@ Status: ✅ feito · 🟡 parcial · ⬜ pendente.
 
 | ID | Tarefa | Status |
 |----|--------|--------|
+| T5.0 | Modelo do overlay de teclas (fila/TTL/combos) | ✅ |
 | T5.1 | Carregador de fonte SDF + atlas | 🟡 (stub) |
 | T5.2 | Render de texto SDF | ⬜ |
 | T5.3 | Captura de teclas (Win hook / X11 XRecord) | ⬜ |

@@ -32,10 +32,14 @@ STUB="$WORK/stub"
 
 if [ ! -d "$OBS/libobs" ]; then
     echo "Baixando headers do OBS ($OBS_REF) para $WORK ..."
-    curl -fsSL --retry 3 -o "$WORK/obs.tar.gz" \
-        "https://github.com/obsproject/obs-studio/archive/refs/heads/${OBS_REF}.tar.gz"
-    tar xzf "$WORK/obs.tar.gz" -C "$WORK"
-    mv "$WORK/obs-studio-${OBS_REF}" "$OBS"
+    mkdir -p "$WORK/unpack"
+    if ! curl -fsSL --retry 3 -o "$WORK/obs.tar.gz" \
+        "https://github.com/obsproject/obs-studio/archive/refs/tags/${OBS_REF}.tar.gz"; then
+        curl -fsSL --retry 3 -o "$WORK/obs.tar.gz" \
+            "https://github.com/obsproject/obs-studio/archive/refs/heads/${OBS_REF}.tar.gz"
+    fi
+    tar xzf "$WORK/obs.tar.gz" -C "$WORK/unpack"
+    mv "$WORK/unpack/obs-studio-${OBS_REF}" "$OBS"
 fi
 
 if [ ! -d "$SIMDE/simde" ]; then
@@ -57,7 +61,8 @@ cat > "$STUB/obsconfig.h" <<'EOF'
 #define OBS_BETA 0
 EOF
 
-BASE_INC=(-I"$ROOT/src" -I"$ROOT/third_party" -I"$STUB" -I"$OBS/libobs" -I"$SIMDE" -I"$OBS/frontend/api")
+BASE_INC=(-I"$ROOT/src" -I"$ROOT/third_party" -I"$STUB" -I"$OBS/libobs" -I"$SIMDE"
+	-I"$OBS/frontend/api" -I"$OBS/UI/obs-frontend-api")
 DEF=(-DTOPSCREEN_VERSION='"0.0.0-check"')
 
 if [ -f /usr/include/X11/Xlib.h ]; then

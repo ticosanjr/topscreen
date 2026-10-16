@@ -72,7 +72,7 @@ integração com o OBS ainda precisam de uma passada em um OBS real.
 
 ## Requisitos
 
-- **OBS Studio** 31.0+ (alvo 33.x)
+- **OBS Studio** 30.0+ (validado contra 30.0.2 e contra o master/33)
 - **Windows 10+** ou **Linux** (X11 e Wayland)
 - CMake 3.20+, compilador C++20
 - Qt6 (opcional, para o dock)

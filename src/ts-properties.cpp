@@ -84,8 +84,18 @@ obs_properties_t *properties_create(void *data)
 							OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
 	obs_property_list_add_int(style, obs_module_text("Cursor.Style.MacOs"),
 				  static_cast<int>(CursorStyle::MacOs));
-	obs_property_list_add_int(style, obs_module_text("Cursor.Style.Touch"),
-				  static_cast<int>(CursorStyle::Touch));
+	obs_property_list_add_int(style, obs_module_text("Cursor.Style.Windows"),
+				  static_cast<int>(CursorStyle::Windows));
+	obs_property_list_add_int(style, obs_module_text("Cursor.Style.Breeze"),
+				  static_cast<int>(CursorStyle::Breeze));
+	obs_property_list_add_int(style, obs_module_text("Cursor.Style.Bibata"),
+				  static_cast<int>(CursorStyle::Bibata));
+	obs_property_list_add_int(style, obs_module_text("Cursor.Style.Adwaita"),
+				  static_cast<int>(CursorStyle::Adwaita));
+	obs_property_list_add_int(style, obs_module_text("Cursor.Style.GoogleDot"),
+				  static_cast<int>(CursorStyle::GoogleDot));
+	obs_property_list_add_int(style, obs_module_text("Cursor.Style.Pointer"),
+				  static_cast<int>(CursorStyle::Pointer));
 
 	obs_properties_add_float_slider(cur, kCursorSize, obs_module_text("Cursor.Size"), 0.5, 4.0, 0.05);
 	obs_properties_add_float_slider(cur, kCursorSmooth, obs_module_text("Cursor.Smooth"), 0.0, 1.0, 0.01);

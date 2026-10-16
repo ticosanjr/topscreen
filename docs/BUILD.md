@@ -1,5 +1,13 @@
 # Build
 
+## Build rápido
+
+```bash
+./scripts/build.sh                 # plugin + testes, e roda os testes
+./scripts/build.sh --tests-only    # só os testes (não precisa de libobs)
+./scripts/build.sh --no-test       # só compila
+```
+
 ## Instalação rápida
 
 ### Linux

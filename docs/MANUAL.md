@@ -87,13 +87,28 @@ Coloca a tela "flutuando" sobre um fundo, com cantos e sombra.
 | Opção | O que faz |
 |-------|-----------|
 | **Mostrar cursor** | Desenha o cursor próprio (desliga o nativo) |
-| **Estilo** | macOS ou Touch (aparência) |
+| **Estilo** | Um dos 7 cursores (ver abaixo) |
 | **Tamanho** | Escala do cursor (1.0 = padrão) |
 | **Suavização** | 0 = "flutuante", 1 = "colado" ao mouse |
 | **Inclinação na curva (sway)** | O cursor inclina levemente ao virar |
 | **Sombra do cursor** | Sombra para destacar do fundo |
 | **Ocultar quando parado / Delay** | Some quando você para de mexer |
 | **Voltar ao início quando parado / Tempo** | Cursor "volta" (vídeos em loop) |
+
+**Estilos de cursor disponíveis (7)**
+
+| Estilo | Aparência |
+|--------|-----------|
+| macOS (clássico) | Seta preta com contorno branco |
+| Windows (clássico) | Seta branca com contorno preto |
+| Breeze (KDE) | Seta do tema Breeze |
+| Bibata (moderno) | Seta arredondada moderna (Bibata Modern Classic) |
+| Adwaita | Seta do tema Adwaita (GNOME) |
+| Google Dot | Círculo com ponto (estilo Google) |
+| Mão (pointer) | Mão apontando |
+
+> Os bitmaps são gerados por `tools/make-cursor-atlas.py` (lê temas de cursor
+> instalados em `/usr/share/icons`) e ficam em `data/cursors/`.
 
 ### Clique esquerdo / Clique direito
 Cada botão tem seu próprio efeito, independente.

@@ -23,7 +23,7 @@ Ex.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Opacidade da sombra | `bg_shadow_alpha` | double | 0–1 | `0.35` |
 | | Desfoque da sombra (px) | `bg_shadow_blur` | double | 0–200 | `48` |
 | Cursor | Mostrar cursor | `cursor_enabled` | bool | — | `true` |
-| | Estilo | `cursor_style` | int | 0 macOS, 1 Touch | `0` |
+| | Estilo | `cursor_style` | int | 0 macOS, 1 Windows, 2 Breeze, 3 Bibata, 4 Adwaita, 5 GoogleDot, 6 Pointer | `0` |
 | | Tamanho | `cursor_size` | double | 0.5–4 | `1.4` |
 | | Sombra do cursor | `cursor_shadow` | bool | — | `true` |
 | | Suavização | `cursor_smooth` | double | 0–1 | `0.7` |

@@ -3,7 +3,10 @@
 #include <graphics/graphics.h>
 #include <obs-module.h>
 
+#include <vector>
+
 #include "core/config.hpp"
+#include "core/cursor_atlas.hpp"
 #include "render/ts-frame.hpp"
 #include "render/ts-text.hpp"
 
@@ -34,6 +37,8 @@ public:
 private:
 	void cache_params();
 	void validate_params() const;
+	void load_cursor_atlas();
+	void release_cursor_atlas();
 
 	gs_effect_t *effect_ = nullptr;
 
@@ -55,6 +60,12 @@ private:
 	gs_eparam_t *p_cursor_opacity_ = nullptr;
 	gs_eparam_t *p_cursor_rotation_ = nullptr;
 	gs_eparam_t *p_cursor_shadow_ = nullptr;
+
+	gs_eparam_t *p_cursor_tex_ = nullptr;
+	gs_eparam_t *p_cursor_tex_enabled_ = nullptr;
+	gs_eparam_t *p_cursor_cell_off_ = nullptr;
+	gs_eparam_t *p_cursor_cell_scale_ = nullptr;
+	gs_eparam_t *p_cursor_hotspot_ = nullptr;
 
 	gs_eparam_t *p_zoom_blur_ = nullptr;
 	gs_eparam_t *p_spotlight_enabled_ = nullptr;
@@ -79,6 +90,11 @@ private:
 	ClickParams click_[4];
 
 	TextRenderer text_;
+
+	/* Atlas de cursores (bitmaps dos estilos). */
+	gs_texture_t *cursor_tex_ = nullptr;
+	core::CursorAtlas cursor_atlas_;
+	std::vector<core::Vec2f> cursor_hotspots_;
 };
 
 } // namespace topscreen

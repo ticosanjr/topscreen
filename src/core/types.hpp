@@ -30,7 +30,13 @@ enum class BgMode : int {
 
 enum class CursorStyle : int {
 	MacOs = 0,
-	Touch = 1,
+	Windows = 1,
+	Breeze = 2,
+	Bibata = 3,
+	Adwaita = 4,
+	GoogleDot = 5,
+	Pointer = 6,
+	Count = 7,
 };
 
 /** Tipos de efeito de clique. */

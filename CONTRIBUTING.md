@@ -15,8 +15,16 @@ Obrigado pelo interesse! Este projeto é um plugin de efeitos ao vivo para OBS.
 
 - `src/core/` — núcleo puro, testado. Não inclua `<obs-module.h>` aqui.
 - `src/` — camada OBS (filtro, compositor, settings, input, dock).
-- `data/` — shader, locales, presets, udev.
+- `data/` — shader, locales, presets, sons, fontes, cursores, udev.
 - `tests/` — testes do núcleo.
+
+### Recursos gerados
+
+- **Cursores:** `data/cursors/atlas.rgba` + `atlas.json` são gerados por
+  `python3 tools/make-cursor-atlas.py` (lê temas XCursor de `/usr/share/icons`
+  e desenha os clássicos). Rode de novo se mudar os estilos.
+- **Fonte:** `data/fonts/DejaVuSans-Bold.ttf` (para o overlay de teclas).
+- **Sons:** `data/sounds/*.wav` (som de clique).
 
 ## Fluxo
 

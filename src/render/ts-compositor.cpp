@@ -3,9 +3,15 @@
 #include <graphics/vec2.h>
 #include <graphics/vec4.h>
 
+#include <algorithm>
 #include <cstdio>
+#include <fstream>
+#include <iterator>
+#include <sstream>
+#include <vector>
 
 #include "core/color.hpp"
+#include "core/cursor_atlas.hpp"
 
 namespace topscreen {
 
@@ -65,7 +71,70 @@ bool Compositor::load()
 
 	/* Overlay de teclas (melhor esforco: se faltar fonte/efeito, segue sem). */
 	text_.load("fonts/DejaVuSans-Bold.ttf", "effects/text.effect");
+
+	/* Atlas de cursores (melhor esforco: sem ele, usa o cursor procedural). */
+	load_cursor_atlas();
+
 	return true;
+}
+
+void Compositor::load_cursor_atlas()
+{
+	char *path = obs_module_file("cursors/atlas.rgba");
+	if (!path) {
+		blog(LOG_WARNING, "[TopScreen] atlas de cursores nao encontrado (usando procedural)");
+		return;
+	}
+
+	std::ifstream in(path, std::ios::binary);
+	bfree(path);
+	if (!in)
+		return;
+
+	const std::vector<uint8_t> bytes((std::istreambuf_iterator<char>(in)),
+					 std::istreambuf_iterator<char>());
+
+	std::string err;
+	if (!core::cursor_atlas_parse(bytes.data(), bytes.size(), &cursor_atlas_, &err)) {
+		blog(LOG_WARNING, "[TopScreen] atlas de cursores invalido: %s", err.c_str());
+		return;
+	}
+
+	/* Hotspots (opcional; se faltar, usa um padrao). */
+	char *jpath = obs_module_file("cursors/atlas.json");
+	if (jpath) {
+		std::ifstream jin(jpath);
+		bfree(jpath);
+		if (jin) {
+			std::ostringstream ss;
+			ss << jin.rdbuf();
+			std::string jerr;
+			core::cursor_hotspots_parse(ss.str(), &cursor_hotspots_, &jerr);
+		}
+	}
+
+	obs_enter_graphics();
+	const uint8_t *data[1] = {cursor_atlas_.pixels.data()};
+	cursor_tex_ = gs_texture_create(cursor_atlas_.width(), cursor_atlas_.height(), GS_RGBA, 1, data, 0);
+	obs_leave_graphics();
+
+	if (!cursor_tex_) {
+		blog(LOG_WARNING, "[TopScreen] falha ao criar a textura do atlas de cursores");
+		return;
+	}
+
+	blog(LOG_INFO, "[TopScreen] atlas de cursores: %u estilos (%ux%u)", cursor_atlas_.count,
+	     cursor_atlas_.width(), cursor_atlas_.height());
+}
+
+void Compositor::release_cursor_atlas()
+{
+	if (cursor_tex_) {
+		obs_enter_graphics();
+		gs_texture_destroy(cursor_tex_);
+		obs_leave_graphics();
+		cursor_tex_ = nullptr;
+	}
 }
 
 void Compositor::cache_params()
@@ -93,6 +162,12 @@ void Compositor::cache_params()
 	p_cursor_opacity_ = P("cursor_opacity");
 	p_cursor_rotation_ = P("cursor_rotation");
 	p_cursor_shadow_ = P("cursor_shadow");
+
+	p_cursor_tex_ = P("cursor_tex");
+	p_cursor_tex_enabled_ = P("cursor_tex_enabled");
+	p_cursor_cell_off_ = P("cursor_cell_off");
+	p_cursor_cell_scale_ = P("cursor_cell_scale");
+	p_cursor_hotspot_ = P("cursor_hotspot");
 
 	p_zoom_blur_ = P("zoom_blur");
 	p_spotlight_enabled_ = P("spotlight_enabled");
@@ -148,6 +223,7 @@ void Compositor::validate_params() const
 void Compositor::release()
 {
 	text_.release();
+	release_cursor_atlas();
 
 	if (!effect_)
 		return;
@@ -222,6 +298,25 @@ void Compositor::render(obs_source_t *filter, const core::Config &cfg, const Fra
 	set_f(p_cursor_opacity_, static_cast<float>(st.cursor.opacity));
 	set_f(p_cursor_rotation_, static_cast<float>(st.cursor.rotation));
 	set_f(p_cursor_shadow_, cfg.cursor.shadow ? 1.0f : 0.0f);
+
+	/* Cursor por bitmap (atlas). */
+	const bool has_atlas = (cursor_tex_ != nullptr && cursor_atlas_.count > 0);
+	set_f(p_cursor_tex_enabled_, has_atlas ? 1.0f : 0.0f);
+	if (has_atlas) {
+		const uint32_t idx =
+			std::min<uint32_t>(static_cast<uint32_t>(cfg.cursor.style), cursor_atlas_.count - 1);
+		const float n = static_cast<float>(cursor_atlas_.count);
+		set_v2(p_cursor_cell_off_, 0.0f, static_cast<float>(idx) / n);
+		set_v2(p_cursor_cell_scale_, 1.0f, 1.0f / n);
+
+		core::Vec2f hs{0.05, 0.05};
+		if (idx < cursor_hotspots_.size())
+			hs = cursor_hotspots_[idx];
+		set_v2(p_cursor_hotspot_, static_cast<float>(hs.x), static_cast<float>(hs.y));
+
+		if (p_cursor_tex_)
+			gs_effect_set_texture(p_cursor_tex_, cursor_tex_);
+	}
 
 	/* Motion blur do zoom */
 	set_f(p_zoom_blur_, active ? static_cast<float>(st.zoom_blur) : 0.0f);

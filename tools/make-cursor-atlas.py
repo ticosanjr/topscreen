@@ -1,0 +1,232 @@
+#!/usr/bin/env python3
+"""
+Gera o atlas de cursores do TopScreen.
+
+- Extrai cursores reais de temas XCursor instalados (Bibata, Breeze, Adwaita,
+  GoogleDot) lendo o formato XCursor.
+- Desenha "macOS (classico)" e "Windows (classico)" proceduralmente.
+- Empacota tudo em data/cursors/atlas.rgba (TSAT) + atlas.json (hotspots).
+
+Formato TSAT (little-endian):
+  0  : magic 'TSAT'
+  4  : u32 version = 1
+  8  : u32 cell (lado do icone, px)
+  12 : u32 count
+  16 : pixels RGBA8 (cell x cell*count, topo->baixo)
+
+Uso: python3 tools/make-cursor-atlas.py
+"""
+import json
+import math
+import os
+import struct
+import sys
+
+CELL = 128
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+OUT_DIR = os.path.join(ROOT, "data", "cursors")
+
+ICONS = "/usr/share/icons"
+
+# nome, fonte (caminho xcursor)  -- ordem = id do CursorStyle no codigo
+SOURCES = [
+    ("macos", "__procedural_mac__"),
+    ("windows", "__procedural_win__"),
+    ("breeze", f"{ICONS}/breeze_cursors/cursors/left_ptr"),
+    ("bibata", f"{ICONS}/Bibata-Modern-Classic/cursors/left_ptr"),
+    ("adwaita", f"{ICONS}/Adwaita/cursors/left_ptr"),
+    ("googledot", f"{ICONS}/GoogleDot-White/cursors/left_ptr"),
+    ("pointer", f"{ICONS}/Adwaita/cursors/pointer"),
+]
+
+
+# ---------------------------------------------------------------------------
+# XCursor
+# ---------------------------------------------------------------------------
+def parse_xcursor(path):
+    data = open(path, "rb").read()
+    magic, hsize, version, ntoc = struct.unpack_from("<4sIII", data, 0)
+    if magic != b"Xcur":
+        raise ValueError(f"nao e XCursor: {path}")
+    images = []
+    for i in range(ntoc):
+        ctype, subtype, pos = struct.unpack_from("<III", data, hsize + i * 12)
+        if ctype != 0xFFFD0002:  # image
+            continue
+        hsize2, itype, isub, iver, w, h, xh, yh, delay = struct.unpack_from("<IIIIIIIII", data, pos)
+        pix = struct.unpack_from("<%dI" % (w * h), data, pos + hsize2)
+        images.append({"w": w, "h": h, "xhot": xh, "yhot": yh, "pix": pix})
+    if not images:
+        raise ValueError(f"sem imagens: {path}")
+    return images
+
+
+def best_image(images):
+    """Maior imagem com lado <= 128 (nitida e leve)."""
+    cand = [im for im in images if max(im["w"], im["h"]) <= 128] or images
+    return max(cand, key=lambda im: max(im["w"], im["h"]))
+
+
+def argb_to_rgba(pix, w, h):
+    out = []
+    for p in pix:
+        a = (p >> 24) & 0xFF
+        r = (p >> 16) & 0xFF
+        g = (p >> 8) & 0xFF
+        b = p & 0xFF
+        out.append((r, g, b, a))
+    return out
+
+
+# ---------------------------------------------------------------------------
+# Rasterizacao procedural (poligonos com anti-aliasing)
+# ---------------------------------------------------------------------------
+def point_in_poly(x, y, poly):
+    inside = False
+    n = len(poly)
+    j = n - 1
+    for i in range(n):
+        xi, yi = poly[i]
+        xj, yj = poly[j]
+        if (yi > y) != (yj > y):
+            xint = (xj - xi) * (y - yi) / (yj - yi) + xi
+            if x < xint:
+                inside = not inside
+        j = i
+    return inside
+
+
+def dist_seg(px, py, ax, ay, bx, by):
+    dx, dy = bx - ax, by - ay
+    l2 = dx * dx + dy * dy
+    if l2 == 0:
+        return math.hypot(px - ax, py - ay)
+    t = max(0.0, min(1.0, ((px - ax) * dx + (py - ay) * dy) / l2))
+    return math.hypot(px - (ax + t * dx), py - (ay + t * dy))
+
+
+def sd_poly(x, y, poly):
+    d = min(dist_seg(x, y, *poly[i], *poly[(i + 1) % len(poly)]) for i in range(len(poly)))
+    return -d if point_in_poly(x, y, poly) else d
+
+
+def rasterize(poly, fill, outline, outline_w, grid=24):
+    """Rasteriza um poligono (coordenadas em `grid`) para CELL x CELL RGBA."""
+    scale = CELL / grid
+    src = [(px * scale, py * scale) for (px, py) in poly]
+    ow = outline_w * scale
+    ss = 3  # supersampling
+    out = bytearray(CELL * CELL * 4)
+    for y in range(CELL):
+        for x in range(CELL):
+            ar = ag = ab = aa = 0
+            for sy in range(ss):
+                for sx in range(ss):
+                    fx = x + (sx + 0.5) / ss
+                    fy = y + (sy + 0.5) / ss
+                    d = sd_poly(fx, fy, src)
+                    if d <= 0.0:
+                        r, g, b, a = fill
+                    elif d <= ow:
+                        r, g, b, a = outline
+                    else:
+                        r = g = b = a = 0
+                    ar += r * a
+                    ag += g * a
+                    ab += b * a
+                    aa += a
+            n = ss * ss
+            a = aa / n
+            idx = (y * CELL + x) * 4
+            if a > 0:
+                out[idx + 0] = min(255, int(ar / aa))
+                out[idx + 1] = min(255, int(ag / aa))
+                out[idx + 2] = min(255, int(ab / aa))
+                out[idx + 3] = min(255, int(a))
+            else:
+                out[idx + 3] = 0
+    return out
+
+
+MAC_POLY = [(1.2, 1.0), (1.2, 18.0), (5.3, 14.2), (8.4, 21.5), (11.2, 20.3),
+            (8.1, 13.2), (13.2, 13.2)]
+WIN_POLY = [(0.8, 0.6), (0.8, 17.5), (4.8, 13.7), (7.9, 19.9), (10.3, 18.9),
+            (7.2, 12.6), (12.0, 12.6)]
+
+
+def procedural(kind):
+    if kind == "mac":
+        # macOS: preenchimento preto, contorno branco fino
+        return rasterize(MAC_POLY, (0, 0, 0, 255), (255, 255, 255, 235), 0.9)
+    else:
+        # Windows: preenchimento branco, contorno preto
+        return rasterize(WIN_POLY, (255, 255, 255, 255), (0, 0, 0, 255), 1.0)
+
+
+# ---------------------------------------------------------------------------
+# Composicao do atlas
+# ---------------------------------------------------------------------------
+def resample_to_cell(rgba, w, h):
+    """Redimensiona (bilinear) para CELL x CELL, centralizado."""
+    out = bytearray(CELL * CELL * 4)
+    sc = min(CELL / w, CELL / h)
+    dw, dh = max(1, int(w * sc)), max(1, int(h * sc))
+    ox, oy = (CELL - dw) // 2, (CELL - dh) // 2
+    for y in range(dh):
+        for x in range(dw):
+            sx = min(w - 1, int(x / sc))
+            sy = min(h - 1, int(y / sc))
+            si = (sy * w + sx) * 4
+            di = ((oy + y) * CELL + (ox + x)) * 4
+            out[di:di + 4] = rgba[si:si + 4]
+    return out, ox, oy, sc
+
+
+def main():
+    os.makedirs(OUT_DIR, exist_ok=True)
+    cells = []
+    meta = []
+
+    for name, src in SOURCES:
+        if src == "__procedural_mac__":
+            cells.append(procedural("mac"))
+            meta.append({"name": name, "hotspot": [round(1.2 / 24, 4), round(1.0 / 24, 4)]})
+            print(f"[atlas] {name}: procedural mac")
+            continue
+        if src == "__procedural_win__":
+            cells.append(procedural("win"))
+            meta.append({"name": name, "hotspot": [round(0.8 / 24, 4), round(0.6 / 24, 4)]})
+            print(f"[atlas] {name}: procedural windows")
+            continue
+
+        if not os.path.exists(src):
+            raise SystemExit(f"cursor nao encontrado: {src}")
+
+        im = best_image(parse_xcursor(src))
+        rgba = bytearray()
+        for (r, g, b, a) in argb_to_rgba(im["pix"], im["w"], im["h"]):
+            rgba += bytes((r, g, b, a))
+
+        cell, ox, oy, sc = resample_to_cell(rgba, im["w"], im["h"])
+        hx = (ox + im["xhot"] * sc) / CELL
+        hy = (oy + im["yhot"] * sc) / CELL
+        cells.append(cell)
+        meta.append({"name": name, "hotspot": [round(hx, 4), round(hy, 4)]})
+        print(f"[atlas] {name}: {im['w']}x{im['h']} hotspot=({hx:.3f},{hy:.3f}) de {src}")
+
+    count = len(cells)
+    with open(os.path.join(OUT_DIR, "atlas.rgba"), "wb") as f:
+        f.write(b"TSAT")
+        f.write(struct.pack("<III", 1, CELL, count))
+        for c in cells:
+            f.write(c)
+
+    with open(os.path.join(OUT_DIR, "atlas.json"), "w") as f:
+        json.dump({"cell": CELL, "count": count, "cursors": meta}, f, indent=2)
+        f.write("\n")
+
+    print(f"[atlas] OK: {count} cursores, cell={CELL} -> data/cursors/")
+
+
+if __name__ == "__main__":
+    sys.exit(main())

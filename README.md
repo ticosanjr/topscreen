@@ -37,7 +37,7 @@ Veja [`docs/ROADMAP.md`](docs/ROADMAP.md) e [`docs/TAREFAS.md`](docs/TAREFAS.md)
 | F2 | Cursor (tamanho/suavização/sway/idle/loop) | 🟡 implementado (verificar no OBS) |
 | F3 | Efeitos de clique L/R + atalhos + presets | 🟡 implementado (som = stub) |
 | F4 | Zoom/Pan (mola) auto + manual + pan | 🟡 implementado |
-| F5 | Overlay de teclas (SDF) + spotlight + webcam | ⬜ |
+| F5 | Overlay de teclas (atlas TTF) + spotlight + webcam | 🟡 (teclas/spotlight ✅; webcam/marca-texto ⬜) |
 | F6 | Fonte de captura própria + áudio próprio | ⬜ |
 | F7 | Paridade Wayland (portais + evdev) + polimento | ⬜ |
 

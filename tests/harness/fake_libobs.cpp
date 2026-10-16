@@ -323,6 +323,12 @@ obs_property_t *obs_properties_add_list(obs_properties_t *props, const char *nam
 	return add_prop(props, name);
 }
 
+obs_property_t *obs_properties_add_int_slider(obs_properties_t *props, const char *name, const char *, int,
+					      int, int)
+{
+	return add_prop(props, name);
+}
+
 obs_property_t *obs_properties_add_group(obs_properties_t *props, const char *name, const char *,
 					 enum obs_group_type, obs_properties_t *)
 {

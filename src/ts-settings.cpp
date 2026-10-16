@@ -57,6 +57,18 @@ void config_defaults(obs_data_t *s)
 	obs_data_set_default_double(s, kClickSoundVolume, def.click_sound.volume);
 	obs_data_set_default_bool(s, kClickSoundLeft, def.click_sound.left);
 	obs_data_set_default_bool(s, kClickSoundRight, def.click_sound.right);
+
+	obs_data_set_default_bool(s, kMotionBlurEnabled, def.motion_blur.enabled);
+	obs_data_set_default_double(s, kMotionBlurAmount, def.motion_blur.amount);
+
+	obs_data_set_default_bool(s, kSpotlightEnabled, def.spotlight.enabled);
+	obs_data_set_default_double(s, kSpotlightRadius, def.spotlight.radius);
+	obs_data_set_default_double(s, kSpotlightDim, def.spotlight.dim);
+
+	obs_data_set_default_bool(s, kKeysEnabled, def.keys.enabled);
+	obs_data_set_default_bool(s, kKeysModifiersOnly, def.keys.modifiers_only);
+	obs_data_set_default_double(s, kKeysTtlMs, def.keys.ttl_ms);
+	obs_data_set_default_int(s, kKeysMax, def.keys.max_keys);
 }
 
 void config_load(obs_data_t *s, Config *c)
@@ -104,10 +116,22 @@ void config_load(obs_data_t *s, Config *c)
 
 	c->click_sound.enabled = obs_data_get_bool(s, kClickSoundEnabled);
 	const char *file = obs_data_get_string(s, kClickSoundFile);
-	c->click_sound.file = file ? file : "click-soft.wav";
+	c->click_sound.file = file ? file : "sounds/click-soft.wav";
 	c->click_sound.volume = obs_data_get_double(s, kClickSoundVolume);
 	c->click_sound.left = obs_data_get_bool(s, kClickSoundLeft);
 	c->click_sound.right = obs_data_get_bool(s, kClickSoundRight);
+
+	c->motion_blur.enabled = obs_data_get_bool(s, kMotionBlurEnabled);
+	c->motion_blur.amount = obs_data_get_double(s, kMotionBlurAmount);
+
+	c->spotlight.enabled = obs_data_get_bool(s, kSpotlightEnabled);
+	c->spotlight.radius = obs_data_get_double(s, kSpotlightRadius);
+	c->spotlight.dim = obs_data_get_double(s, kSpotlightDim);
+
+	c->keys.enabled = obs_data_get_bool(s, kKeysEnabled);
+	c->keys.modifiers_only = obs_data_get_bool(s, kKeysModifiersOnly);
+	c->keys.ttl_ms = obs_data_get_double(s, kKeysTtlMs);
+	c->keys.max_keys = static_cast<int>(obs_data_get_int(s, kKeysMax));
 }
 
 void config_store(obs_data_t *s, const Config &c)
@@ -158,6 +182,18 @@ void config_store(obs_data_t *s, const Config &c)
 	obs_data_set_double(s, kClickSoundVolume, c.click_sound.volume);
 	obs_data_set_bool(s, kClickSoundLeft, c.click_sound.left);
 	obs_data_set_bool(s, kClickSoundRight, c.click_sound.right);
+
+	obs_data_set_bool(s, kMotionBlurEnabled, c.motion_blur.enabled);
+	obs_data_set_double(s, kMotionBlurAmount, c.motion_blur.amount);
+
+	obs_data_set_bool(s, kSpotlightEnabled, c.spotlight.enabled);
+	obs_data_set_double(s, kSpotlightRadius, c.spotlight.radius);
+	obs_data_set_double(s, kSpotlightDim, c.spotlight.dim);
+
+	obs_data_set_bool(s, kKeysEnabled, c.keys.enabled);
+	obs_data_set_bool(s, kKeysModifiersOnly, c.keys.modifiers_only);
+	obs_data_set_double(s, kKeysTtlMs, c.keys.ttl_ms);
+	obs_data_set_int(s, kKeysMax, c.keys.max_keys);
 }
 
 } // namespace topscreen

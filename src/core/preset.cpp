@@ -134,6 +134,21 @@ bool Preset::apply(Config *cfg, std::string *error) const
 	cfg->click_sound.left = read_bool(o, kClickSoundLeft, cfg->click_sound.left);
 	cfg->click_sound.right = read_bool(o, kClickSoundRight, cfg->click_sound.right);
 
+	/* Motion blur */
+	cfg->motion_blur.enabled = read_bool(o, kMotionBlurEnabled, cfg->motion_blur.enabled);
+	cfg->motion_blur.amount = read_number(o, kMotionBlurAmount, cfg->motion_blur.amount);
+
+	/* Spotlight */
+	cfg->spotlight.enabled = read_bool(o, kSpotlightEnabled, cfg->spotlight.enabled);
+	cfg->spotlight.radius = read_number(o, kSpotlightRadius, cfg->spotlight.radius);
+	cfg->spotlight.dim = read_number(o, kSpotlightDim, cfg->spotlight.dim);
+
+	/* Teclas */
+	cfg->keys.enabled = read_bool(o, kKeysEnabled, cfg->keys.enabled);
+	cfg->keys.modifiers_only = read_bool(o, kKeysModifiersOnly, cfg->keys.modifiers_only);
+	cfg->keys.ttl_ms = read_number(o, kKeysTtlMs, cfg->keys.ttl_ms);
+	cfg->keys.max_keys = read_int(o, kKeysMax, cfg->keys.max_keys);
+
 	return true;
 }
 

@@ -55,6 +55,11 @@ private:
 	gs_eparam_t *p_cursor_rotation_ = nullptr;
 	gs_eparam_t *p_cursor_shadow_ = nullptr;
 
+	gs_eparam_t *p_zoom_blur_ = nullptr;
+	gs_eparam_t *p_spotlight_enabled_ = nullptr;
+	gs_eparam_t *p_spotlight_radius_ = nullptr;
+	gs_eparam_t *p_spotlight_dim_ = nullptr;
+
 	/* Slots de clique explicitos (o shader nao usa arrays de uniform). */
 	struct ClickParams {
 		gs_eparam_t *pos = nullptr;

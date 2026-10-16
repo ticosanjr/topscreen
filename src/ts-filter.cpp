@@ -13,6 +13,7 @@
 #include "ts-settings.hpp"
 
 #include <atomic>
+#include <cmath>
 #include <string>
 
 using namespace topscreen;
@@ -317,6 +318,9 @@ void ts_filter_tick(void *data, float seconds)
 	ctx->frame.cursor = ctx->cursor.render();
 	ctx->frame.zoom = ctx->zoom.render();
 	ctx->frame.click_count = ctx->clicks.collect(ctx->time_ms, ctx->frame.clicks, kShaderClickSlots);
+	ctx->frame.zoom_blur = ctx->cfg.motion_blur.enabled
+				       ? clamp01(std::fabs(ctx->zoom.zoom_velocity()) * ctx->cfg.motion_blur.amount * 0.5)
+				       : 0.0;
 
 	/* Publica estado para o dock (thread da UI). */
 	ctx->effects_cache_.store(ctx->cfg.effects_enabled);

@@ -54,7 +54,16 @@ TEST(preset_cobre_todas_as_chaves)
             "click_sound_file": "x.wav",
             "click_sound_volume": 0.42,
             "click_sound_left": false,
-            "click_sound_right": true
+            "click_sound_right": true,
+            "motion_blur_enabled": false,
+            "motion_blur_amount": 0.66,
+            "spotlight_enabled": true,
+            "spotlight_radius": 0.44,
+            "spotlight_dim": 0.33,
+            "keys_enabled": false,
+            "keys_modifiers_only": true,
+            "keys_ttl_ms": 1234,
+            "keys_max": 9
         }
     })";
 
@@ -111,4 +120,16 @@ TEST(preset_cobre_todas_as_chaves)
 	CHECK_NEAR(c.click_sound.volume, 0.42, 1e-9);
 	CHECK(!c.click_sound.left);
 	CHECK(c.click_sound.right);
+
+	CHECK(!c.motion_blur.enabled);
+	CHECK_NEAR(c.motion_blur.amount, 0.66, 1e-9);
+
+	CHECK(c.spotlight.enabled);
+	CHECK_NEAR(c.spotlight.radius, 0.44, 1e-9);
+	CHECK_NEAR(c.spotlight.dim, 0.33, 1e-9);
+
+	CHECK(!c.keys.enabled);
+	CHECK(c.keys.modifiers_only);
+	CHECK_NEAR(c.keys.ttl_ms, 1234.0, 1e-9);
+	CHECK_EQ(c.keys.max_keys, 9);
 }

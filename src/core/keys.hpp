@@ -55,4 +55,16 @@ inline constexpr const char *kClickSoundVolume = "click_sound_volume";
 inline constexpr const char *kClickSoundLeft = "click_sound_left";
 inline constexpr const char *kClickSoundRight = "click_sound_right";
 
+inline constexpr const char *kMotionBlurEnabled = "motion_blur_enabled";
+inline constexpr const char *kMotionBlurAmount = "motion_blur_amount";
+
+inline constexpr const char *kSpotlightEnabled = "spotlight_enabled";
+inline constexpr const char *kSpotlightRadius = "spotlight_radius";
+inline constexpr const char *kSpotlightDim = "spotlight_dim";
+
+inline constexpr const char *kKeysEnabled = "keys_enabled";
+inline constexpr const char *kKeysModifiersOnly = "keys_modifiers_only";
+inline constexpr const char *kKeysTtlMs = "keys_ttl_ms";
+inline constexpr const char *kKeysMax = "keys_max";
+
 } // namespace topscreen::core::keys

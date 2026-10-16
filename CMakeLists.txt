@@ -144,7 +144,7 @@ endif()
 # Plataformas
 # ---------------------------------------------------------------------------
 if(WIN32)
-    target_link_libraries(topscreen PRIVATE user32)
+    target_link_libraries(topscreen PRIVATE user32 winmm)
 elseif(UNIX)
     find_package(X11 QUIET)
     if(X11_FOUND)

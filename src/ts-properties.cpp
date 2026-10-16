@@ -130,6 +130,30 @@ obs_properties_t *properties_create(void *data)
 	obs_properties_add_float_slider(zoom, kZoomPanAmount, obs_module_text("Zoom.PanAmount"), 0.0, 1.0, 0.01);
 	obs_properties_add_group(props, "grp_zoom", obs_module_text("Group.Zoom"), OBS_GROUP_NORMAL, zoom);
 
+	/* ---------------- Motion blur ---------------- */
+	obs_properties_t *mb = obs_properties_create();
+	obs_properties_add_bool(mb, kMotionBlurEnabled, obs_module_text("MotionBlur.Enabled"));
+	obs_properties_add_float_slider(mb, kMotionBlurAmount, obs_module_text("MotionBlur.Amount"), 0.0, 1.0,
+					0.01);
+	obs_properties_add_group(props, "grp_motionblur", obs_module_text("Group.MotionBlur"), OBS_GROUP_NORMAL, mb);
+
+	/* ---------------- Spotlight ---------------- */
+	obs_properties_t *spot = obs_properties_create();
+	obs_properties_add_bool(spot, kSpotlightEnabled, obs_module_text("Spotlight.Enabled"));
+	obs_properties_add_float_slider(spot, kSpotlightRadius, obs_module_text("Spotlight.Radius"), 0.05, 1.0,
+					0.01);
+	obs_properties_add_float_slider(spot, kSpotlightDim, obs_module_text("Spotlight.Dim"), 0.0, 1.0, 0.01);
+	obs_properties_add_group(props, "grp_spotlight", obs_module_text("Group.Spotlight"), OBS_GROUP_NORMAL,
+				 spot);
+
+	/* ---------------- Teclas ---------------- */
+	obs_properties_t *keys = obs_properties_create();
+	obs_properties_add_bool(keys, kKeysEnabled, obs_module_text("Keys.Enabled"));
+	obs_properties_add_bool(keys, kKeysModifiersOnly, obs_module_text("Keys.ModifiersOnly"));
+	obs_properties_add_float_slider(keys, kKeysTtlMs, obs_module_text("Keys.TtlMs"), 500.0, 8000.0, 50.0);
+	obs_properties_add_int_slider(keys, kKeysMax, obs_module_text("Keys.Max"), 1, 12, 1);
+	obs_properties_add_group(props, "grp_keys", obs_module_text("Group.Keys"), OBS_GROUP_NORMAL, keys);
+
 	return props;
 }
 

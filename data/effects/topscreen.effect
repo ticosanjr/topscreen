@@ -30,6 +30,11 @@ uniform float  cursor_opacity;
 uniform float  cursor_rotation; // rad
 uniform float  cursor_shadow;
 
+uniform float  zoom_blur;        // 0..1 (motion blur do zoom)
+uniform float  spotlight_enabled;
+uniform float  spotlight_radius; // fracao do menor lado
+uniform float  spotlight_dim;    // 0..1
+
 uniform float  click_count;
 
 uniform float2 click0_pos;
@@ -206,8 +211,20 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 		float2 cs         = content_size();
 		float2 content_uv = (px - content_pad) / cs;
 		float2 uv_screen  = zoom_focus + (content_uv - zoom_focus) / max(zoom, 0.0001);
-		float4 screen     = image.Sample(def_sampler, uv_screen);
-		col               = lerp(col, screen, mask);
+
+		float4 screen;
+		if (zoom_blur > 0.001) {
+			// Motion blur radial (aprox. do movimento do zoom)
+			float2 d = (uv_screen - zoom_focus) * zoom_blur * 0.03;
+			screen = image.Sample(def_sampler, uv_screen - d);
+			screen += image.Sample(def_sampler, uv_screen);
+			screen += image.Sample(def_sampler, uv_screen + d);
+			screen *= (1.0 / 3.0);
+		} else {
+			screen = image.Sample(def_sampler, uv_screen);
+		}
+
+		col = lerp(col, screen, mask);
 
 		// Efeitos de clique (4 slots explicitos)
 		if (click_count > 0.5)
@@ -222,6 +239,15 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 		if (click_count > 3.5)
 			col = apply_click(col, px, mask, click3_pos, click3_prog, click3_size, click3_color,
 					  click3_type);
+
+		// Spotlight: escurece fora de um circulo que segue o cursor
+		if (spotlight_enabled > 0.5) {
+			float2 cpx = content_to_pixel(cursor_pos);
+			float  rad = spotlight_radius * min(target_size.x, target_size.y);
+			float  dd  = len2(px - cpx);
+			float  k   = smoothstep(rad * 0.6, rad, dd) * spotlight_dim;
+			col.rgb    = col.rgb * (1.0 - k * 0.85);
+		}
 
 		// Cursor (seta procedural: preenchimento claro + borda escura)
 		if (cursor_enabled > 0.5) {

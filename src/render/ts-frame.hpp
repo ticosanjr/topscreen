@@ -12,6 +12,7 @@ struct FrameState {
 	core::ZoomRender zoom;
 	core::ClickRender clicks[core::ClickFxModel::kMaxSlots];
 	int click_count = 0;
+	double zoom_blur = 0.0; // 0..1 (motion blur do zoom)
 };
 
 /** Numero maximo de cliques enviados ao shader (limite dos uniforms). */

@@ -2,6 +2,7 @@
 
 #include "click_fx.hpp"
 #include "cursor.hpp"
+#include "key_overlay.hpp"
 #include "types.hpp"
 #include "zoom.hpp"
 
@@ -30,6 +31,19 @@ struct ClickSoundConfig {
 	bool right = false;
 };
 
+/** Motion blur (radial, ligado ao movimento do zoom/cursor). */
+struct MotionBlurConfig {
+	bool enabled = true;
+	double amount = 0.35; // 0..1
+};
+
+/** Spotlight: escurece fora de um circulo que segue o cursor. */
+struct SpotlightConfig {
+	bool enabled = false;
+	double radius = 0.30; // fracao do menor lado
+	double dim = 0.60;    // 0..1 (quanto escurece fora)
+};
+
 /** Configuracao completa do TopScreen (independente do OBS). */
 struct Config {
 	bool effects_enabled = true;
@@ -39,6 +53,9 @@ struct Config {
 	ClickConfig click_left;
 	ClickConfig click_right;
 	ClickSoundConfig click_sound;
+	MotionBlurConfig motion_blur;
+	SpotlightConfig spotlight;
+	KeyOverlayConfig keys;
 };
 
 } // namespace topscreen::core

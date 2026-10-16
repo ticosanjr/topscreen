@@ -2,13 +2,16 @@
 
 #include "core/wav.hpp"
 
+#include <string>
+
 namespace topscreen {
 
 /**
  * Som de clique.
  *
- * Faz o decode do WAV (via core/wav) no load(). O playback entra em F6 (canal
- * de audio da fonte propria / obs_source_output_audio).
+ * Faz o decode do WAV (via core/wav) no load() e toca via audio do sistema
+ * (PlaySound no Windows; paplay/pw-play/aplay no Linux). O playback pelo canal
+ * de audio do OBS entra em F6 (fonte propria).
  */
 class ClickSound {
 public:
@@ -22,6 +25,8 @@ public:
 
 private:
 	bool loaded_ = false;
+	std::string path_;
+	std::string player_; // Linux: caminho do player resolvido
 	core::WavData wav_;
 };
 

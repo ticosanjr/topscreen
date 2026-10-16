@@ -90,6 +90,11 @@ void Compositor::cache_params()
 	p_cursor_rotation_ = P("cursor_rotation");
 	p_cursor_shadow_ = P("cursor_shadow");
 
+	p_zoom_blur_ = P("zoom_blur");
+	p_spotlight_enabled_ = P("spotlight_enabled");
+	p_spotlight_radius_ = P("spotlight_radius");
+	p_spotlight_dim_ = P("spotlight_dim");
+
 	p_click_count_ = P("click_count");
 
 	char name[32];
@@ -146,6 +151,7 @@ void Compositor::release()
 	p_shadow_alpha_ = p_shadow_blur_ = p_shadow_offset_ = nullptr;
 	p_cursor_enabled_ = p_cursor_pos_ = p_cursor_scale_ = nullptr;
 	p_cursor_opacity_ = p_cursor_rotation_ = p_cursor_shadow_ = nullptr;
+	p_zoom_blur_ = p_spotlight_enabled_ = p_spotlight_radius_ = p_spotlight_dim_ = nullptr;
 	p_click_count_ = nullptr;
 	for (auto &c : click_)
 		c = ClickParams{};
@@ -204,6 +210,15 @@ void Compositor::render(obs_source_t *filter, const core::Config &cfg, const Fra
 	set_f(p_cursor_opacity_, static_cast<float>(st.cursor.opacity));
 	set_f(p_cursor_rotation_, static_cast<float>(st.cursor.rotation));
 	set_f(p_cursor_shadow_, cfg.cursor.shadow ? 1.0f : 0.0f);
+
+	/* Motion blur do zoom */
+	set_f(p_zoom_blur_, active ? static_cast<float>(st.zoom_blur) : 0.0f);
+
+	/* Spotlight */
+	const bool spot = active && cfg.spotlight.enabled;
+	set_f(p_spotlight_enabled_, spot ? 1.0f : 0.0f);
+	set_f(p_spotlight_radius_, static_cast<float>(cfg.spotlight.radius));
+	set_f(p_spotlight_dim_, static_cast<float>(cfg.spotlight.dim));
 
 	/* Cliques (ate kShaderClickSlots, slots explicitos) */
 	int used = st.click_count;

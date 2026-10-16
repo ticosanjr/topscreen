@@ -65,11 +65,12 @@ vive toda a matemática e a lógica de estado — o que de fato precisa estar ce
 | `test_docs.cpp` | `docs/` × código | toda chave de `keys.hpp` está documentada; atalhos do código estão na referência |
 | `test_cursor_atlas.cpp` | `core/cursor_atlas.*` + `data/cursors/` | formato TSAT, hotspots e **atlas real** (12 estilos = `CursorStyle::Count`) |
 | `test_image.cpp` | `core/image.*` + `data/wallpapers/` | decode de imagem (lê um **wallpaper real** 1920x1080) e casos inválidos |
+| `test_mapping.cpp` | `core/mapping.*` | área de conteúdo (padding/proporção), zoom para frente e **consistência com o shader** (prova que o cursor cai no pixel certo em qualquer zoom) |
 
 ## Números atuais
 
 ```
-89 testes | 1794 verificações | 0 falhas   (núcleo)
+96 testes | 1983 verificações | 0 falhas   (núcleo)
 5 testes  | 27 verificações   | 0 falhas   (integração com libobs fake)
 ```
 

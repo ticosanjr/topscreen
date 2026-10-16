@@ -16,6 +16,7 @@ inline constexpr const char *kBgColorA = "bg_color_a";
 inline constexpr const char *kBgColorB = "bg_color_b";
 inline constexpr const char *kBgImage = "bg_image";
 inline constexpr const char *kBgImageFile = "bg_image_file";
+inline constexpr const char *kBgImageBlur = "bg_image_blur";
 inline constexpr const char *kBgPaddingX = "bg_padding_x";
 inline constexpr const char *kBgPaddingY = "bg_padding_y";
 inline constexpr const char *kBgCornerRadius = "bg_corner_radius";

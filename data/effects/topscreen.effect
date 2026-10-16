@@ -23,6 +23,7 @@ uniform texture2d bg_tex;     // wallpaper
 uniform float  bg_tex_enabled;
 uniform float  bg_tex_aspect; // w/h da imagem
 uniform float  bg_keep_aspect;
+uniform float  bg_blur;       // desfoque do wallpaper (px)
 uniform float  shadow_alpha;
 uniform float  shadow_blur;
 uniform float2 shadow_offset;
@@ -224,7 +225,22 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 		else
 			sc.x = at / ai;
 		float2 buv = (vert_in.uv - 0.5) * sc + 0.5;
-		col = bg_tex.Sample(def_sampler, buv);
+
+		if (bg_blur > 0.01) {
+			// desfoque barato (9 amostras)
+			float2 o = bg_blur / max(target_size, float2(1.0, 1.0));
+			col = bg_tex.Sample(def_sampler, buv) * 0.25;
+			col += bg_tex.Sample(def_sampler, buv + float2(o.x, 0.0)) * 0.125;
+			col += bg_tex.Sample(def_sampler, buv - float2(o.x, 0.0)) * 0.125;
+			col += bg_tex.Sample(def_sampler, buv + float2(0.0, o.y)) * 0.125;
+			col += bg_tex.Sample(def_sampler, buv - float2(0.0, o.y)) * 0.125;
+			col += bg_tex.Sample(def_sampler, buv + o) * 0.0625;
+			col += bg_tex.Sample(def_sampler, buv - o) * 0.0625;
+			col += bg_tex.Sample(def_sampler, buv + float2(o.x, -o.y)) * 0.0625;
+			col += bg_tex.Sample(def_sampler, buv - float2(o.x, -o.y)) * 0.0625;
+		} else {
+			col = bg_tex.Sample(def_sampler, buv);
+		}
 	} else if (bg_mode > 0.5 && bg_mode < 1.5) {
 		col = lerp(bg_a, bg_b, saturate(vert_in.uv.y));
 	} else if (bg_mode >= 1.5) {

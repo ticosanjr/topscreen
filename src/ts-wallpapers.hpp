@@ -15,6 +15,9 @@ inline constexpr WallpaperEntry kWallpapers[] = {
 	{"Graphite", "wallpapers/graphite.jpg"}, {"Ocean", "wallpapers/ocean.jpg"},
 	{"Forest", "wallpapers/forest.jpg"},     {"Lavender", "wallpapers/lavender.jpg"},
 	{"Ember", "wallpapers/ember.jpg"},       {"Midnight", "wallpapers/midnight.jpg"},
+	{"Neon", "wallpapers/neon.jpg"},         {"Cyberpunk", "wallpapers/cyberpunk.jpg"},
+	{"Tropical", "wallpapers/tropical.jpg"}, {"Coral", "wallpapers/coral.jpg"},
+	{"Galaxy", "wallpapers/galaxy.jpg"},     {"Rainbow", "wallpapers/rainbow.jpg"},
 };
 
 inline constexpr int kWallpaperCount = sizeof(kWallpapers) / sizeof(kWallpapers[0]);

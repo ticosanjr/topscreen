@@ -30,6 +30,12 @@ PALETTES = {
     "lavender":  ["#1e1b3a", "#5b4bd8", "#a78bfa", "#f4c2ff", "#1e1b3a"],
     "ember":     ["#1a0a0a", "#7a1f1f", "#e0452b", "#ffb703", "#1a0a0a"],
     "midnight":  ["#05060f", "#101a3a", "#2b3fa8", "#6a4bd8", "#05060f"],
+    "neon":      ["#0d0221", "#ff006e", "#8338ec", "#3a86ff", "#00f5d4"],
+    "cyberpunk": ["#0a0f1e", "#f9f002", "#ff2a6d", "#05d9e8", "#0a0f1e"],
+    "tropical":  ["#04395e", "#0ead69", "#f5e960", "#ff5d8f", "#04395e"],
+    "coral":     ["#2b0b3a", "#ff5c8a", "#ff9f1c", "#ffd166", "#2b0b3a"],
+    "galaxy":    ["#0b032d", "#843b62", "#f67e7d", "#6a2c70", "#0b032d"],
+    "rainbow":   ["#2d00f7", "#c200fb", "#0075f2", "#ff0a54", "#00e5ff"],
 }
 
 

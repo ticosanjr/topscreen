@@ -89,6 +89,7 @@ bool Preset::apply(Config *cfg, std::string *error) const
 	cfg->bg.color_b = static_cast<uint32_t>(read_number(o, kBgColorB, cfg->bg.color_b));
 	cfg->bg.image = read_string(o, kBgImage, cfg->bg.image);
 	cfg->bg.image_file = read_string(o, kBgImageFile, cfg->bg.image_file);
+	cfg->bg.image_blur = read_number(o, kBgImageBlur, cfg->bg.image_blur);
 	cfg->bg.padding_x = read_number(o, kBgPaddingX, cfg->bg.padding_x);
 	cfg->bg.padding_y = read_number(o, kBgPaddingY, cfg->bg.padding_y);
 	cfg->bg.corner_radius = read_number(o, kBgCornerRadius, cfg->bg.corner_radius);

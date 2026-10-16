@@ -81,6 +81,7 @@ obs_properties_t *properties_create(void *data)
 
 	obs_properties_add_path(bg, kBgImageFile, obs_module_text("Background.ImageFile"), OBS_PATH_FILE,
 				obs_module_text("Background.ImageFile.Filter"), nullptr);
+	obs_properties_add_float_slider(bg, kBgImageBlur, obs_module_text("Background.ImageBlur"), 0.0, 60.0, 1.0);
 
 	obs_properties_add_color(bg, kBgColorA, obs_module_text("Background.ColorA"));
 	obs_properties_add_color(bg, kBgColorB, obs_module_text("Background.ColorB"));

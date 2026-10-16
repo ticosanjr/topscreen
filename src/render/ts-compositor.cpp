@@ -159,6 +159,7 @@ void Compositor::cache_params()
 	p_bg_tex_enabled_ = P("bg_tex_enabled");
 	p_bg_tex_aspect_ = P("bg_tex_aspect");
 	p_bg_keep_aspect_ = P("bg_keep_aspect");
+	p_bg_blur_ = P("bg_blur");
 	p_shadow_alpha_ = P("shadow_alpha");
 	p_shadow_blur_ = P("shadow_blur");
 	p_shadow_offset_ = P("shadow_offset");
@@ -245,6 +246,7 @@ void Compositor::release()
 	p_bg_a_ = p_bg_b_ = p_bg_mode_ = nullptr;
 	p_bg_tex_ = p_bg_tex_enabled_ = p_bg_tex_aspect_ = nullptr;
 	p_bg_keep_aspect_ = nullptr;
+	p_bg_blur_ = nullptr;
 	p_shadow_alpha_ = p_shadow_blur_ = p_shadow_offset_ = nullptr;
 	p_cursor_enabled_ = p_cursor_pos_ = p_cursor_scale_ = nullptr;
 	p_cursor_opacity_ = p_cursor_rotation_ = p_cursor_shadow_ = nullptr;
@@ -296,6 +298,7 @@ void Compositor::render(obs_source_t *filter, const core::Config &cfg, const Fra
 	load_bg_image(active ? bg_path : std::string());
 	const bool bgimg = bg && bg_tex_ != nullptr;
 	set_f(p_bg_tex_enabled_, bgimg ? 1.0f : 0.0f);
+	set_f(p_bg_blur_, static_cast<float>(cfg.bg.image_blur));
 	if (bgimg) {
 		set_f(p_bg_tex_aspect_, bg_aspect_);
 		if (p_bg_tex_)

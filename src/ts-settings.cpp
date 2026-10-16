@@ -19,6 +19,7 @@ void config_defaults(obs_data_t *s)
 	obs_data_set_default_int(s, kBgColorB, static_cast<long long>(def.bg.color_b));
 	obs_data_set_default_string(s, kBgImage, def.bg.image.c_str());
 	obs_data_set_default_string(s, kBgImageFile, def.bg.image_file.c_str());
+	obs_data_set_default_double(s, kBgImageBlur, def.bg.image_blur);
 	obs_data_set_default_double(s, kBgPaddingX, def.bg.padding_x);
 	obs_data_set_default_double(s, kBgPaddingY, def.bg.padding_y);
 	obs_data_set_default_double(s, kBgCornerRadius, def.bg.corner_radius);
@@ -101,6 +102,7 @@ void config_load(obs_data_t *s, Config *c)
 	c->bg.image = bgimg ? bgimg : "";
 	const char *bgfile = obs_data_get_string(s, kBgImageFile);
 	c->bg.image_file = bgfile ? bgfile : "";
+	c->bg.image_blur = obs_data_get_double(s, kBgImageBlur);
 	c->bg.padding_x = obs_data_get_double(s, kBgPaddingX);
 	c->bg.padding_y = obs_data_get_double(s, kBgPaddingY);
 	c->bg.corner_radius = obs_data_get_double(s, kBgCornerRadius);
@@ -171,6 +173,15 @@ void config_load(obs_data_t *s, Config *c)
 	c->highlight.hold_ms = obs_data_get_double(s, kHighlightHoldMs);
 	c->highlight.fade_ms = obs_data_get_double(s, kHighlightFadeMs);
 	c->highlight.color = static_cast<uint32_t>(obs_data_get_int(s, kHighlightColor));
+
+	/*
+	 * Migracao: 0.7/0.3 eram os defaults antigos do cursor (com "deslize").
+	 * Fontes antigas ficariam deslizando; passam a seguir o mouse exatamente.
+	 */
+	if (c->cursor.smooth == 0.7 && c->cursor.sway == 0.3) {
+		c->cursor.smooth = 0.0;
+		c->cursor.sway = 0.0;
+	}
 }
 
 void config_store(obs_data_t *s, const Config &c)
@@ -183,6 +194,7 @@ void config_store(obs_data_t *s, const Config &c)
 	obs_data_set_int(s, kBgColorB, static_cast<long long>(c.bg.color_b));
 	obs_data_set_string(s, kBgImage, c.bg.image.c_str());
 	obs_data_set_string(s, kBgImageFile, c.bg.image_file.c_str());
+	obs_data_set_double(s, kBgImageBlur, c.bg.image_blur);
 	obs_data_set_double(s, kBgPaddingX, c.bg.padding_x);
 	obs_data_set_double(s, kBgPaddingY, c.bg.padding_y);
 	obs_data_set_double(s, kBgCornerRadius, c.bg.corner_radius);

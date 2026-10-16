@@ -22,6 +22,7 @@ TEST(preset_cobre_todas_as_chaves)
             "bg_color_b": 222,
             "bg_image": "wallpapers/ocean.jpg",
             "bg_image_file": "/tmp/minha.jpg",
+            "bg_image_blur": 9,
             "bg_padding_x": 11,
             "bg_padding_y": 12,
             "bg_corner_radius": 12,
@@ -99,6 +100,7 @@ TEST(preset_cobre_todas_as_chaves)
 	CHECK_EQ(c.bg.color_b, 222u);
 	CHECK_EQ(c.bg.image, std::string("wallpapers/ocean.jpg"));
 	CHECK_EQ(c.bg.image_file, std::string("/tmp/minha.jpg"));
+	CHECK_NEAR(c.bg.image_blur, 9.0, 1e-9);
 	CHECK_NEAR(c.bg.padding_x, 11.0, 1e-9);
 	CHECK_NEAR(c.bg.padding_y, 12.0, 1e-9);
 	CHECK_NEAR(c.bg.corner_radius, 12.0, 1e-9);

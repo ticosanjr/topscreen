@@ -48,7 +48,7 @@ integração com o OBS ainda precisam de uma passada em um OBS real.
 ### Testes rápidos
 
 ```bash
-./tests/run.sh     # 66 testes do núcleo, sem libobs/cmake
+./tests/run.sh     # 70 testes do núcleo, sem libobs/cmake
 ```
 
 ---

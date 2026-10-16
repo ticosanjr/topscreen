@@ -53,22 +53,31 @@ if(NOT libobs_FOUND)
         message(STATUS "TopScreen: libobs via pkg-config")
         add_library(OBS::libobs ALIAS PkgConfig::LIBOBS)
     else()
-        # Fallback 2: caminhos manuais (headers + biblioteca)
+        # Fallback 2: auto-deteccao / caminhos manuais
         set(LIBOBS_INCLUDE_DIR "" CACHE PATH "Diretorio dos headers do libobs (contendo obs-module.h)")
         set(LIBOBS_LIBRARY "" CACHE FILEPATH "Caminho da biblioteca do libobs (.so/.dll)")
-        if(LIBOBS_INCLUDE_DIR AND LIBOBS_LIBRARY)
-            message(STATUS "TopScreen: libobs via caminhos manuais")
+
+        find_path(TOPSCREEN_LIBOBS_INCLUDE_DIR obs-module.h
+            HINTS "${LIBOBS_INCLUDE_DIR}"
+            PATHS /usr/include/obs /usr/local/include/obs)
+        find_library(TOPSCREEN_LIBOBS_LIBRARY
+            NAMES obs libobs
+            HINTS "${LIBOBS_LIBRARY}"
+            PATHS /usr/lib/x86_64-linux-gnu /usr/lib /usr/local/lib /lib/x86_64-linux-gnu)
+
+        if(TOPSCREEN_LIBOBS_INCLUDE_DIR AND TOPSCREEN_LIBOBS_LIBRARY)
+            message(STATUS "TopScreen: libobs via auto-deteccao (${TOPSCREEN_LIBOBS_LIBRARY})")
             add_library(OBS::libobs UNKNOWN IMPORTED)
             set_target_properties(OBS::libobs PROPERTIES
-                IMPORTED_LOCATION "${LIBOBS_LIBRARY}"
-                INTERFACE_INCLUDE_DIRECTORIES "${LIBOBS_INCLUDE_DIR}")
+                IMPORTED_LOCATION "${TOPSCREEN_LIBOBS_LIBRARY}"
+                INTERFACE_INCLUDE_DIRECTORIES "${TOPSCREEN_LIBOBS_INCLUDE_DIR}")
         else()
             message(FATAL_ERROR
                 "libobs nao encontrado.\n"
                 "Instale o pacote de desenvolvimento do OBS, ou passe:\n"
-                "  -DLIBOBS_INCLUDE_DIR=/caminho/para/libobs/headers\n"
+                "  -DLIBOBS_INCLUDE_DIR=/caminho/para/headers/do/libobs\n"
                 "  -DLIBOBS_LIBRARY=/caminho/para/libobs.so\n"
-                "Ou aponte -DCMAKE_PREFIX_PATH para uma instalacao do OBS. Ver docs/BUILD.md.")
+                "Ou rode scripts/build-install.sh. Ver docs/BUILD.md.")
         endif()
     endif()
 else()

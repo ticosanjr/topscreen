@@ -1,5 +1,25 @@
 # Build
 
+## Instalação rápida (Linux)
+
+Se você já tem o OBS instalado e quer só compilar/instalar:
+
+```bash
+# sem libobs-dev? instale primeiro:
+sudo apt install libobs-dev          # ou use o PPA do OBS
+
+chmod +x scripts/build-install.sh
+scripts/build-install.sh                 # só compila
+scripts/build-install.sh --system        # instala no OBS do sistema (sudo)
+scripts/build-install.sh --dir <pasta>   # copia para a pasta de plugins do OBS
+```
+
+O script auto-detecta os headers e a biblioteca do libobs.
+
+> **Importante:** o log do OBS vai para o **stderr**. Use `2>&1`:
+> `obs --verbose 2>&1 | grep -i topscreen`, ou veja
+> `~/.config/obs-studio/logs/`.
+
 ## Dependências
 
 - CMake >= 3.20

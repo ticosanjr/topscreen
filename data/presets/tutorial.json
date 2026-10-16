@@ -1,0 +1,19 @@
+{
+    "name": "Tutorial",
+    "description": "Fundo solido, cantos discretos. Base para overlay de teclas.",
+    "settings": {
+        "effects_enabled": true,
+        "bg_enabled": true,
+        "bg_mode": 0,
+        "bg_color_a": 4278190080,
+        "bg_color_b": 4278190080,
+        "bg_padding": 48,
+        "bg_corner_radius": 12,
+        "bg_shadow": true,
+        "bg_shadow_alpha": 0.25,
+        "bg_shadow_blur": 32,
+        "zoom": 1.0,
+        "zoom_focus_x": 0.5,
+        "zoom_focus_y": 0.5
+    }
+}

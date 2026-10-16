@@ -1,0 +1,123 @@
+# Build
+
+## Dependências
+
+- CMake >= 3.20
+- Compilador com C++20 (MSVC 2019+, GCC 11+, Clang 13+)
+- **libobs** (headers/libs) — venha do pacote de desenvolvimento do OBS, do build
+  oficial de desenvolvimento, ou de um build local do OBS.
+- **Qt6 Widgets** e **obs-frontend-api** (opcionais; necessários para o dock)
+- X11 (`libx11-dev`) no Linux para o backend de input X11
+- `libevdev` (opcional, Tier 3 Wayland — F7)
+
+> Este repositório **não** empacota as dependências. O `CMakeLists.txt` procura
+> `libobs` via `find_package(libobs)`; se não achar, cai para `pkg-config libobs`.
+
+---
+
+## Linux
+
+### 1. Obter o libobs
+
+**Opção A — pacotes da distro** (quando existirem headers de plugin):
+
+```bash
+# Debian/Ubuntu (exemplo; nomes variam por versão)
+sudo apt install cmake build-essential qt6-base-dev libx11-dev libobs-dev
+```
+
+**Opção B — build do OBS a partir do fonte** (recomendado para dev de plugin,
+garante headers, `obs-frontend-api` e configs CMake):
+
+```bash
+git clone --recursive https://github.com/obsproject/obs-studio
+cd obs-studio
+cmake --preset ubuntu-x86_64
+cmake --build build_x86_64 -j
+cmake --install build_x86_64 --prefix "$HOME/obs-dev"
+```
+
+Aponte o TopScreen para essa instalação:
+
+```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_PREFIX_PATH="$HOME/obs-dev"
+```
+
+### 2. Compilar
+
+```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build -j
+```
+
+### 3. Instalar / testar
+
+Instalação para o OBS do sistema:
+
+```bash
+sudo cmake --install build
+# lib:  /usr/local/lib/obs-plugins/topscreen.so
+# data: /usr/local/share/obs/obs-plugins/topscreen/
+```
+
+Modo **portable** (sem instalar): coloque ao lado do binário do OBS:
+
+```bash
+cp build/topscreen.so   <obs-portable>/obs-plugins/
+cp -r data/             <obs-portable>/obs-plugins/topscreen/
+```
+
+Rode o OBS com logs e confirme o carregamento:
+
+```bash
+obs --verbose 2>&1 | grep -i topscreen
+```
+
+---
+
+## Windows
+
+1. Instale **Visual Studio 2022** (Desktop C++) e **CMake**.
+2. Obtenha o **libobs + obs-frontend-api** (build de desenvolvimento do OBS ou
+   compile o OBS com `cmake --preset windows-x64`).
+3. Configure apontando para o OBS/Qt:
+
+```powershell
+cmake -S . -B build -G "Visual Studio 17 2022" -A x64 `
+      -DCMAKE_PREFIX_PATH="C:\obs-dev"
+cmake --build build --config Release
+```
+
+4. Copie o resultado para o OBS (portable ou instalado):
+
+```
+build\Release\topscreen.dll   ->  <obs>\obs-plugins\64bit\
+data\                         ->  <obs>\obs-plugins\64bit\topscreen\
+```
+
+---
+
+## Opções de CMake
+
+| Opção | Padrão | Efeito |
+|-------|--------|--------|
+| `ENABLE_QT` | `ON` | Compila o dock Qt |
+| `ENABLE_FRONTEND_API` | `ON` | Usa `obs-frontend-api` (necessário para o dock) |
+| `CMAKE_BUILD_TYPE` | `Release` | Tipo de build em geradores single-config |
+
+Defines automáticos: `TOPSCREEN_VERSION`, `TOPSCREEN_HAVE_QT`,
+`TOPSCREEN_HAVE_FRONTEND`, `TOPSCREEN_HAVE_X11`, `TOPSCREEN_HAVE_EVDEV`.
+
+---
+
+## Troubleshooting
+
+- **`find_package(libobs)` falha**: defina `-DCMAKE_PREFIX_PATH` para a pasta do
+  OBS dev, ou garanta um `libobs.pc` no `PKG_CONFIG_PATH`.
+- **Símbolos indefinidos ao carregar**: normalmente é mismatch de ABI entre o
+  libobs usado no build e o OBS em execução — recompile contra a mesma versão.
+- **Dock não aparece**: verifique se Qt6 e `obs-frontend-api` foram encontrados
+  (o configure imprime `TopScreen: Qt=... frontend=...`).
+- **Input não funciona no Linux**: veja `docs/INPUT-E-PLATAFORMAS.md`
+  (X11 habilitado via `TOPSCREEN_HAVE_X11`; evdev exige permissão).

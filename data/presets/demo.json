@@ -1,0 +1,19 @@
+{
+    "name": "Demo",
+    "description": "Fundo em gradiente, cantos arredondados e sombra suave.",
+    "settings": {
+        "effects_enabled": true,
+        "bg_enabled": true,
+        "bg_mode": 2,
+        "bg_color_a": 4280296494,
+        "bg_color_b": 4282003036,
+        "bg_padding": 64,
+        "bg_corner_radius": 18,
+        "bg_shadow": true,
+        "bg_shadow_alpha": 0.35,
+        "bg_shadow_blur": 48,
+        "zoom": 1.0,
+        "zoom_focus_x": 0.5,
+        "zoom_focus_y": 0.5
+    }
+}

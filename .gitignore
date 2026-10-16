@@ -1,0 +1,36 @@
+# Build
+build/
+build_*/
+_build/
+cmake-build-*/
+dist/
+out/
+
+# Compiled
+*.o
+*.obj
+*.so
+*.dll
+*.dylib
+*.a
+*.lib
+*.exp
+*.pdb
+*.ilk
+
+# Editors / IDEs
+.idea/
+.vs/
+.vscode/*
+!.vscode/extensions.json
+*.user
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Misc
+*.log
+.cache/
+compile_commands.json

@@ -1,0 +1,11 @@
+BasedOnStyle: LLVM
+IndentWidth: 4
+TabWidth: 8
+UseTab: AlignWithSpaces
+ColumnLimit: 100
+PointerAlignment: Left
+AllowShortFunctionsOnASingleLine: Inline
+AlignAfterOpenBracket: Align
+SortIncludes: true
+Cpp11BracedListStyle: true
+NamespaceIndentation: None

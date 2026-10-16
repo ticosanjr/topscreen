@@ -1,0 +1,98 @@
+// TopScreen - efeito principal.
+//
+// Fundo (solido/gradiente), cantos arredondados (SDF com anti-aliasing),
+// padding interno, sombra aproximada e zoom/pan em um unico passe.
+//
+// A sintaxe e compilada pelo OBS para HLSL (D3D11) e GLSL (OpenGL).
+
+uniform float4x4 ViewProj;
+uniform texture2d image;
+
+uniform float2 target_size;   // resolucao de saida (px)
+uniform float  content_pad;   // padding interno (px)
+uniform float  corner_radius; // raio dos cantos (px)
+uniform float  zoom;          // >= 1
+uniform float2 zoom_focus;    // 0..1 (centro do zoom)
+uniform float4 bg_a;
+uniform float4 bg_b;
+uniform float  bg_mode;       // 0 solido, 1 vertical, 2 diagonal
+uniform float  shadow_alpha;
+uniform float  shadow_blur;
+uniform float2 shadow_offset;
+
+sampler_state def_sampler {
+	Filter   = Linear;
+	AddressU = Clamp;
+	AddressV = Clamp;
+};
+
+struct VertInOut {
+	float4 pos : POSITION;
+	float2 uv  : TEXCOORD0;
+};
+
+VertInOut VSDefault(VertInOut vert_in)
+{
+	VertInOut vert_out;
+	vert_out.pos = mul(float4(vert_in.pos.xyz, 1.0), ViewProj);
+	vert_out.uv  = vert_in.uv;
+	return vert_out;
+}
+
+// Distancia assinada a um retangulo arredondado centrado na origem.
+float sd_round_box(float2 p, float2 half_extents, float radius)
+{
+	float2 q = abs(p) - half_extents + radius;
+	return min(max(q.x, q.y), 0.0) + length(max(q, 0.0)) - radius;
+}
+
+float4 PSCompose(VertInOut vert_in) : TARGET
+{
+	float2 px     = vert_in.uv * target_size;
+	float2 center = target_size * 0.5;
+	float2 p      = px - center;
+
+	float2 content_half = center - content_pad;
+	float  radius       = min(corner_radius, min(content_half.x, content_half.y));
+	radius              = max(radius, 0.0);
+
+	// Fundo
+	float4 col = bg_a;
+	if (bg_mode > 0.5 && bg_mode < 1.5) {
+		col = lerp(bg_a, bg_b, saturate(vert_in.uv.y));
+	} else if (bg_mode >= 1.5) {
+		col = lerp(bg_a, bg_b, saturate((vert_in.uv.x + vert_in.uv.y) * 0.5));
+	}
+
+	// Sombra aproximada: retangulo arredondado deslocado, com falloff suave
+	if (shadow_alpha > 0.001) {
+		float2 sp = p - shadow_offset;
+		float  ds = sd_round_box(sp, content_half + shadow_blur, radius + shadow_blur);
+		float  s  = 1.0 - smoothstep(-shadow_blur, shadow_blur, ds);
+		col.rgb   = lerp(col.rgb, float3(0.0, 0.0, 0.0), s * shadow_alpha);
+	}
+
+	// Conteudo: mascara de canto com anti-aliasing
+	float dc   = sd_round_box(p, content_half, radius);
+	float mask = 1.0 - smoothstep(-1.0, 1.0, dc);
+
+	if (mask > 0.0) {
+		float2 pad2 = float2(content_pad, content_pad) * 2.0;
+		float2 content_size = max(target_size - pad2, float2(1.0, 1.0));
+		float2 content_uv   = (px - content_pad) / content_size;
+		float2 uv_screen    = zoom_focus + (content_uv - zoom_focus) / max(zoom, 0.0001);
+		float4 screen       = image.Sample(def_sampler, uv_screen);
+		col                 = lerp(col, screen, mask);
+	}
+
+	return col;
+}
+
+technique Draw
+{
+	pass
+	{
+		vertex_shader = VSDefault(vert_in);
+		pixel_shader  = PSCompose(vert_in);
+	}
+}

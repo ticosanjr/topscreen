@@ -1,0 +1,23 @@
+{
+    "name": "topscreen",
+    "version": "0.1.0",
+    "author": "TopScreen contributors",
+    "website": "https://example.invalid/topscreen",
+    "displayName": "TopScreen",
+    "description": "Efeitos de captura de tela ao vivo para OBS Studio.",
+    "platformConfig": {
+        "macos": {
+            "bundleId": "com.example.topscreen"
+        }
+    },
+    "dependencies": {
+        "obs-studio": {
+            "version": "31.0.0",
+            "repository": "https://github.com/obsproject/obs-studio"
+        },
+        "prebuilt": {
+            "version": "2025-01-01",
+            "repository": "https://github.com/obsproject/obs-deps"
+        }
+    }
+}

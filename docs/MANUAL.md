@@ -84,10 +84,11 @@ Coloca a tela "flutuando" sobre um fundo, com cantos e sombra.
 | **Espaçamento horizontal / vertical (px)** | Margem entre a tela e a borda (X e Y separados) |
 | **Manter a proporção da tela** | Evita esticar a tela: ela é reduzida proporcionalmente (deixe ligado) |
 | **Cantos arredondados (px)** | Raio dos cantos da tela |
-| **Sombra da janela: ligar/desligar** | Liga/desliga a sombra atrás da tela |
-| **Sombra: opacidade** | Quão forte é a sombra (0 = invisível, 1 = forte) |
-| **Sombra: tamanho do desfoque** | Quão suave/grande é a sombra |
-| **Sombra: deslocamento para baixo** | Move a sombra para baixo (efeito de relevo) |
+| **Sombra da janela** (sub-grupo) | |
+| ↳ **Ligar sombra** | Liga/desliga a sombra atrás da tela |
+| ↳ **Intensidade** | Quão forte é a sombra (0 = invisível, 1 = forte) |
+| ↳ **Suavidade / tamanho** | Quão suave e grande é a sombra |
+| ↳ **Distância para baixo** | Move a sombra para baixo (efeito de relevo) |
 
 > O fundo aparece **atrás** da tela. Sem imagem, use o **Estilo** (cor/gradiente).
 

@@ -81,8 +81,9 @@ obs_properties_t *properties_create(void *data)
 	obs_property_list_add_int(mode, obs_module_text("Background.Mode.Diagonal"),
 				  static_cast<int>(BgMode::Diagonal));
 
+	/* Lista NAO-editavel: mostra o rotulo, salva o caminho. */
 	obs_property_t *wp = obs_properties_add_list(bg, kBgImage, obs_module_text("Background.Image"),
-						     OBS_COMBO_TYPE_EDITABLE, OBS_COMBO_FORMAT_STRING);
+						     OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
 	obs_property_list_add_string(wp, obs_module_text("Background.Image.None"), "");
 	for (const auto &entry : kWallpapers)
 		obs_property_list_add_string(wp, entry[0], entry[1]);
@@ -97,13 +98,14 @@ obs_properties_t *properties_create(void *data)
 	obs_properties_add_bool(bg, kBgKeepAspect, obs_module_text("Background.KeepAspect"));
 	obs_properties_add_float_slider(bg, kBgCornerRadius, obs_module_text("Background.CornerRadius"), 0.0, 200.0,
 					1.0);
-	obs_properties_add_bool(bg, kBgShadow, obs_module_text("Background.Shadow"));
-	obs_properties_add_float_slider(bg, kBgShadowAlpha, obs_module_text("Background.ShadowAlpha"), 0.0, 1.0,
-					0.01);
-	obs_properties_add_float_slider(bg, kBgShadowBlur, obs_module_text("Background.ShadowBlur"), 0.0, 200.0,
-					1.0);
-	obs_properties_add_float_slider(bg, kBgShadowOffset, obs_module_text("Background.ShadowOffset"), -100.0,
-					100.0, 1.0);
+
+	/* Sombra da janela (sub-grupo com nomes claros) */
+	obs_properties_t *sh = obs_properties_create();
+	obs_properties_add_bool(sh, kBgShadow, obs_module_text("Shadow.Enabled"));
+	obs_properties_add_float_slider(sh, kBgShadowAlpha, obs_module_text("Shadow.Opacity"), 0.0, 1.0, 0.01);
+	obs_properties_add_float_slider(sh, kBgShadowBlur, obs_module_text("Shadow.Blur"), 0.0, 200.0, 1.0);
+	obs_properties_add_float_slider(sh, kBgShadowOffset, obs_module_text("Shadow.Offset"), -100.0, 100.0, 1.0);
+	obs_properties_add_group(bg, "grp_shadow", obs_module_text("Group.Shadow"), OBS_GROUP_NORMAL, sh);
 	obs_properties_add_group(props, "grp_bg", obs_module_text("Group.Background"), OBS_GROUP_NORMAL, bg);
 
 	/* ---------------- Cursor ---------------- */

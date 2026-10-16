@@ -213,14 +213,9 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 	float  radius       = min(corner_radius, min(content_half.x, content_half.y));
 	radius              = max(radius, 0.0);
 
-	// Fundo
+	// Fundo: imagem (se houver) tem prioridade sobre cor/gradiente
 	float4 col = bg_a;
-	if (bg_mode > 0.5 && bg_mode < 1.5) {
-		col = lerp(bg_a, bg_b, saturate(vert_in.uv.y));
-	} else if (bg_mode >= 1.5 && bg_mode < 2.5) {
-		col = lerp(bg_a, bg_b, saturate((vert_in.uv.x + vert_in.uv.y) * 0.5));
-	} else if (bg_mode >= 2.5 && bg_tex_enabled > 0.5) {
-		// Imagem de fundo (ajuste "cover", sem distorcao)
+	if (bg_tex_enabled > 0.5) {
 		float at = target_size.x / max(target_size.y, 1.0);
 		float ai = max(bg_tex_aspect, 0.0001);
 		float2 sc = float2(1.0, 1.0);
@@ -230,6 +225,10 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 			sc.x = at / ai;
 		float2 buv = (vert_in.uv - 0.5) * sc + 0.5;
 		col = bg_tex.Sample(def_sampler, buv);
+	} else if (bg_mode > 0.5 && bg_mode < 1.5) {
+		col = lerp(bg_a, bg_b, saturate(vert_in.uv.y));
+	} else if (bg_mode >= 1.5) {
+		col = lerp(bg_a, bg_b, saturate((vert_in.uv.x + vert_in.uv.y) * 0.5));
 	}
 
 	// Sombra aproximada
@@ -305,7 +304,8 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 			float  icon  = max(target_size.y * 0.030 * cursor_scale, 8.0);
 
 			if (cursor_tex_enabled > 0.5) {
-				float2 anchor = (cursor_hotspot - 0.5) * icon;
+				// ancora = centro do icone para o hotspot cair no ponteiro
+				float2 anchor = (float2(0.5, 0.5) - cursor_hotspot) * icon;
 				float2 cuv    = (local - anchor) / icon + 0.5;
 
 				if (cursor_shadow > 0.5) {

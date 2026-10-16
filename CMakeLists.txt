@@ -32,6 +32,8 @@ set(TOPSCREEN_CORE_SOURCES
     src/core/preset.cpp
     src/core/key_overlay.cpp
     src/core/wav.cpp
+    src/core/font_atlas.cpp
+    src/core/stb_truetype_impl.cpp
 )
 
 # ---------------------------------------------------------------------------
@@ -108,6 +110,7 @@ set(TOPSCREEN_SOURCES
     src/ts-presets.cpp
     src/ts-registry.cpp
     src/render/ts-compositor.cpp
+    src/render/ts-text.cpp
     src/input/ts-input.cpp
     src/input/ts-input-platform.cpp
     src/hotkeys/ts-hotkeys.cpp
@@ -122,7 +125,7 @@ endif()
 
 add_library(topscreen MODULE ${TOPSCREEN_SOURCES})
 
-target_include_directories(topscreen PRIVATE src)
+target_include_directories(topscreen PRIVATE src third_party)
 target_link_libraries(topscreen PRIVATE OBS::libobs)
 
 target_compile_definitions(topscreen PRIVATE
@@ -176,7 +179,7 @@ if(TOPSCREEN_BUILD_TESTS)
     enable_testing()
     file(GLOB TOPSCREEN_TEST_SOURCES CONFIGURE_DEPENDS tests/*.cpp)
     add_executable(topscreen_tests ${TOPSCREEN_TEST_SOURCES} ${TOPSCREEN_CORE_SOURCES})
-    target_include_directories(topscreen_tests PRIVATE src)
+    target_include_directories(topscreen_tests PRIVATE src third_party)
     target_compile_definitions(topscreen_tests PRIVATE
         TOPSCREEN_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data"
         TOPSCREEN_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")

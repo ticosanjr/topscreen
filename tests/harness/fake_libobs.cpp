@@ -24,6 +24,8 @@ std::vector<RegisteredHotkey> g_hotkeys;
 
 char g_effect_dummy = 0;
 char g_param_dummy = 0;
+char g_technique_dummy = 0;
+char g_texture_dummy = 0;
 
 obs_property_t *add_prop(obs_properties_t *props, const char *name)
 {
@@ -384,5 +386,43 @@ void gs_effect_set_float(gs_eparam_t *, float) {}
 void gs_effect_set_color(gs_eparam_t *, uint32_t) {}
 void gs_effect_set_vec2(gs_eparam_t *, const struct vec2 *) {}
 void gs_effect_set_val(gs_eparam_t *, const void *, size_t) {}
+void gs_effect_set_texture(gs_eparam_t *, gs_texture_t *) {}
+void gs_effect_set_vec4(gs_eparam_t *, const struct vec4 *) {}
+
+gs_technique_t *gs_effect_get_technique(const gs_effect_t *, const char *)
+{
+	return reinterpret_cast<gs_technique_t *>(&g_technique_dummy);
+}
+
+size_t gs_technique_begin(gs_technique_t *)
+{
+	return 1;
+}
+
+bool gs_technique_begin_pass(gs_technique_t *, size_t)
+{
+	return true;
+}
+
+void gs_technique_end_pass(gs_technique_t *) {}
+void gs_technique_end(gs_technique_t *) {}
+
+void gs_matrix_push(void) {}
+void gs_matrix_pop(void) {}
+void gs_matrix_translate3f(float, float, float) {}
+void gs_matrix_scale3f(float, float, float) {}
+
+void gs_draw_sprite_subregion(gs_texture_t *, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t) {}
+
+void gs_blend_state_push(void) {}
+void gs_blend_state_pop(void) {}
+void gs_blend_function(enum gs_blend_type, enum gs_blend_type) {}
+
+gs_texture_t *gs_texture_create(uint32_t, uint32_t, enum gs_color_format, uint32_t, const uint8_t **, uint32_t)
+{
+	return reinterpret_cast<gs_texture_t *>(&g_texture_dummy);
+}
+
+void gs_texture_destroy(gs_texture_t *) {}
 
 } // extern "C"

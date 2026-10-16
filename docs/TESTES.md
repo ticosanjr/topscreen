@@ -59,11 +59,13 @@ vive toda a matemática e a lógica de estado — o que de fato precisa estar ce
 | `test_key_overlay.cpp` | `core/key_overlay.*` | fila de teclas, TTL, repetição, filtro de modificadores, limite, formatação de combos |
 | `test_wav.cpp` | `core/wav.*` | PCM 8/16/24/32 e float, estéreo, erros, e **arquivos reais** `data/sounds/*.wav` |
 
+| `test_font_atlas.cpp` | `core/font_atlas.*` | atlas gerado do **TTF real**, métricas por glifo, alpha, casos inválidos |
+
 ## Números atuais
 
 ```
-66 testes | 981 verificações | 0 falhas   (núcleo)
-3 testes  | 23 verificações  | 0 falhas   (integração com libobs fake)
+70 testes | 1470 verificações | 0 falhas   (núcleo)
+4 testes  | 25 verificações   | 0 falhas   (integração com libobs fake)
 ```
 
 ## O que NÃO é coberto (e por quê)

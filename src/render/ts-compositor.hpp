@@ -5,6 +5,7 @@
 
 #include "core/config.hpp"
 #include "render/ts-frame.hpp"
+#include "render/ts-text.hpp"
 
 namespace topscreen {
 
@@ -71,6 +72,8 @@ private:
 
 	gs_eparam_t *p_click_count_ = nullptr;
 	ClickParams click_[4];
+
+	TextRenderer text_;
 };
 
 } // namespace topscreen

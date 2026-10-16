@@ -12,6 +12,7 @@ mkdir -p "$OUT_DIR"
 echo "Compilando testes com ${CXX} ..."
 "${CXX}" -std=c++20 -O1 -g -Wall -Wextra \
     -I "${ROOT}/src" \
+    -I "${ROOT}/third_party" \
     -DTOPSCREEN_TEST_DATA_DIR="\"${ROOT}/data\"" \
     -DTOPSCREEN_SOURCE_DIR="\"${ROOT}\"" \
     "${ROOT}"/tests/*.cpp \

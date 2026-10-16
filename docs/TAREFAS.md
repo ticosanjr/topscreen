@@ -68,18 +68,18 @@ Status: ✅ feito · 🟡 parcial · ⬜ pendente.
 | T4.4 | Zoom manual in/out/reset por atalho | ✅ |
 | T4.5 | Pan leve seguindo o mouse | ✅ |
 | T4.6 | Parâmetros de zoom na UI | ✅ |
-| T4.7 | Motion blur (cursor e zoom) | ⬜ |
+| T4.7 | Motion blur (cursor e zoom) | ✅ (blur radial do zoom) |
 
 ## F5 — Texto, spotlight, webcam
 
 | ID | Tarefa | Status |
 |----|--------|--------|
 | T5.0 | Modelo do overlay de teclas (fila/TTL/combos) | ✅ |
-| T5.1 | Carregador de fonte SDF + atlas | 🟡 (stub) |
-| T5.2 | Render de texto SDF | ⬜ |
-| T5.3 | Captura de teclas (Win hook / X11 XRecord) | ⬜ |
-| T5.4 | Overlay de teclas "pill" | ⬜ |
-| T5.5 | Spotlight/dim seguindo o cursor | ⬜ |
+| T5.1 | Atlas de fonte (TTF + stb_truetype) | ✅ |
+| T5.2 | Render de texto (sprites de glifos, contorno) | ✅ |
+| T5.3 | Captura de teclas (Windows / X11; evdev em F7) | ✅ |
+| T5.4 | Overlay de teclas | ✅ |
+| T5.5 | Spotlight/dim seguindo o cursor | ✅ |
 | T5.6 | Webcam bubble | ⬜ |
 | T5.7 | Marca-texto de arrasto | ⬜ |
 

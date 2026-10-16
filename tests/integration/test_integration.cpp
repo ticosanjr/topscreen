@@ -3,6 +3,7 @@
 
 #include <obs-module.h>
 
+#include <cstdlib>
 #include <string>
 
 #include "core/keys.hpp"
@@ -126,6 +127,33 @@ TEST(integration_todos_os_presets_e_toggle_background)
 	CHECK(!obs_data_get_bool(filter->settings, core::keys::kBgEnabled) != !before);
 
 	ts_filter_source_info.destroy(ctx);
+}
+
+TEST(integration_overlay_de_teclas)
+{
+	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
+
+	/* Injeta teclas pelo gancho de depuracao (sem back-end de input). */
+	::setenv("TOPSCREEN_DEBUG_KEY", "Ctrl", 1);
+
+	obs_source_t *parent = make_parent(1920, 1080);
+	obs_source_t *filter = fakeobs::make_source(&ts_filter_source_info, parent, 0, 0);
+
+	void *ctx = create_filter(filter);
+	REQUIRE(ctx != nullptr);
+
+	ts_filter_source_info.video_render(ctx, nullptr);
+
+	/* Roda frames suficientes para o gancho disparar e o overlay ser desenhado. */
+	for (int i = 0; i < 130; ++i) {
+		ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+		ts_filter_source_info.video_render(ctx, nullptr);
+	}
+
+	::unsetenv("TOPSCREEN_DEBUG_KEY");
+
+	ts_filter_source_info.destroy(ctx);
+	CHECK(registry_first() == nullptr);
 }
 
 TEST(integration_render_nao_crasha_sem_efeito)

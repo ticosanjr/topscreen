@@ -89,6 +89,7 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 	core::CursorModel cursor;
 	core::ZoomModel zoom;
 	core::ClickFxModel clicks;
+	core::KeyOverlayModel keys;
 	FrameState frame;
 
 	uint32_t target_w = 0;
@@ -152,6 +153,7 @@ void ts_filter_ctx::reconfigure_models()
 	zoom.configure(cfg.zoom);
 	clicks.set_left(cfg.click_left);
 	clicks.set_right(cfg.click_right);
+	keys.configure(cfg.keys);
 }
 
 void ts_filter_ctx::request_preset(int index)
@@ -287,6 +289,11 @@ void ts_filter_tick(void *data, float seconds)
 
 	ctx->input.poll();
 
+	/* Teclas alimentam o overlay mesmo sem cursor disponivel. */
+	for (int i = 0; i < ctx->input.state().key_count; ++i)
+		ctx->keys.press(ctx->input.state().key_labels[i], ctx->input.state().key_modifier[i],
+				ctx->time_ms);
+
 	if (ctx->input.available() && ctx->target_w > 0 && ctx->target_h > 0) {
 		const InputState &st = ctx->input.state();
 		const core::Monitor mon{0.0, 0.0, static_cast<double>(ctx->target_w),
@@ -314,10 +321,13 @@ void ts_filter_tick(void *data, float seconds)
 	ctx->clicks.tick(ctx->time_ms);
 	ctx->cursor.update(ctx->time_ms);
 	ctx->zoom.update(ctx->time_ms);
+	ctx->keys.tick(ctx->time_ms);
 
 	ctx->frame.cursor = ctx->cursor.render();
 	ctx->frame.zoom = ctx->zoom.render();
 	ctx->frame.click_count = ctx->clicks.collect(ctx->time_ms, ctx->frame.clicks, kShaderClickSlots);
+	ctx->frame.key_count =
+		ctx->keys.collect(ctx->time_ms, ctx->frame.keys, FrameState::kMaxKeys);
 	ctx->frame.zoom_blur = ctx->cfg.motion_blur.enabled
 				       ? clamp01(std::fabs(ctx->zoom.zoom_velocity()) * ctx->cfg.motion_blur.amount * 0.5)
 				       : 0.0;

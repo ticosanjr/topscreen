@@ -57,7 +57,7 @@ cat > "$STUB/obsconfig.h" <<'EOF'
 #define OBS_BETA 0
 EOF
 
-BASE_INC=(-I"$ROOT/src" -I"$STUB" -I"$OBS/libobs" -I"$SIMDE" -I"$OBS/frontend/api")
+BASE_INC=(-I"$ROOT/src" -I"$ROOT/third_party" -I"$STUB" -I"$OBS/libobs" -I"$SIMDE" -I"$OBS/frontend/api")
 DEF=(-DTOPSCREEN_VERSION='"0.0.0-check"')
 
 if [ -f /usr/include/X11/Xlib.h ]; then

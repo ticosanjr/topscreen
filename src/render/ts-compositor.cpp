@@ -61,6 +61,9 @@ bool Compositor::load()
 
 	cache_params();
 	validate_params();
+
+	/* Overlay de teclas (melhor esforco: se faltar fonte/efeito, segue sem). */
+	text_.load("fonts/DejaVuSans-Bold.ttf", "effects/text.effect");
 	return true;
 }
 
@@ -138,6 +141,8 @@ void Compositor::validate_params() const
 
 void Compositor::release()
 {
+	text_.release();
+
 	if (!effect_)
 		return;
 
@@ -236,6 +241,10 @@ void Compositor::render(obs_source_t *filter, const core::Config &cfg, const Fra
 	}
 
 	obs_source_process_filter_end(filter, effect_, w, h);
+
+	/* Overlay de teclas por cima do resultado. */
+	if (active && cfg.keys.enabled && st.key_count > 0)
+		text_.draw(st.keys, st.key_count, w, h);
 }
 
 } // namespace topscreen

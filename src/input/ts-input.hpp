@@ -2,10 +2,14 @@
 
 #include <obs-module.h>
 
+#include <string>
+
 namespace topscreen {
 
-/** Estado de input (cursor + botoes) capturado por tick. */
+/** Estado de input (cursor + botoes + teclas) capturado por tick. */
 struct InputState {
+	static constexpr int kMaxKeyEvents = 8;
+
 	double x = 0.0;
 	double y = 0.0;
 	bool left = false;
@@ -13,6 +17,11 @@ struct InputState {
 	bool left_pressed = false;  /* borda de subida neste tick */
 	bool right_pressed = false; /* borda de subida neste tick */
 	bool available = false;
+
+	/* Teclas com borda de subida neste tick (para o overlay). */
+	std::string key_labels[kMaxKeyEvents];
+	bool key_modifier[kMaxKeyEvents] = {};
+	int key_count = 0;
 
 	/* Tier de capacidade: 0 = indisponivel, 1 = nativo, 2 = portal, 3 = evdev. */
 	int tier = 0;

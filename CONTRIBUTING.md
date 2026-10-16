@@ -23,9 +23,11 @@ Obrigado pelo interesse! Este projeto é um plugin de efeitos ao vivo para OBS.
 1. Crie um branch.
 2. Implemente a mudança.
 3. **Rode os testes:** `./tests/run.sh` (precisa passar).
-4. Se mexeu na lógica, adicione/atualize testes em `tests/`.
-5. Se mexeu em efeito/escopo, atualize `docs/EFEITOS.md`, `docs/TAREFAS.md`.
-6. Abra o PR descrevendo o que mudou e como verificar.
+4. **Rode a checagem de headers:** `./tools/check-obs-headers.sh` (compila o
+   plugin contra os headers reais do OBS, sem precisar instalá-lo).
+5. Se mexeu na lógica, adicione/atualize testes em `tests/`.
+6. Se mexeu em efeito/escopo, atualize `docs/EFEITOS.md`, `docs/TAREFAS.md`.
+7. Abra o PR descrevendo o que mudou e como verificar.
 
 ## Estilo de código
 

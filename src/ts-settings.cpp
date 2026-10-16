@@ -59,7 +59,7 @@ void config_defaults(obs_data_t *s)
 	obs_data_set_default_bool(s, kClickSoundRight, def.click_sound.right);
 }
 
-void config_load(const obs_data_t *s, Config *c)
+void config_load(obs_data_t *s, Config *c)
 {
 	c->effects_enabled = obs_data_get_bool(s, kEffectsEnabled);
 

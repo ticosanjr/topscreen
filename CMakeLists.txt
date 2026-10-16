@@ -151,7 +151,8 @@ if(TOPSCREEN_BUILD_TESTS)
     add_executable(topscreen_tests ${TOPSCREEN_TEST_SOURCES} ${TOPSCREEN_CORE_SOURCES})
     target_include_directories(topscreen_tests PRIVATE src)
     target_compile_definitions(topscreen_tests PRIVATE
-        TOPSCREEN_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data")
+        TOPSCREEN_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data"
+        TOPSCREEN_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
     add_test(NAME topscreen_tests COMMAND topscreen_tests)
 endif()
 

@@ -100,7 +100,7 @@ Status: ✅ feito · 🟡 parcial · ⬜ pendente.
 | T7.2 | Backend evdev (libevdev) | ⬜ |
 | T7.3 | Regra udev `uaccess` + detecção no dock | 🟡 (arquivo udev pronto) |
 | T7.4 | Degradação graciosa + relatório de tiers | 🟡 (tier no log/campo) |
-| T7.5 | CI: build Win + Linux contra OBS | 🟡 (CI de testes ✅, build best-effort) |
+| T7.5 | CI: build Win + Linux contra OBS | 🟡 (CI de testes + checagem de headers ✅; build do plugin best-effort) |
 | T7.6 | Empacotamento portable + release | ⬜ |
 | T7.7 | i18n final + ícone + screenshots | ⬜ |
 
@@ -111,7 +111,7 @@ Status: ✅ feito · 🟡 parcial · ⬜ pendente.
 | TD.1 | Texto completo da licença GPL-2.0 (`COPYING`) | ✅ |
 | TD.2 | `CONTRIBUTING.md` e template de PR | ✅ |
 | TD.3 | Ajustar `buildspec.json`/presets para CI oficial | ⬜ |
-| TD.4 | Testes de sanidade do núcleo | ✅ (47 testes) |
+| TD.4 | Testes de sanidade do núcleo | ✅ (50 testes + checagem de headers do OBS) |
 
 ---
 

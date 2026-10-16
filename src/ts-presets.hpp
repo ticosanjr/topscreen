@@ -9,7 +9,7 @@
 namespace topscreen {
 
 /**
- * Carrega e aplica presets embutidos (data/presets/*.json).
+ * Carrega e aplica presets embutidos (arquivos .json em data/presets).
  *
  * Os arquivos sao resolvidos via obs_module_file(), portanto funcionam tanto
  * instalados quanto em modo portable.

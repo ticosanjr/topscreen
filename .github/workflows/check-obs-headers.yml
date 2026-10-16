@@ -1,0 +1,24 @@
+name: Check OBS headers
+
+# Compila o plugin contra os headers REAIS do OBS (sem libobs instalado),
+# pegando erros de API que os testes do nucleo nao pegam.
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install X11 headers
+        run: sudo apt-get update && sudo apt-get install -y libx11-dev
+
+      - name: Compile against OBS headers
+        run: |
+          chmod +x tools/check-obs-headers.sh
+          TOPSCREEN_CHECK_DIR="$RUNNER_TEMP/obscheck" ./tools/check-obs-headers.sh

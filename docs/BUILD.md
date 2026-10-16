@@ -130,6 +130,12 @@ ctest --test-dir build --output-on-failure
 
 Veja [`TESTES.md`](TESTES.md) para a cobertura e o que ainda precisa de um OBS real.
 
+Para checar que o plugin **compila** contra os headers do OBS sem tê-lo instalado:
+
+```bash
+./tools/check-obs-headers.sh
+```
+
 ---
 
 ## Troubleshooting

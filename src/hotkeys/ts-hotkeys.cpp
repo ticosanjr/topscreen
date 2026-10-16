@@ -10,11 +10,28 @@ const char *const kHotkeyNames[HK_Count] = {
 	"TopScreen.PrevPreset",
 };
 
-const char *const kHotkeyDescriptions[HK_Count] = {
-	"Hotkey.ToggleEffects", "Hotkey.ToggleBackground", "Hotkey.ZoomIn",
-	"Hotkey.ZoomOut",       "Hotkey.ResetZoom",        "Hotkey.NextPreset",
-	"Hotkey.PrevPreset",
-};
+/* Descricao localizada de cada atalho (literais para o teste de traducao). */
+const char *hotkey_description(int action)
+{
+	switch (action) {
+	case HK_ToggleEffects:
+		return obs_module_text("Hotkey.ToggleEffects");
+	case HK_ToggleBackground:
+		return obs_module_text("Hotkey.ToggleBackground");
+	case HK_ZoomIn:
+		return obs_module_text("Hotkey.ZoomIn");
+	case HK_ZoomOut:
+		return obs_module_text("Hotkey.ZoomOut");
+	case HK_ResetZoom:
+		return obs_module_text("Hotkey.ResetZoom");
+	case HK_NextPreset:
+		return obs_module_text("Hotkey.NextPreset");
+	case HK_PrevPreset:
+		return obs_module_text("Hotkey.PrevPreset");
+	default:
+		return "";
+	}
+}
 
 } // namespace
 
@@ -23,8 +40,7 @@ void Hotkeys::register_all(obs_source_t *source, HotkeyContext *ctx)
 	for (int i = 0; i < HK_Count; ++i) {
 		bindings_[i].ctx = ctx;
 		bindings_[i].action = i;
-		ids_[i] = obs_hotkey_register_source(source, kHotkeyNames[i],
-						     obs_module_text(kHotkeyDescriptions[i]),
+		ids_[i] = obs_hotkey_register_source(source, kHotkeyNames[i], hotkey_description(i),
 						     ts_hotkey_callback, &bindings_[i]);
 	}
 }

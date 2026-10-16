@@ -11,7 +11,7 @@ namespace topscreen {
 
 namespace {
 
-void add_click_group(obs_properties_t *props, const char *group_key, const char *title_key,
+void add_click_group(obs_properties_t *props, const char *group_key, const char *title,
 		     const char *effect_key, const char *size_key, const char *color_key,
 		     const char *duration_key, const char *easing_key)
 {
@@ -39,7 +39,7 @@ void add_click_group(obs_properties_t *props, const char *group_key, const char 
 	obs_property_list_add_int(easing, obs_module_text("Easing.OutCubic"), EASE_OUT_CUBIC);
 	obs_property_list_add_int(easing, obs_module_text("Easing.InOutCubic"), EASE_IN_OUT_CUBIC);
 
-	obs_properties_add_group(props, group_key, obs_module_text(title_key), OBS_GROUP_NORMAL, g);
+	obs_properties_add_group(props, group_key, title, OBS_GROUP_NORMAL, g);
 }
 
 } // namespace
@@ -100,10 +100,10 @@ obs_properties_t *properties_create(void *data)
 	obs_properties_add_group(props, "grp_cursor", obs_module_text("Group.Cursor"), OBS_GROUP_NORMAL, cur);
 
 	/* ---------------- Cliques ---------------- */
-	add_click_group(props, "grp_click_left", "Group.ClickLeft", kClickLeftEffect, kClickLeftSize,
-			kClickLeftColor, kClickLeftDurationMs, kClickLeftEasing);
-	add_click_group(props, "grp_click_right", "Group.ClickRight", kClickRightEffect, kClickRightSize,
-			kClickRightColor, kClickRightDurationMs, kClickRightEasing);
+	add_click_group(props, "grp_click_left", obs_module_text("Group.ClickLeft"), kClickLeftEffect,
+			kClickLeftSize, kClickLeftColor, kClickLeftDurationMs, kClickLeftEasing);
+	add_click_group(props, "grp_click_right", obs_module_text("Group.ClickRight"), kClickRightEffect,
+			kClickRightSize, kClickRightColor, kClickRightDurationMs, kClickRightEasing);
 
 	/* ---------------- Som de clique ---------------- */
 	obs_properties_t *snd = obs_properties_create();

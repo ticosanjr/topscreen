@@ -1,14 +1,28 @@
 # Testes
 
+## Duas camadas de verificação
+
+1. **Testes do núcleo** (`./tests/run.sh`) — lógica pura, roda em qualquer lugar.
+2. **Checagem contra os headers do OBS** (`./tools/check-obs-headers.sh`) —
+   compila cada fonte do plugin contra os headers **reais** do OBS (via
+   `-fsyntax-only`, sem libobs instalado). Pega erro de API/assinatura/tipo que
+   os testes de núcleo não pegam. Roda no CI
+   (`.github/workflows/check-obs-headers.yml`).
+
 ## Como rodar
 
-**Local (sem cmake/libobs):**
+**Camada 1 — núcleo (sem cmake/libobs):**
 
 ```bash
 ./tests/run.sh
 ```
 
-Compila o núcleo + os testes com `g++` e executa.
+**Camada 2 — headers do OBS (baixa os headers automaticamente):**
+
+```bash
+./tools/check-obs-headers.sh
+# X11 presente? o backend X11 também é checado; senão, é ignorado.
+```
 
 **Via CMake/CTest:**
 
@@ -18,7 +32,8 @@ cmake --build build -j
 ctest --test-dir build --output-on-failure
 ```
 
-**CI:** `.github/workflows/tests.yml` roda em Linux e Windows a cada push/PR.
+**CI:** `.github/workflows/tests.yml` (núcleo, Linux+Windows) e
+`check-obs-headers.yml` (Linux, com X11) a cada push/PR.
 
 ## O que é testado
 
@@ -38,16 +53,18 @@ vive toda a matemática e a lógica de estado — o que de fato precisa estar ce
 | `test_json.cpp` | `core/json.*` | objeto/array/aninhado, números, escapes (`\uXXXX`), erros |
 | `test_preset.cpp` | `core/preset.*` | parse + apply, campos ausentes mantidos, erros, **arquivos reais** `data/presets/*.json` |
 | `test_shader_params.cpp` | `data/effects/topscreen.effect` | presença dos uniforms que o compositor busca por nome + técnica `Draw` (pega divergência silenciosa) |
+| `test_preset_all_keys.cpp` | `core/preset.*` | todas as chaves de config são mapeadas (garante preset completo) |
+| `test_locale_keys.cpp` | `data/locale/*.ini` | toda chave usada em `obs_module_text()` existe no `en-US.ini` + paridade pt/en |
 
 ## Números atuais
 
 ```
-47 testes | 595 verificações | 0 falhas
+50 testes | 848 verificações | 0 falhas
 ```
 
 ## O que NÃO é coberto (e por quê)
 
-Estes itens dependem de `libobs`/GPU/OS e não rodam neste ambiente:
+Estes itens dependem de `libobs`/GPU/OS em execução e não rodam aqui:
 
 | Item | Por que não testado aqui | Como verificar |
 |------|--------------------------|----------------|
@@ -57,9 +74,11 @@ Estes itens dependem de `libobs`/GPU/OS e não rodam neste ambiente:
 | Dock Qt | precisa de Qt6 + frontend | abrir o dock no OBS |
 | Som de clique | ainda é stub (T3.6) | — |
 
+> A **compilação** do plugin contra os headers do OBS é checada (camada 2);
+> o que falta é a **execução** dentro do OBS.
+
 A estratégia é: **empurrar a complexidade para o núcleo testável** e manter a
-camada de OBS fina. Ainda assim, o shader e a integração precisam de uma
-passada em um OBS real (é o próximo marco de verificação).
+camada de OBS fina.
 
 ## Adicionando testes
 

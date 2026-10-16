@@ -105,8 +105,16 @@ private:
 		syncing_ = false;
 
 		if (has) {
-			status_->setText(QString(obs_module_text("Dock.Input")) + ": " +
-					 QString::number(c->input_tier()));
+			const int tier = c->input_tier();
+			const char *tier_text = obs_module_text("Tier.None");
+			if (tier == 1)
+				tier_text = obs_module_text("Tier.Native");
+			else if (tier == 2)
+				tier_text = obs_module_text("Tier.Portal");
+			else if (tier == 3)
+				tier_text = obs_module_text("Tier.Evdev");
+
+			status_->setText(QString(obs_module_text("Dock.Input")) + ": " + QString(tier_text));
 		} else {
 			status_->setText(QString(obs_module_text("Dock.NoFilter")));
 		}

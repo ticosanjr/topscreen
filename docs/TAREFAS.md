@@ -100,7 +100,7 @@ Status: ✅ feito · 🟡 parcial · ⬜ pendente.
 | T7.1 | Portal `GlobalShortcuts` | ⬜ |
 | T7.2 | Backend evdev (libevdev) | ✅ (leitura direta de /dev/input + decoder testado) |
 | T7.3 | Regra udev `uaccess` + detecção no dock | ✅ (regra pronta + aviso no log) |
-| T7.4 | Degradação graciosa + relatório de tiers | 🟡 (tier no log/campo) |
+| T7.4 | Degradação graciosa + relatório de tiers | ✅ (tier legível no dock + avisos no log) |
 | T7.5 | CI: build Win + Linux contra OBS | 🟡 (CI de testes + checagem de headers ✅; build do plugin best-effort) |
 | T7.6 | Empacotamento portable + release | ⬜ |
 | T7.7 | i18n final + ícone + screenshots | ⬜ |

@@ -65,6 +65,7 @@ integração com o OBS ainda precisam de uma passada em um OBS real.
 | [`docs/ROADMAP.md`](docs/ROADMAP.md) | Fases e critérios de aceite |
 | [`docs/TAREFAS.md`](docs/TAREFAS.md) | Quebra de tarefas executável |
 | [`docs/TESTES.md`](docs/TESTES.md) | Testes do núcleo: como rodar e o que cobrem |
+| [`docs/VERIFICACAO.md`](docs/VERIFICACAO.md) | Roteiro de verificação manual em um OBS real |
 | [`docs/BUILD.md`](docs/BUILD.md) | Como compilar (Windows/Linux) |
 
 ---

@@ -113,6 +113,62 @@ TEST(shader_tem_tecnica_draw)
 	CHECK(has_draw);
 }
 
+namespace {
+
+std::string read_text_file(const std::string &path)
+{
+	std::ifstream in(path);
+	std::ostringstream out;
+	out << in.rdbuf();
+	return out.str();
+}
+
+/* Checagens estruturais basicas de um .effect. */
+void check_effect_structure(const std::string &name)
+{
+	const std::string text = read_text_file(std::string(TOPSCREEN_TEST_DATA_DIR) + "/effects/" + name);
+	++tst::checks();
+	if (text.empty()) {
+		tst::fail(__FILE__, __LINE__, "effect vazio ou ausente: " + name);
+		return;
+	}
+
+	int balance = 0;
+	for (char c : text) {
+		if (c == '{')
+			++balance;
+		else if (c == '}')
+			--balance;
+	}
+	++tst::checks();
+	if (balance != 0)
+		tst::fail(__FILE__, __LINE__, "chaves desbalanceadas em " + name);
+
+	++tst::checks();
+	if (text.find("technique ") == std::string::npos)
+		tst::fail(__FILE__, __LINE__, "sem tecnica em " + name);
+	++tst::checks();
+	if (text.find("pass") == std::string::npos)
+		tst::fail(__FILE__, __LINE__, "sem pass em " + name);
+	++tst::checks();
+	if (text.find("vertex_shader") == std::string::npos)
+		tst::fail(__FILE__, __LINE__, "sem vertex_shader em " + name);
+	++tst::checks();
+	if (text.find("pixel_shader") == std::string::npos)
+		tst::fail(__FILE__, __LINE__, "sem pixel_shader em " + name);
+	++tst::checks();
+	if (text.find("uniform float4x4 ViewProj") == std::string::npos)
+		tst::fail(__FILE__, __LINE__, "sem ViewProj em " + name);
+}
+
+} // namespace
+
+TEST(shader_estrutura_dos_efeitos)
+{
+	check_effect_structure("topscreen.effect");
+	check_effect_structure("text.effect");
+}
+
 /*
  * Invariantes de compatibilidade: os shaders do OBS nao usam arrays de uniform
  * nem loops, e o translator pode nao cobrir sign()/length(). Mantemos o mesmo

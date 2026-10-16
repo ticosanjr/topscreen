@@ -62,12 +62,13 @@ vive toda a matemática e a lógica de estado — o que de fato precisa estar ce
 | `test_font_atlas.cpp` | `core/font_atlas.*` | atlas gerado do **TTF real**, métricas por glifo, alpha, casos inválidos |
 | `test_evdev.cpp` | `core/evdev.*` | decodificação de `input_event`, labels, modificadores, registros parciais |
 | `test_highlighter.cpp` | `core/highlighter.*` | arrasto, retângulo normalizado, hold/fade, arrasto pequeno, desabilitado |
+| `test_docs.cpp` | `docs/` × código | toda chave de `keys.hpp` está documentada; atalhos do código estão na referência |
 
 ## Números atuais
 
 ```
-82 testes | 1563 verificações | 0 falhas   (núcleo)
-4 testes  | 25 verificações   | 0 falhas   (integração com libobs fake)
+84 testes | 1633 verificações | 0 falhas   (núcleo)
+5 testes  | 27 verificações   | 0 falhas   (integração com libobs fake)
 ```
 
 ## O que NÃO é coberto (e por quê)

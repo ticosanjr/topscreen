@@ -1,76 +1,78 @@
 # Catálogo de efeitos
 
 Regra de ouro: **só entra o que funciona ao vivo**. Efeitos de pós-produção
-(timeline, cortes, keyframes manuais) ficam de fora por definição.
+(timeline, cortes, keyframes manuais) não existem aqui.
 
-Legenda de modo: `auto` reage sozinho · `hotkey` só por atalho · `always` sempre ligado.
+Status: ✅ implementado · 🟡 parcial · ⬜ planejado.
+Modo: `auto` reage sozinho · `hotkey` só por atalho · `always` sempre ligado.
 
 ## Cursor
 
-| Recurso | Modo | Parâmetros |
-|---------|------|------------|
-| Trocar ponteiro (estilo macOS/touch) | auto | `style`, `size` |
-| Sombra do cursor | auto | `shadow`, `shadow_alpha` |
-| Suavização do movimento | auto | `smooth` (0..1) |
-| Sway (inclina na curva) | auto | `sway` (0..1) |
-| Ocultar quando parado | auto | `hide_idle`, `delay_ms` |
-| Loop do cursor (recomeça onde começou) | off | `loop`, `loop_ms` |
-| Sempre usar cursor do sistema | off | `always_default` |
+| Recurso | Modo | Status | Observações |
+|---------|------|--------|-------------|
+| Substituir o ponteiro (desliga o nativo) | auto | ✅ | desliga `capture_cursor`/`show_cursor` na fonte-pai |
+| Tamanho | auto | ✅ | 0.5–4× |
+| Sombra | auto | ✅ | |
+| Suavização do movimento | auto | ✅ | mola criticamente amortecida |
+| Sway (inclina na curva) | auto | ✅ | |
+| Ocultar quando parado | auto | ✅ | com delay |
+| Loop (volta ao início) | off | ✅ | |
+| Estilos distintos (macOS/touch) | auto | 🟡 | enum existe; visual único por enquanto |
 
 ## Cliques
 
-| Recurso | Modo | Parâmetros |
-|---------|------|------------|
-| Efeito do **botão esquerdo** | auto | `effect` (orbe/onda/anel/ripple/força), `size`, `color`, `duration_ms`, `easing` |
-| Efeito do **botão direito** | auto | idem, independente do esquerdo |
-| Som de clique | auto | `enabled`, `file`, `volume`, `buttons[]` |
+| Recurso | Modo | Status | Observações |
+|---------|------|--------|-------------|
+| Efeito do botão esquerdo | auto | ✅ | onda / orbe / anel / força + cor/tamanho/duração/curva |
+| Efeito do botão direito | auto | ✅ | independente do esquerdo |
+| Som de clique | auto | ✅ | toca no áudio do sistema |
 
 ## Enquadramento
 
-| Recurso | Modo | Parâmetros |
-|---------|------|------------|
-| Fundo (cor/gradiente/imagem) | sempre | `mode`, `color_a`, `color_b`, `image`, `blur` |
-| Cantos arredondados | sempre | `corner_radius` |
-| Padding | sempre | `padding` |
-| Sombra | sempre | `shadow`, `shadow_alpha`, `shadow_blur`, `shadow_offset` |
-| Inset (borda interna) | off | `inset`, `inset_color` |
+| Recurso | Modo | Status | Observações |
+|---------|------|--------|-------------|
+| Fundo (cor/gradiente) | sempre | ✅ | sólido, vertical, diagonal |
+| Fundo por imagem | sempre | ⬜ | |
+| Cantos arredondados | sempre | ✅ | |
+| Espaçamento (padding) | sempre | ✅ | |
+| Sombra | sempre | ✅ | |
+| Inset / borda interna | off | ⬜ | |
 
 ## Zoom / Pan
 
-| Recurso | Modo | Parâmetros |
-|---------|------|------------|
-| Zoom automático (por clique, depois cursor) | auto | `amount`, `duration_ms`, `easing`, `idle_timeout_ms`, `follow` |
-| Pan leve seguindo o mouse | auto | `pan_amount`, `pan_smooth` |
-| Zoom manual in/out/reset | hotkey | `step`, `speed`, `easing` |
-| Zoom em região | hotkey | `region`, `amount` |
+| Recurso | Modo | Status | Observações |
+|---------|------|--------|-------------|
+| Zoom automático (clique/cursor) | auto | ✅ | volta ao normal no idle |
+| Zoom manual in/out/reset | hotkey | ✅ | |
+| Pan leve seguindo o mouse | auto | ✅ | |
+| Zoom em região selecionada | hotkey | ⬜ | |
 
 ## Movimento e atenção
 
-| Recurso | Modo | Parâmetros |
-|---------|------|------------|
-| Motion blur | auto | `enabled`, `amount` (cursor / zoom separados) |
-| Spotlight (foco) seguindo o cursor | hotkey | `radius`, `dim` |
-| Escurecer fora do foco | hotkey | `dim` |
+| Recurso | Modo | Status | Observações |
+|---------|------|--------|-------------|
+| Motion blur (do zoom) | auto | ✅ | blur radial com 3 amostras |
+| Motion blur (do cursor) | auto | ⬜ | |
+| Spotlight seguindo o cursor | hotkey | ✅ | escurece fora do círculo |
 
 ## Texto e destaque
 
-| Recurso | Modo | Parâmetros |
-|---------|------|------------|
-| Overlay de teclas (pill) | hotkey/auto | `show` (modificadores/tudo), `style`, `font`, `ttl_ms`, `position` |
-| Marca-texto de arrasto | auto | `color`, `thickness`, `style` |
+| Recurso | Modo | Status | Observações |
+|---------|------|--------|-------------|
+| Overlay de teclas | auto/hotkey | ✅ | atlas TTF + contorno; captura Win/X11/evdev |
+| Marca-texto de arrasto | auto | ✅ | região arrastada com hold/fade |
 
-> **Realce do texto realmente selecionado** (via acessibilidade/UIA/AT-SPI) está
-> fora do v1 por ser inviável de forma confiável ao vivo. O substituto viável é o
-> **marca-texto de arrasto**. Reavaliação futura.
+> O **realce do texto realmente selecionado** (via acessibilidade) segue fora do
+> escopo — o substituto é o **marca-texto de arrasto**.
 
 ## Câmera e extras
 
-| Recurso | Modo | Parâmetros |
-|---------|------|------------|
-| Webcam bubble (PiP) | sempre | `shape`, `corner`, `scale`, `mirror` |
-| Contagem / HUD de atalhos | hotkey | `position`, `style` |
+| Recurso | Modo | Status | Observações |
+|---------|------|--------|-------------|
+| Webcam bubble | sempre | ⬜ | exige fonte própria (F6) |
+| Countdown / HUD de atalhos | hotkey | ⬜ | |
 
 ## Fora de escopo (pós-produção)
 
-Timeline, cortes, speed ramps por segmento, keyframes manuais, transições entre
-takes, exportação MP4/GIF, normalização de áudio da gravação.
+Timeline, cortes, speed ramps, keyframes manuais, transições entre takes,
+exportação MP4/GIF, normalização de áudio da gravação.

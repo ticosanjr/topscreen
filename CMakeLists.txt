@@ -120,6 +120,7 @@ if(TOPSCREEN_BUILD_PLUGIN)
         src/ts-properties.cpp
         src/ts-presets.cpp
         src/ts-registry.cpp
+        src/ts-wallpapers.cpp
         src/render/ts-compositor.cpp
         src/render/ts-text.cpp
         src/input/ts-input.cpp

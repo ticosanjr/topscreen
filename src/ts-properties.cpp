@@ -3,6 +3,7 @@
 #include "core/easing.hpp"
 #include "core/keys.hpp"
 #include "core/types.hpp"
+#include "ts-wallpapers.hpp"
 
 using namespace topscreen::core;
 using namespace topscreen::core::keys;
@@ -10,16 +11,6 @@ using namespace topscreen::core::keys;
 namespace topscreen {
 
 namespace {
-
-/* Wallpapers embutidos (data/wallpapers). */
-const char *const kWallpapers[][2] = {
-	{"Aurora", "wallpapers/aurora.jpg"},     {"Sunset", "wallpapers/sunset.jpg"},
-	{"Monterey", "wallpapers/monterey.jpg"}, {"Ventura", "wallpapers/ventura.jpg"},
-	{"Sonoma", "wallpapers/sonoma.jpg"},     {"Sequoia", "wallpapers/sequoia.jpg"},
-	{"Graphite", "wallpapers/graphite.jpg"}, {"Ocean", "wallpapers/ocean.jpg"},
-	{"Forest", "wallpapers/forest.jpg"},     {"Lavender", "wallpapers/lavender.jpg"},
-	{"Ember", "wallpapers/ember.jpg"},       {"Midnight", "wallpapers/midnight.jpg"},
-};
 
 /* Fontes embutidas (data/fonts). */
 const char *const kFonts[][2] = {
@@ -86,7 +77,7 @@ obs_properties_t *properties_create(void *data)
 						     OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
 	obs_property_list_add_string(wp, obs_module_text("Background.Image.None"), "");
 	for (const auto &entry : kWallpapers)
-		obs_property_list_add_string(wp, entry[0], entry[1]);
+		obs_property_list_add_string(wp, entry.name, entry.path);
 
 	obs_properties_add_path(bg, kBgImageFile, obs_module_text("Background.ImageFile"), OBS_PATH_FILE,
 				obs_module_text("Background.ImageFile.Filter"), nullptr);

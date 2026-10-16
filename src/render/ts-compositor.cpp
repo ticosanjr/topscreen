@@ -14,6 +14,7 @@
 #include "core/cursor_atlas.hpp"
 #include "core/image.hpp"
 #include "core/types.hpp"
+#include "ts-wallpapers.hpp"
 
 namespace topscreen {
 
@@ -384,8 +385,14 @@ void Compositor::render(obs_source_t *filter, const core::Config &cfg, const Fra
 		text_.draw(st.keys, st.key_count, cfg.keys, w, h);
 }
 
-void Compositor::load_bg_image(const std::string &path)
+void Compositor::load_bg_image(const std::string &raw)
 {
+	/* Auto-correcao: se o valor for o nome de um wallpaper embutido
+	 * (ex.: "Aurora", de versoes/config antigas), converte para o caminho. */
+	std::string path = raw;
+	if (const char *w = wallpaper_path_for(path.c_str()))
+		path = w;
+
 	if (path == bg_loaded_)
 		return;
 

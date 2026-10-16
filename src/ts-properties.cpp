@@ -19,6 +19,11 @@ const char *const kFonts[][2] = {
 	{"DejaVu Sans Mono Bold", "fonts/DejaVuSansMono-Bold.ttf"},
 };
 
+/* Filtro do seletor de imagem (hardcoded, como no OBS: evita risco de escaping). */
+const char *const kImageFilter =
+	"Images (*.png *.jpg *.jpeg *.bmp *.tga *.gif *.webp *.PNG *.JPG *.JPEG *.BMP *.TGA *.GIF *.WEBP)"
+	";;All files (*.*)";
+
 void add_click_group(obs_properties_t *props, const char *group_key, const char *title,
 		     const char *effect_key, const char *size_key, const char *color_key,
 		     const char *duration_key, const char *easing_key)
@@ -80,7 +85,7 @@ obs_properties_t *properties_create(void *data)
 		obs_property_list_add_string(wp, entry.name, entry.path);
 
 	obs_properties_add_path(bg, kBgImageFile, obs_module_text("Background.ImageFile"), OBS_PATH_FILE,
-				obs_module_text("Background.ImageFile.Filter"), nullptr);
+				kImageFilter, nullptr);
 	obs_properties_add_float_slider(bg, kBgImageBlur, obs_module_text("Background.ImageBlur"), 0.0, 60.0, 1.0);
 
 	obs_properties_add_color(bg, kBgColorA, obs_module_text("Background.ColorA"));

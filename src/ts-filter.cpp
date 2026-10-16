@@ -57,8 +57,9 @@ void disable_parent_cursor(obs_source_t *parent)
 	if (!props)
 		return;
 
-	static const char *const kCursorKeys[] = {"capture_cursor", "show_cursor"};
+	static const char *const kCursorKeys[] = {"capture_cursor", "show_cursor", "draw_cursor"};
 
+	bool found = false;
 	for (const char *key : kCursorKeys) {
 		if (!obs_properties_get(props, key))
 			continue;
@@ -67,13 +68,19 @@ void disable_parent_cursor(obs_source_t *parent)
 		if (!s)
 			continue;
 
-		if (obs_data_get_bool(s, key)) {
-			obs_data_set_bool(s, key, false);
-			obs_source_update(parent, s);
-			blog(LOG_INFO, "[TopScreen] cursor nativo da captura desativado (%s)", key);
-		}
+		const bool was = obs_data_get_bool(s, key);
+		obs_data_set_bool(s, key, false);
+		obs_source_update(parent, s);
 		obs_data_release(s);
+
+		blog(LOG_INFO, "[TopScreen] cursor nativo da captura desativado (%s, estava %s)", key,
+		     was ? "ligado" : "desligado");
+		found = true;
 	}
+
+	if (!found)
+		blog(LOG_INFO, "[TopScreen] fonte-pai nao expoe opcao de cursor nativo (%s)",
+		     parent ? obs_source_get_name(parent) : "?");
 
 	obs_properties_destroy(props);
 }

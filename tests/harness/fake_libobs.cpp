@@ -224,6 +224,20 @@ void obs_data_set_default_string(obs_data_t *data, const char *name, const char 
 		data->strings[name] = value ? value : "";
 }
 
+bool obs_data_has_user_value(obs_data_t *data, const char *name)
+{
+	if (!data || !name)
+		return false;
+	return data->bools.count(name) || data->ints.count(name) || data->doubles.count(name) ||
+	       data->strings.count(name);
+}
+
+bool obs_data_has_default_value(obs_data_t *data, const char *name)
+{
+	/* no stub, defaults sao gravados no mesmo mapa de valores */
+	return obs_data_has_user_value(data, name);
+}
+
 // ---- obs_source ----
 obs_data_t *obs_source_get_settings(const obs_source_t *source)
 {
@@ -236,6 +250,12 @@ void obs_source_update(obs_source_t *source, obs_data_t *settings)
 		return;
 	// Nosso get_settings devolve o proprio objeto; copia por seguranca.
 	*source->settings = *settings;
+}
+
+const char *obs_source_get_name(const obs_source_t *source)
+{
+	(void)source;
+	return "fake-parent";
 }
 
 uint32_t obs_source_get_base_width(obs_source_t *source)

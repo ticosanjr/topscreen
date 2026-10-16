@@ -90,94 +90,128 @@ void config_defaults(obs_data_t *s)
 	obs_data_set_default_int(s, kHighlightColor, static_cast<long long>(def.highlight.color));
 }
 
+namespace {
+
+/*
+ * Leitura com fallback para os defaults do codigo.
+ *
+ * Fontes criadas por versoes antigas nao tem as chaves novas; sem isso elas
+ * virariam 0/false (padding 0, texto invisivel, etc.).
+ */
+bool has_key(obs_data_t *s, const char *k)
+{
+	return obs_data_has_user_value(s, k) || obs_data_has_default_value(s, k);
+}
+bool read_bool(obs_data_t *s, const char *k, bool d)
+{
+	return has_key(s, k) ? obs_data_get_bool(s, k) : d;
+}
+long long read_int(obs_data_t *s, const char *k, long long d)
+{
+	return has_key(s, k) ? obs_data_get_int(s, k) : d;
+}
+double read_double(obs_data_t *s, const char *k, double d)
+{
+	return has_key(s, k) ? obs_data_get_double(s, k) : d;
+}
+std::string read_string(obs_data_t *s, const char *k, const std::string &d)
+{
+	if (!has_key(s, k))
+		return d;
+	const char *v = obs_data_get_string(s, k);
+	return v ? v : d;
+}
+
+} // namespace
+
 void config_load(obs_data_t *s, Config *c)
 {
-	c->effects_enabled = obs_data_get_bool(s, kEffectsEnabled);
+	const Config d;
 
-	c->bg.enabled = obs_data_get_bool(s, kBgEnabled);
-	c->bg.mode = static_cast<int>(obs_data_get_int(s, kBgMode));
-	c->bg.color_a = static_cast<uint32_t>(obs_data_get_int(s, kBgColorA));
-	c->bg.color_b = static_cast<uint32_t>(obs_data_get_int(s, kBgColorB));
-	const char *bgimg = obs_data_get_string(s, kBgImage);
-	c->bg.image = bgimg ? bgimg : "";
-	const char *bgfile = obs_data_get_string(s, kBgImageFile);
-	c->bg.image_file = bgfile ? bgfile : "";
-	c->bg.image_blur = obs_data_get_double(s, kBgImageBlur);
-	c->bg.padding_x = obs_data_get_double(s, kBgPaddingX);
-	c->bg.padding_y = obs_data_get_double(s, kBgPaddingY);
-	c->bg.corner_radius = obs_data_get_double(s, kBgCornerRadius);
-	c->bg.shadow = obs_data_get_bool(s, kBgShadow);
-	c->bg.shadow_alpha = obs_data_get_double(s, kBgShadowAlpha);
-	c->bg.shadow_blur = obs_data_get_double(s, kBgShadowBlur);
-	c->bg.shadow_offset = obs_data_get_double(s, kBgShadowOffset);
-	c->bg.keep_aspect = obs_data_get_bool(s, kBgKeepAspect);
+	c->effects_enabled = read_bool(s, kEffectsEnabled, d.effects_enabled);
 
-	c->cursor.enabled = obs_data_get_bool(s, kCursorEnabled);
-	c->cursor.style = static_cast<int>(obs_data_get_int(s, kCursorStyle));
-	c->cursor.size = obs_data_get_double(s, kCursorSize);
-	c->cursor.shadow = obs_data_get_bool(s, kCursorShadow);
-	c->cursor.smooth = obs_data_get_double(s, kCursorSmooth);
-	c->cursor.sway = obs_data_get_double(s, kCursorSway);
-	c->cursor.hide_idle = obs_data_get_bool(s, kCursorHideIdle);
-	c->cursor.idle_delay_ms = obs_data_get_double(s, kCursorIdleDelayMs);
-	c->cursor.loop = obs_data_get_bool(s, kCursorLoop);
-	c->cursor.loop_ms = obs_data_get_double(s, kCursorLoopMs);
+	c->bg.enabled = read_bool(s, kBgEnabled, d.bg.enabled);
+	c->bg.mode = static_cast<int>(read_int(s, kBgMode, d.bg.mode));
+	c->bg.color_a = static_cast<uint32_t>(read_int(s, kBgColorA, d.bg.color_a));
+	c->bg.color_b = static_cast<uint32_t>(read_int(s, kBgColorB, d.bg.color_b));
+	c->bg.image = read_string(s, kBgImage, d.bg.image);
+	c->bg.image_file = read_string(s, kBgImageFile, d.bg.image_file);
+	c->bg.image_blur = read_double(s, kBgImageBlur, d.bg.image_blur);
+	c->bg.padding_x = read_double(s, kBgPaddingX, d.bg.padding_x);
+	c->bg.padding_y = read_double(s, kBgPaddingY, d.bg.padding_y);
+	/* migracao da chave antiga 'bg_padding' */
+	if (!has_key(s, kBgPaddingX) && !has_key(s, kBgPaddingY) && has_key(s, "bg_padding")) {
+		c->bg.padding_x = obs_data_get_double(s, "bg_padding");
+		c->bg.padding_y = c->bg.padding_x;
+	}
+	c->bg.corner_radius = read_double(s, kBgCornerRadius, d.bg.corner_radius);
+	c->bg.shadow = read_bool(s, kBgShadow, d.bg.shadow);
+	c->bg.shadow_alpha = read_double(s, kBgShadowAlpha, d.bg.shadow_alpha);
+	c->bg.shadow_blur = read_double(s, kBgShadowBlur, d.bg.shadow_blur);
+	c->bg.shadow_offset = read_double(s, kBgShadowOffset, d.bg.shadow_offset);
+	c->bg.keep_aspect = read_bool(s, kBgKeepAspect, d.bg.keep_aspect);
 
-	c->zoom.mode = static_cast<int>(obs_data_get_int(s, kZoomMode));
-	c->zoom.amount = obs_data_get_double(s, kZoomAmount);
-	c->zoom.duration_ms = obs_data_get_double(s, kZoomDurationMs);
-	c->zoom.idle_timeout_ms = obs_data_get_double(s, kZoomIdleTimeoutMs);
-	c->zoom.pan_amount = obs_data_get_double(s, kZoomPanAmount);
+	c->cursor.enabled = read_bool(s, kCursorEnabled, d.cursor.enabled);
+	c->cursor.style = static_cast<int>(read_int(s, kCursorStyle, d.cursor.style));
+	c->cursor.size = read_double(s, kCursorSize, d.cursor.size);
+	c->cursor.shadow = read_bool(s, kCursorShadow, d.cursor.shadow);
+	c->cursor.smooth = read_double(s, kCursorSmooth, d.cursor.smooth);
+	c->cursor.sway = read_double(s, kCursorSway, d.cursor.sway);
+	c->cursor.hide_idle = read_bool(s, kCursorHideIdle, d.cursor.hide_idle);
+	c->cursor.idle_delay_ms = read_double(s, kCursorIdleDelayMs, d.cursor.idle_delay_ms);
+	c->cursor.loop = read_bool(s, kCursorLoop, d.cursor.loop);
+	c->cursor.loop_ms = read_double(s, kCursorLoopMs, d.cursor.loop_ms);
 
-	c->click_left.effect = static_cast<int>(obs_data_get_int(s, kClickLeftEffect));
-	c->click_left.size = obs_data_get_double(s, kClickLeftSize);
-	c->click_left.color = static_cast<uint32_t>(obs_data_get_int(s, kClickLeftColor));
-	c->click_left.duration_ms = obs_data_get_double(s, kClickLeftDurationMs);
-	c->click_left.easing = static_cast<int>(obs_data_get_int(s, kClickLeftEasing));
+	c->zoom.mode = static_cast<int>(read_int(s, kZoomMode, d.zoom.mode));
+	c->zoom.amount = read_double(s, kZoomAmount, d.zoom.amount);
+	c->zoom.duration_ms = read_double(s, kZoomDurationMs, d.zoom.duration_ms);
+	c->zoom.idle_timeout_ms = read_double(s, kZoomIdleTimeoutMs, d.zoom.idle_timeout_ms);
+	c->zoom.pan_amount = read_double(s, kZoomPanAmount, d.zoom.pan_amount);
 
-	c->click_right.effect = static_cast<int>(obs_data_get_int(s, kClickRightEffect));
-	c->click_right.size = obs_data_get_double(s, kClickRightSize);
-	c->click_right.color = static_cast<uint32_t>(obs_data_get_int(s, kClickRightColor));
-	c->click_right.duration_ms = obs_data_get_double(s, kClickRightDurationMs);
-	c->click_right.easing = static_cast<int>(obs_data_get_int(s, kClickRightEasing));
+	c->click_left.effect = static_cast<int>(read_int(s, kClickLeftEffect, d.click_left.effect));
+	c->click_left.size = read_double(s, kClickLeftSize, d.click_left.size);
+	c->click_left.color = static_cast<uint32_t>(read_int(s, kClickLeftColor, d.click_left.color));
+	c->click_left.duration_ms = read_double(s, kClickLeftDurationMs, d.click_left.duration_ms);
+	c->click_left.easing = static_cast<int>(read_int(s, kClickLeftEasing, d.click_left.easing));
 
-	c->click_sound.enabled = obs_data_get_bool(s, kClickSoundEnabled);
-	const char *file = obs_data_get_string(s, kClickSoundFile);
-	c->click_sound.file = file ? file : "sounds/click-soft.wav";
-	c->click_sound.volume = obs_data_get_double(s, kClickSoundVolume);
-	c->click_sound.left = obs_data_get_bool(s, kClickSoundLeft);
-	c->click_sound.right = obs_data_get_bool(s, kClickSoundRight);
+	c->click_right.effect = static_cast<int>(read_int(s, kClickRightEffect, d.click_right.effect));
+	c->click_right.size = read_double(s, kClickRightSize, d.click_right.size);
+	c->click_right.color = static_cast<uint32_t>(read_int(s, kClickRightColor, d.click_right.color));
+	c->click_right.duration_ms = read_double(s, kClickRightDurationMs, d.click_right.duration_ms);
+	c->click_right.easing = static_cast<int>(read_int(s, kClickRightEasing, d.click_right.easing));
 
-	c->motion_blur.enabled = obs_data_get_bool(s, kMotionBlurEnabled);
-	c->motion_blur.amount = obs_data_get_double(s, kMotionBlurAmount);
+	c->click_sound.enabled = read_bool(s, kClickSoundEnabled, d.click_sound.enabled);
+	c->click_sound.file = read_string(s, kClickSoundFile, d.click_sound.file);
+	c->click_sound.volume = read_double(s, kClickSoundVolume, d.click_sound.volume);
+	c->click_sound.left = read_bool(s, kClickSoundLeft, d.click_sound.left);
+	c->click_sound.right = read_bool(s, kClickSoundRight, d.click_sound.right);
 
-	c->spotlight.enabled = obs_data_get_bool(s, kSpotlightEnabled);
-	c->spotlight.radius = obs_data_get_double(s, kSpotlightRadius);
-	c->spotlight.dim = obs_data_get_double(s, kSpotlightDim);
+	c->motion_blur.enabled = read_bool(s, kMotionBlurEnabled, d.motion_blur.enabled);
+	c->motion_blur.amount = read_double(s, kMotionBlurAmount, d.motion_blur.amount);
 
-	c->keys.enabled = obs_data_get_bool(s, kKeysEnabled);
-	c->keys.modifiers_only = obs_data_get_bool(s, kKeysModifiersOnly);
-	c->keys.ttl_ms = obs_data_get_double(s, kKeysTtlMs);
-	c->keys.max_keys = static_cast<int>(obs_data_get_int(s, kKeysMax));
-	c->keys.pos_x = obs_data_get_double(s, kKeysPosX);
-	c->keys.pos_y = obs_data_get_double(s, kKeysPosY);
-	c->keys.size = obs_data_get_double(s, kKeysSize);
-	const char *kfont = obs_data_get_string(s, kKeysFont);
-	c->keys.font = kfont ? kfont : "fonts/DejaVuSans-Bold.ttf";
-	c->keys.color = static_cast<uint32_t>(obs_data_get_int(s, kKeysColor));
-	c->keys.shadow = obs_data_get_bool(s, kKeysShadow);
-	c->keys.band = obs_data_get_bool(s, kKeysBand);
-	c->keys.band_color = static_cast<uint32_t>(obs_data_get_int(s, kKeysBandColor));
+	c->spotlight.enabled = read_bool(s, kSpotlightEnabled, d.spotlight.enabled);
+	c->spotlight.radius = read_double(s, kSpotlightRadius, d.spotlight.radius);
+	c->spotlight.dim = read_double(s, kSpotlightDim, d.spotlight.dim);
 
-	c->highlight.enabled = obs_data_get_bool(s, kHighlightEnabled);
-	c->highlight.hold_ms = obs_data_get_double(s, kHighlightHoldMs);
-	c->highlight.fade_ms = obs_data_get_double(s, kHighlightFadeMs);
-	c->highlight.color = static_cast<uint32_t>(obs_data_get_int(s, kHighlightColor));
+	c->keys.enabled = read_bool(s, kKeysEnabled, d.keys.enabled);
+	c->keys.modifiers_only = read_bool(s, kKeysModifiersOnly, d.keys.modifiers_only);
+	c->keys.ttl_ms = read_double(s, kKeysTtlMs, d.keys.ttl_ms);
+	c->keys.max_keys = static_cast<int>(read_int(s, kKeysMax, d.keys.max_keys));
+	c->keys.pos_x = read_double(s, kKeysPosX, d.keys.pos_x);
+	c->keys.pos_y = read_double(s, kKeysPosY, d.keys.pos_y);
+	c->keys.size = read_double(s, kKeysSize, d.keys.size);
+	c->keys.font = read_string(s, kKeysFont, d.keys.font);
+	c->keys.color = static_cast<uint32_t>(read_int(s, kKeysColor, d.keys.color));
+	c->keys.shadow = read_bool(s, kKeysShadow, d.keys.shadow);
+	c->keys.band = read_bool(s, kKeysBand, d.keys.band);
+	c->keys.band_color = static_cast<uint32_t>(read_int(s, kKeysBandColor, d.keys.band_color));
 
-	/*
-	 * Migracao: 0.7/0.3 eram os defaults antigos do cursor (com "deslize").
-	 * Fontes antigas ficariam deslizando; passam a seguir o mouse exatamente.
-	 */
+	c->highlight.enabled = read_bool(s, kHighlightEnabled, d.highlight.enabled);
+	c->highlight.hold_ms = read_double(s, kHighlightHoldMs, d.highlight.hold_ms);
+	c->highlight.fade_ms = read_double(s, kHighlightFadeMs, d.highlight.fade_ms);
+	c->highlight.color = static_cast<uint32_t>(read_int(s, kHighlightColor, d.highlight.color));
+
+	/* Migracao: 0.7/0.3 eram os defaults antigos do cursor (com "deslize"). */
 	if (c->cursor.smooth == 0.7 && c->cursor.sway == 0.3) {
 		c->cursor.smooth = 0.0;
 		c->cursor.sway = 0.0;

@@ -177,3 +177,32 @@ TEST(integration_render_nao_crasha_sem_efeito)
 
 	ts_filter_source_info.destroy(ctx);
 }
+
+/* Fonte-pai fake que usa "show_cursor" (como o xshm_input do Linux). */
+namespace {
+obs_properties_t *parent_props_show_cursor(void *)
+{
+	obs_properties_t *p = obs_properties_create();
+	obs_properties_add_bool(p, "show_cursor", "Show cursor");
+	return p;
+}
+const obs_source_info parent_info2 = {
+	.id = "fake_xshm_capture",
+	.type = OBS_SOURCE_TYPE_INPUT,
+	.output_flags = OBS_SOURCE_VIDEO,
+	.get_properties = parent_props_show_cursor,
+};
+} // namespace
+
+TEST(integration_desativa_show_cursor_do_pai)
+{
+	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
+	obs_source_t *parent = fakeobs::make_source(&parent_info2, nullptr, 1920, 1080);
+	obs_data_set_bool(parent->settings, "show_cursor", true);
+	obs_source_t *filter = fakeobs::make_source(&ts_filter_source_info, parent, 0, 0);
+	void *ctx = create_filter(filter);
+	REQUIRE(ctx != nullptr);
+	ts_filter_source_info.video_render(ctx, nullptr);
+	CHECK(!obs_data_get_bool(parent->settings, "show_cursor"));
+	ts_filter_source_info.destroy(ctx);
+}

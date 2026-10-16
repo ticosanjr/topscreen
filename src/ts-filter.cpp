@@ -42,8 +42,11 @@ double clamp01(double v)
 /**
  * Desativa o cursor nativo da fonte-pai (ex.: Captura de Tela).
  *
- * Fazemos isso para poder desenhar o nosso cursor sem duplicar. Só age quando
- * a fonte expõe a propriedade "capture_cursor".
+ * Fontes diferentes usam nomes diferentes para a mesma opcao:
+ *   - "capture_cursor": Windows (monitor_capture) e alguns backends
+ *   - "show_cursor":    Linux (xshm_input), macOS (screen_capture)
+ *
+ * Fazemos isso para poder desenhar o nosso cursor sem duplicar.
  */
 void disable_parent_cursor(obs_source_t *parent)
 {
@@ -54,16 +57,22 @@ void disable_parent_cursor(obs_source_t *parent)
 	if (!props)
 		return;
 
-	if (obs_properties_get(props, "capture_cursor")) {
+	static const char *const kCursorKeys[] = {"capture_cursor", "show_cursor"};
+
+	for (const char *key : kCursorKeys) {
+		if (!obs_properties_get(props, key))
+			continue;
+
 		obs_data_t *s = obs_source_get_settings(parent);
-		if (s) {
-			if (obs_data_get_bool(s, "capture_cursor")) {
-				obs_data_set_bool(s, "capture_cursor", false);
-				obs_source_update(parent, s);
-				blog(LOG_INFO, "[TopScreen] cursor nativo da captura desativado");
-			}
-			obs_data_release(s);
+		if (!s)
+			continue;
+
+		if (obs_data_get_bool(s, key)) {
+			obs_data_set_bool(s, key, false);
+			obs_source_update(parent, s);
+			blog(LOG_INFO, "[TopScreen] cursor nativo da captura desativado (%s)", key);
 		}
+		obs_data_release(s);
 	}
 
 	obs_properties_destroy(props);

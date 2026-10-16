@@ -232,6 +232,7 @@ void *ts_filter_create(obs_data_t *settings, obs_source_t *source)
 	ctx->reconfigure_models();
 
 	ctx->presets.load();
+	ctx->click_sound.load(ctx->cfg.click_sound.file.c_str());
 
 	ctx->loaded = ctx->compositor.load();
 	if (!ctx->loaded)

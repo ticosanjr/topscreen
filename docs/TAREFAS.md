@@ -54,7 +54,7 @@ Status: ✅ feito · 🟡 parcial · ⬜ pendente.
 | T3.3 | Efeito de clique esquerdo (ripple/orbe/anel/força) | ✅ |
 | T3.4 | Efeito de clique direito independente | ✅ |
 | T3.5 | Parâmetros de clique (cor/tamanho/duração/curva) na UI | ✅ |
-| T3.6 | Som de clique (decode WAV + playback) | 🟡 (stub) |
+| T3.6 | Som de clique (decode WAV + playback) | 🟡 (decode WAV ✅ + sons prontos; playback em F6) |
 | T3.7 | Presets aplicáveis por atalho (next/prev) | ✅ |
 | T3.8 | Fallback de atalhos via OBS WebSocket | ⬜ |
 

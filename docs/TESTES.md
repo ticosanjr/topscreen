@@ -6,7 +6,8 @@
 2. **Checagem contra os headers do OBS** (`./tools/check-obs-headers.sh`) —
    compila cada fonte do plugin contra os headers **reais** do OBS (via
    `-fsyntax-only`, sem libobs instalado). Pega erro de API/assinatura/tipo que
-   os testes de núcleo não pegam. Roda no CI
+   os testes de núcleo não pegam. O dock (`src/ui`) é checado com Qt6 real
+   quando disponível, ou com o stub em `tools/qt-stub`. Roda no CI
    (`.github/workflows/check-obs-headers.yml`).
 
 ## Como rodar
@@ -56,11 +57,12 @@ vive toda a matemática e a lógica de estado — o que de fato precisa estar ce
 | `test_preset_all_keys.cpp` | `core/preset.*` | todas as chaves de config são mapeadas (garante preset completo) |
 | `test_locale_keys.cpp` | `data/locale/*.ini` | toda chave usada em `obs_module_text()` existe no `en-US.ini` + paridade pt/en |
 | `test_key_overlay.cpp` | `core/key_overlay.*` | fila de teclas, TTL, repetição, filtro de modificadores, limite, formatação de combos |
+| `test_wav.cpp` | `core/wav.*` | PCM 8/16/24/32 e float, estéreo, erros, e **arquivos reais** `data/sounds/*.wav` |
 
 ## Números atuais
 
 ```
-59 testes | 890 verificações | 0 falhas
+66 testes | 932 verificações | 0 falhas
 ```
 
 ## O que NÃO é coberto (e por quê)

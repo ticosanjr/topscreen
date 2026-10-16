@@ -1,24 +1,28 @@
 #pragma once
 
+#include "core/wav.hpp"
+
 namespace topscreen {
 
 /**
  * Som de clique.
  *
- * F3/T3.6. Nesta fase e apenas o esqueleto; em F6 o playback vai para o canal
- * de audio da fonte propria (obs_source_output_audio).
+ * Faz o decode do WAV (via core/wav) no load(). O playback entra em F6 (canal
+ * de audio da fonte propria / obs_source_output_audio).
  */
 class ClickSound {
 public:
-	bool load(const char *path);
+	/** Carrega um arquivo relativo ao diretorio de dados do modulo. */
+	bool load(const char *module_file);
 	void release();
 	void play();
 
 	bool loaded() const { return loaded_; }
+	const core::WavData &wav() const { return wav_; }
 
 private:
 	bool loaded_ = false;
-	void *sound_ = nullptr;
+	core::WavData wav_;
 };
 
 } // namespace topscreen

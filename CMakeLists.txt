@@ -31,6 +31,7 @@ set(TOPSCREEN_CORE_SOURCES
     src/core/json.cpp
     src/core/preset.cpp
     src/core/key_overlay.cpp
+    src/core/wav.cpp
 )
 
 # ---------------------------------------------------------------------------

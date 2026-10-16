@@ -25,7 +25,7 @@ DIAGNOSE=0
 
 while [ $# -gt 0 ]; do
 	case "$1" in
-	--system) MODE="prefix"; TARGET_PREFIX="/usr"; shift ;;
+	--system) MODE="system"; shift ;;
 	--prefix) MODE="prefix"; TARGET_PREFIX="${2:?}"; shift 2 ;;
 	--dir) MODE="dir"; TARGET_DIR="${2:?}"; shift 2 ;;
 	--data) DATA_DIR="${2:?}"; shift 2 ;;
@@ -178,6 +178,35 @@ build)
 	echo "  scripts/build-install.sh --system           # OBS do sistema"
 	echo "  scripts/build-install.sh --dir <plugins>    # portable/custom"
 	FINAL="build concluido"
+	;;
+system)
+	# Descobre a pasta de plugins que o OBS usa (multiarch no Debian/Ubuntu).
+	PLUGDIR=""
+	for d in /usr/lib/*/obs-plugins; do
+		[ -d "$d" ] && {
+			PLUGDIR="$d"
+			break
+		}
+	done
+	[ -n "$PLUGDIR" ] || PLUGDIR="/usr/lib/obs-plugins"
+	DATADIR="/usr/share/obs/obs-plugins/topscreen"
+
+	log "Instalando para o OBS do sistema:"
+	echo "  plugin: $PLUGDIR/topscreen.so"
+	echo "  dados:  $DATADIR/"
+
+	sudo mkdir -p "$PLUGDIR" "$DATADIR"
+	sudo cp -f "$SO" "$PLUGDIR/topscreen.so"
+	sudo cp -rf "$ROOT/data/." "$DATADIR/"
+
+	# Remove instalacao antiga no lugar errado (ex.: /usr/lib/obs-plugins).
+	if [ "$PLUGDIR" != "/usr/lib/obs-plugins" ] && [ -f /usr/lib/obs-plugins/topscreen.so ]; then
+		warn "removendo instalacao antiga em /usr/lib/obs-plugins/topscreen.so"
+		sudo rm -f /usr/lib/obs-plugins/topscreen.so
+	fi
+
+	ok "Instalado. Reinicie o OBS."
+	FINAL="instalado em $PLUGDIR"
 	;;
 prefix)
 	log "Instalando em prefixo $TARGET_PREFIX ..."

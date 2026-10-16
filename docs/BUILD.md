@@ -10,8 +10,7 @@ sudo apt install libobs-dev          # ou use o PPA do OBS
 
 chmod +x scripts/build-install.sh
 scripts/build-install.sh                 # só compila
-scripts/build-install.sh --system        # instala no OBS do sistema (sudo)
-scripts/build-install.sh --dir <pasta>   # copia para a pasta de plugins do OBS
+scripts/build-install.sh --system        # instala no OBS do sistema (sudo)scripts/build-install.sh --dir <pasta>   # copia para a pasta de plugins do OBS
 ```
 
 O script auto-detecta os headers e a biblioteca do libobs.

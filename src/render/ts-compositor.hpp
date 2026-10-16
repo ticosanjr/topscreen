@@ -3,7 +3,8 @@
 #include <graphics/graphics.h>
 #include <obs-module.h>
 
-#include "ts-settings.hpp"
+#include "core/config.hpp"
+#include "render/ts-frame.hpp"
 
 namespace topscreen {
 
@@ -11,7 +12,8 @@ namespace topscreen {
  * Compositor: dona do efeito GPU do TopScreen.
  *
  * Recebe o frame da fonte-pai via obs_source_process_filter_* e desenha a
- * composicao (fundo, cantos, sombra, zoom/pan) em um unico passe.
+ * composicao (fundo, cantos, sombra, zoom/pan, cursor e efeitos de clique)
+ * em um unico passe.
  */
 class Compositor {
 public:
@@ -21,17 +23,10 @@ public:
 	Compositor(const Compositor &) = delete;
 	Compositor &operator=(const Compositor &) = delete;
 
-	/** Carrega o efeito. Requer contexto grafico (tratado internamente). */
 	bool load();
-
-	/** Libera o efeito. Requer contexto grafico (tratado internamente). */
 	void release();
 
-	/**
-	 * Renderiza o filtro aplicando a config.
-	 * Deve ser chamado dentro de video_render (contexto grafico ativo).
-	 */
-	void render(obs_source_t *filter, const Config &cfg);
+	void render(obs_source_t *filter, const core::Config &cfg, const FrameState &st);
 
 	bool loaded() const { return effect_ != nullptr; }
 
@@ -51,6 +46,18 @@ private:
 	gs_eparam_t *p_shadow_alpha_ = nullptr;
 	gs_eparam_t *p_shadow_blur_ = nullptr;
 	gs_eparam_t *p_shadow_offset_ = nullptr;
+
+	gs_eparam_t *p_cursor_enabled_ = nullptr;
+	gs_eparam_t *p_cursor_pos_ = nullptr;
+	gs_eparam_t *p_cursor_scale_ = nullptr;
+	gs_eparam_t *p_cursor_opacity_ = nullptr;
+	gs_eparam_t *p_cursor_rotation_ = nullptr;
+	gs_eparam_t *p_cursor_shadow_ = nullptr;
+
+	gs_eparam_t *p_click_count_ = nullptr;
+	gs_eparam_t *p_click_data_ = nullptr;
+	gs_eparam_t *p_click_color_ = nullptr;
+	gs_eparam_t *p_click_meta_ = nullptr;
 };
 
 } // namespace topscreen

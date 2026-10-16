@@ -1,0 +1,35 @@
+#include "core/color.hpp"
+#include "test_framework.hpp"
+
+using namespace topscreen::core;
+
+TEST(color_unpack_conhecido)
+{
+	/* 0xAABBGGRR => byte baixo = R. */
+	const Rgba c = unpack_abgr(0xFF3A2E5C);
+	CHECK_NEAR(c.r, static_cast<double>(0x5C) / 255.0, 1e-6);
+	CHECK_NEAR(c.g, static_cast<double>(0x2E) / 255.0, 1e-6);
+	CHECK_NEAR(c.b, static_cast<double>(0x3A) / 255.0, 1e-6);
+	CHECK_NEAR(c.a, 1.0, 1e-6);
+}
+
+TEST(color_pack_roundtrip)
+{
+	const uint32_t values[] = {0xFFFFFFFF, 0x00000000, 0xFF3A2E5C, 0x80403020};
+	for (uint32_t v : values) {
+		++tst::checks();
+		if (pack_abgr(unpack_abgr(v)) != v)
+			tst::fail(__FILE__, __LINE__, "roundtrip de cor falhou");
+	}
+}
+
+TEST(color_lerp)
+{
+	const Rgba a{0.0f, 0.0f, 0.0f, 1.0f};
+	const Rgba b{1.0f, 1.0f, 1.0f, 1.0f};
+
+	CHECK_NEAR(lerp_color(a, b, 0.5f).r, 0.5, 1e-6);
+	CHECK_NEAR(lerp_color(a, b, -1.0f).r, 0.0, 1e-6); /* recorta */
+	CHECK_NEAR(lerp_color(a, b, 2.0f).r, 1.0, 1e-6);  /* recorta */
+	CHECK_NEAR(lerp_color(a, b, 0.25f).g, 0.25, 1e-6);
+}

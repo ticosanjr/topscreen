@@ -33,13 +33,23 @@ Veja [`docs/ROADMAP.md`](docs/ROADMAP.md) e [`docs/TAREFAS.md`](docs/TAREFAS.md)
 | Fase | Escopo | Status |
 |------|--------|--------|
 | F0 | Skeleton do plugin + filtro passthrough | ✅ implementado |
-| F1 | Fundo, cantos arredondados, padding, sombra, presets + dock inicial | 🟡 parcial |
-| F2 | Cursor (tamanho/estilo/suavização/idle) | ⬜ |
-| F3 | Efeitos de clique L/R + som + atalhos + presets | ⬜ |
-| F4 | Zoom/Pan (mola) auto + manual | ⬜ |
+| F1 | Fundo, cantos arredondados, padding, sombra, presets + dock inicial | 🟡 implementado (verificar no OBS) |
+| F2 | Cursor (tamanho/suavização/sway/idle/loop) | 🟡 implementado (verificar no OBS) |
+| F3 | Efeitos de clique L/R + atalhos + presets | 🟡 implementado (som = stub) |
+| F4 | Zoom/Pan (mola) auto + manual + pan | 🟡 implementado |
 | F5 | Overlay de teclas (SDF) + spotlight + webcam | ⬜ |
 | F6 | Fonte de captura própria + áudio próprio | ⬜ |
 | F7 | Paridade Wayland (portais + evdev) + polimento | ⬜ |
+
+O núcleo (matemática, cursor, cliques, zoom, presets, JSON) tem **testes
+automatizados** — veja [`docs/TESTES.md`](docs/TESTES.md). O shader e a
+integração com o OBS ainda precisam de uma passada em um OBS real.
+
+### Testes rápidos
+
+```bash
+./tests/run.sh     # 45 testes do núcleo, sem libobs/cmake
+```
 
 ---
 
@@ -54,6 +64,7 @@ Veja [`docs/ROADMAP.md`](docs/ROADMAP.md) e [`docs/TAREFAS.md`](docs/TAREFAS.md)
 | [`docs/INPUT-E-PLATAFORMAS.md`](docs/INPUT-E-PLATAFORMAS.md) | Input por SO e paridade X11/Wayland |
 | [`docs/ROADMAP.md`](docs/ROADMAP.md) | Fases e critérios de aceite |
 | [`docs/TAREFAS.md`](docs/TAREFAS.md) | Quebra de tarefas executável |
+| [`docs/TESTES.md`](docs/TESTES.md) | Testes do núcleo: como rodar e o que cobrem |
 | [`docs/BUILD.md`](docs/BUILD.md) | Como compilar (Windows/Linux) |
 
 ---

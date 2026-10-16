@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 
-project(TopScreen VERSION 0.1.0 LANGUAGES C CXX)
+project(TopScreen VERSION 0.2.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -15,6 +15,22 @@ include(GNUInstallDirs)
 
 option(ENABLE_QT            "Build the TopScreen Qt dock"        ON)
 option(ENABLE_FRONTEND_API  "Use obs-frontend-api for the dock"  ON)
+option(TOPSCREEN_BUILD_TESTS "Build the core unit tests"         ON)
+
+# ---------------------------------------------------------------------------
+# Nucleo (independente do OBS) - tambem usado pelos testes
+# ---------------------------------------------------------------------------
+set(TOPSCREEN_CORE_SOURCES
+    src/core/easing.cpp
+    src/core/spring.cpp
+    src/core/geometry.cpp
+    src/core/coord.cpp
+    src/core/cursor.cpp
+    src/core/click_fx.cpp
+    src/core/zoom.cpp
+    src/core/json.cpp
+    src/core/preset.cpp
+)
 
 # ---------------------------------------------------------------------------
 # libobs
@@ -56,20 +72,21 @@ if(ENABLE_QT AND TOPSCREEN_HAVE_FRONTEND)
 endif()
 
 # ---------------------------------------------------------------------------
-# Fontes
+# Fontes do plugin
 # ---------------------------------------------------------------------------
 set(TOPSCREEN_SOURCES
     src/plugin-main.cpp
     src/ts-filter.cpp
     src/ts-settings.cpp
     src/ts-properties.cpp
+    src/ts-presets.cpp
     src/render/ts-compositor.cpp
-    src/dynamics/ts-spring.cpp
     src/input/ts-input.cpp
     src/input/ts-input-platform.cpp
     src/hotkeys/ts-hotkeys.cpp
     src/text/ts-sdf-font.cpp
     src/audio/ts-click-sound.cpp
+    ${TOPSCREEN_CORE_SOURCES}
 )
 
 if(TOPSCREEN_HAVE_QT)
@@ -108,7 +125,6 @@ elseif(UNIX)
         target_link_libraries(topscreen PRIVATE X11::X11)
         message(STATUS "TopScreen: X11 input backend enabled")
     endif()
-    # libevdev/libinput (Tier 3 - Wayland) — opcional nesta fase
     find_package(PkgConfig QUIET)
     if(PkgConfig_FOUND)
         pkg_check_modules(LIBEVDEV QUIET libevdev)
@@ -127,9 +143,21 @@ set_target_properties(topscreen PROPERTIES
 )
 
 # ---------------------------------------------------------------------------
+# Testes do nucleo (nao dependem do OBS)
+# ---------------------------------------------------------------------------
+if(TOPSCREEN_BUILD_TESTS)
+    enable_testing()
+    file(GLOB TOPSCREEN_TEST_SOURCES CONFIGURE_DEPENDS tests/*.cpp)
+    add_executable(topscreen_tests ${TOPSCREEN_TEST_SOURCES} ${TOPSCREEN_CORE_SOURCES})
+    target_include_directories(topscreen_tests PRIVATE src)
+    target_compile_definitions(topscreen_tests PRIVATE
+        TOPSCREEN_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data")
+    add_test(NAME topscreen_tests COMMAND topscreen_tests)
+endif()
+
+# ---------------------------------------------------------------------------
 # Instalação
 # ---------------------------------------------------------------------------
-# Linux: biblioteca em <libdir>/obs-plugins, dados em <datadir>/obs/obs-plugins/<name>
 if(UNIX AND NOT APPLE)
     install(TARGETS topscreen LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}/obs-plugins")
     install(DIRECTORY data/ DESTINATION "${CMAKE_INSTALL_DATADIR}/obs/obs-plugins/topscreen")
@@ -140,4 +168,4 @@ if(WIN32)
     install(DIRECTORY data/ DESTINATION "obs-plugins/64bit/topscreen")
 endif()
 
-message(STATUS "TopScreen: Qt=${TOPSCREEN_HAVE_QT} frontend=${TOPSCREEN_HAVE_FRONTEND}")
+message(STATUS "TopScreen: Qt=${TOPSCREEN_HAVE_QT} frontend=${TOPSCREEN_HAVE_FRONTEND} tests=${TOPSCREEN_BUILD_TESTS}")

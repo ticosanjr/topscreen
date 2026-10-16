@@ -104,10 +104,31 @@ data\                         ->  <obs>\obs-plugins\64bit\topscreen\
 |-------|--------|--------|
 | `ENABLE_QT` | `ON` | Compila o dock Qt |
 | `ENABLE_FRONTEND_API` | `ON` | Usa `obs-frontend-api` (necessário para o dock) |
+| `TOPSCREEN_BUILD_TESTS` | `ON` | Compila os testes do núcleo (não dependem do OBS) |
 | `CMAKE_BUILD_TYPE` | `Release` | Tipo de build em geradores single-config |
 
 Defines automáticos: `TOPSCREEN_VERSION`, `TOPSCREEN_HAVE_QT`,
 `TOPSCREEN_HAVE_FRONTEND`, `TOPSCREEN_HAVE_X11`, `TOPSCREEN_HAVE_EVDEV`.
+
+---
+
+## Testes
+
+Os testes do **núcleo** não dependem de libobs/cmake e rodam em qualquer lugar:
+
+```bash
+./tests/run.sh          # compila com g++ e roda
+```
+
+Com CMake:
+
+```bash
+cmake -S . -B build -DTOPSCREEN_BUILD_TESTS=ON
+cmake --build build -j
+ctest --test-dir build --output-on-failure
+```
+
+Veja [`TESTES.md`](TESTES.md) para a cobertura e o que ainda precisa de um OBS real.
 
 ---
 

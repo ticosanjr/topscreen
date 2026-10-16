@@ -1,0 +1,68 @@
+# Testes
+
+## Como rodar
+
+**Local (sem cmake/libobs):**
+
+```bash
+./tests/run.sh
+```
+
+Compila o núcleo + os testes com `g++` e executa.
+
+**Via CMake/CTest:**
+
+```bash
+cmake -S . -B build -DTOPSCREEN_BUILD_TESTS=ON
+cmake --build build -j
+ctest --test-dir build --output-on-failure
+```
+
+**CI:** `.github/workflows/tests.yml` roda em Linux e Windows a cada push/PR.
+
+## O que é testado
+
+Os testes cobrem o **núcleo puro** (`src/core/`), que não depende do OBS. É onde
+vive toda a matemática e a lógica de estado — o que de fato precisa estar certo.
+
+| Arquivo | Alvo | Cobertura |
+|---------|------|-----------|
+| `test_color.cpp` | `core/color.hpp` | unpack/pack ABGR roundtrip, interpolação e recorte |
+| `test_easing.cpp` | `core/easing.*` | extremos, recorte de domínio, monotonicidade, simetria |
+| `test_spring.cpp` | `core/spring.*` | convergência, ausência de overshoot, reset, estabilidade com dt grande |
+| `test_geometry.cpp` | `core/geometry.*` | SDF de retângulo arredondado, máscara com AA, transform de zoom, pixel→conteúdo, clamp de foco |
+| `test_coord.cpp` | `core/coord.*` | mapeamento tela↔conteúdo, limites do monitor, casos inválidos |
+| `test_cursor.cpp` | `core/cursor.*` | posição inicial, perseguição de alvo, idle/fade, loop, desabilitado |
+| `test_click_fx.cpp` | `core/click_fx.*` | spawn, progresso, expiração, L/R distintos, reciclagem de slots, saturação |
+| `test_zoom.cpp` | `core/zoom.*` | passo manual e limites, auto com foco recente, retorno no idle, modo off, clamp de foco |
+| `test_json.cpp` | `core/json.*` | objeto/array/aninhado, números, escapes (`\uXXXX`), erros |
+| `test_preset.cpp` | `core/preset.*` | parse + apply, campos ausentes mantidos, erros, **arquivos reais** `data/presets/*.json` |
+
+## Números atuais
+
+```
+45 testes | 569 verificações | 0 falhas
+```
+
+## O que NÃO é coberto (e por quê)
+
+Estes itens dependem de `libobs`/GPU/OS e não rodam neste ambiente:
+
+| Item | Por que não testado aqui | Como verificar |
+|------|--------------------------|----------------|
+| Shader `topscreen.effect` | precisa de contexto OpenGL/D3D do OBS | carregar o filtro no OBS e conferir visualmente |
+| Integração `obs_source_info` | precisa do OBS em execução | `obs --verbose` e checar o log do TopScreen |
+| Backends de input | precisam de WinAPI/X11 reais | testar cursor/cliques no OBS |
+| Dock Qt | precisa de Qt6 + frontend | abrir o dock no OBS |
+| Som de clique | ainda é stub (T3.6) | — |
+
+A estratégia é: **empurrar a complexidade para o núcleo testável** e manter a
+camada de OBS fina. Ainda assim, o shader e a integração precisam de uma
+passada em um OBS real (é o próximo marco de verificação).
+
+## Adicionando testes
+
+1. Crie `tests/test_<assunto>.cpp`.
+2. Use as macros de `tests/test_framework.hpp` (`TEST`, `CHECK`, `CHECK_NEAR`,
+   `CHECK_EQ`, `REQUIRE`).
+3. Rode `./tests/run.sh`. O CMake pega o arquivo automaticamente (`GLOB`).

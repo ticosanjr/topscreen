@@ -1,6 +1,6 @@
 #pragma once
 
-namespace topscreen {
+namespace topscreen::core {
 
 /**
  * Mola 1D criticamente amortecida.
@@ -19,6 +19,7 @@ public:
 
 	double value() const { return value_; }
 	double velocity() const { return velocity_; }
+	double target() const { return target_; }
 
 private:
 	double value_ = 0.0;
@@ -28,10 +29,4 @@ private:
 	double damping_ = 1.0;
 };
 
-/* Easings normalizados (entrada 0..1, saida 0..1). */
-double ease_linear(double t);
-double ease_in_out_cubic(double t);
-double ease_out_cubic(double t);
-double ease_in_cubic(double t);
-
-} // namespace topscreen
+} // namespace topscreen::core

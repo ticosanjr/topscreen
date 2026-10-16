@@ -1,0 +1,58 @@
+#pragma once
+
+/**
+ * Nomes das chaves de configuracao.
+ *
+ * Fonte unica de verdade, usada tanto pelo mapeamento obs_data (plugin) quanto
+ * pelos arquivos de preset (nucleo).
+ */
+namespace topscreen::core::keys {
+
+inline constexpr const char *kEffectsEnabled = "effects_enabled";
+
+inline constexpr const char *kBgEnabled = "bg_enabled";
+inline constexpr const char *kBgMode = "bg_mode";
+inline constexpr const char *kBgColorA = "bg_color_a";
+inline constexpr const char *kBgColorB = "bg_color_b";
+inline constexpr const char *kBgPadding = "bg_padding";
+inline constexpr const char *kBgCornerRadius = "bg_corner_radius";
+inline constexpr const char *kBgShadow = "bg_shadow";
+inline constexpr const char *kBgShadowAlpha = "bg_shadow_alpha";
+inline constexpr const char *kBgShadowBlur = "bg_shadow_blur";
+
+inline constexpr const char *kCursorEnabled = "cursor_enabled";
+inline constexpr const char *kCursorStyle = "cursor_style";
+inline constexpr const char *kCursorSize = "cursor_size";
+inline constexpr const char *kCursorShadow = "cursor_shadow";
+inline constexpr const char *kCursorSmooth = "cursor_smooth";
+inline constexpr const char *kCursorSway = "cursor_sway";
+inline constexpr const char *kCursorHideIdle = "cursor_hide_idle";
+inline constexpr const char *kCursorIdleDelayMs = "cursor_idle_delay_ms";
+inline constexpr const char *kCursorLoop = "cursor_loop";
+inline constexpr const char *kCursorLoopMs = "cursor_loop_ms";
+
+inline constexpr const char *kZoomMode = "zoom_mode";
+inline constexpr const char *kZoomAmount = "zoom_amount";
+inline constexpr const char *kZoomDurationMs = "zoom_duration_ms";
+inline constexpr const char *kZoomIdleTimeoutMs = "zoom_idle_timeout_ms";
+inline constexpr const char *kZoomPanAmount = "zoom_pan_amount";
+
+inline constexpr const char *kClickLeftEffect = "click_left_effect";
+inline constexpr const char *kClickLeftSize = "click_left_size";
+inline constexpr const char *kClickLeftColor = "click_left_color";
+inline constexpr const char *kClickLeftDurationMs = "click_left_duration_ms";
+inline constexpr const char *kClickLeftEasing = "click_left_easing";
+
+inline constexpr const char *kClickRightEffect = "click_right_effect";
+inline constexpr const char *kClickRightSize = "click_right_size";
+inline constexpr const char *kClickRightColor = "click_right_color";
+inline constexpr const char *kClickRightDurationMs = "click_right_duration_ms";
+inline constexpr const char *kClickRightEasing = "click_right_easing";
+
+inline constexpr const char *kClickSoundEnabled = "click_sound_enabled";
+inline constexpr const char *kClickSoundFile = "click_sound_file";
+inline constexpr const char *kClickSoundVolume = "click_sound_volume";
+inline constexpr const char *kClickSoundLeft = "click_sound_left";
+inline constexpr const char *kClickSoundRight = "click_sound_right";
+
+} // namespace topscreen::core::keys

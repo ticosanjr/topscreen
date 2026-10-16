@@ -1,0 +1,49 @@
+name: Build plugin
+
+# Workflow manual (best-effort) para compilar o plugin contra o libobs.
+# Execute em Actions > Build plugin > Run workflow.
+#
+# O build do plugin depende do libobs/obs-frontend-api/Qt6 do ambiente. Ajuste
+# CMAKE_PREFIX_PATH conforme a instalacao (ver docs/BUILD.md). O job de testes
+# do nucleo (tests.yml) roda automaticamente em push/PR.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake build-essential qt6-base-dev libx11-dev pkg-config
+
+      - name: Configure (find libobs)
+        run: |
+          if pkg-config --exists libobs; then
+            cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+          else
+            echo "::warning::libobs não encontrado. Defina CMAKE_PREFIX_PATH para uma instalação do OBS."
+            cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DTOPSCREEN_BUILD_TESTS=ON || true
+          fi
+
+      - name: Build
+        run: cmake --build build -j || true
+
+      - name: Tests (se compilou)
+        run: ctest --test-dir build --output-on-failure || true
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        run: |
+          cmake -S . -B build -G "Visual Studio 17 2022" -A x64
+
+      - name: Build
+        run: cmake --build build --config Release

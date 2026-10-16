@@ -1,0 +1,41 @@
+name: Tests
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  core-tests:
+    name: Core tests (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build & run core tests (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          g++ -std=c++20 -O1 -g -Wall -Wextra \
+            -I src \
+            -DTOPSCREEN_TEST_DATA_DIR="$PWD/data" \
+            tests/*.cpp src/core/*.cpp \
+            -o topscreen_tests
+          ./topscreen_tests
+
+      - name: Build & run core tests (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $files = @(Get-ChildItem tests/*.cpp | ForEach-Object { $_.FullName })
+          $core  = @(Get-ChildItem src/core/*.cpp | ForEach-Object { $_.FullName })
+          g++ -std=c++20 -O1 -g -Wall -Wextra `
+            -I src `
+            -DTOPSCREEN_TEST_DATA_DIR="$PWD/data" `
+            @files @core `
+            -o topscreen_tests.exe
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          .\topscreen_tests.exe

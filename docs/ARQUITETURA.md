@@ -22,19 +22,41 @@ aplica uma cadeia de passes GPU e devolve o resultado. Nada sai do processo do O
 
 ## Módulos
 
+O código é dividido em **núcleo puro** (`src/core/`, sem dependência do OBS e
+coberto por testes) e **camada OBS** (fina, apenas liga o núcleo ao libobs).
+
+### Núcleo puro (`src/core/`) — testável
+
+| Módulo | Arquivo | Responsabilidade |
+|--------|---------|------------------|
+| Tipos/cor | `types.hpp`, `color.hpp` | Enums estáveis, ABGR↔RGBA, interpolação |
+| Easing | `easing.{hpp,cpp}` | Curvas de animação |
+| Mola | `spring.{hpp,cpp}` | Mola criticamente amortecida (com subpassos estáveis) |
+| Geometria | `geometry.{hpp,cpp}` | SDF de canto arredondado, máscara, transform de zoom, clamp de foco |
+| Coordenadas | `coord.{hpp,cpp}` | Mapeamento tela↔conteúdo, monitor |
+| Cursor | `cursor.{hpp,cpp}` | Suavização, sway, idle, loop |
+| Cliques | `click_fx.{hpp,cpp}` | Fila de animações de clique L/R |
+| Zoom | `zoom.{hpp,cpp}` | Auto/manual, pan, timeout de inatividade |
+| JSON | `json.{hpp,cpp}` | Parser JSON sem dependências |
+| Preset | `preset.{hpp,cpp}` | Parse + aplicação de presets |
+| Config | `config.hpp`, `keys.hpp` | `Config` e nomes de chaves (fonte única) |
+
+### Camada OBS
+
 | Módulo | Arquivo | Responsabilidade |
 |--------|---------|------------------|
 | Plugin | `src/plugin-main.cpp` | `OBS_DECLARE_MODULE`, registro de fonte, dock |
-| Filtro | `src/ts-filter.cpp` | `obs_source_info`, ciclo de vida, render, atalhos |
-| Settings | `src/ts-settings.{hpp,cpp}` | Estrutura de config, defaults, load/save |
+| Filtro | `src/ts-filter.cpp` | `obs_source_info`, ciclo de vida, tick/render, atalhos |
+| Settings | `src/ts-settings.{hpp,cpp}` | Mapeamento obs_data ↔ `core::Config` |
 | Propriedades | `src/ts-properties.{hpp,cpp}` | UI nativa (obs_properties) |
+| Presets | `src/ts-presets.{hpp,cpp}` | Carrega `data/presets/*.json` |
 | Compositor | `src/render/ts-compositor.{hpp,cpp}` | Efeito shader + upload de parâmetros |
-| Dynamics | `src/dynamics/ts-spring.{hpp,cpp}` | Mola criticamente amortecida, easing, idle |
-| Input | `src/input/ts-input.{hpp,cpp}` + `ts-input-platform.cpp` | Estado de cursor/botões/teclas |
+| Frame | `src/render/ts-frame.hpp` | Estado por frame (cursor/zoom/cliques) |
+| Input | `src/input/ts-input.*` + `ts-input-platform.cpp` | Estado de cursor/botões/teclas |
 | Hotkeys | `src/hotkeys/ts-hotkeys.{hpp,cpp}` | Registro de atalhos + callbacks |
-| Texto | `src/text/ts-sdf-font.{hpp,cpp}` | Fonte SDF (overlay de teclas) |
-| Áudio | `src/audio/ts-click-sound.{hpp,cpp}` | Som de clique |
-| UI | `src/ui/ts-dock.{hpp,cpp}` | Dock Qt (presets/toggles) — opcional |
+| Texto | `src/text/ts-sdf-font.{hpp,cpp}` | Fonte SDF (F5) |
+| Áudio | `src/audio/ts-click-sound.{hpp,cpp}` | Som de clique (F3/F6) |
+| UI | `src/ui/ts-dock.{hpp,cpp}` | Dock Qt (opcional) |
 
 ## Pipeline de render
 

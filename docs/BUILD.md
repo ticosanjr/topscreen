@@ -1,20 +1,50 @@
 # Build
 
-## Instalação rápida (Linux)
+## Instalação rápida
 
-Se você já tem o OBS instalado e quer só compilar/instalar:
+### Linux
 
 ```bash
-# sem libobs-dev? instale primeiro:
-sudo apt install libobs-dev          # ou use o PPA do OBS
+# dependencias (uma vez)
+sudo apt update && sudo apt install -y cmake build-essential libobs-dev
+# opcional (dock): sudo apt install -y qt6-base-dev
 
-chmod +x scripts/build-install.sh
-scripts/build-install.sh                 # só compila
-scripts/build-install.sh --user          # instala só para você (sem sudo)
-scripts/build-install.sh --system        # instala no OBS do sistema (sudo)scripts/build-install.sh --dir <pasta>   # copia para a pasta de plugins do OBS
+./scripts/install-linux.sh            # plugin de usuario (sem sudo)
+./scripts/install-linux.sh --system   # OBS do sistema (usa sudo)
 ```
 
-O script auto-detecta os headers e a biblioteca do libobs.
+### Windows
+
+```powershell
+# dependencias (uma vez): cmake + Visual Studio Build Tools
+winget install Kitware.CMake
+winget install Microsoft.VisualStudio.2022.BuildTools
+
+# sem compilar aqui (use um topscreen.dll pronto):
+pwsh -File scripts\install-windows.ps1 -Dll .\topscreen.dll
+
+# compilar + instalar como plugin de usuario:
+pwsh -File scripts\install-windows.ps1 -ObsDevDir C:\obs-dev
+
+# ou instalar num OBS portable:
+pwsh -File scripts\install-windows.ps1 -ObsDir D:\OBS
+```
+
+> **Windows:** compilar exige o **libobs dev** (headers + .lib). Se você só tem o
+> OBS instalado, use `-Dll` com um binário já compilado, ou compile contra uma
+> pasta de desenvolvimento do OBS com `-ObsDevDir`.
+
+### Testes (nas duas plataformas)
+
+```bash
+./tests/run.sh                                   # Linux (g++ direto)
+cmake -S . -B build-tests -DTOPSCREEN_BUILD_PLUGIN=OFF   # qualquer SO
+cmake --build build-tests && ctest --test-dir build-tests --output-on-failure
+```
+
+```powershell
+pwsh -File tests\run.ps1                         # Windows (ou PowerShell em qualquer SO)
+```
 
 > **Importante:** o log do OBS vai para o **stderr**. Use `2>&1`:
 > `obs --verbose 2>&1 | grep -i topscreen`, ou veja
@@ -28,7 +58,7 @@ O script auto-detecta os headers e a biblioteca do libobs.
   oficial de desenvolvimento, ou de um build local do OBS.
 - **Qt6 Widgets** e **obs-frontend-api** (opcionais; necessários para o dock)
 - X11 (`libx11-dev`) no Linux para o backend de input X11
-- `libevdev` (opcional, Tier 3 Wayland — F7)
+- `linux/input.h` (linux-libc-dev) para o backend evdev (Tier 3)
 
 > Este repositório **não** empacota as dependências. O `CMakeLists.txt` procura
 > `libobs` via `find_package(libobs)`; se não achar, cai para `pkg-config libobs`.

@@ -13,12 +13,13 @@ endif()
 
 include(GNUInstallDirs)
 
-option(ENABLE_QT            "Build the TopScreen Qt dock"        ON)
-option(ENABLE_FRONTEND_API  "Use obs-frontend-api for the dock"  ON)
-option(TOPSCREEN_BUILD_TESTS "Build the core unit tests"         ON)
+option(TOPSCREEN_BUILD_PLUGIN "Build the OBS plugin"          ON)
+option(TOPSCREEN_BUILD_TESTS  "Build the core unit tests"     ON)
+option(ENABLE_QT              "Build the TopScreen Qt dock"   ON)
+option(ENABLE_FRONTEND_API    "Use obs-frontend-api for dock" ON)
 
 # ---------------------------------------------------------------------------
-# Nucleo (independente do OBS) - tambem usado pelos testes
+# Nucleo (independente do OBS) - usado pelo plugin e pelos testes
 # ---------------------------------------------------------------------------
 set(TOPSCREEN_CORE_SOURCES
     src/core/easing.cpp
@@ -39,146 +40,151 @@ set(TOPSCREEN_CORE_SOURCES
 )
 
 # ---------------------------------------------------------------------------
-# libobs
+# Plugin
 # ---------------------------------------------------------------------------
-find_package(libobs QUIET)
+if(TOPSCREEN_BUILD_PLUGIN)
 
-if(NOT libobs_FOUND)
-    # Fallback 1: pkg-config (algumas distros instalam libobs.pc)
-    find_package(PkgConfig QUIET)
-    if(PkgConfig_FOUND)
-        pkg_check_modules(LIBOBS QUIET IMPORTED_TARGET libobs)
-    endif()
-    if(LIBOBS_FOUND)
-        message(STATUS "TopScreen: libobs via pkg-config")
-        add_library(OBS::libobs ALIAS PkgConfig::LIBOBS)
-    else()
-        # Fallback 2: auto-deteccao / caminhos manuais
-        set(LIBOBS_INCLUDE_DIR "" CACHE PATH "Diretorio dos headers do libobs (contendo obs-module.h)")
-        set(LIBOBS_LIBRARY "" CACHE FILEPATH "Caminho da biblioteca do libobs (.so/.dll)")
+    # ---- libobs ----
+    find_package(libobs QUIET)
 
-        find_path(TOPSCREEN_LIBOBS_INCLUDE_DIR obs-module.h
-            HINTS "${LIBOBS_INCLUDE_DIR}"
-            PATHS /usr/include/obs /usr/local/include/obs)
-        find_library(TOPSCREEN_LIBOBS_LIBRARY
-            NAMES obs libobs
-            HINTS "${LIBOBS_LIBRARY}"
-            PATHS /usr/lib/x86_64-linux-gnu /usr/lib /usr/local/lib /lib/x86_64-linux-gnu)
-
-        if(TOPSCREEN_LIBOBS_INCLUDE_DIR AND TOPSCREEN_LIBOBS_LIBRARY)
-            message(STATUS "TopScreen: libobs via auto-deteccao (${TOPSCREEN_LIBOBS_LIBRARY})")
-            add_library(OBS::libobs UNKNOWN IMPORTED)
-            set_target_properties(OBS::libobs PROPERTIES
-                IMPORTED_LOCATION "${TOPSCREEN_LIBOBS_LIBRARY}"
-                INTERFACE_INCLUDE_DIRECTORIES "${TOPSCREEN_LIBOBS_INCLUDE_DIR}")
+    if(NOT libobs_FOUND)
+        find_package(PkgConfig QUIET)
+        if(PkgConfig_FOUND)
+            pkg_check_modules(LIBOBS QUIET IMPORTED_TARGET libobs)
+        endif()
+        if(LIBOBS_FOUND)
+            message(STATUS "TopScreen: libobs via pkg-config")
+            add_library(OBS::libobs ALIAS PkgConfig::LIBOBS)
         else()
-            message(FATAL_ERROR
-                "libobs nao encontrado.\n"
-                "Instale o pacote de desenvolvimento do OBS, ou passe:\n"
-                "  -DLIBOBS_INCLUDE_DIR=/caminho/para/headers/do/libobs\n"
-                "  -DLIBOBS_LIBRARY=/caminho/para/libobs.so\n"
-                "Ou rode scripts/build-install.sh. Ver docs/BUILD.md.")
+            set(LIBOBS_INCLUDE_DIR "" CACHE PATH "Headers do libobs (obs-module.h)")
+            set(LIBOBS_LIBRARY "" CACHE FILEPATH "Biblioteca do libobs (.so/.lib)")
+
+            find_path(TOPSCREEN_LIBOBS_INCLUDE_DIR obs-module.h
+                HINTS "${LIBOBS_INCLUDE_DIR}"
+                PATHS /usr/include/obs /usr/local/include/obs)
+            find_library(TOPSCREEN_LIBOBS_LIBRARY
+                NAMES obs libobs
+                HINTS "${LIBOBS_LIBRARY}"
+                PATHS /usr/lib/x86_64-linux-gnu /usr/lib /usr/local/lib)
+
+            if(TOPSCREEN_LIBOBS_INCLUDE_DIR AND TOPSCREEN_LIBOBS_LIBRARY)
+                message(STATUS "TopScreen: libobs via auto-deteccao (${TOPSCREEN_LIBOBS_LIBRARY})")
+                add_library(OBS::libobs UNKNOWN IMPORTED)
+                set_target_properties(OBS::libobs PROPERTIES
+                    IMPORTED_LOCATION "${TOPSCREEN_LIBOBS_LIBRARY}"
+                    INTERFACE_INCLUDE_DIRECTORIES "${TOPSCREEN_LIBOBS_INCLUDE_DIR}")
+            else()
+                message(FATAL_ERROR
+                    "libobs nao encontrado.\n"
+                    "Instale o pacote de desenvolvimento do OBS, ou passe:\n"
+                    "  -DLIBOBS_INCLUDE_DIR=/caminho/para/headers\n"
+                    "  -DLIBOBS_LIBRARY=/caminho/para/libobs\n"
+                    "Ou use -DTOPSCREEN_BUILD_PLUGIN=OFF para compilar so os testes.\n"
+                    "Ver docs/BUILD.md.")
+            endif()
+        endif()
+    else()
+        message(STATUS "TopScreen: using libobs from ${libobs_DIR}")
+    endif()
+
+    # ---- obs-frontend-api (opcional; necessario para o dock) ----
+    set(TOPSCREEN_HAVE_FRONTEND OFF)
+    if(ENABLE_FRONTEND_API)
+        find_package(obs-frontend-api QUIET)
+        if(obs-frontend-api_FOUND)
+            set(TOPSCREEN_HAVE_FRONTEND ON)
+        else()
+            message(STATUS "TopScreen: obs-frontend-api nao encontrado, dock desativado")
         endif()
     endif()
+
+    # ---- Qt6 (opcional) ----
+    set(TOPSCREEN_HAVE_QT OFF)
+    if(ENABLE_QT AND TOPSCREEN_HAVE_FRONTEND)
+        find_package(Qt6 QUIET COMPONENTS Widgets)
+        if(Qt6_FOUND)
+            set(TOPSCREEN_HAVE_QT ON)
+        else()
+            message(STATUS "TopScreen: Qt6 nao encontrado, dock desativado")
+        endif()
+    endif()
+
+    # ---- fontes ----
+    set(TOPSCREEN_SOURCES
+        src/plugin-main.cpp
+        src/ts-filter.cpp
+        src/ts-settings.cpp
+        src/ts-properties.cpp
+        src/ts-presets.cpp
+        src/ts-registry.cpp
+        src/render/ts-compositor.cpp
+        src/render/ts-text.cpp
+        src/input/ts-input.cpp
+        src/input/ts-input-platform.cpp
+        src/hotkeys/ts-hotkeys.cpp
+        src/text/ts-sdf-font.cpp
+        src/audio/ts-click-sound.cpp
+        ${TOPSCREEN_CORE_SOURCES}
+    )
+
+    if(TOPSCREEN_HAVE_QT)
+        list(APPEND TOPSCREEN_SOURCES src/ui/ts-dock.cpp)
+    endif()
+
+    add_library(topscreen MODULE ${TOPSCREEN_SOURCES})
+    target_include_directories(topscreen PRIVATE src third_party)
+    target_link_libraries(topscreen PRIVATE OBS::libobs)
+    target_compile_definitions(topscreen PRIVATE TOPSCREEN_VERSION="${PROJECT_VERSION}")
+
+    if(TOPSCREEN_HAVE_FRONTEND)
+        target_compile_definitions(topscreen PRIVATE TOPSCREEN_HAVE_FRONTEND)
+        target_link_libraries(topscreen PRIVATE OBS::obs-frontend-api)
+    endif()
+
+    if(TOPSCREEN_HAVE_QT)
+        target_compile_definitions(topscreen PRIVATE TOPSCREEN_HAVE_QT)
+        target_link_libraries(topscreen PRIVATE Qt6::Widgets)
+        set_target_properties(topscreen PROPERTIES AUTOMOC ON)
+    endif()
+
+    if(WIN32)
+        target_link_libraries(topscreen PRIVATE user32 winmm)
+    elseif(UNIX)
+        find_package(X11 QUIET)
+        if(X11_FOUND)
+            target_compile_definitions(topscreen PRIVATE TOPSCREEN_HAVE_X11)
+            target_link_libraries(topscreen PRIVATE X11::X11)
+            message(STATUS "TopScreen: backend de input X11 habilitado")
+        endif()
+        include(CheckIncludeFile)
+        check_include_file(linux/input.h TOPSCREEN_HAVE_LINUX_INPUT)
+        if(TOPSCREEN_HAVE_LINUX_INPUT)
+            target_compile_definitions(topscreen PRIVATE TOPSCREEN_HAVE_EVDEV)
+            message(STATUS "TopScreen: backend de input evdev habilitado (/dev/input)")
+        endif()
+    endif()
+
+    set_target_properties(topscreen PROPERTIES
+        PREFIX ""
+        OUTPUT_NAME "topscreen"
+        FOLDER "plugins"
+    )
+
+    # ---- instalacao ----
+    if(UNIX AND NOT APPLE)
+        install(TARGETS topscreen LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}/obs-plugins")
+        install(DIRECTORY data/ DESTINATION "${CMAKE_INSTALL_DATADIR}/obs/obs-plugins/topscreen")
+    endif()
+    if(WIN32)
+        install(TARGETS topscreen RUNTIME DESTINATION "obs-plugins/64bit")
+        install(DIRECTORY data/ DESTINATION "obs-plugins/64bit/topscreen")
+    endif()
+
+    message(STATUS "TopScreen: Qt=${TOPSCREEN_HAVE_QT} frontend=${TOPSCREEN_HAVE_FRONTEND}")
+
 else()
-    message(STATUS "TopScreen: using libobs from ${libobs_DIR}")
+    message(STATUS "TopScreen: plugin desativado (apenas testes)")
 endif()
-
-# ---------------------------------------------------------------------------
-# obs-frontend-api (opcional)
-# ---------------------------------------------------------------------------
-set(TOPSCREEN_HAVE_FRONTEND OFF)
-if(ENABLE_FRONTEND_API)
-    find_package(obs-frontend-api QUIET)
-    if(obs-frontend-api_FOUND)
-        set(TOPSCREEN_HAVE_FRONTEND ON)
-    else()
-        message(STATUS "TopScreen: obs-frontend-api not found, dock disabled")
-    endif()
-endif()
-
-# ---------------------------------------------------------------------------
-# Qt6 (opcional, só com frontend)
-# ---------------------------------------------------------------------------
-set(TOPSCREEN_HAVE_QT OFF)
-if(ENABLE_QT AND TOPSCREEN_HAVE_FRONTEND)
-    find_package(Qt6 QUIET COMPONENTS Widgets)
-    if(Qt6_FOUND)
-        set(TOPSCREEN_HAVE_QT ON)
-    else()
-        message(STATUS "TopScreen: Qt6 not found, dock disabled")
-    endif()
-endif()
-
-# ---------------------------------------------------------------------------
-# Fontes do plugin
-# ---------------------------------------------------------------------------
-set(TOPSCREEN_SOURCES
-    src/plugin-main.cpp
-    src/ts-filter.cpp
-    src/ts-settings.cpp
-    src/ts-properties.cpp
-    src/ts-presets.cpp
-    src/ts-registry.cpp
-    src/render/ts-compositor.cpp
-    src/render/ts-text.cpp
-    src/input/ts-input.cpp
-    src/input/ts-input-platform.cpp
-    src/hotkeys/ts-hotkeys.cpp
-    src/text/ts-sdf-font.cpp
-    src/audio/ts-click-sound.cpp
-    ${TOPSCREEN_CORE_SOURCES}
-)
-
-if(TOPSCREEN_HAVE_QT)
-    list(APPEND TOPSCREEN_SOURCES src/ui/ts-dock.cpp)
-endif()
-
-add_library(topscreen MODULE ${TOPSCREEN_SOURCES})
-
-target_include_directories(topscreen PRIVATE src third_party)
-target_link_libraries(topscreen PRIVATE OBS::libobs)
-
-target_compile_definitions(topscreen PRIVATE
-    TOPSCREEN_VERSION="${PROJECT_VERSION}"
-)
-
-if(TOPSCREEN_HAVE_FRONTEND)
-    target_compile_definitions(topscreen PRIVATE TOPSCREEN_HAVE_FRONTEND)
-    target_link_libraries(topscreen PRIVATE OBS::obs-frontend-api)
-endif()
-
-if(TOPSCREEN_HAVE_QT)
-    target_compile_definitions(topscreen PRIVATE TOPSCREEN_HAVE_QT)
-    target_link_libraries(topscreen PRIVATE Qt6::Widgets)
-    set_target_properties(topscreen PROPERTIES AUTOMOC ON)
-endif()
-
-# ---------------------------------------------------------------------------
-# Plataformas
-# ---------------------------------------------------------------------------
-if(WIN32)
-    target_link_libraries(topscreen PRIVATE user32 winmm)
-elseif(UNIX)
-    find_package(X11 QUIET)
-    if(X11_FOUND)
-        target_compile_definitions(topscreen PRIVATE TOPSCREEN_HAVE_X11)
-        target_link_libraries(topscreen PRIVATE X11::X11)
-        message(STATUS "TopScreen: X11 input backend enabled")
-    endif()
-    include(CheckIncludeFile)
-    check_include_file(linux/input.h TOPSCREEN_HAVE_LINUX_INPUT)
-    if(TOPSCREEN_HAVE_LINUX_INPUT)
-        target_compile_definitions(topscreen PRIVATE TOPSCREEN_HAVE_EVDEV)
-        message(STATUS "TopScreen: evdev input backend enabled (/dev/input)")
-    endif()
-endif()
-
-set_target_properties(topscreen PROPERTIES
-    PREFIX ""
-    OUTPUT_NAME "topscreen"
-    FOLDER "plugins"
-)
 
 # ---------------------------------------------------------------------------
 # Testes do nucleo (nao dependem do OBS)
@@ -194,17 +200,4 @@ if(TOPSCREEN_BUILD_TESTS)
     add_test(NAME topscreen_tests COMMAND topscreen_tests)
 endif()
 
-# ---------------------------------------------------------------------------
-# Instalação
-# ---------------------------------------------------------------------------
-if(UNIX AND NOT APPLE)
-    install(TARGETS topscreen LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}/obs-plugins")
-    install(DIRECTORY data/ DESTINATION "${CMAKE_INSTALL_DATADIR}/obs/obs-plugins/topscreen")
-endif()
-
-if(WIN32)
-    install(TARGETS topscreen RUNTIME DESTINATION "obs-plugins/64bit")
-    install(DIRECTORY data/ DESTINATION "obs-plugins/64bit/topscreen")
-endif()
-
-message(STATUS "TopScreen: Qt=${TOPSCREEN_HAVE_QT} frontend=${TOPSCREEN_HAVE_FRONTEND} tests=${TOPSCREEN_BUILD_TESTS}")
+message(STATUS "TopScreen: plugin=${TOPSCREEN_BUILD_PLUGIN} tests=${TOPSCREEN_BUILD_TESTS}")

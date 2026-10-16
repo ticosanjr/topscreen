@@ -77,15 +77,28 @@ integração com o OBS ainda precisam de uma passada em um OBS real.
 - CMake 3.20+, compilador C++20
 - Qt6 (opcional, para o dock)
 
-## Compilação (resumo)
+## Instalação (simples)
+
+**Linux**
+```bash
+./scripts/install-linux.sh            # plugin de usuário (sem sudo)
+./scripts/install-linux.sh --system   # OBS do sistema (usa sudo)
+```
+
+**Windows**
+```powershell
+pwsh -File scripts\install-windows.ps1                    # plugin de usuário
+pwsh -File scripts\install-windows.ps1 -ObsDir D:\OBS     # OBS portable
+pwsh -File scripts\install-windows.ps1 -Dll .\topscreen.dll
+```
+
+**Testes (núcleo, nas duas plataformas)**
+```bash
+./tests/run.sh            # Linux
+pwsh -File tests\run.ps1  # Windows (ou PowerShell em qualquer SO)
+```
 
 Veja [`docs/BUILD.md`](docs/BUILD.md) para o passo a passo completo.
-
-```bash
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build -j
-cmake --install build
-```
 
 ---
 

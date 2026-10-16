@@ -6,6 +6,14 @@
 #include <cstdlib>
 #include <string>
 
+#if defined(_WIN32)
+#define TS_SETENV(k, v) _putenv_s(k, v)
+#define TS_UNSETENV(k) _putenv_s(k, "")
+#else
+#define TS_SETENV(k, v) ::setenv(k, v, 1)
+#define TS_UNSETENV(k) ::unsetenv(k)
+#endif
+
 #include "core/keys.hpp"
 #include "ts-filter.hpp"
 #include "ts-registry.hpp"
@@ -134,7 +142,7 @@ TEST(integration_overlay_de_teclas)
 	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
 
 	/* Injeta teclas pelo gancho de depuracao (sem back-end de input). */
-	::setenv("TOPSCREEN_DEBUG_KEY", "Ctrl", 1);
+	TS_SETENV("TOPSCREEN_DEBUG_KEY", "Ctrl");
 
 	obs_source_t *parent = make_parent(1920, 1080);
 	obs_source_t *filter = fakeobs::make_source(&ts_filter_source_info, parent, 0, 0);
@@ -150,7 +158,7 @@ TEST(integration_overlay_de_teclas)
 		ts_filter_source_info.video_render(ctx, nullptr);
 	}
 
-	::unsetenv("TOPSCREEN_DEBUG_KEY");
+	TS_UNSETENV("TOPSCREEN_DEBUG_KEY");
 
 	ts_filter_source_info.destroy(ctx);
 	CHECK(registry_first() == nullptr);

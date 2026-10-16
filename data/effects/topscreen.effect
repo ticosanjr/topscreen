@@ -231,8 +231,8 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 		float2 buv = (vert_in.uv - 0.5) * sc + 0.5;
 
 		if (bg_blur > 0.01) {
-			// desfoque em 13 amostras (2 aneis) - visivel mas barato
-			float2 o = (bg_blur * 1.5) / max(target_size, float2(1.0, 1.0));
+			// desfoque em 13 amostras (2 aneis), raio proporcional
+			float2 o = (bg_blur * 2.0) / max(target_size, float2(1.0, 1.0));
 			float2 h = o * 0.5;
 			col = bg_tex.Sample(def_sampler, buv) * 0.20;
 			col += bg_tex.Sample(def_sampler, buv + float2(h.x, 0.0)) * 0.10;

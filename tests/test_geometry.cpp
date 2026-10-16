@@ -53,13 +53,36 @@ TEST(geometry_pixel_to_content)
 	CHECK_NEAR(mid.y, 0.5, 1e-9);
 }
 
-TEST(geometry_clamp_focus)
+TEST(geometry_clamp_focus_cantos)
 {
-	/* Zoom 1: apenas o centro. */
-	CHECK_NEAR(clamp_focus(0.1, 1.0), 0.5, 1e-9);
-	/* Zoom 2: margem 0.25 => foco entre 0.25 e 0.75. */
-	CHECK_NEAR(clamp_focus(0.0, 2.0), 0.25, 1e-9);
-	CHECK_NEAR(clamp_focus(1.0, 2.0), 0.75, 1e-9);
-	/* Dentro da faixa nao muda. */
-	CHECK_NEAR(clamp_focus(0.5, 2.0), 0.5, 1e-9);
+	/* Foco em [0,1]: os cantos sao alcancaveis (a janela 1/zoom cabe na fonte). */
+	CHECK_NEAR(clamp_focus(0.0, 2.0), 0.0, 1e-9);
+	CHECK_NEAR(clamp_focus(1.0, 2.0), 1.0, 1e-9);
+	CHECK_NEAR(clamp_focus(-0.5, 2.0), 0.0, 1e-9);
+	CHECK_NEAR(clamp_focus(1.5, 2.0), 1.0, 1e-9);
+	CHECK_NEAR(clamp_focus(0.5, 1.0), 0.5, 1e-9);
+}
+
+TEST(geometry_focus_limits_mantem_ponto_visivel)
+{
+	/* Ponto no canto esquerdo: o foco tem que ir a 0 para ele aparecer. */
+	FocusLimits l = focus_limits(0.0, 2.0);
+	CHECK_NEAR(l.lo, 0.0, 1e-9);
+	CHECK_NEAR(l.hi, 0.0, 1e-9);
+	CHECK_NEAR(clamp_focus_keep(0.0, 0.8, 2.0), 0.0, 1e-9);
+
+	/* Ponto no canto direito: foco 1. */
+	l = focus_limits(1.0, 2.0);
+	CHECK_NEAR(l.lo, 1.0, 1e-9);
+	CHECK_NEAR(l.hi, 1.0, 1e-9);
+
+	/* No centro a faixa permite qualquer foco (pan livre). */
+	l = focus_limits(0.5, 2.0);
+	CHECK(l.lo <= 1e-9);
+	CHECK(l.hi >= 1.0 - 1e-9);
+
+	/* Sem zoom: qualquer foco serve. */
+	l = focus_limits(0.0, 1.0);
+	CHECK_NEAR(l.lo, 0.0, 1e-9);
+	CHECK_NEAR(l.hi, 1.0, 1e-9);
 }

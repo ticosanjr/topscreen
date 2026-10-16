@@ -59,6 +59,10 @@ private:
 	Spring fx_;
 	Spring fy_;
 	double manual_ = 1.0;
+	double focus_point_x_ = 0.5; // ultimo ponto (fonte) focado
+	double focus_point_y_ = 0.5;
+	double base_fx_ = 0.5;       // alvo do foco (apos o pan)
+	double base_fy_ = 0.5;
 	double last_focus_ms_ = 0.0;
 	double last_update_ms_ = 0.0;
 	bool started_ = false;

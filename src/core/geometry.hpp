@@ -44,8 +44,20 @@ Vec2f pixel_to_content(double px, double py, double target_w, double target_h, d
 
 /**
  * Limita o foco do zoom para nao amostrar fora da tela (0..1).
- * Para zoom <= 1 o unico valor valido e 0.5.
+ *
+ * Com foco em [0,1] a janela visivel (largura 1/zoom) sempre cabe na fonte.
  */
 double clamp_focus(double focus, double zoom);
+
+/** Faixa de foco que mantem um ponto `source_pos` visivel (0..1). */
+struct FocusLimits {
+	double lo = 0.0;
+	double hi = 1.0;
+};
+
+FocusLimits focus_limits(double source_pos, double zoom);
+
+/** Limita o foco mantendo o ponto `source_pos` dentro da tela. */
+double clamp_focus_keep(double source_pos, double focus, double zoom);
 
 } // namespace topscreen::core

@@ -298,9 +298,10 @@ TOPSCREEN_DEBUG_KEY=Ctrl obs
   maiores adicionam deslize (de propósito).
 - **Inclinação na curva** em `0` remove a inclinação.
 
-**O cursor/mouse não bate com a tela**
-- O mapeamento assume a captura no canto superior esquerdo da tela. Em
-  multi-monitor com a tela secundária, o cursor pode deslocar.
+**O zoom corta os cantos / o cursor some no canto**
+- Isso foi corrigido: o foco agora **acompanha** o cursor até as bordas
+  (a janela visível sempre cabe na tela). Reduza **Intensidade do pan** só se
+  quiser um acompanhamento mais suave no meio da tela.
 
 **Sem teclas no overlay (Linux)**
 - Aplique a regra udev do §9.

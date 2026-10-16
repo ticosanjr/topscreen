@@ -32,6 +32,10 @@ void ZoomModel::reset(double now_ms)
 	zoom_.reset(1.0);
 	fx_.reset(0.5);
 	fy_.reset(0.5);
+	focus_point_x_ = 0.5;
+	focus_point_y_ = 0.5;
+	base_fx_ = 0.5;
+	base_fy_ = 0.5;
 	last_focus_ms_ = now_ms;
 	last_update_ms_ = now_ms;
 	started_ = true;
@@ -41,8 +45,17 @@ void ZoomModel::focus_on(double x, double y, double now_ms)
 {
 	if (!started_)
 		reset(now_ms);
-	fx_.set_target(x);
-	fy_.set_target(y);
+
+	focus_point_x_ = clamp_range(x, 0.0, 1.0);
+	focus_point_y_ = clamp_range(y, 0.0, 1.0);
+
+	/* Pan: aproxima o foco do cursor UMA vez (nunca a cada frame). */
+	const double pan = clamp_range(cfg_.pan_amount, 0.0, 1.0);
+	base_fx_ = 0.5 + (focus_point_x_ - 0.5) * pan;
+	base_fy_ = 0.5 + (focus_point_y_ - 0.5) * pan;
+
+	fx_.set_target(base_fx_);
+	fy_.set_target(base_fy_);
 	last_focus_ms_ = now_ms;
 }
 
@@ -81,14 +94,15 @@ void ZoomModel::update(double now_ms)
 		target_zoom = manual_ * (cfg_.amount > 1.0 ? cfg_.amount : 1.0);
 	zoom_.set_target(target_zoom);
 
-	/* Pan: reduz a amplitude do foco conforme pan_amount. */
-	const double pan = clamp_range(cfg_.pan_amount, 0.0, 1.0);
-	if (pan > 0.0) {
-		const double cx = 0.5 + (fx_.target() - 0.5) * pan;
-		const double cy = 0.5 + (fy_.target() - 0.5) * pan;
-		fx_.set_target(cx);
-		fy_.set_target(cy);
-	}
+	/*
+	 * Mantem o ponto focado visivel: se o pan deixaria o cursor fora da tela,
+	 * puxa o foco para o limite. Com isso os cantos continuam alcancaveis e o
+	 * cursor nao some.
+	 */
+	const FocusLimits lx = focus_limits(focus_point_x_, target_zoom);
+	const FocusLimits ly = focus_limits(focus_point_y_, target_zoom);
+	fx_.set_target(clamp_range(base_fx_, lx.lo, lx.hi));
+	fy_.set_target(clamp_range(base_fy_, ly.lo, ly.hi));
 
 	zoom_.update(dt);
 	fx_.update(dt);

@@ -41,17 +41,51 @@ Vec2f pixel_to_content(double px, double py, double target_w, double target_h, d
 
 double clamp_focus(double focus, double zoom)
 {
-	if (zoom <= 1.0)
-		return 0.5;
-	double margin = (zoom - 1.0) / (2.0 * zoom);
-	if (margin < 0.0)
-		margin = 0.0;
-	if (margin > 0.5)
-		margin = 0.5;
-	if (focus < margin)
-		focus = margin;
-	if (focus > 1.0 - margin)
-		focus = 1.0 - margin;
+	(void)zoom;
+	/*
+	 * Com foco em [0,1] a janela visivel (1/zoom) sempre cabe na fonte.
+	 * Nao ha margem extra: exigir margem era o que impedia chegar aos cantos.
+	 */
+	if (focus < 0.0)
+		focus = 0.0;
+	if (focus > 1.0)
+		focus = 1.0;
+	return focus;
+}
+
+FocusLimits focus_limits(double source_pos, double zoom)
+{
+	FocusLimits l;
+	if (zoom <= 1.0001) {
+		l.lo = 0.0;
+		l.hi = 1.0;
+		return l;
+	}
+
+	/*
+	 * c = foco + (fonte - foco) * zoom  deve ficar em [0,1]:
+	 *   foco <= fonte*zoom/(zoom-1)   e   foco >= (fonte*zoom - 1)/(zoom-1)
+	 */
+	const double z = zoom - 1.0;
+	l.lo = (source_pos * zoom - 1.0) / z;
+	l.hi = (source_pos * zoom) / z;
+
+	if (l.lo < 0.0)
+		l.lo = 0.0;
+	if (l.hi > 1.0)
+		l.hi = 1.0;
+	if (l.lo > l.hi)
+		l.lo = l.hi = 0.5;
+	return l;
+}
+
+double clamp_focus_keep(double source_pos, double focus, double zoom)
+{
+	const FocusLimits l = focus_limits(source_pos, zoom);
+	if (focus < l.lo)
+		return l.lo;
+	if (focus > l.hi)
+		return l.hi;
 	return focus;
 }
 

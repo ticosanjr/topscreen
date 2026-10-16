@@ -82,7 +82,7 @@ TEST(zoom_modo_off_nao_aproxima)
 	CHECK_NEAR(m.render().zoom, 1.0, 1e-3);
 }
 
-TEST(zoom_foco_limitado_pela_borda)
+TEST(zoom_foco_alcanca_os_cantos)
 {
 	ZoomModel m;
 	ZoomConfig cfg;
@@ -94,12 +94,66 @@ TEST(zoom_foco_limitado_pela_borda)
 	m.configure(cfg);
 	m.reset(0.0);
 
+	/* Canto inferior direito da fonte. */
 	m.focus_on(1.0, 1.0, 0.0);
 	double t = 0.0;
 	advance(m, t, 1.0);
+	const ZoomRender r = m.render();
+	CHECK(r.focus_x > 0.9);
+	CHECK(r.focus_y > 0.9);
+
+	/* O ponto da fonte (1,1) tem que aparecer DENTRO da tela. */
+	const double d = r.focus_x + (1.0 - r.focus_x) * r.zoom;
+	CHECK(d <= 1.0 + 1e-6);
+}
+
+TEST(zoom_canto_esquerdo_com_pan_pequeno)
+{
+	ZoomModel m;
+	ZoomConfig cfg;
+	cfg.mode = static_cast<int>(ZoomMode::Auto);
+	cfg.amount = 1.6;
+	cfg.duration_ms = 100.0;
+	cfg.idle_timeout_ms = 100000.0;
+	cfg.pan_amount = 0.25; /* pan "suave": mesmo assim o canto deve ser alcancado */
+	m.configure(cfg);
+	m.reset(0.0);
+
+	m.focus_on(0.0, 0.0, 0.0);
+	double t = 0.0;
+	advance(m, t, 1.5);
 
 	const ZoomRender r = m.render();
-	CHECK(r.focus_x <= 0.75 + 1e-6);
-	CHECK(r.focus_y <= 0.75 + 1e-6);
-	CHECK(r.focus_x >= 0.25 - 1e-6);
+	/* o foco tem que ser puxado para perto de 0 (nao ficar em 0.375) */
+	CHECK(r.focus_x < 0.1);
+	CHECK(r.focus_y < 0.1);
+
+	/* e o ponto (0,0) tem que estar visivel (0 <= d <= 1) */
+	const double d = r.focus_x + (0.0 - r.focus_x) * r.zoom;
+	CHECK(d >= -1e-6);
+	CHECK(d <= 1.0 + 1e-6);
+}
+
+TEST(zoom_pan_nao_decai_com_o_tempo)
+{
+	ZoomModel m;
+	ZoomConfig cfg;
+	cfg.mode = static_cast<int>(ZoomMode::Auto);
+	cfg.amount = 2.0;
+	cfg.duration_ms = 100.0;
+	cfg.idle_timeout_ms = 100000.0;
+	cfg.pan_amount = 0.5;
+	m.configure(cfg);
+	m.reset(0.0);
+
+	m.focus_on(0.8, 0.8, 0.0);
+	double t = 0.0;
+	advance(m, t, 1.0);
+	const double fx1 = m.render().focus_x;
+
+	/* muito tempo depois, o foco nao pode ter "decaido" para o centro */
+	advance(m, t, 3.0);
+	const double fx2 = m.render().focus_x;
+	CHECK_NEAR(fx1, fx2, 1e-6);
+	CHECK(fx2 > 0.6);
 }

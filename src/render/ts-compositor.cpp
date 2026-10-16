@@ -299,6 +299,11 @@ void Compositor::render(obs_source_t *filter, const core::Config &cfg, const Fra
 	const bool bgimg = bg && bg_tex_ != nullptr;
 	set_f(p_bg_tex_enabled_, bgimg ? 1.0f : 0.0f);
 	set_f(p_bg_blur_, static_cast<float>(cfg.bg.image_blur));
+
+	if (cfg.bg.image_blur != last_blur_) {
+		last_blur_ = cfg.bg.image_blur;
+		blog(LOG_INFO, "[TopScreen] desfoque do wallpaper: %.0f px", cfg.bg.image_blur);
+	}
 	if (bgimg) {
 		set_f(p_bg_tex_aspect_, bg_aspect_);
 		if (p_bg_tex_)

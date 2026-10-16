@@ -1,3 +1,4 @@
+#include "core/geometry.hpp"
 #include "core/mapping.hpp"
 #include "test_framework.hpp"
 
@@ -66,12 +67,31 @@ TEST(mapping_fonte_para_pixel)
 }
 
 /*
- * Consistencia com o shader (o teste que prova o alinhamento do cursor):
- * o shader amostra a fonte em u = f + (c - f)/z para desenhar o pixel do
- * conteudo c. Entao, para TODO c, source_to_pixel(u) tem que devolver
- * exatamente aquele pixel. Se isso vale, cursor/cliques caem no lugar certo
- * em qualquer zoom.
+ * Os cantos: com o foco ajustado para manter o ponto visivel, um ponto da
+ * BORDA tem que aparecer dentro da area de conteudo (nao some da tela).
  */
+TEST(mapping_canto_visivel_com_foco_ajustado)
+{
+	const ContentArea a = content_area(1920, 1080, 64, 64, true);
+	const double pontos[] = {0.0, 0.25, 0.5, 0.75, 1.0};
+	const double zooms[] = {1.6, 2.5};
+
+	for (double s : pontos) {
+		for (double z : zooms) {
+			/* pior caso: foco centralizado (pan 0) -> o clamp tem que puxar */
+			const double f = clamp_focus_keep(s, 0.5, z);
+			const Vec2f d = source_to_display(s, s, f, f, z);
+			CHECK(d.x >= -1e-9 && d.x <= 1.0 + 1e-9);
+			CHECK(d.y >= -1e-9 && d.y <= 1.0 + 1e-9);
+
+			const Vec2f p = source_to_pixel(s, s, f, f, z, a);
+			CHECK(p.x >= a.origin.x - 1e-6);
+			CHECK(p.x <= a.origin.x + a.size.x + 1e-6);
+			CHECK(p.y >= a.origin.y - 1e-6);
+			CHECK(p.y <= a.origin.y + a.size.y + 1e-6);
+		}
+	}
+}
 TEST(mapping_consistencia_com_shader)
 {
 	const ContentArea a = content_area(1920, 1080, 64, 64, true);

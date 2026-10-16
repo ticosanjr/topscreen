@@ -109,6 +109,7 @@ private:
 	gs_texture_t *bg_tex_ = nullptr;
 	std::string bg_loaded_;
 	float bg_aspect_ = 1.0f;
+	double last_blur_ = -1.0;
 };
 
 } // namespace topscreen

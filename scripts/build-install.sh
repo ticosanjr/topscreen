@@ -26,6 +26,7 @@ DIAGNOSE=0
 while [ $# -gt 0 ]; do
 	case "$1" in
 	--system) MODE="system"; shift ;;
+	--user) MODE="user"; shift ;;
 	--prefix) MODE="prefix"; TARGET_PREFIX="${2:?}"; shift 2 ;;
 	--dir) MODE="dir"; TARGET_DIR="${2:?}"; shift 2 ;;
 	--data) DATA_DIR="${2:?}"; shift 2 ;;
@@ -175,7 +176,8 @@ ok "OK: $SO"
 case "$MODE" in
 build)
 	log "Build concluido. Para instalar:"
-	echo "  scripts/build-install.sh --system           # OBS do sistema"
+	echo "  scripts/build-install.sh --user             # so para voce (sem sudo)"
+	echo "  scripts/build-install.sh --system           # OBS do sistema (sudo)"
 	echo "  scripts/build-install.sh --dir <plugins>    # portable/custom"
 	FINAL="build concluido"
 	;;
@@ -207,6 +209,15 @@ system)
 
 	ok "Instalado. Reinicie o OBS."
 	FINAL="instalado em $PLUGDIR"
+	;;
+user)
+	P="$HOME/.config/obs-studio/plugins/topscreen"
+	log "Instalando como plugin de usuario (sem sudo): $P"
+	mkdir -p "$P/bin/64bit" "$P/data"
+	cp -f "$SO" "$P/bin/64bit/topscreen.so"
+	cp -rf "$ROOT/data/." "$P/data/"
+	ok "Instalado. Reinicie o OBS."
+	FINAL="instalado em $P"
 	;;
 prefix)
 	log "Instalando em prefixo $TARGET_PREFIX ..."

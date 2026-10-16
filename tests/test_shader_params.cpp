@@ -11,23 +11,35 @@
 
 namespace {
 
+std::string effect_path()
+{
+	return std::string(TOPSCREEN_TEST_DATA_DIR) + "/effects/topscreen.effect";
+}
+
+/* Le o .effect removendo comentarios de linha. */
+std::string read_effect()
+{
+	std::ifstream in(effect_path());
+	std::ostringstream out;
+	std::string line;
+	while (std::getline(in, line)) {
+		const auto comment = line.find("//");
+		if (comment != std::string::npos)
+			line = line.substr(0, comment);
+		out << line << '\n';
+	}
+	return out.str();
+}
+
 /* Le os nomes de uniform declarados no .effect (ignora comentarios). */
 std::set<std::string> read_uniforms(bool *has_draw_technique)
 {
 	std::set<std::string> names;
 	*has_draw_technique = false;
 
-	const std::string path = std::string(TOPSCREEN_TEST_DATA_DIR) + "/effects/topscreen.effect";
-	std::ifstream in(path);
-	if (!in)
-		return names;
-
+	std::istringstream in(read_effect());
 	std::string line;
 	while (std::getline(in, line)) {
-		const auto comment = line.find("//");
-		if (comment != std::string::npos)
-			line = line.substr(0, comment);
-
 		if (line.find("technique Draw") != std::string::npos)
 			*has_draw_technique = true;
 
@@ -77,7 +89,11 @@ TEST(shader_tem_uniforms_esperados)
 		"bg_b",           "bg_mode",        "shadow_alpha",  "shadow_blur",
 		"shadow_offset",  "cursor_enabled", "cursor_pos",    "cursor_scale",
 		"cursor_opacity", "cursor_rotation", "cursor_shadow", "click_count",
-		"click_data",     "click_color",    "click_meta",
+		"click0_pos",     "click0_prog",    "click0_size",   "click0_color",
+		"click0_type",    "click1_pos",     "click1_prog",   "click1_size",
+		"click1_color",   "click1_type",    "click2_pos",    "click2_prog",
+		"click2_size",    "click2_color",   "click2_type",   "click3_pos",
+		"click3_prog",    "click3_size",    "click3_color",  "click3_type",
 	};
 
 	for (const char *name : required) {
@@ -87,10 +103,48 @@ TEST(shader_tem_uniforms_esperados)
 	}
 }
 
-/* O shader deve conter ao menos uma tecnica util para o filtro. */
+/* O shader deve conter a tecnica usada pelo filtro. */
 TEST(shader_tem_tecnica_draw)
 {
 	bool has_draw = false;
 	read_uniforms(&has_draw);
 	CHECK(has_draw);
+}
+
+/*
+ * Invariantes de compatibilidade: os shaders do OBS nao usam arrays de uniform
+ * nem loops, e o translator pode nao cobrir sign()/length(). Mantemos o mesmo
+ * estilo para reduzir risco de falha silenciosa em runtime.
+ */
+TEST(shader_evita_construcoes_arriscadas)
+{
+	const std::string text = read_effect();
+
+	++tst::checks();
+	if (text.find("uniform") != std::string::npos) {
+		// nenhuma declaracao de uniform pode conter '[' (array)
+		std::istringstream in(text);
+		std::string line;
+		while (std::getline(in, line)) {
+			std::istringstream ss(line);
+			std::string kw;
+			ss >> kw;
+			if (kw == "uniform" && line.find('[') != std::string::npos) {
+				tst::fail(__FILE__, __LINE__, "shader usa array de uniform: " + line);
+				break;
+			}
+		}
+	}
+
+	++tst::checks();
+	if (text.find("for (") != std::string::npos)
+		tst::fail(__FILE__, __LINE__, "shader usa loop 'for' (evitar)");
+
+	++tst::checks();
+	if (text.find("sign(") != std::string::npos)
+		tst::fail(__FILE__, __LINE__, "shader usa sign() (evitar)");
+
+	++tst::checks();
+	if (text.find("length(") != std::string::npos)
+		tst::fail(__FILE__, __LINE__, "shader usa length() (evitar)");
 }

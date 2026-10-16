@@ -36,11 +36,35 @@ set(TOPSCREEN_CORE_SOURCES
 # libobs
 # ---------------------------------------------------------------------------
 find_package(libobs QUIET)
+
 if(NOT libobs_FOUND)
-    message(STATUS "TopScreen: find_package(libobs) not found, trying pkg-config")
-    find_package(PkgConfig REQUIRED)
-    pkg_check_modules(LIBOBS REQUIRED IMPORTED_TARGET libobs)
-    add_library(OBS::libobs ALIAS PkgConfig::LIBOBS)
+    # Fallback 1: pkg-config (algumas distros instalam libobs.pc)
+    find_package(PkgConfig QUIET)
+    if(PkgConfig_FOUND)
+        pkg_check_modules(LIBOBS QUIET IMPORTED_TARGET libobs)
+    endif()
+    if(LIBOBS_FOUND)
+        message(STATUS "TopScreen: libobs via pkg-config")
+        add_library(OBS::libobs ALIAS PkgConfig::LIBOBS)
+    else()
+        # Fallback 2: caminhos manuais (headers + biblioteca)
+        set(LIBOBS_INCLUDE_DIR "" CACHE PATH "Diretorio dos headers do libobs (contendo obs-module.h)")
+        set(LIBOBS_LIBRARY "" CACHE FILEPATH "Caminho da biblioteca do libobs (.so/.dll)")
+        if(LIBOBS_INCLUDE_DIR AND LIBOBS_LIBRARY)
+            message(STATUS "TopScreen: libobs via caminhos manuais")
+            add_library(OBS::libobs UNKNOWN IMPORTED)
+            set_target_properties(OBS::libobs PROPERTIES
+                IMPORTED_LOCATION "${LIBOBS_LIBRARY}"
+                INTERFACE_INCLUDE_DIRECTORIES "${LIBOBS_INCLUDE_DIR}")
+        else()
+            message(FATAL_ERROR
+                "libobs nao encontrado.\n"
+                "Instale o pacote de desenvolvimento do OBS, ou passe:\n"
+                "  -DLIBOBS_INCLUDE_DIR=/caminho/para/libobs/headers\n"
+                "  -DLIBOBS_LIBRARY=/caminho/para/libobs.so\n"
+                "Ou aponte -DCMAKE_PREFIX_PATH para uma instalacao do OBS. Ver docs/BUILD.md.")
+        endif()
+    endif()
 else()
     message(STATUS "TopScreen: using libobs from ${libobs_DIR}")
 endif()

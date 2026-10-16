@@ -4,6 +4,9 @@
 // padding, sombra aproximada, zoom/pan, cursor e efeitos de clique, tudo em
 // um unico passe. A sintaxe e compilada pelo OBS para HLSL (D3D11) e GLSL
 // (OpenGL).
+//
+// Nota: assim como os shaders do proprio OBS, este efeito NAO usa arrays de
+// uniform nem loops - os efeitos de clique usam 4 slots explicitos.
 
 uniform float4x4 ViewProj;
 uniform texture2d image;
@@ -28,9 +31,30 @@ uniform float  cursor_rotation; // rad
 uniform float  cursor_shadow;
 
 uniform float  click_count;
-uniform float4 click_data[4];  // x, y, progress, size
-uniform float4 click_color[4]; // rgba
-uniform float4 click_meta[4];  // effect (0 ripple, 1 orb, 2 ring, 3 force)
+
+uniform float2 click0_pos;
+uniform float  click0_prog;
+uniform float  click0_size;
+uniform float4 click0_color;
+uniform float  click0_type;
+
+uniform float2 click1_pos;
+uniform float  click1_prog;
+uniform float  click1_size;
+uniform float4 click1_color;
+uniform float  click1_type;
+
+uniform float2 click2_pos;
+uniform float  click2_prog;
+uniform float  click2_size;
+uniform float4 click2_color;
+uniform float  click2_type;
+
+uniform float2 click3_pos;
+uniform float  click3_prog;
+uniform float  click3_size;
+uniform float4 click3_color;
+uniform float  click3_type;
 
 sampler_state def_sampler {
 	Filter   = Linear;
@@ -51,11 +75,16 @@ VertInOut VSDefault(VertInOut vert_in)
 	return vert_out;
 }
 
-// Distancia assinada a um retangulo arredondado centrado na origem.
-float sd_round_box(float2 p, float2 half_extents, float radius)
+// Sinal (evita depender de sign() no translator do OBS).
+float sgn(float x)
 {
-	float2 q = abs(p) - half_extents + radius;
-	return min(max(q.x, q.y), 0.0) + length(max(q, 0.0)) - radius;
+	return x < 0.0 ? -1.0 : 1.0;
+}
+
+// Comprimento (evita depender de length()).
+float len2(float2 v)
+{
+	return sqrt(dot(v, v));
 }
 
 // Rotacao 2D.
@@ -64,6 +93,13 @@ float2 rotate2(float2 p, float a)
 	float s = sin(a);
 	float c = cos(a);
 	return float2(c * p.x - s * p.y, s * p.x + c * p.y);
+}
+
+// Distancia assinada a um retangulo arredondado centrado na origem.
+float sd_round_box(float2 p, float2 half_extents, float radius)
+{
+	float2 q = abs(p) - half_extents + radius;
+	return min(max(q.x, q.y), 0.0) + len2(max(q, 0.0)) - radius;
 }
 
 // Distancia assinada a um triangulo (para o cursor).
@@ -80,12 +116,12 @@ float sd_triangle(float2 p, float2 p0, float2 p1, float2 p2)
 	float2 pq1 = v1 - e1 * clamp(dot(v1, e1) / dot(e1, e1), 0.0, 1.0);
 	float2 pq2 = v2 - e2 * clamp(dot(v2, e2) / dot(e2, e2), 0.0, 1.0);
 
-	float s = sign(e0.x * e2.y - e0.y * e2.x);
+	float s = sgn(e0.x * e2.y - e0.y * e2.x);
 	float2 d = min(min(float2(dot(pq0, pq0), s * (v0.x * e0.y - v0.y * e0.x)),
 			   float2(dot(pq1, pq1), s * (v1.x * e1.y - v1.y * e1.x))),
 		       float2(dot(pq2, pq2), s * (v2.x * e2.y - v2.y * e2.x)));
 
-	return -sqrt(d.x) * sign(d.y);
+	return -sqrt(d.x) * sgn(d.y);
 }
 
 // Tamanho da area de conteudo (descontando o padding).
@@ -101,6 +137,39 @@ float2 content_to_pixel(float2 cu)
 	float2 cs = content_size();
 	float2 su = zoom_focus + (cu - zoom_focus) / max(zoom, 0.0001);
 	return su * cs + float2(content_pad, content_pad);
+}
+
+// Compoe um efeito de clique sobre a cor atual.
+float4 apply_click(float4 col, float2 px, float mask, float2 cu, float prog, float csize,
+		   float4 ccol, float type)
+{
+	float2 local = px - content_to_pixel(cu);
+	float  base  = target_size.y * 0.08;
+	float  r     = max(base * csize * prog, 0.0);
+	float  aa    = max(target_size.y * 0.0015, 1.0);
+	float  dist  = len2(local);
+	float  a     = 0.0;
+
+	if (type < 0.5) {
+		// ripple: anel com borda media
+		float th = max(base * csize * 0.18, aa);
+		a        = (1.0 - smoothstep(th - aa, th + aa, abs(dist - r))) * (1.0 - prog);
+	} else if (type < 1.5) {
+		// orb: disco preenchido que cresce e some
+		a = (1.0 - smoothstep(-aa, aa, dist - r)) * (1.0 - prog) * 0.8;
+	} else if (type < 2.5) {
+		// ring: anel fino
+		float th = max(base * csize * 0.08, aa);
+		a        = (1.0 - smoothstep(th - aa, th + aa, abs(dist - r))) * (1.0 - prog);
+	} else {
+		// force: anel grosso
+		float th = max(base * csize * 0.40, aa);
+		a        = (1.0 - smoothstep(th - aa, th + aa, abs(dist - r))) * (1.0 - prog) * 1.2;
+	}
+
+	a *= ccol.a * mask;
+	col.rgb = lerp(col.rgb, ccol.rgb, saturate(a));
+	return col;
 }
 
 float4 PSCompose(VertInOut vert_in) : TARGET
@@ -140,67 +209,44 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 		float4 screen     = image.Sample(def_sampler, uv_screen);
 		col               = lerp(col, screen, mask);
 
-		// Efeitos de clique
-		float base_radius = target_size.y * 0.08;
-		for (int i = 0; i < 4; ++i) {
-			if (float(i) >= click_count)
-				break;
+		// Efeitos de clique (4 slots explicitos)
+		if (click_count > 0.5)
+			col = apply_click(col, px, mask, click0_pos, click0_prog, click0_size, click0_color,
+					  click0_type);
+		if (click_count > 1.5)
+			col = apply_click(col, px, mask, click1_pos, click1_prog, click1_size, click1_color,
+					  click1_type);
+		if (click_count > 2.5)
+			col = apply_click(col, px, mask, click2_pos, click2_prog, click2_size, click2_color,
+					  click2_type);
+		if (click_count > 3.5)
+			col = apply_click(col, px, mask, click3_pos, click3_prog, click3_size, click3_color,
+					  click3_type);
 
-			float2 cu    = click_data[i].xy;
-			float  prog  = saturate(click_data[i].z);
-			float  csize = click_data[i].w;
-			float  type  = click_meta[i].x;
-			float4 ccol  = click_color[i];
-
-			float2 local = px - content_to_pixel(cu);
-			float  r     = max(base_radius * csize * prog, 0.0);
-			float  aa    = max(target_size.y * 0.0015, 1.0);
-			float  a     = 0.0;
-
-			if (type < 0.5) {
-				// ripple: anel com borda media
-				float th = max(base_radius * csize * 0.18, aa);
-				float d  = abs(length(local) - r);
-				a        = (1.0 - smoothstep(th - aa, th + aa, d)) * (1.0 - prog);
-			} else if (type < 1.5) {
-				// orb: disco preenchido que cresce e some
-				float d = length(local) - r;
-				a       = (1.0 - smoothstep(-aa, aa, d)) * (1.0 - prog) * 0.8;
-			} else if (type < 2.5) {
-				// ring: anel fino
-				float th = max(base_radius * csize * 0.08, aa);
-				float d  = abs(length(local) - r);
-				a        = (1.0 - smoothstep(th - aa, th + aa, d)) * (1.0 - prog);
-			} else {
-				// force: anel grosso e curto
-				float th = max(base_radius * csize * 0.40, aa);
-				float d  = abs(length(local) - r);
-				a        = (1.0 - smoothstep(th - aa, th + aa, d)) * (1.0 - prog) * 1.2;
-			}
-
-			a *= ccol.a * mask;
-			col.rgb = lerp(col.rgb, ccol.rgb, saturate(a));
-		}
-
-		// Cursor (seta procedural)
+		// Cursor (seta procedural: preenchimento claro + borda escura)
 		if (cursor_enabled > 0.5) {
 			float2 cpx   = content_to_pixel(cursor_pos);
 			float2 local = rotate2(px - cpx, -cursor_rotation);
 			float  u     = max(target_size.y * 0.001 * cursor_scale, 0.5);
+			float  corta = max(1.0, u * 0.12);
+			float2 a0    = float2(0.0, 0.0) * u;
+			float2 a1    = float2(0.0, 20.0) * u;
+			float2 a2    = float2(14.0, 14.0) * u;
 
-			float  corta = 1.5;
 			if (cursor_shadow > 0.5) {
 				float2 sp = local - float2(2.0, 3.0) * u;
-				float  ds = sd_triangle(sp, float2(0.0, 0.0) * u, float2(0.0, 20.0) * u,
-							float2(14.0, 14.0) * u);
+				float  ds = sd_triangle(sp, a0, a1, a2);
 				float  sa = (1.0 - smoothstep(-corta, corta, ds)) * 0.35 * cursor_opacity * mask;
-				col.rgb = lerp(col.rgb, float3(0.0, 0.0, 0.0), saturate(sa));
+				col.rgb   = lerp(col.rgb, float3(0.0, 0.0, 0.0), saturate(sa));
 			}
 
-			float d = sd_triangle(local, float2(0.0, 0.0) * u, float2(0.0, 20.0) * u,
-					      float2(14.0, 14.0) * u);
-			float a = (1.0 - smoothstep(-corta, corta, d)) * cursor_opacity * mask;
-			col.rgb = lerp(col.rgb, float3(1.0, 1.0, 1.0), saturate(a));
+			float d        = sd_triangle(local, a0, a1, a2);
+			float fill     = 1.0 - smoothstep(-corta, corta, d);
+			float border   = 1.0 - smoothstep(corta, corta * 3.0, abs(d));
+			float coverage = max(fill, border) * cursor_opacity * mask;
+
+			col.rgb = lerp(col.rgb, float3(0.0, 0.0, 0.0), saturate(coverage));
+			col.rgb = lerp(col.rgb, float3(1.0, 1.0, 1.0), saturate(fill * cursor_opacity * mask));
 		}
 	}
 

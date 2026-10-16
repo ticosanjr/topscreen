@@ -32,6 +32,7 @@ public:
 
 private:
 	void cache_params();
+	void validate_params() const;
 
 	gs_effect_t *effect_ = nullptr;
 
@@ -54,10 +55,17 @@ private:
 	gs_eparam_t *p_cursor_rotation_ = nullptr;
 	gs_eparam_t *p_cursor_shadow_ = nullptr;
 
+	/* Slots de clique explicitos (o shader nao usa arrays de uniform). */
+	struct ClickParams {
+		gs_eparam_t *pos = nullptr;
+		gs_eparam_t *prog = nullptr;
+		gs_eparam_t *size = nullptr;
+		gs_eparam_t *color = nullptr;
+		gs_eparam_t *type = nullptr;
+	};
+
 	gs_eparam_t *p_click_count_ = nullptr;
-	gs_eparam_t *p_click_data_ = nullptr;
-	gs_eparam_t *p_click_color_ = nullptr;
-	gs_eparam_t *p_click_meta_ = nullptr;
+	ClickParams click_[4];
 };
 
 } // namespace topscreen

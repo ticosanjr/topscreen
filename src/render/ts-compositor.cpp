@@ -2,9 +2,35 @@
 
 #include <graphics/vec2.h>
 
+#include <cstdio>
+
 #include "core/color.hpp"
 
 namespace topscreen {
+
+namespace {
+
+/* Setters com guarda: um uniform ausente nao pode derrubar o OBS. */
+inline void set_f(gs_eparam_t *p, float v)
+{
+	if (p)
+		gs_effect_set_float(p, v);
+}
+inline void set_v2(gs_eparam_t *p, float x, float y)
+{
+	if (!p)
+		return;
+	struct vec2 v;
+	vec2_set(&v, x, y);
+	gs_effect_set_vec2(p, &v);
+}
+inline void set_c(gs_eparam_t *p, uint32_t c)
+{
+	if (p)
+		gs_effect_set_color(p, c);
+}
+
+} // namespace
 
 Compositor::~Compositor()
 {
@@ -34,6 +60,7 @@ bool Compositor::load()
 	}
 
 	cache_params();
+	validate_params();
 	return true;
 }
 
@@ -64,9 +91,44 @@ void Compositor::cache_params()
 	p_cursor_shadow_ = P("cursor_shadow");
 
 	p_click_count_ = P("click_count");
-	p_click_data_ = P("click_data");
-	p_click_color_ = P("click_color");
-	p_click_meta_ = P("click_meta");
+
+	char name[32];
+	for (int i = 0; i < 4; ++i) {
+		std::snprintf(name, sizeof(name), "click%d_pos", i);
+		click_[i].pos = P(name);
+		std::snprintf(name, sizeof(name), "click%d_prog", i);
+		click_[i].prog = P(name);
+		std::snprintf(name, sizeof(name), "click%d_size", i);
+		click_[i].size = P(name);
+		std::snprintf(name, sizeof(name), "click%d_color", i);
+		click_[i].color = P(name);
+		std::snprintf(name, sizeof(name), "click%d_type", i);
+		click_[i].type = P(name);
+	}
+}
+
+void Compositor::validate_params() const
+{
+	if (!effect_)
+		return;
+
+	struct Named {
+		const char *name;
+		gs_eparam_t *param;
+	};
+	const Named checks[] = {
+		{"target_size", p_target_size_},   {"content_pad", p_pad_},
+		{"corner_radius", p_radius_},      {"zoom", p_zoom_},
+		{"zoom_focus", p_focus_},          {"bg_a", p_bg_a_},
+		{"bg_b", p_bg_b_},                 {"bg_mode", p_bg_mode_},
+		{"cursor_enabled", p_cursor_enabled_}, {"cursor_pos", p_cursor_pos_},
+		{"cursor_scale", p_cursor_scale_}, {"click_count", p_click_count_},
+	};
+
+	for (const Named &n : checks) {
+		if (!n.param)
+			blog(LOG_WARNING, "[TopScreen] uniform ausente no shader: %s", n.name);
+	}
 }
 
 void Compositor::release()
@@ -84,7 +146,9 @@ void Compositor::release()
 	p_shadow_alpha_ = p_shadow_blur_ = p_shadow_offset_ = nullptr;
 	p_cursor_enabled_ = p_cursor_pos_ = p_cursor_scale_ = nullptr;
 	p_cursor_opacity_ = p_cursor_rotation_ = p_cursor_shadow_ = nullptr;
-	p_click_count_ = p_click_data_ = p_click_color_ = p_click_meta_ = nullptr;
+	p_click_count_ = nullptr;
+	for (auto &c : click_)
+		c = ClickParams{};
 }
 
 void Compositor::render(obs_source_t *filter, const core::Config &cfg, const FrameState &st)
@@ -113,74 +177,48 @@ void Compositor::render(obs_source_t *filter, const core::Config &cfg, const Fra
 	const bool active = cfg.effects_enabled;
 	const bool bg = active && cfg.bg.enabled;
 
-	struct vec2 size;
-	vec2_set(&size, static_cast<float>(w), static_cast<float>(h));
-	gs_effect_set_vec2(p_target_size_, &size);
+	set_v2(p_target_size_, static_cast<float>(w), static_cast<float>(h));
 
-	gs_effect_set_float(p_pad_, bg ? static_cast<float>(cfg.bg.padding) : 0.0f);
-	gs_effect_set_float(p_radius_, bg ? static_cast<float>(cfg.bg.corner_radius) : 0.0f);
-	gs_effect_set_float(p_bg_mode_, bg ? static_cast<float>(cfg.bg.mode) : 0.0f);
-
-	gs_effect_set_color(p_bg_a_, cfg.bg.color_a);
-	gs_effect_set_color(p_bg_b_, cfg.bg.color_b);
+	set_f(p_pad_, bg ? static_cast<float>(cfg.bg.padding) : 0.0f);
+	set_f(p_radius_, bg ? static_cast<float>(cfg.bg.corner_radius) : 0.0f);
+	set_f(p_bg_mode_, bg ? static_cast<float>(cfg.bg.mode) : 0.0f);
+	set_c(p_bg_a_, cfg.bg.color_a);
+	set_c(p_bg_b_, cfg.bg.color_b);
 
 	const float shadow_alpha = (bg && cfg.bg.shadow) ? static_cast<float>(cfg.bg.shadow_alpha) : 0.0f;
-	gs_effect_set_float(p_shadow_alpha_, shadow_alpha);
-	gs_effect_set_float(p_shadow_blur_, static_cast<float>(cfg.bg.shadow_blur));
-
-	struct vec2 shadow_offset;
-	vec2_set(&shadow_offset, 0.0f, static_cast<float>(cfg.bg.shadow_blur) * 0.25f);
-	gs_effect_set_vec2(p_shadow_offset_, &shadow_offset);
+	set_f(p_shadow_alpha_, shadow_alpha);
+	set_f(p_shadow_blur_, static_cast<float>(cfg.bg.shadow_blur));
+	set_v2(p_shadow_offset_, 0.0f, static_cast<float>(cfg.bg.shadow_blur) * 0.25f);
 
 	float zoom = active ? static_cast<float>(st.zoom.zoom) : 1.0f;
 	if (zoom < 1.0f)
 		zoom = 1.0f;
-	gs_effect_set_float(p_zoom_, zoom);
-
-	struct vec2 focus;
-	vec2_set(&focus, static_cast<float>(st.zoom.focus_x), static_cast<float>(st.zoom.focus_y));
-	gs_effect_set_vec2(p_focus_, &focus);
+	set_f(p_zoom_, zoom);
+	set_v2(p_focus_, static_cast<float>(st.zoom.focus_x), static_cast<float>(st.zoom.focus_y));
 
 	/* Cursor */
 	const bool cursor_on = active && cfg.cursor.enabled && st.cursor.visible && st.cursor.opacity > 0.001;
-	gs_effect_set_float(p_cursor_enabled_, cursor_on ? 1.0f : 0.0f);
-	struct vec2 cpos;
-	vec2_set(&cpos, static_cast<float>(st.cursor.x), static_cast<float>(st.cursor.y));
-	gs_effect_set_vec2(p_cursor_pos_, &cpos);
-	gs_effect_set_float(p_cursor_scale_, static_cast<float>(st.cursor.size));
-	gs_effect_set_float(p_cursor_opacity_, static_cast<float>(st.cursor.opacity));
-	gs_effect_set_float(p_cursor_rotation_, static_cast<float>(st.cursor.rotation));
-	gs_effect_set_float(p_cursor_shadow_, (cfg.cursor.shadow ? 1.0f : 0.0f));
+	set_f(p_cursor_enabled_, cursor_on ? 1.0f : 0.0f);
+	set_v2(p_cursor_pos_, static_cast<float>(st.cursor.x), static_cast<float>(st.cursor.y));
+	set_f(p_cursor_scale_, static_cast<float>(st.cursor.size));
+	set_f(p_cursor_opacity_, static_cast<float>(st.cursor.opacity));
+	set_f(p_cursor_rotation_, static_cast<float>(st.cursor.rotation));
+	set_f(p_cursor_shadow_, cfg.cursor.shadow ? 1.0f : 0.0f);
 
-	/* Cliques (ate kShaderClickSlots) */
-	float click_data[kShaderClickSlots * 4] = {};
-	float click_color[kShaderClickSlots * 4] = {};
-	float click_meta[kShaderClickSlots * 4] = {};
-
+	/* Cliques (ate kShaderClickSlots, slots explicitos) */
 	int used = st.click_count;
 	if (used > kShaderClickSlots)
 		used = kShaderClickSlots;
+	set_f(p_click_count_, static_cast<float>(used));
 
 	for (int i = 0; i < used; ++i) {
 		const core::ClickRender &c = st.clicks[i];
-		click_data[i * 4 + 0] = static_cast<float>(c.x);
-		click_data[i * 4 + 1] = static_cast<float>(c.y);
-		click_data[i * 4 + 2] = static_cast<float>(c.progress);
-		click_data[i * 4 + 3] = static_cast<float>(c.size);
-
-		const core::Rgba col = core::unpack_abgr(c.color);
-		click_color[i * 4 + 0] = col.r;
-		click_color[i * 4 + 1] = col.g;
-		click_color[i * 4 + 2] = col.b;
-		click_color[i * 4 + 3] = col.a;
-
-		click_meta[i * 4 + 0] = static_cast<float>(c.effect);
+		set_v2(click_[i].pos, static_cast<float>(c.x), static_cast<float>(c.y));
+		set_f(click_[i].prog, static_cast<float>(c.progress));
+		set_f(click_[i].size, static_cast<float>(c.size));
+		set_c(click_[i].color, c.color);
+		set_f(click_[i].type, static_cast<float>(c.effect));
 	}
-
-	gs_effect_set_float(p_click_count_, static_cast<float>(used));
-	gs_effect_set_val(p_click_data_, click_data, sizeof(click_data));
-	gs_effect_set_val(p_click_color_, click_color, sizeof(click_color));
-	gs_effect_set_val(p_click_meta_, click_meta, sizeof(click_meta));
 
 	obs_source_process_filter_end(filter, effect_, w, h);
 }

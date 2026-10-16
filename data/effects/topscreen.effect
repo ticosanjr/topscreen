@@ -163,11 +163,15 @@ float2 content_origin()
 	return (target_size - content_size()) * 0.5;
 }
 
-// Converte coordenada de conteudo (0..1) para pixel de saida, aplicando o zoom.
+// Posicao EXIBIDA, em pixels, de um ponto da FONTE (content uv).
+//
+// A tela e amostrada com u = f + (c - f)/zoom; logo um ponto da fonte s
+// aparece em c = f + (s - f)*zoom. Inverter isso aqui e o que faz cursor,
+// cliques, spotlight e marca-texto ficarem colados no lugar certo.
 float2 content_to_pixel(float2 cu)
 {
 	float2 cs = content_size();
-	float2 su = zoom_focus + (cu - zoom_focus) / max(zoom, 0.0001);
+	float2 su = zoom_focus + (cu - zoom_focus) * max(zoom, 1.0);
 	return su * cs + content_origin();
 }
 
@@ -227,17 +231,22 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 		float2 buv = (vert_in.uv - 0.5) * sc + 0.5;
 
 		if (bg_blur > 0.01) {
-			// desfoque barato (9 amostras)
-			float2 o = bg_blur / max(target_size, float2(1.0, 1.0));
-			col = bg_tex.Sample(def_sampler, buv) * 0.25;
-			col += bg_tex.Sample(def_sampler, buv + float2(o.x, 0.0)) * 0.125;
-			col += bg_tex.Sample(def_sampler, buv - float2(o.x, 0.0)) * 0.125;
-			col += bg_tex.Sample(def_sampler, buv + float2(0.0, o.y)) * 0.125;
-			col += bg_tex.Sample(def_sampler, buv - float2(0.0, o.y)) * 0.125;
-			col += bg_tex.Sample(def_sampler, buv + o) * 0.0625;
-			col += bg_tex.Sample(def_sampler, buv - o) * 0.0625;
-			col += bg_tex.Sample(def_sampler, buv + float2(o.x, -o.y)) * 0.0625;
-			col += bg_tex.Sample(def_sampler, buv - float2(o.x, -o.y)) * 0.0625;
+			// desfoque em 13 amostras (2 aneis) - visivel mas barato
+			float2 o = (bg_blur * 1.5) / max(target_size, float2(1.0, 1.0));
+			float2 h = o * 0.5;
+			col = bg_tex.Sample(def_sampler, buv) * 0.20;
+			col += bg_tex.Sample(def_sampler, buv + float2(h.x, 0.0)) * 0.10;
+			col += bg_tex.Sample(def_sampler, buv - float2(h.x, 0.0)) * 0.10;
+			col += bg_tex.Sample(def_sampler, buv + float2(0.0, h.y)) * 0.10;
+			col += bg_tex.Sample(def_sampler, buv - float2(0.0, h.y)) * 0.10;
+			col += bg_tex.Sample(def_sampler, buv + float2(o.x, 0.0)) * 0.075;
+			col += bg_tex.Sample(def_sampler, buv - float2(o.x, 0.0)) * 0.075;
+			col += bg_tex.Sample(def_sampler, buv + float2(0.0, o.y)) * 0.075;
+			col += bg_tex.Sample(def_sampler, buv - float2(0.0, o.y)) * 0.075;
+			col += bg_tex.Sample(def_sampler, buv + o) * 0.025;
+			col += bg_tex.Sample(def_sampler, buv - o) * 0.025;
+			col += bg_tex.Sample(def_sampler, buv + float2(o.x, -o.y)) * 0.025;
+			col += bg_tex.Sample(def_sampler, buv - float2(o.x, -o.y)) * 0.025;
 		} else {
 			col = bg_tex.Sample(def_sampler, buv);
 		}

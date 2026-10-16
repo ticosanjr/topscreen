@@ -8,6 +8,13 @@
 ./scripts/build.sh --no-test       # só compila
 ```
 
+## Remover
+
+```bash
+./scripts/uninstall-linux.sh            # sistema + usuário
+./scripts/uninstall-linux.sh --system   # só o sistema (resolve "Duplicate library")
+```
+
 ## Instalação rápida
 
 ### Linux

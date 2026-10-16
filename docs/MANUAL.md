@@ -95,7 +95,7 @@ Coloca a tela "flutuando" sobre um fundo, com cantos e sombra.
 | **Ocultar quando parado / Delay** | Some quando você para de mexer |
 | **Voltar ao início quando parado / Tempo** | Cursor "volta" (vídeos em loop) |
 
-**Estilos de cursor disponíveis (7)**
+**Estilos de cursor disponíveis (12)**
 
 | Estilo | Aparência |
 |--------|-----------|
@@ -106,6 +106,11 @@ Coloca a tela "flutuando" sobre um fundo, com cantos e sombra.
 | Adwaita | Seta do tema Adwaita (GNOME) |
 | Google Dot | Círculo com ponto (estilo Google) |
 | Mão (pointer) | Mão apontando |
+| DMZ (clássico X11) | Seta clássica do tema DMZ-White |
+| Yaru (Ubuntu) | Seta do tema Yaru |
+| XCursor Pro | Seta do tema XCursor-Pro |
+| Bibata Ice (azul) | Bibata com destaque azul |
+| Bibata Original | Bibata na forma original |
 
 > Os bitmaps são gerados por `tools/make-cursor-atlas.py` (lê temas de cursor
 > instalados em `/usr/share/icons`) e ficam em `data/cursors/`.

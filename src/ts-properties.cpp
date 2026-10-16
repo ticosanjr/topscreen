@@ -96,6 +96,16 @@ obs_properties_t *properties_create(void *data)
 				  static_cast<int>(CursorStyle::GoogleDot));
 	obs_property_list_add_int(style, obs_module_text("Cursor.Style.Pointer"),
 				  static_cast<int>(CursorStyle::Pointer));
+	obs_property_list_add_int(style, obs_module_text("Cursor.Style.Dmz"),
+				  static_cast<int>(CursorStyle::Dmz));
+	obs_property_list_add_int(style, obs_module_text("Cursor.Style.Yaru"),
+				  static_cast<int>(CursorStyle::Yaru));
+	obs_property_list_add_int(style, obs_module_text("Cursor.Style.XCursorPro"),
+				  static_cast<int>(CursorStyle::XCursorPro));
+	obs_property_list_add_int(style, obs_module_text("Cursor.Style.BibataIce"),
+				  static_cast<int>(CursorStyle::BibataIce));
+	obs_property_list_add_int(style, obs_module_text("Cursor.Style.BibataOriginal"),
+				  static_cast<int>(CursorStyle::BibataOriginal));
 
 	obs_properties_add_float_slider(cur, kCursorSize, obs_module_text("Cursor.Size"), 0.5, 4.0, 0.05);
 	obs_properties_add_float_slider(cur, kCursorSmooth, obs_module_text("Cursor.Smooth"), 0.0, 1.0, 0.01);

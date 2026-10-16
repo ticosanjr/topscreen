@@ -37,6 +37,11 @@ SOURCES = [
     ("adwaita", f"{ICONS}/Adwaita/cursors/left_ptr"),
     ("googledot", f"{ICONS}/GoogleDot-White/cursors/left_ptr"),
     ("pointer", f"{ICONS}/Adwaita/cursors/pointer"),
+    ("dmz", f"{ICONS}/DMZ-White/cursors/left_ptr"),
+    ("yaru", f"{ICONS}/Yaru/cursors/left_ptr"),
+    ("xcursorpro", f"{ICONS}/XCursor-Pro-Light/cursors/left_ptr"),
+    ("bibataice", f"{ICONS}/Bibata-Modern-Ice/cursors/left_ptr"),
+    ("bibataoriginal", f"{ICONS}/Bibata-Original-Classic/cursors/left_ptr"),
 ]
 
 

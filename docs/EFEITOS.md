@@ -11,7 +11,7 @@ Modo: `auto` reage sozinho · `hotkey` só por atalho · `always` sempre ligado.
 | Recurso | Modo | Status | Observações |
 |---------|------|--------|-------------|
 | Substituir o ponteiro (desliga o nativo) | auto | ✅ | desliga `capture_cursor`/`show_cursor` na fonte-pai |
-| **7 estilos de cursor** | auto | ✅ | macOS, Windows, Breeze, Bibata, Adwaita, GoogleDot, Pointer |
+| **12 estilos de cursor** | auto | ✅ | macOS, Windows, Breeze, Bibata, Adwaita, GoogleDot, Pointer, DMZ, Yaru, XCursorPro, BibataIce, BibataOriginal |
 | Tamanho | auto | ✅ | 0.5–4× |
 | Sombra | auto | ✅ | |
 | Suavização do movimento | auto | ✅ | mola criticamente amortecida |

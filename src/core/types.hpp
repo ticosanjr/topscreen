@@ -36,7 +36,12 @@ enum class CursorStyle : int {
 	Adwaita = 4,
 	GoogleDot = 5,
 	Pointer = 6,
-	Count = 7,
+	Dmz = 7,
+	Yaru = 8,
+	XCursorPro = 9,
+	BibataIce = 10,
+	BibataOriginal = 11,
+	Count = 12,
 };
 
 /** Tipos de efeito de clique. */

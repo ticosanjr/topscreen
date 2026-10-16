@@ -1,6 +1,6 @@
 {
   "cell": 128,
-  "count": 7,
+  "count": 12,
   "cursors": [
     {
       "name": "macos",
@@ -49,6 +49,41 @@
       "hotspot": [
         0.3125,
         0.1667
+      ]
+    },
+    {
+      "name": "dmz",
+      "hotspot": [
+        0.2917,
+        0.1667
+      ]
+    },
+    {
+      "name": "yaru",
+      "hotspot": [
+        0.1458,
+        0.1354
+      ]
+    },
+    {
+      "name": "xcursorpro",
+      "hotspot": [
+        0.25,
+        0.1146
+      ]
+    },
+    {
+      "name": "bibataice",
+      "hotspot": [
+        0.2083,
+        0.0729
+      ]
+    },
+    {
+      "name": "bibataoriginal",
+      "hotspot": [
+        0.2083,
+        0.0729
       ]
     }
   ]

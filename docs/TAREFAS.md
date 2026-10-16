@@ -36,7 +36,7 @@ Status: ✅ feito · 🟡 parcial · ⬜ pendente.
 
 | ID | Tarefa | Status |
 |----|--------|--------|
-| T2.1 | Ocultar cursor nativo do pai (detectar captura de tela) | ⬜ |
+| T2.1 | Ocultar cursor nativo do pai (detectar captura de tela) | ✅ |
 | T2.2 | Mapear coordenadas globais → canvas (DPI/multi-monitor) | 🟡 (origem 0,0) |
 | T2.3 | Ativar/desativar cursor do filtro | ✅ |
 | T2.4 | Cursor procedural escalável + sombra | ✅ |
@@ -108,10 +108,10 @@ Status: ✅ feito · 🟡 parcial · ⬜ pendente.
 
 | ID | Tarefa | Status |
 |----|--------|--------|
-| TD.1 | Texto completo da licença GPL-2.0 (`COPYING`) | 🟡 |
-| TD.2 | `CONTRIBUTING.md` e template de PR | ⬜ |
+| TD.1 | Texto completo da licença GPL-2.0 (`COPYING`) | ✅ |
+| TD.2 | `CONTRIBUTING.md` e template de PR | ✅ |
 | TD.3 | Ajustar `buildspec.json`/presets para CI oficial | ⬜ |
-| TD.4 | Testes de sanidade do núcleo | ✅ (45 testes) |
+| TD.4 | Testes de sanidade do núcleo | ✅ (47 testes) |
 
 ---
 

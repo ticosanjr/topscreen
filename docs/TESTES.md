@@ -37,11 +37,12 @@ vive toda a matemática e a lógica de estado — o que de fato precisa estar ce
 | `test_zoom.cpp` | `core/zoom.*` | passo manual e limites, auto com foco recente, retorno no idle, modo off, clamp de foco |
 | `test_json.cpp` | `core/json.*` | objeto/array/aninhado, números, escapes (`\uXXXX`), erros |
 | `test_preset.cpp` | `core/preset.*` | parse + apply, campos ausentes mantidos, erros, **arquivos reais** `data/presets/*.json` |
+| `test_shader_params.cpp` | `data/effects/topscreen.effect` | presença dos uniforms que o compositor busca por nome + técnica `Draw` (pega divergência silenciosa) |
 
 ## Números atuais
 
 ```
-45 testes | 569 verificações | 0 falhas
+47 testes | 595 verificações | 0 falhas
 ```
 
 ## O que NÃO é coberto (e por quê)

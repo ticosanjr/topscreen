@@ -20,6 +20,36 @@ double clamp01(double v)
 }
 
 /**
+ * Desativa o cursor nativo da fonte-pai (ex.: Captura de Tela).
+ *
+ * Fazemos isso para poder desenhar o nosso cursor sem duplicar. Só age quando
+ * a fonte expõe a propriedade "capture_cursor".
+ */
+void disable_parent_cursor(obs_source_t *parent)
+{
+	if (!parent)
+		return;
+
+	obs_properties_t *props = obs_source_properties(parent);
+	if (!props)
+		return;
+
+	if (obs_properties_get(props, "capture_cursor")) {
+		obs_data_t *s = obs_source_get_settings(parent);
+		if (s) {
+			if (obs_data_get_bool(s, "capture_cursor")) {
+				obs_data_set_bool(s, "capture_cursor", false);
+				obs_source_update(parent, s);
+				blog(LOG_INFO, "[TopScreen] cursor nativo da captura desativado");
+			}
+			obs_data_release(s);
+		}
+	}
+
+	obs_properties_destroy(props);
+}
+
+/**
  * Estado de uma instancia do filtro TopScreen.
  *
  * Implementa HotkeyContext para que os atalhos registrados no OBS alterem a
@@ -44,6 +74,7 @@ struct ts_filter_ctx final : public HotkeyContext {
 	uint32_t target_h = 0;
 	double time_ms = 0.0;
 	bool loaded = false;
+	bool parent_cursor_checked = false;
 
 	void push_settings();
 	void reconfigure_models();
@@ -231,6 +262,12 @@ void ts_filter_render(void *data, gs_effect_t *effect)
 	if (target) {
 		ctx->target_w = obs_source_get_base_width(target);
 		ctx->target_h = obs_source_get_base_height(target);
+	}
+
+	/* T2.1: uma unica vez, desativa o cursor nativo da fonte-pai. */
+	if (!ctx->parent_cursor_checked) {
+		ctx->parent_cursor_checked = true;
+		disable_parent_cursor(obs_filter_get_parent(ctx->source));
 	}
 
 	ctx->compositor.render(ctx->source, ctx->cfg, ctx->frame);

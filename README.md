@@ -48,7 +48,7 @@ integração com o OBS ainda precisam de uma passada em um OBS real.
 ### Testes rápidos
 
 ```bash
-./tests/run.sh     # 45 testes do núcleo, sem libobs/cmake
+./tests/run.sh     # 47 testes do núcleo, sem libobs/cmake
 ```
 
 ---
@@ -90,5 +90,5 @@ cmake --install build
 
 ## Licença
 
-GPL-2.0-or-later. Veja [`LICENSE`](LICENSE). Plugins que linkam `libobs`
-precisam ser compatíveis com a GPLv2 (ver `docs/PLANO.md` §2).
+GPL-2.0-or-later. Veja [`COPYING`](COPYING) (texto completo) e [`LICENSE`](LICENSE).
+Plugins que linkam `libobs` precisam ser compatíveis com a GPLv2 (ver `docs/PLANO.md` §2).

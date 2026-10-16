@@ -63,7 +63,11 @@ TEST(preset_cobre_todas_as_chaves)
             "keys_enabled": false,
             "keys_modifiers_only": true,
             "keys_ttl_ms": 1234,
-            "keys_max": 9
+            "keys_max": 9,
+            "highlight_enabled": false,
+            "highlight_hold_ms": 777,
+            "highlight_fade_ms": 222,
+            "highlight_color": 12345
         }
     })";
 
@@ -132,4 +136,9 @@ TEST(preset_cobre_todas_as_chaves)
 	CHECK(c.keys.modifiers_only);
 	CHECK_NEAR(c.keys.ttl_ms, 1234.0, 1e-9);
 	CHECK_EQ(c.keys.max_keys, 9);
+
+	CHECK(!c.highlight.enabled);
+	CHECK_NEAR(c.highlight.hold_ms, 777.0, 1e-9);
+	CHECK_NEAR(c.highlight.fade_ms, 222.0, 1e-9);
+	CHECK_EQ(c.highlight.color, 12345u);
 }

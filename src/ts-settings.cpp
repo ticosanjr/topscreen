@@ -69,6 +69,11 @@ void config_defaults(obs_data_t *s)
 	obs_data_set_default_bool(s, kKeysModifiersOnly, def.keys.modifiers_only);
 	obs_data_set_default_double(s, kKeysTtlMs, def.keys.ttl_ms);
 	obs_data_set_default_int(s, kKeysMax, def.keys.max_keys);
+
+	obs_data_set_default_bool(s, kHighlightEnabled, def.highlight.enabled);
+	obs_data_set_default_double(s, kHighlightHoldMs, def.highlight.hold_ms);
+	obs_data_set_default_double(s, kHighlightFadeMs, def.highlight.fade_ms);
+	obs_data_set_default_int(s, kHighlightColor, static_cast<long long>(def.highlight.color));
 }
 
 void config_load(obs_data_t *s, Config *c)
@@ -132,6 +137,11 @@ void config_load(obs_data_t *s, Config *c)
 	c->keys.modifiers_only = obs_data_get_bool(s, kKeysModifiersOnly);
 	c->keys.ttl_ms = obs_data_get_double(s, kKeysTtlMs);
 	c->keys.max_keys = static_cast<int>(obs_data_get_int(s, kKeysMax));
+
+	c->highlight.enabled = obs_data_get_bool(s, kHighlightEnabled);
+	c->highlight.hold_ms = obs_data_get_double(s, kHighlightHoldMs);
+	c->highlight.fade_ms = obs_data_get_double(s, kHighlightFadeMs);
+	c->highlight.color = static_cast<uint32_t>(obs_data_get_int(s, kHighlightColor));
 }
 
 void config_store(obs_data_t *s, const Config &c)
@@ -194,6 +204,11 @@ void config_store(obs_data_t *s, const Config &c)
 	obs_data_set_bool(s, kKeysModifiersOnly, c.keys.modifiers_only);
 	obs_data_set_double(s, kKeysTtlMs, c.keys.ttl_ms);
 	obs_data_set_int(s, kKeysMax, c.keys.max_keys);
+
+	obs_data_set_bool(s, kHighlightEnabled, c.highlight.enabled);
+	obs_data_set_double(s, kHighlightHoldMs, c.highlight.hold_ms);
+	obs_data_set_double(s, kHighlightFadeMs, c.highlight.fade_ms);
+	obs_data_set_int(s, kHighlightColor, static_cast<long long>(c.highlight.color));
 }
 
 } // namespace topscreen

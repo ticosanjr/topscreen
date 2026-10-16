@@ -149,6 +149,12 @@ bool Preset::apply(Config *cfg, std::string *error) const
 	cfg->keys.ttl_ms = read_number(o, kKeysTtlMs, cfg->keys.ttl_ms);
 	cfg->keys.max_keys = read_int(o, kKeysMax, cfg->keys.max_keys);
 
+	/* Marca-texto */
+	cfg->highlight.enabled = read_bool(o, kHighlightEnabled, cfg->highlight.enabled);
+	cfg->highlight.hold_ms = read_number(o, kHighlightHoldMs, cfg->highlight.hold_ms);
+	cfg->highlight.fade_ms = read_number(o, kHighlightFadeMs, cfg->highlight.fade_ms);
+	cfg->highlight.color = static_cast<uint32_t>(read_number(o, kHighlightColor, cfg->highlight.color));
+
 	return true;
 }
 

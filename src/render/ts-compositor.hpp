@@ -61,6 +61,11 @@ private:
 	gs_eparam_t *p_spotlight_radius_ = nullptr;
 	gs_eparam_t *p_spotlight_dim_ = nullptr;
 
+	gs_eparam_t *p_highlight_active_ = nullptr;
+	gs_eparam_t *p_highlight_rect_ = nullptr;
+	gs_eparam_t *p_highlight_color_ = nullptr;
+	gs_eparam_t *p_highlight_alpha_ = nullptr;
+
 	/* Slots de clique explicitos (o shader nao usa arrays de uniform). */
 	struct ClickParams {
 		gs_eparam_t *pos = nullptr;

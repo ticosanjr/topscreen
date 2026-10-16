@@ -90,6 +90,7 @@ TEST(shader_tem_uniforms_esperados)
 		"shadow_offset",  "cursor_enabled", "cursor_pos",    "cursor_scale",
 		"cursor_opacity", "cursor_rotation", "cursor_shadow", "click_count",
 		"zoom_blur",      "spotlight_enabled", "spotlight_radius", "spotlight_dim",
+		"highlight_active", "highlight_rect", "highlight_color", "highlight_alpha",
 		"click0_pos",     "click0_prog",    "click0_size",   "click0_color",
 		"click0_type",    "click1_pos",     "click1_prog",   "click1_size",
 		"click1_color",   "click1_type",    "click2_pos",    "click2_prog",

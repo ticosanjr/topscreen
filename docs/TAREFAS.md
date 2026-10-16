@@ -80,8 +80,8 @@ Status: ✅ feito · 🟡 parcial · ⬜ pendente.
 | T5.3 | Captura de teclas (Windows / X11; evdev em F7) | ✅ |
 | T5.4 | Overlay de teclas | ✅ |
 | T5.5 | Spotlight/dim seguindo o cursor | ✅ |
-| T5.6 | Webcam bubble | ⬜ |
-| T5.7 | Marca-texto de arrasto | ⬜ |
+| T5.6 | Webcam bubble | ⬜ (precisa de fonte própria - F6) |
+| T5.7 | Marca-texto de arrasto | ✅ |
 
 ## F6 — Fonte de captura própria + áudio
 
@@ -98,8 +98,8 @@ Status: ✅ feito · 🟡 parcial · ⬜ pendente.
 | ID | Tarefa | Status |
 |----|--------|--------|
 | T7.1 | Portal `GlobalShortcuts` | ⬜ |
-| T7.2 | Backend evdev (libevdev) | ⬜ |
-| T7.3 | Regra udev `uaccess` + detecção no dock | 🟡 (arquivo udev pronto) |
+| T7.2 | Backend evdev (libevdev) | ✅ (leitura direta de /dev/input + decoder testado) |
+| T7.3 | Regra udev `uaccess` + detecção no dock | ✅ (regra pronta + aviso no log) |
 | T7.4 | Degradação graciosa + relatório de tiers | 🟡 (tier no log/campo) |
 | T7.5 | CI: build Win + Linux contra OBS | 🟡 (CI de testes + checagem de headers ✅; build do plugin best-effort) |
 | T7.6 | Empacotamento portable + release | ⬜ |

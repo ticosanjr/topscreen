@@ -90,6 +90,7 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 	core::ZoomModel zoom;
 	core::ClickFxModel clicks;
 	core::KeyOverlayModel keys;
+	core::HighlighterModel highlight;
 	FrameState frame;
 
 	uint32_t target_w = 0;
@@ -97,6 +98,7 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 	double time_ms = 0.0;
 	bool loaded = false;
 	bool parent_cursor_checked = false;
+	bool prev_left = false;
 
 	std::atomic<uint32_t> actions_{0};
 	std::atomic<int> pending_effects_{-1};
@@ -154,6 +156,7 @@ void ts_filter_ctx::reconfigure_models()
 	clicks.set_left(cfg.click_left);
 	clicks.set_right(cfg.click_right);
 	keys.configure(cfg.keys);
+	highlight.configure(cfg.highlight);
 }
 
 void ts_filter_ctx::request_preset(int index)
@@ -306,6 +309,15 @@ void ts_filter_tick(void *data, float seconds)
 		ctx->cursor.set_target(cx, cy, ctx->time_ms);
 		ctx->zoom.set_cursor(cx, cy, ctx->time_ms);
 
+		/* Marca-texto de arrasto (botao esquerdo). */
+		if (st.left_pressed)
+			ctx->highlight.begin(cx, cy, ctx->time_ms);
+		else if (st.left)
+			ctx->highlight.move(cx, cy, ctx->time_ms);
+		if (!st.left && ctx->prev_left)
+			ctx->highlight.end(ctx->time_ms);
+		ctx->prev_left = st.left;
+
 		if (st.left_pressed) {
 			ctx->clicks.spawn(cx, cy, ctx->time_ms, false);
 			if (ctx->cfg.click_sound.enabled && ctx->cfg.click_sound.left)
@@ -322,12 +334,14 @@ void ts_filter_tick(void *data, float seconds)
 	ctx->cursor.update(ctx->time_ms);
 	ctx->zoom.update(ctx->time_ms);
 	ctx->keys.tick(ctx->time_ms);
+	ctx->highlight.update(ctx->time_ms);
 
 	ctx->frame.cursor = ctx->cursor.render();
 	ctx->frame.zoom = ctx->zoom.render();
 	ctx->frame.click_count = ctx->clicks.collect(ctx->time_ms, ctx->frame.clicks, kShaderClickSlots);
 	ctx->frame.key_count =
 		ctx->keys.collect(ctx->time_ms, ctx->frame.keys, FrameState::kMaxKeys);
+	ctx->frame.highlight = ctx->highlight.render();
 	ctx->frame.zoom_blur = ctx->cfg.motion_blur.enabled
 				       ? clamp01(std::fabs(ctx->zoom.zoom_velocity()) * ctx->cfg.motion_blur.amount * 0.5)
 				       : 0.0;

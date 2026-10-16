@@ -34,6 +34,8 @@ set(TOPSCREEN_CORE_SOURCES
     src/core/wav.cpp
     src/core/font_atlas.cpp
     src/core/stb_truetype_impl.cpp
+    src/core/evdev.cpp
+    src/core/highlighter.cpp
 )
 
 # ---------------------------------------------------------------------------

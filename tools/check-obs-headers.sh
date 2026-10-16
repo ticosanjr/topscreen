@@ -67,6 +67,11 @@ else
     echo "X11 ausente: backend X11 NAO sera checado."
 fi
 
+if [ -f /usr/include/linux/input.h ]; then
+    DEF+=(-DTOPSCREEN_HAVE_EVDEV)
+    echo "linux/input.h detectado: backend evdev incluido na checagem."
+fi
+
 # Qt (real se disponivel, senao stub) para checar o dock.
 QT_INC=()
 if pkg-config --exists Qt6Widgets 2>/dev/null; then

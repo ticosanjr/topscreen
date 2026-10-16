@@ -1,6 +1,7 @@
 #include "ts-compositor.hpp"
 
 #include <graphics/vec2.h>
+#include <graphics/vec4.h>
 
 #include <cstdio>
 
@@ -98,6 +99,11 @@ void Compositor::cache_params()
 	p_spotlight_radius_ = P("spotlight_radius");
 	p_spotlight_dim_ = P("spotlight_dim");
 
+	p_highlight_active_ = P("highlight_active");
+	p_highlight_rect_ = P("highlight_rect");
+	p_highlight_color_ = P("highlight_color");
+	p_highlight_alpha_ = P("highlight_alpha");
+
 	p_click_count_ = P("click_count");
 
 	char name[32];
@@ -157,6 +163,7 @@ void Compositor::release()
 	p_cursor_enabled_ = p_cursor_pos_ = p_cursor_scale_ = nullptr;
 	p_cursor_opacity_ = p_cursor_rotation_ = p_cursor_shadow_ = nullptr;
 	p_zoom_blur_ = p_spotlight_enabled_ = p_spotlight_radius_ = p_spotlight_dim_ = nullptr;
+	p_highlight_active_ = p_highlight_rect_ = p_highlight_color_ = p_highlight_alpha_ = nullptr;
 	p_click_count_ = nullptr;
 	for (auto &c : click_)
 		c = ClickParams{};
@@ -224,6 +231,19 @@ void Compositor::render(obs_source_t *filter, const core::Config &cfg, const Fra
 	set_f(p_spotlight_enabled_, spot ? 1.0f : 0.0f);
 	set_f(p_spotlight_radius_, static_cast<float>(cfg.spotlight.radius));
 	set_f(p_spotlight_dim_, static_cast<float>(cfg.spotlight.dim));
+
+	/* Marca-texto de arrasto */
+	const bool hl = active && st.highlight.active;
+	set_f(p_highlight_active_, hl ? 1.0f : 0.0f);
+	{
+		struct vec4 rect;
+		vec4_set(&rect, static_cast<float>(st.highlight.x0), static_cast<float>(st.highlight.y0),
+			 static_cast<float>(st.highlight.x1), static_cast<float>(st.highlight.y1));
+		if (p_highlight_rect_)
+			gs_effect_set_vec4(p_highlight_rect_, &rect);
+	}
+	set_c(p_highlight_color_, st.highlight.color);
+	set_f(p_highlight_alpha_, static_cast<float>(st.highlight.alpha));
 
 	/* Cliques (ate kShaderClickSlots, slots explicitos) */
 	int used = st.click_count;

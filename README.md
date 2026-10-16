@@ -39,7 +39,7 @@ Veja [`docs/ROADMAP.md`](docs/ROADMAP.md) e [`docs/TAREFAS.md`](docs/TAREFAS.md)
 | F4 | Zoom/Pan (mola) auto + manual + pan | 🟡 implementado |
 | F5 | Overlay de teclas (atlas TTF) + spotlight + webcam | 🟡 (teclas/spotlight ✅; webcam/marca-texto ⬜) |
 | F6 | Fonte de captura própria + áudio próprio | ⬜ |
-| F7 | Paridade Wayland (portais + evdev) + polimento | ⬜ |
+| F7 | Paridade Wayland (portal + evdev) + CI + polimento | 🟡 (evdev ✅; portal ⬜) |
 
 O núcleo (matemática, cursor, cliques, zoom, presets, JSON) tem **testes
 automatizados** — veja [`docs/TESTES.md`](docs/TESTES.md). O shader e a
@@ -48,7 +48,7 @@ integração com o OBS ainda precisam de uma passada em um OBS real.
 ### Testes rápidos
 
 ```bash
-./tests/run.sh     # 70 testes do núcleo, sem libobs/cmake
+./tests/run.sh     # 81 testes do núcleo, sem libobs/cmake
 ```
 
 ---

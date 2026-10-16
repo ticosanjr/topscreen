@@ -35,6 +35,11 @@ uniform float  spotlight_enabled;
 uniform float  spotlight_radius; // fracao do menor lado
 uniform float  spotlight_dim;    // 0..1
 
+uniform float  highlight_active;
+uniform float4 highlight_rect;   // x0,y0,x1,y1 (conteudo 0..1)
+uniform float4 highlight_color;  // rgba
+uniform float  highlight_alpha;
+
 uniform float  click_count;
 
 uniform float2 click0_pos;
@@ -239,6 +244,18 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 		if (click_count > 3.5)
 			col = apply_click(col, px, mask, click3_pos, click3_prog, click3_size, click3_color,
 					  click3_type);
+
+		// Marca-texto de arrasto
+		if (highlight_active > 0.5) {
+			float2 hp0 = content_to_pixel(highlight_rect.xy);
+			float2 hp1 = content_to_pixel(highlight_rect.zw);
+			float2 hc  = (hp0 + hp1) * 0.5;
+			float2 hh  = abs(hp1 - hp0) * 0.5;
+			float  hr  = min(hh.x, hh.y) * 0.25;
+			float  hd  = sd_round_box(px - hc, hh, hr);
+			float  ha  = (1.0 - smoothstep(-1.0, 1.0, hd)) * highlight_alpha * mask * highlight_color.a;
+			col.rgb    = lerp(col.rgb, highlight_color.rgb, saturate(ha));
+		}
 
 		// Spotlight: escurece fora de um circulo que segue o cursor
 		if (spotlight_enabled > 0.5) {

@@ -3,11 +3,11 @@
 /*
  * Backends de input por plataforma.
  *
- * Tier 1 (nativo):
- *   - Windows: WinAPI (GetCursorPos + GetAsyncKeyState + scan de teclas)
- *   - X11:     Xlib (XQueryPointer + XQueryKeymap)
- * Tier 2 (portal GlobalShortcuts) e Tier 3 (evdev) entram em F7; ver
- * docs/INPUT-E-PLATAFORMAS.md.
+ *   - Windows: WinAPI (cursor + botoes + scan de teclas)  -> Tier 1
+ *   - Linux:   X11 para cursor/botoes (Tier 1) e evdev para teclas (Tier 3)
+ *   - Sem backend: degradacao graciosa (Tier 4)
+ *
+ * Tier 2 (portal GlobalShortcuts) entra em F7; ver docs/INPUT-E-PLATAFORMAS.md.
  */
 
 #if defined(_WIN32)
@@ -123,25 +123,46 @@ void ts_input_platform_poll(void *state, InputState *out)
 
 } // namespace topscreen
 
-#elif defined(TOPSCREEN_HAVE_X11)
+#elif defined(__linux__)
 
+#include <cstdio>
+#include <cstring>
+#include <string>
+#include <vector>
+
+#include "core/evdev.hpp"
+
+#if defined(TOPSCREEN_HAVE_X11)
 #include <X11/XKBlib.h>
 #include <X11/Xlib.h>
 #include <X11/keysym.h>
-
 #include <cctype>
-#include <cstring>
-#include <string>
+#endif
+
+#if defined(TOPSCREEN_HAVE_EVDEV)
+#include <fcntl.h>
+#include <linux/input.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
+#endif
 
 namespace topscreen {
 
 namespace {
 
-struct X11Input {
+struct LinuxInput {
+#if defined(TOPSCREEN_HAVE_X11)
 	Display *dpy = nullptr;
 	unsigned char prev[32] = {};
+#endif
+#if defined(TOPSCREEN_HAVE_EVDEV)
+	int fd = -1;
+	unsigned char buf[1024] = {};
+	size_t buflen = 0;
+#endif
 };
 
+#if defined(TOPSCREEN_HAVE_X11)
 std::string x11_label(KeySym ks, bool *is_mod)
 {
 	*is_mod = false;
@@ -154,7 +175,6 @@ std::string x11_label(KeySym ks, bool *is_mod)
 	for (char &c : n)
 		c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
 
-	/* Nomes amigaveis. */
 	if (n == "RETURN")
 		return "Enter";
 	if (n == "BACKSPACE")
@@ -189,75 +209,196 @@ std::string x11_label(KeySym ks, bool *is_mod)
 		*is_mod = true;
 		return "Win";
 	}
-
-	/* Teclas de 1 caractere. */
 	if (n.size() == 1 && std::isalnum(static_cast<unsigned char>(n[0])))
 		return n;
 
 	return {};
 }
+#endif
+
+#if defined(TOPSCREEN_HAVE_EVDEV)
+bool evdev_is_keyboard(int fd)
+{
+	unsigned long ev_bits = 0;
+	if (ioctl(fd, EVIOCGBIT(0, sizeof(ev_bits)), &ev_bits) < 0)
+		return false;
+	if (!(ev_bits & (1UL << EV_KEY)))
+		return false;
+
+	unsigned long key_bits[(KEY_MAX / 8) + 1] = {};
+	if (ioctl(fd, EVIOCGBIT(EV_KEY, sizeof(key_bits)), key_bits) < 0)
+		return false;
+
+	auto has = [&](int code) { return (key_bits[code / 8] & (1UL << (code % 8))) != 0; };
+	return has(KEY_A) && has(KEY_Z) && has(KEY_SPACE);
+}
+
+int evdev_open_keyboard()
+{
+	for (int i = 0; i < 32; ++i) {
+		char path[32];
+		std::snprintf(path, sizeof(path), "/dev/input/event%d", i);
+
+		const int fd = ::open(path, O_RDONLY | O_NONBLOCK);
+		if (fd < 0)
+			continue;
+
+		if (evdev_is_keyboard(fd)) {
+			blog(LOG_INFO, "[TopScreen] evdev: usando %s", path);
+			return fd;
+		}
+		::close(fd);
+	}
+	return -1;
+}
+#endif
 
 } // namespace
 
 void *ts_input_platform_start(obs_source_t *source)
 {
 	UNUSED_PARAMETER(source);
-	auto *s = new X11Input();
+	auto *s = new LinuxInput();
+
+#if defined(TOPSCREEN_HAVE_X11)
 	s->dpy = XOpenDisplay(nullptr);
 	if (!s->dpy)
-		blog(LOG_WARNING, "[TopScreen] nao foi possivel abrir o display X11");
+		blog(LOG_INFO, "[TopScreen] X11 indisponivel (cursor/rotação por X11 desativados)");
+#endif
+
+#if defined(TOPSCREEN_HAVE_EVDEV)
+	s->fd = evdev_open_keyboard();
+	if (s->fd < 0)
+		blog(LOG_INFO, "[TopScreen] evdev indisponivel (permissao em /dev/input?)");
+#endif
+
 	return s;
 }
 
 void ts_input_platform_stop(void *state)
 {
-	auto *s = static_cast<X11Input *>(state);
+	auto *s = static_cast<LinuxInput *>(state);
+#if defined(TOPSCREEN_HAVE_X11)
 	if (s->dpy)
 		XCloseDisplay(s->dpy);
+#endif
+#if defined(TOPSCREEN_HAVE_EVDEV)
+	if (s->fd >= 0)
+		::close(s->fd);
+#endif
 	delete s;
 }
 
 void ts_input_platform_poll(void *state, InputState *out)
 {
-	auto *s = static_cast<X11Input *>(state);
-	if (!s->dpy)
-		return;
+	auto *s = static_cast<LinuxInput *>(state);
 
-	Window root = DefaultRootWindow(s->dpy);
-	Window child_ret;
-	int root_x = 0, root_y = 0, win_x = 0, win_y = 0;
-	unsigned int mask = 0;
+#if defined(TOPSCREEN_HAVE_X11)
+	const bool x11 = (s->dpy != nullptr);
+#else
+	const bool x11 = false;
+#endif
 
-	if (XQueryPointer(s->dpy, root, &child_ret, &child_ret, &root_x, &root_y, &win_x, &win_y, &mask)) {
-		out->x = static_cast<double>(root_x);
-		out->y = static_cast<double>(root_y);
-		out->available = true;
-		out->tier = 1;
+#if defined(TOPSCREEN_HAVE_EVDEV)
+	const bool evdev = (s->fd >= 0);
+#else
+	const bool evdev = false;
+#endif
 
-		out->left = (mask & Button1Mask) != 0;
-		out->right = (mask & Button3Mask) != 0;
+	out->key_count = 0;
+
+	/* Cursor e botoes (X11) */
+#if defined(TOPSCREEN_HAVE_X11)
+	if (x11) {
+		Window root = DefaultRootWindow(s->dpy);
+		Window child_ret;
+		int root_x = 0, root_y = 0, win_x = 0, win_y = 0;
+		unsigned int mask = 0;
+
+		if (XQueryPointer(s->dpy, root, &child_ret, &child_ret, &root_x, &root_y, &win_x, &win_y,
+				  &mask)) {
+			out->x = static_cast<double>(root_x);
+			out->y = static_cast<double>(root_y);
+			out->available = true;
+
+			out->left = (mask & Button1Mask) != 0;
+			out->right = (mask & Button3Mask) != 0;
+		}
 	}
+#endif
 
-	char keys[32] = {};
-	XQueryKeymap(s->dpy, keys);
-	for (int kc = 8; kc < 256; ++kc) {
-		const unsigned char bit = static_cast<unsigned char>(1u << (kc & 7));
-		const bool down = (keys[kc >> 3] & bit) != 0;
-		const bool was = (s->prev[kc >> 3] & bit) != 0;
-		if (down && !was) {
-			const KeySym ks = XkbKeycodeToKeysym(s->dpy, static_cast<KeyCode>(kc), 0, 0);
-			if (ks != NoSymbol) {
-				bool is_mod = false;
-				const std::string label = x11_label(ks, &is_mod);
-				if (!label.empty() && out->key_count < InputState::kMaxKeyEvents) {
+	/* Teclas: evdev tem prioridade (funciona tambem no Wayland). */
+	bool keys_done = false;
+	(void)keys_done;
+#if defined(TOPSCREEN_HAVE_EVDEV)
+	if (evdev) {
+		for (;;) {
+			const ssize_t n = ::read(s->fd, s->buf + s->buflen, sizeof(s->buf) - s->buflen);
+			if (n <= 0)
+				break;
+			s->buflen += static_cast<size_t>(n);
+			if (s->buflen >= sizeof(s->buf))
+				break;
+		}
+
+		const size_t rec = sizeof(struct input_event);
+		if (s->buflen >= rec) {
+			const size_t usable = (s->buflen / rec) * rec;
+			std::vector<core::EvdevKey> events;
+			core::evdev_decode(s->buf, usable, rec, &events);
+			std::memmove(s->buf, s->buf + usable, s->buflen - usable);
+			s->buflen -= usable;
+
+			for (const core::EvdevKey &k : events) {
+				if (!k.pressed)
+					continue;
+				const std::string label = core::evdev_key_label(k.code);
+				if (label.empty())
+					continue;
+				if (out->key_count < InputState::kMaxKeyEvents) {
 					out->key_labels[out->key_count] = label;
-					out->key_modifier[out->key_count] = is_mod;
+					out->key_modifier[out->key_count] = core::evdev_key_is_modifier(k.code);
 					++out->key_count;
 				}
 			}
 		}
+		keys_done = true;
 	}
-	std::memcpy(s->prev, keys, sizeof(keys));
+#endif
+
+	/* Fallback de teclas por X11 */
+#if defined(TOPSCREEN_HAVE_X11)
+	if (x11 && !keys_done) {
+		char keys[32] = {};
+		XQueryKeymap(s->dpy, keys);
+		for (int kc = 8; kc < 256; ++kc) {
+			const unsigned char bit = static_cast<unsigned char>(1u << (kc & 7));
+			const bool down = (keys[kc >> 3] & bit) != 0;
+			const bool was = (s->prev[kc >> 3] & bit) != 0;
+			if (down && !was) {
+				const KeySym ks = XkbKeycodeToKeysym(s->dpy, static_cast<KeyCode>(kc), 0, 0);
+				if (ks != NoSymbol) {
+					bool is_mod = false;
+					const std::string label = x11_label(ks, &is_mod);
+					if (!label.empty() && out->key_count < InputState::kMaxKeyEvents) {
+						out->key_labels[out->key_count] = label;
+						out->key_modifier[out->key_count] = is_mod;
+						++out->key_count;
+					}
+				}
+			}
+		}
+		std::memcpy(s->prev, keys, sizeof(keys));
+	}
+#endif
+
+	/* Tier: 1 se ha cursor nativo (X11); 3 se so temos teclas via evdev. */
+	if (x11)
+		out->tier = 1;
+	else if (evdev)
+		out->tier = 3;
+	else
+		out->tier = 0;
 }
 
 } // namespace topscreen

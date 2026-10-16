@@ -2,6 +2,7 @@
 
 #include "click_fx.hpp"
 #include "cursor.hpp"
+#include "highlighter.hpp"
 #include "key_overlay.hpp"
 #include "types.hpp"
 #include "zoom.hpp"
@@ -56,6 +57,7 @@ struct Config {
 	MotionBlurConfig motion_blur;
 	SpotlightConfig spotlight;
 	KeyOverlayConfig keys;
+	HighlighterConfig highlight;
 };
 
 } // namespace topscreen::core

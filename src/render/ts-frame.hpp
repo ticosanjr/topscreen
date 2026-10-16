@@ -2,6 +2,7 @@
 
 #include "core/click_fx.hpp"
 #include "core/cursor.hpp"
+#include "core/highlighter.hpp"
 #include "core/zoom.hpp"
 
 namespace topscreen {
@@ -17,6 +18,7 @@ struct FrameState {
 	core::KeyRender keys[kMaxKeys];
 	int key_count = 0;
 	double zoom_blur = 0.0; // 0..1 (motion blur do zoom)
+	core::HighlightRender highlight;
 };
 
 /** Numero maximo de cliques enviados ao shader (limite dos uniforms). */

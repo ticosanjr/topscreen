@@ -60,11 +60,13 @@ vive toda a matemática e a lógica de estado — o que de fato precisa estar ce
 | `test_wav.cpp` | `core/wav.*` | PCM 8/16/24/32 e float, estéreo, erros, e **arquivos reais** `data/sounds/*.wav` |
 
 | `test_font_atlas.cpp` | `core/font_atlas.*` | atlas gerado do **TTF real**, métricas por glifo, alpha, casos inválidos |
+| `test_evdev.cpp` | `core/evdev.*` | decodificação de `input_event`, labels, modificadores, registros parciais |
+| `test_highlighter.cpp` | `core/highlighter.*` | arrasto, retângulo normalizado, hold/fade, arrasto pequeno, desabilitado |
 
 ## Números atuais
 
 ```
-70 testes | 1470 verificações | 0 falhas   (núcleo)
+81 testes | 1537 verificações | 0 falhas   (núcleo)
 4 testes  | 25 verificações   | 0 falhas   (integração com libobs fake)
 ```
 

@@ -67,4 +67,9 @@ inline constexpr const char *kKeysModifiersOnly = "keys_modifiers_only";
 inline constexpr const char *kKeysTtlMs = "keys_ttl_ms";
 inline constexpr const char *kKeysMax = "keys_max";
 
+inline constexpr const char *kHighlightEnabled = "highlight_enabled";
+inline constexpr const char *kHighlightHoldMs = "highlight_hold_ms";
+inline constexpr const char *kHighlightFadeMs = "highlight_fade_ms";
+inline constexpr const char *kHighlightColor = "highlight_color";
+
 } // namespace topscreen::core::keys

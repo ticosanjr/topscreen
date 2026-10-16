@@ -69,8 +69,14 @@ void CursorModel::update(double now_ms)
 		sy_.set_target(start_y_);
 	}
 
-	sx_.update(dt);
-	sy_.update(dt);
+	if (cfg_.smooth <= 0.001) {
+		/* Sem suavizacao: segue o mouse exatamente. */
+		sx_.reset(sx_.target());
+		sy_.reset(sy_.target());
+	} else {
+		sx_.update(dt);
+		sy_.update(dt);
+	}
 
 	/* Sway: inclina na direcao do movimento, amortecido pela velocidade. */
 	const double vx = sx_.velocity();

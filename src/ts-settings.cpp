@@ -26,6 +26,7 @@ void config_defaults(obs_data_t *s)
 	obs_data_set_default_double(s, kBgShadowAlpha, def.bg.shadow_alpha);
 	obs_data_set_default_double(s, kBgShadowBlur, def.bg.shadow_blur);
 	obs_data_set_default_double(s, kBgShadowOffset, def.bg.shadow_offset);
+	obs_data_set_default_bool(s, kBgKeepAspect, def.bg.keep_aspect);
 
 	obs_data_set_default_bool(s, kCursorEnabled, def.cursor.enabled);
 	obs_data_set_default_int(s, kCursorStyle, def.cursor.style);
@@ -107,6 +108,7 @@ void config_load(obs_data_t *s, Config *c)
 	c->bg.shadow_alpha = obs_data_get_double(s, kBgShadowAlpha);
 	c->bg.shadow_blur = obs_data_get_double(s, kBgShadowBlur);
 	c->bg.shadow_offset = obs_data_get_double(s, kBgShadowOffset);
+	c->bg.keep_aspect = obs_data_get_bool(s, kBgKeepAspect);
 
 	c->cursor.enabled = obs_data_get_bool(s, kCursorEnabled);
 	c->cursor.style = static_cast<int>(obs_data_get_int(s, kCursorStyle));
@@ -188,6 +190,7 @@ void config_store(obs_data_t *s, const Config &c)
 	obs_data_set_double(s, kBgShadowAlpha, c.bg.shadow_alpha);
 	obs_data_set_double(s, kBgShadowBlur, c.bg.shadow_blur);
 	obs_data_set_double(s, kBgShadowOffset, c.bg.shadow_offset);
+	obs_data_set_bool(s, kBgKeepAspect, c.bg.keep_aspect);
 
 	obs_data_set_bool(s, kCursorEnabled, c.cursor.enabled);
 	obs_data_set_int(s, kCursorStyle, c.cursor.style);

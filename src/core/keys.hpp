@@ -23,6 +23,7 @@ inline constexpr const char *kBgShadow = "bg_shadow";
 inline constexpr const char *kBgShadowAlpha = "bg_shadow_alpha";
 inline constexpr const char *kBgShadowBlur = "bg_shadow_blur";
 inline constexpr const char *kBgShadowOffset = "bg_shadow_offset";
+inline constexpr const char *kBgKeepAspect = "bg_keep_aspect";
 
 inline constexpr const char *kCursorEnabled = "cursor_enabled";
 inline constexpr const char *kCursorStyle = "cursor_style";

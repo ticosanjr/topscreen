@@ -80,7 +80,6 @@ obs_properties_t *properties_create(void *data)
 				  static_cast<int>(BgMode::Vertical));
 	obs_property_list_add_int(mode, obs_module_text("Background.Mode.Diagonal"),
 				  static_cast<int>(BgMode::Diagonal));
-	obs_property_list_add_int(mode, obs_module_text("Background.Mode.Image"), static_cast<int>(BgMode::Image));
 
 	obs_property_t *wp = obs_properties_add_list(bg, kBgImage, obs_module_text("Background.Image"),
 						     OBS_COMBO_TYPE_EDITABLE, OBS_COMBO_FORMAT_STRING);
@@ -95,6 +94,7 @@ obs_properties_t *properties_create(void *data)
 	obs_properties_add_color(bg, kBgColorB, obs_module_text("Background.ColorB"));
 	obs_properties_add_float_slider(bg, kBgPaddingX, obs_module_text("Background.PaddingX"), 0.0, 400.0, 1.0);
 	obs_properties_add_float_slider(bg, kBgPaddingY, obs_module_text("Background.PaddingY"), 0.0, 400.0, 1.0);
+	obs_properties_add_bool(bg, kBgKeepAspect, obs_module_text("Background.KeepAspect"));
 	obs_properties_add_float_slider(bg, kBgCornerRadius, obs_module_text("Background.CornerRadius"), 0.0, 200.0,
 					1.0);
 	obs_properties_add_bool(bg, kBgShadow, obs_module_text("Background.Shadow"));

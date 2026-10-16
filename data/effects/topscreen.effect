@@ -22,6 +22,7 @@ uniform float  bg_mode;       // 0 solido, 1 vertical, 2 diagonal, 3 imagem
 uniform texture2d bg_tex;     // wallpaper
 uniform float  bg_tex_enabled;
 uniform float  bg_tex_aspect; // w/h da imagem
+uniform float  bg_keep_aspect;
 uniform float  shadow_alpha;
 uniform float  shadow_blur;
 uniform float2 shadow_offset;
@@ -144,11 +145,21 @@ float sd_triangle(float2 p, float2 p0, float2 p1, float2 p2)
 	return -sqrt(d.x) * sgn(d.y);
 }
 
-// Tamanho da area de conteudo (descontando o padding).
+// Tamanho da area de conteudo (descontando o padding; com opcao de manter proporcao).
 float2 content_size()
 {
-	float2 pad2 = content_pad * 2.0;
-	return max(target_size - pad2, float2(1.0, 1.0));
+	float2 area = max(target_size - content_pad * 2.0, float2(1.0, 1.0));
+	if (bg_keep_aspect > 0.5) {
+		float sc = min(area.x / max(target_size.x, 1.0), area.y / max(target_size.y, 1.0));
+		area = target_size * sc;
+	}
+	return area;
+}
+
+// Canto superior esquerdo da area de conteudo.
+float2 content_origin()
+{
+	return (target_size - content_size()) * 0.5;
 }
 
 // Converte coordenada de conteudo (0..1) para pixel de saida, aplicando o zoom.
@@ -156,7 +167,7 @@ float2 content_to_pixel(float2 cu)
 {
 	float2 cs = content_size();
 	float2 su = zoom_focus + (cu - zoom_focus) / max(zoom, 0.0001);
-	return su * cs + content_pad;
+	return su * cs + content_origin();
 }
 
 // Compoe um efeito de clique sobre a cor atual.
@@ -198,7 +209,7 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 	float2 center = target_size * 0.5;
 	float2 p      = px - center;
 
-	float2 content_half = center - content_pad;
+	float2 content_half = content_size() * 0.5;
 	float  radius       = min(corner_radius, min(content_half.x, content_half.y));
 	radius              = max(radius, 0.0);
 
@@ -235,7 +246,7 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 
 	if (mask > 0.0) {
 		float2 cs         = content_size();
-		float2 content_uv = (px - content_pad) / cs;
+		float2 content_uv = (px - content_origin()) / cs;
 		float2 uv_screen  = zoom_focus + (content_uv - zoom_focus) / max(zoom, 0.0001);
 
 		float4 screen;

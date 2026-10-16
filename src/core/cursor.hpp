@@ -10,8 +10,8 @@ struct CursorConfig {
 	int style = static_cast<int>(CursorStyle::MacOs);
 	double size = 1.4;     // multiplicador de tamanho
 	bool shadow = true;
-	double smooth = 0.7;   // 0..1 -> rigidez da mola
-	double sway = 0.3;     // 0..1 -> inclinacao na curva
+	double smooth = 0.0;   // 0 = segue o mouse exatamente
+	double sway = 0.0;     // 0..1 -> inclinacao na curva
 	bool hide_idle = true; // oculta quando parado
 	double idle_delay_ms = 1200.0;
 	bool loop = false; // volta ao inicio quando parado

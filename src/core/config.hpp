@@ -26,6 +26,7 @@ struct BackgroundConfig {
 	double shadow_alpha = 0.35;
 	double shadow_blur = 48.0;
 	double shadow_offset = 12.0; // deslocamento vertical (px)
+	bool keep_aspect = true;     // mantem a proporcao da tela (sem distorcao)
 };
 
 struct ClickSoundConfig {

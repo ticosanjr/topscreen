@@ -157,6 +157,7 @@ void Compositor::cache_params()
 	p_bg_tex_ = P("bg_tex");
 	p_bg_tex_enabled_ = P("bg_tex_enabled");
 	p_bg_tex_aspect_ = P("bg_tex_aspect");
+	p_bg_keep_aspect_ = P("bg_keep_aspect");
 	p_shadow_alpha_ = P("shadow_alpha");
 	p_shadow_blur_ = P("shadow_blur");
 	p_shadow_offset_ = P("shadow_offset");
@@ -242,6 +243,7 @@ void Compositor::release()
 	p_target_size_ = p_pad_ = p_radius_ = p_zoom_ = p_focus_ = nullptr;
 	p_bg_a_ = p_bg_b_ = p_bg_mode_ = nullptr;
 	p_bg_tex_ = p_bg_tex_enabled_ = p_bg_tex_aspect_ = nullptr;
+	p_bg_keep_aspect_ = nullptr;
 	p_shadow_alpha_ = p_shadow_blur_ = p_shadow_offset_ = nullptr;
 	p_cursor_enabled_ = p_cursor_pos_ = p_cursor_scale_ = nullptr;
 	p_cursor_opacity_ = p_cursor_rotation_ = p_cursor_shadow_ = nullptr;
@@ -284,13 +286,14 @@ void Compositor::render(obs_source_t *filter, const core::Config &cfg, const Fra
 	       bg ? static_cast<float>(cfg.bg.padding_y) : 0.0f);
 	set_f(p_radius_, bg ? static_cast<float>(cfg.bg.corner_radius) : 0.0f);
 	set_f(p_bg_mode_, bg ? static_cast<float>(cfg.bg.mode) : 0.0f);
+	set_f(p_bg_keep_aspect_, cfg.bg.keep_aspect ? 1.0f : 0.0f);
 	set_c(p_bg_a_, cfg.bg.color_a);
 	set_c(p_bg_b_, cfg.bg.color_b);
 
-	/* Wallpaper (imagem de fundo): arquivo do PC tem prioridade */
+	/* Wallpaper: se houver imagem (do PC ou embutida), ela e usada. */
 	const std::string bg_path = !cfg.bg.image_file.empty() ? cfg.bg.image_file : cfg.bg.image;
 	load_bg_image(active ? bg_path : std::string());
-	const bool bgimg = bg && cfg.bg.mode == static_cast<int>(core::BgMode::Image) && bg_tex_ != nullptr;
+	const bool bgimg = bg && bg_tex_ != nullptr;
 	set_f(p_bg_tex_enabled_, bgimg ? 1.0f : 0.0f);
 	if (bgimg) {
 		set_f(p_bg_tex_aspect_, bg_aspect_);

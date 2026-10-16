@@ -77,13 +77,19 @@ Coloca a tela "flutuando" sobre um fundo, com cantos e sombra.
 | Opção | O que faz |
 |-------|-----------|
 | **Ativar fundo** | Liga o fundo + cantos + espaçamento |
-| **Estilo** | Cor sólida, gradiente vertical/diagonal ou **imagem de fundo** |
+| **Estilo** | Cor sólida, gradiente vertical ou diagonal (usado quando **não** há imagem) |
 | **Cor A / Cor B** | Cores do fundo (B só aparece nos gradientes) |
-| **Wallpaper** | Escolha uma das **12 imagens** que vêm com o plugin ou aponte para uma imagem do seu PC (escolha "Editar" e cole o caminho) |
+| **Wallpaper** | Uma das **12 imagens** que vêm com o plugin. Escolher já aplica |
+| **Imagem do PC** | Botão para escolher um **arquivo do seu PC** (jpg/png/bmp/tga). Tem prioridade sobre o Wallpaper |
 | **Espaçamento horizontal / vertical (px)** | Margem entre a tela e a borda (X e Y separados) |
+| **Manter a proporção da tela** | Evita esticar a tela: ela é reduzida proporcionalmente (deixe ligado) |
 | **Cantos arredondados (px)** | Raio dos cantos da tela |
-| **Sombra da janela** | Liga a sombra atrás da tela |
-| **Opacidade / Desfoque / Deslocamento da sombra** | Ajuste fino da sombra |
+| **Sombra da janela: ligar/desligar** | Liga/desliga a sombra atrás da tela |
+| **Sombra: opacidade** | Quão forte é a sombra (0 = invisível, 1 = forte) |
+| **Sombra: tamanho do desfoque** | Quão suave/grande é a sombra |
+| **Sombra: deslocamento para baixo** | Move a sombra para baixo (efeito de relevo) |
+
+> O fundo aparece **atrás** da tela. Sem imagem, use o **Estilo** (cor/gradiente).
 
 ### Cursor
 | Opção | O que faz |
@@ -91,7 +97,7 @@ Coloca a tela "flutuando" sobre um fundo, com cantos e sombra.
 | **Mostrar cursor** | Desenha o cursor próprio (desliga o nativo) |
 | **Estilo** | Um dos 7 cursores (ver abaixo) |
 | **Tamanho** | Escala do cursor (1.0 = padrão) |
-| **Suavização** | 0 = "flutuante", 1 = "colado" ao mouse |
+| **Suavização** | 0 = **segue o mouse exatamente**; acima disso, desliza (estilo "screen recorder") |
 | **Inclinação na curva (sway)** | O cursor inclina levemente ao virar |
 | **Sombra do cursor** | Sombra para destacar do fundo |
 | **Ocultar quando parado / Delay** | Some quando você para de mexer |
@@ -286,7 +292,9 @@ TOPSCREEN_DEBUG_KEY=Ctrl obs
   nome, desligue manualmente a opção de cursor da fonte.
 
 **O cursor está atrasado**
-- Aumente **Suavização** para 1.0 e reduza **Inclinação na curva** para 0.
+- **Suavização** em `0` faz o cursor seguir o mouse **exatamente**. Valores
+  maiores adicionam deslize (de propósito).
+- **Inclinação na curva** em `0` remove a inclinação.
 
 **O cursor/mouse não bate com a tela**
 - O mapeamento assume a captura no canto superior esquerdo da tela. Em

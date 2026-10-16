@@ -14,13 +14,14 @@ Ex.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 |------------|------------|-------|------|-------|--------|
 | — | Efeitos habilitados | `effects_enabled` | bool | — | `true` |
 | Plano de fundo | Ativar fundo | `bg_enabled` | bool | — | `true` |
-| | Estilo | `bg_mode` | int | 0 sólido · 1 vertical · 2 diagonal · 3 imagem | `2` |
+| | Estilo | `bg_mode` | int | 0 sólido · 1 vertical · 2 diagonal | `2` |
 | | Cor A | `bg_color_a` | cor | — | `0xFF20242E` |
 | | Cor B | `bg_color_b` | cor | — | `0xFF3A2E5C` |
 | | Wallpaper | `bg_image` | string | "" ou `wallpapers/*.jpg` ou caminho absoluto | `""` |
 | | Imagem do PC | `bg_image_file` | string | caminho de arquivo (tem prioridade) | `""` |
 | | Espaçamento horizontal (px) | `bg_padding_x` | double | 0–400 | `64` |
 | | Espaçamento vertical (px) | `bg_padding_y` | double | 0–400 | `64` |
+| | Manter proporção da tela | `bg_keep_aspect` | bool | — | `true` |
 | | Cantos arredondados (px) | `bg_corner_radius` | double | 0–200 | `18` |
 | | Sombra da janela | `bg_shadow` | bool | — | `true` |
 | | Opacidade da sombra | `bg_shadow_alpha` | double | 0–1 | `0.35` |

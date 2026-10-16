@@ -29,6 +29,7 @@ TEST(preset_cobre_todas_as_chaves)
             "bg_shadow_alpha": 0.11,
             "bg_shadow_blur": 13,
             "bg_shadow_offset": 6,
+            "bg_keep_aspect": false,
             "cursor_enabled": false,
             "cursor_style": 1,
             "cursor_size": 2.5,
@@ -105,6 +106,7 @@ TEST(preset_cobre_todas_as_chaves)
 	CHECK_NEAR(c.bg.shadow_alpha, 0.11, 1e-9);
 	CHECK_NEAR(c.bg.shadow_blur, 13.0, 1e-9);
 	CHECK_NEAR(c.bg.shadow_offset, 6.0, 1e-9);
+	CHECK(!c.bg.keep_aspect);
 
 	CHECK(!c.cursor.enabled);
 	CHECK_EQ(c.cursor.style, 1);

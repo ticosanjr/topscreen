@@ -25,6 +25,8 @@ Obrigado pelo interesse! Este projeto é um plugin de efeitos ao vivo para OBS.
   e desenha os clássicos). Rode de novo se mudar os estilos.
 - **Fonte:** `data/fonts/DejaVuSans-Bold.ttf` (para o overlay de teclas).
 - **Sons:** `data/sounds/*.wav` (som de clique).
+- **Wallpapers:** `data/wallpapers/*.jpg` — gerados por
+  `python3 tools/make-wallpapers.py` (Pillow).
 
 ## Fluxo
 

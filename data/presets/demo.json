@@ -4,10 +4,9 @@
     "settings": {
         "effects_enabled": true,
         "bg_enabled": true,
-        "bg_mode": 2,
+        "bg_mode": 3,
         "bg_color_a": 4280296494,
         "bg_color_b": 4282003036,
-        "bg_padding": 64,
         "bg_corner_radius": 18,
         "bg_shadow": true,
         "bg_shadow_alpha": 0.35,
@@ -40,6 +39,9 @@
         "click_sound_enabled": false,
         "click_sound_volume": 0.6,
         "click_sound_left": true,
-        "click_sound_right": false
+        "click_sound_right": false,
+        "bg_padding_x": 64,
+        "bg_padding_y": 64,
+        "bg_image": "wallpapers/aurora.jpg"
     }
 }

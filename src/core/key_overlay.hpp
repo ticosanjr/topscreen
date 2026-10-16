@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -10,7 +11,14 @@ struct KeyOverlayConfig {
 	bool modifiers_only = false;
 	double ttl_ms = 2000.0;
 	int max_keys = 6;
-	int position = 0; // 0 = bottom_center, 1 = bottom_left, 2 = bottom_right, 3 = top_center
+	double pos_x = 0.5;  // 0..1 (centro horizontal da faixa)
+	double pos_y = 0.93; // 0..1 (base do texto)
+	double size = 1.0;   // multiplicador do tamanho do texto
+	std::string font = "fonts/DejaVuSans-Bold.ttf";
+	uint32_t color = 0xFFFFFFFF; // cor do texto (0xAABBGGRR)
+	bool shadow = true;          // contorno/sombra do texto
+	bool band = true;            // faixa atras do texto
+	uint32_t band_color = 0x99000000;
 };
 
 struct KeyRender {

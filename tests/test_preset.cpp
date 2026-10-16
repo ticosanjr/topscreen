@@ -38,7 +38,7 @@ TEST(preset_from_json_e_apply)
             "bg_enabled": true,
             "bg_mode": 1,
             "bg_color_a": 4278190080,
-            "bg_padding": 32,
+            "bg_padding_x": 32,
             "bg_corner_radius": 8,
             "cursor_enabled": false,
             "cursor_size": 2.0,
@@ -52,11 +52,11 @@ TEST(preset_from_json_e_apply)
 	CHECK_EQ(p.name, std::string("Teste"));
 
 	Config cfg;
-	cfg.bg.padding = 999.0; /* sera sobrescrito */
+	cfg.bg.padding_x = 999.0; /* sera sobrescrito */
 	REQUIRE(p.apply(&cfg, &err));
 
 	CHECK_EQ(cfg.bg.mode, 1);
-	CHECK_NEAR(cfg.bg.padding, 32.0, 1e-9);
+	CHECK_NEAR(cfg.bg.padding_x, 32.0, 1e-9);
 	CHECK_NEAR(cfg.bg.corner_radius, 8.0, 1e-9);
 	CHECK_EQ(cfg.bg.color_a, 4278190080u);
 	CHECK(!cfg.cursor.enabled);
@@ -66,7 +66,7 @@ TEST(preset_from_json_e_apply)
 
 TEST(preset_valores_ausentes_mantidos)
 {
-	const std::string text = R"({"name":"X","settings":{"bg_padding":10}})";
+	const std::string text = R"({"name":"X","settings":{"bg_padding_x":10}})";
 	Preset p;
 	std::string err;
 	REQUIRE(Preset::from_json(text, &p, &err));
@@ -76,7 +76,7 @@ TEST(preset_valores_ausentes_mantidos)
 	cfg.zoom.amount = 3.0;
 	REQUIRE(p.apply(&cfg, &err));
 
-	CHECK_NEAR(cfg.bg.padding, 10.0, 1e-9);
+	CHECK_NEAR(cfg.bg.padding_x, 10.0, 1e-9);
 	CHECK_NEAR(cfg.bg.corner_radius, 42.0, 1e-9); /* nao estava no preset */
 	CHECK_NEAR(cfg.zoom.amount, 3.0, 1e-9);
 }

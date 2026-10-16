@@ -12,6 +12,8 @@
 
 #include "core/color.hpp"
 #include "core/cursor_atlas.hpp"
+#include "core/image.hpp"
+#include "core/types.hpp"
 
 namespace topscreen {
 
@@ -152,6 +154,9 @@ void Compositor::cache_params()
 	p_bg_a_ = P("bg_a");
 	p_bg_b_ = P("bg_b");
 	p_bg_mode_ = P("bg_mode");
+	p_bg_tex_ = P("bg_tex");
+	p_bg_tex_enabled_ = P("bg_tex_enabled");
+	p_bg_tex_aspect_ = P("bg_tex_aspect");
 	p_shadow_alpha_ = P("shadow_alpha");
 	p_shadow_blur_ = P("shadow_blur");
 	p_shadow_offset_ = P("shadow_offset");
@@ -224,6 +229,7 @@ void Compositor::release()
 {
 	text_.release();
 	release_cursor_atlas();
+	release_bg_image();
 
 	if (!effect_)
 		return;
@@ -235,6 +241,7 @@ void Compositor::release()
 	effect_ = nullptr;
 	p_target_size_ = p_pad_ = p_radius_ = p_zoom_ = p_focus_ = nullptr;
 	p_bg_a_ = p_bg_b_ = p_bg_mode_ = nullptr;
+	p_bg_tex_ = p_bg_tex_enabled_ = p_bg_tex_aspect_ = nullptr;
 	p_shadow_alpha_ = p_shadow_blur_ = p_shadow_offset_ = nullptr;
 	p_cursor_enabled_ = p_cursor_pos_ = p_cursor_scale_ = nullptr;
 	p_cursor_opacity_ = p_cursor_rotation_ = p_cursor_shadow_ = nullptr;
@@ -273,16 +280,27 @@ void Compositor::render(obs_source_t *filter, const core::Config &cfg, const Fra
 
 	set_v2(p_target_size_, static_cast<float>(w), static_cast<float>(h));
 
-	set_f(p_pad_, bg ? static_cast<float>(cfg.bg.padding) : 0.0f);
+	set_v2(p_pad_, bg ? static_cast<float>(cfg.bg.padding_x) : 0.0f,
+	       bg ? static_cast<float>(cfg.bg.padding_y) : 0.0f);
 	set_f(p_radius_, bg ? static_cast<float>(cfg.bg.corner_radius) : 0.0f);
 	set_f(p_bg_mode_, bg ? static_cast<float>(cfg.bg.mode) : 0.0f);
 	set_c(p_bg_a_, cfg.bg.color_a);
 	set_c(p_bg_b_, cfg.bg.color_b);
 
+	/* Wallpaper (imagem de fundo) */
+	load_bg_image(active ? cfg.bg.image : std::string());
+	const bool bgimg = bg && cfg.bg.mode == static_cast<int>(core::BgMode::Image) && bg_tex_ != nullptr;
+	set_f(p_bg_tex_enabled_, bgimg ? 1.0f : 0.0f);
+	if (bgimg) {
+		set_f(p_bg_tex_aspect_, bg_aspect_);
+		if (p_bg_tex_)
+			gs_effect_set_texture(p_bg_tex_, bg_tex_);
+	}
+
 	const float shadow_alpha = (bg && cfg.bg.shadow) ? static_cast<float>(cfg.bg.shadow_alpha) : 0.0f;
 	set_f(p_shadow_alpha_, shadow_alpha);
 	set_f(p_shadow_blur_, static_cast<float>(cfg.bg.shadow_blur));
-	set_v2(p_shadow_offset_, 0.0f, static_cast<float>(cfg.bg.shadow_blur) * 0.25f);
+	set_v2(p_shadow_offset_, 0.0f, static_cast<float>(cfg.bg.shadow_offset));
 
 	float zoom = active ? static_cast<float>(st.zoom.zoom) : 1.0f;
 	if (zoom < 1.0f)
@@ -359,7 +377,76 @@ void Compositor::render(obs_source_t *filter, const core::Config &cfg, const Fra
 
 	/* Overlay de teclas por cima do resultado. */
 	if (active && cfg.keys.enabled && st.key_count > 0)
-		text_.draw(st.keys, st.key_count, w, h);
+		text_.draw(st.keys, st.key_count, cfg.keys, w, h);
+}
+
+void Compositor::load_bg_image(const std::string &path)
+{
+	if (path == bg_loaded_)
+		return;
+
+	if (bg_tex_) {
+		obs_enter_graphics();
+		gs_texture_destroy(bg_tex_);
+		obs_leave_graphics();
+		bg_tex_ = nullptr;
+	}
+	bg_loaded_ = path;
+
+	if (path.empty())
+		return;
+
+	std::vector<uint8_t> bytes;
+	std::ifstream in(path, std::ios::binary);
+	if (in) {
+		bytes.assign(std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>());
+	} else {
+		char *m = obs_module_file(path.c_str());
+		if (!m) {
+			blog(LOG_WARNING, "[TopScreen] wallpaper nao encontrado: %s", path.c_str());
+			return;
+		}
+		std::ifstream min(m, std::ios::binary);
+		bfree(m);
+		if (min)
+			bytes.assign(std::istreambuf_iterator<char>(min), std::istreambuf_iterator<char>());
+	}
+
+	if (bytes.empty()) {
+		blog(LOG_WARNING, "[TopScreen] wallpaper vazio/ilegivel: %s", path.c_str());
+		return;
+	}
+
+	core::Image img;
+	std::string err;
+	if (!core::image_decode(bytes.data(), bytes.size(), &img, &err)) {
+		blog(LOG_WARNING, "[TopScreen] wallpaper invalido (%s): %s", path.c_str(), err.c_str());
+		return;
+	}
+
+	bg_aspect_ = static_cast<float>(img.width) / static_cast<float>(img.height);
+
+	obs_enter_graphics();
+	const uint8_t *data[1] = {img.pixels.data()};
+	bg_tex_ = gs_texture_create(static_cast<uint32_t>(img.width), static_cast<uint32_t>(img.height), GS_RGBA, 1,
+				    data, 0);
+	obs_leave_graphics();
+
+	if (bg_tex_)
+		blog(LOG_INFO, "[TopScreen] wallpaper: %s (%dx%d)", path.c_str(), img.width, img.height);
+	else
+		blog(LOG_WARNING, "[TopScreen] falha ao criar a textura do wallpaper: %s", path.c_str());
+}
+
+void Compositor::release_bg_image()
+{
+	if (bg_tex_) {
+		obs_enter_graphics();
+		gs_texture_destroy(bg_tex_);
+		obs_leave_graphics();
+		bg_tex_ = nullptr;
+	}
+	bg_loaded_.clear();
 }
 
 } // namespace topscreen

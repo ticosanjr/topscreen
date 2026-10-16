@@ -87,11 +87,14 @@ bool Preset::apply(Config *cfg, std::string *error) const
 	cfg->bg.mode = read_int(o, kBgMode, cfg->bg.mode);
 	cfg->bg.color_a = static_cast<uint32_t>(read_number(o, kBgColorA, cfg->bg.color_a));
 	cfg->bg.color_b = static_cast<uint32_t>(read_number(o, kBgColorB, cfg->bg.color_b));
-	cfg->bg.padding = read_number(o, kBgPadding, cfg->bg.padding);
+	cfg->bg.image = read_string(o, kBgImage, cfg->bg.image);
+	cfg->bg.padding_x = read_number(o, kBgPaddingX, cfg->bg.padding_x);
+	cfg->bg.padding_y = read_number(o, kBgPaddingY, cfg->bg.padding_y);
 	cfg->bg.corner_radius = read_number(o, kBgCornerRadius, cfg->bg.corner_radius);
 	cfg->bg.shadow = read_bool(o, kBgShadow, cfg->bg.shadow);
 	cfg->bg.shadow_alpha = read_number(o, kBgShadowAlpha, cfg->bg.shadow_alpha);
 	cfg->bg.shadow_blur = read_number(o, kBgShadowBlur, cfg->bg.shadow_blur);
+	cfg->bg.shadow_offset = read_number(o, kBgShadowOffset, cfg->bg.shadow_offset);
 
 	/* Cursor */
 	cfg->cursor.enabled = read_bool(o, kCursorEnabled, cfg->cursor.enabled);
@@ -148,6 +151,14 @@ bool Preset::apply(Config *cfg, std::string *error) const
 	cfg->keys.modifiers_only = read_bool(o, kKeysModifiersOnly, cfg->keys.modifiers_only);
 	cfg->keys.ttl_ms = read_number(o, kKeysTtlMs, cfg->keys.ttl_ms);
 	cfg->keys.max_keys = read_int(o, kKeysMax, cfg->keys.max_keys);
+	cfg->keys.pos_x = read_number(o, kKeysPosX, cfg->keys.pos_x);
+	cfg->keys.pos_y = read_number(o, kKeysPosY, cfg->keys.pos_y);
+	cfg->keys.size = read_number(o, kKeysSize, cfg->keys.size);
+	cfg->keys.font = read_string(o, kKeysFont, cfg->keys.font);
+	cfg->keys.color = static_cast<uint32_t>(read_number(o, kKeysColor, cfg->keys.color));
+	cfg->keys.shadow = read_bool(o, kKeysShadow, cfg->keys.shadow);
+	cfg->keys.band = read_bool(o, kKeysBand, cfg->keys.band);
+	cfg->keys.band_color = static_cast<uint32_t>(read_number(o, kKeysBandColor, cfg->keys.band_color));
 
 	/* Marca-texto */
 	cfg->highlight.enabled = read_bool(o, kHighlightEnabled, cfg->highlight.enabled);

@@ -77,11 +77,13 @@ Coloca a tela "flutuando" sobre um fundo, com cantos e sombra.
 | Opção | O que faz |
 |-------|-----------|
 | **Ativar fundo** | Liga o fundo + cantos + espaçamento |
-| **Estilo** | Cor sólida, gradiente vertical ou diagonal |
+| **Estilo** | Cor sólida, gradiente vertical/diagonal ou **imagem de fundo** |
 | **Cor A / Cor B** | Cores do fundo (B só aparece nos gradientes) |
-| **Espaçamento (px)** | Margem entre a tela e a borda |
+| **Wallpaper** | Escolha uma das **12 imagens** que vêm com o plugin ou aponte para uma imagem do seu PC (escolha "Editar" e cole o caminho) |
+| **Espaçamento horizontal / vertical (px)** | Margem entre a tela e a borda (X e Y separados) |
 | **Cantos arredondados (px)** | Raio dos cantos da tela |
-| **Sombra / Opacidade / Desfoque** | Sombra atrás da tela |
+| **Sombra da janela** | Liga a sombra atrás da tela |
+| **Opacidade / Desfoque / Deslocamento da sombra** | Ajuste fino da sombra |
 
 ### Cursor
 | Opção | O que faz |
@@ -158,10 +160,16 @@ Cada botão tem seu próprio efeito, independente.
 ### Teclas
 | Opção | O que faz |
 |-------|-----------|
-| **Mostrar teclas digitadas** | Mostra o que você digita na base da tela |
+| **Mostrar teclas digitadas** | Mostra o que você digita na tela |
 | **Somente modificadores** | Mostra só Ctrl/Shift/Alt/Win |
 | **Tempo na tela (ms)** | Quanto tempo cada tecla fica |
 | **Máximo de teclas** | Quantas teclas simultâneas mostrar |
+| **Posição X / Y** | Onde a faixa fica (0 = esquerda/topo, 1 = direita/base) |
+| **Tamanho do texto** | Escala do texto |
+| **Fonte** | DejaVu Sans Bold / Sans / Mono Bold, ou um caminho de `.ttf` |
+| **Cor do texto** | Cor das letras |
+| **Sombra do texto** | Contorno escuro para legibilidade |
+| **Faixa de fundo / Cor da faixa** | Retângulo arredondado atrás do texto e sua cor |
 
 ### Marca-texto
 | Opção | O que faz |

@@ -64,11 +64,12 @@ vive toda a matemática e a lógica de estado — o que de fato precisa estar ce
 | `test_highlighter.cpp` | `core/highlighter.*` | arrasto, retângulo normalizado, hold/fade, arrasto pequeno, desabilitado |
 | `test_docs.cpp` | `docs/` × código | toda chave de `keys.hpp` está documentada; atalhos do código estão na referência |
 | `test_cursor_atlas.cpp` | `core/cursor_atlas.*` + `data/cursors/` | formato TSAT, hotspots e **atlas real** (12 estilos = `CursorStyle::Count`) |
+| `test_image.cpp` | `core/image.*` + `data/wallpapers/` | decode de imagem (lê um **wallpaper real** 1920x1080) e casos inválidos |
 
 ## Números atuais
 
 ```
-87 testes | 1708 verificações | 0 falhas   (núcleo)
+89 testes | 1781 verificações | 0 falhas   (núcleo)
 5 testes  | 27 verificações   | 0 falhas   (integração com libobs fake)
 ```
 

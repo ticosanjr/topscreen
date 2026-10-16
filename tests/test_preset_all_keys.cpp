@@ -20,11 +20,14 @@ TEST(preset_cobre_todas_as_chaves)
             "bg_mode": 1,
             "bg_color_a": 111,
             "bg_color_b": 222,
-            "bg_padding": 11,
+            "bg_image": "wallpapers/ocean.jpg",
+            "bg_padding_x": 11,
+            "bg_padding_y": 12,
             "bg_corner_radius": 12,
             "bg_shadow": false,
             "bg_shadow_alpha": 0.11,
             "bg_shadow_blur": 13,
+            "bg_shadow_offset": 6,
             "cursor_enabled": false,
             "cursor_style": 1,
             "cursor_size": 2.5,
@@ -64,6 +67,14 @@ TEST(preset_cobre_todas_as_chaves)
             "keys_modifiers_only": true,
             "keys_ttl_ms": 1234,
             "keys_max": 9,
+            "keys_pos_x": 0.25,
+            "keys_pos_y": 0.8,
+            "keys_size": 1.5,
+            "keys_font": "fonts/DejaVuSans.ttf",
+            "keys_color": 255,
+            "keys_shadow": false,
+            "keys_band": false,
+            "keys_band_color": 1234,
             "highlight_enabled": false,
             "highlight_hold_ms": 777,
             "highlight_fade_ms": 222,
@@ -84,11 +95,14 @@ TEST(preset_cobre_todas_as_chaves)
 	CHECK_EQ(c.bg.mode, 1);
 	CHECK_EQ(c.bg.color_a, 111u);
 	CHECK_EQ(c.bg.color_b, 222u);
-	CHECK_NEAR(c.bg.padding, 11.0, 1e-9);
+	CHECK_EQ(c.bg.image, std::string("wallpapers/ocean.jpg"));
+	CHECK_NEAR(c.bg.padding_x, 11.0, 1e-9);
+	CHECK_NEAR(c.bg.padding_y, 12.0, 1e-9);
 	CHECK_NEAR(c.bg.corner_radius, 12.0, 1e-9);
 	CHECK(!c.bg.shadow);
 	CHECK_NEAR(c.bg.shadow_alpha, 0.11, 1e-9);
 	CHECK_NEAR(c.bg.shadow_blur, 13.0, 1e-9);
+	CHECK_NEAR(c.bg.shadow_offset, 6.0, 1e-9);
 
 	CHECK(!c.cursor.enabled);
 	CHECK_EQ(c.cursor.style, 1);
@@ -136,6 +150,14 @@ TEST(preset_cobre_todas_as_chaves)
 	CHECK(c.keys.modifiers_only);
 	CHECK_NEAR(c.keys.ttl_ms, 1234.0, 1e-9);
 	CHECK_EQ(c.keys.max_keys, 9);
+	CHECK_NEAR(c.keys.pos_x, 0.25, 1e-9);
+	CHECK_NEAR(c.keys.pos_y, 0.8, 1e-9);
+	CHECK_NEAR(c.keys.size, 1.5, 1e-9);
+	CHECK_EQ(c.keys.font, std::string("fonts/DejaVuSans.ttf"));
+	CHECK_EQ(c.keys.color, 255u);
+	CHECK(!c.keys.shadow);
+	CHECK(!c.keys.band);
+	CHECK_EQ(c.keys.band_color, 1234u);
 
 	CHECK(!c.highlight.enabled);
 	CHECK_NEAR(c.highlight.hold_ms, 777.0, 1e-9);

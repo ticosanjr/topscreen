@@ -32,10 +32,10 @@ Modo: `auto` reage sozinho · `hotkey` só por atalho · `always` sempre ligado.
 | Recurso | Modo | Status | Observações |
 |---------|------|--------|-------------|
 | Fundo (cor/gradiente) | sempre | ✅ | sólido, vertical, diagonal |
-| Fundo por imagem | sempre | ⬜ | |
+| Fundo por imagem | sempre | ✅ | 12 wallpapers embutidos ou imagem do seu PC |
 | Cantos arredondados | sempre | ✅ | |
-| Espaçamento (padding) | sempre | ✅ | |
-| Sombra | sempre | ✅ | |
+| Espaçamento (padding X e Y) | sempre | ✅ | eixos separados |
+| Sombra da janela | sempre | ✅ | opacidade, desfoque e deslocamento |
 | Inset / borda interna | off | ⬜ | |
 
 ## Zoom / Pan
@@ -59,7 +59,7 @@ Modo: `auto` reage sozinho · `hotkey` só por atalho · `always` sempre ligado.
 
 | Recurso | Modo | Status | Observações |
 |---------|------|--------|-------------|
-| Overlay de teclas | auto/hotkey | ✅ | atlas TTF + contorno; captura Win/X11/evdev |
+| Overlay de teclas | auto/hotkey | ✅ | atlas TTF (fonte/cor/tamanho/sombra) + posição X/Y + faixa de fundo |
 | Marca-texto de arrasto | auto | ✅ | região arrastada com hold/fade |
 
 > O **realce do texto realmente selecionado** (via acessibilidade) segue fora do

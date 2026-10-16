@@ -11,6 +11,23 @@ namespace topscreen {
 
 namespace {
 
+/* Wallpapers embutidos (data/wallpapers). */
+const char *const kWallpapers[][2] = {
+	{"Aurora", "wallpapers/aurora.jpg"},     {"Sunset", "wallpapers/sunset.jpg"},
+	{"Monterey", "wallpapers/monterey.jpg"}, {"Ventura", "wallpapers/ventura.jpg"},
+	{"Sonoma", "wallpapers/sonoma.jpg"},     {"Sequoia", "wallpapers/sequoia.jpg"},
+	{"Graphite", "wallpapers/graphite.jpg"}, {"Ocean", "wallpapers/ocean.jpg"},
+	{"Forest", "wallpapers/forest.jpg"},     {"Lavender", "wallpapers/lavender.jpg"},
+	{"Ember", "wallpapers/ember.jpg"},       {"Midnight", "wallpapers/midnight.jpg"},
+};
+
+/* Fontes embutidas (data/fonts). */
+const char *const kFonts[][2] = {
+	{"DejaVu Sans Bold", "fonts/DejaVuSans-Bold.ttf"},
+	{"DejaVu Sans", "fonts/DejaVuSans.ttf"},
+	{"DejaVu Sans Mono Bold", "fonts/DejaVuSansMono-Bold.ttf"},
+};
+
 void add_click_group(obs_properties_t *props, const char *group_key, const char *title,
 		     const char *effect_key, const char *size_key, const char *color_key,
 		     const char *duration_key, const char *easing_key)
@@ -63,10 +80,18 @@ obs_properties_t *properties_create(void *data)
 				  static_cast<int>(BgMode::Vertical));
 	obs_property_list_add_int(mode, obs_module_text("Background.Mode.Diagonal"),
 				  static_cast<int>(BgMode::Diagonal));
+	obs_property_list_add_int(mode, obs_module_text("Background.Mode.Image"), static_cast<int>(BgMode::Image));
+
+	obs_property_t *wp = obs_properties_add_list(bg, kBgImage, obs_module_text("Background.Image"),
+						     OBS_COMBO_TYPE_EDITABLE, OBS_COMBO_FORMAT_STRING);
+	obs_property_list_add_string(wp, obs_module_text("Background.Image.None"), "");
+	for (const auto &entry : kWallpapers)
+		obs_property_list_add_string(wp, entry[0], entry[1]);
 
 	obs_properties_add_color(bg, kBgColorA, obs_module_text("Background.ColorA"));
 	obs_properties_add_color(bg, kBgColorB, obs_module_text("Background.ColorB"));
-	obs_properties_add_float_slider(bg, kBgPadding, obs_module_text("Background.Padding"), 0.0, 400.0, 1.0);
+	obs_properties_add_float_slider(bg, kBgPaddingX, obs_module_text("Background.PaddingX"), 0.0, 400.0, 1.0);
+	obs_properties_add_float_slider(bg, kBgPaddingY, obs_module_text("Background.PaddingY"), 0.0, 400.0, 1.0);
 	obs_properties_add_float_slider(bg, kBgCornerRadius, obs_module_text("Background.CornerRadius"), 0.0, 200.0,
 					1.0);
 	obs_properties_add_bool(bg, kBgShadow, obs_module_text("Background.Shadow"));
@@ -74,6 +99,8 @@ obs_properties_t *properties_create(void *data)
 					0.01);
 	obs_properties_add_float_slider(bg, kBgShadowBlur, obs_module_text("Background.ShadowBlur"), 0.0, 200.0,
 					1.0);
+	obs_properties_add_float_slider(bg, kBgShadowOffset, obs_module_text("Background.ShadowOffset"), -100.0,
+					100.0, 1.0);
 	obs_properties_add_group(props, "grp_bg", obs_module_text("Group.Background"), OBS_GROUP_NORMAL, bg);
 
 	/* ---------------- Cursor ---------------- */
@@ -172,6 +199,19 @@ obs_properties_t *properties_create(void *data)
 	obs_properties_add_bool(keys, kKeysModifiersOnly, obs_module_text("Keys.ModifiersOnly"));
 	obs_properties_add_float_slider(keys, kKeysTtlMs, obs_module_text("Keys.TtlMs"), 500.0, 8000.0, 50.0);
 	obs_properties_add_int_slider(keys, kKeysMax, obs_module_text("Keys.Max"), 1, 12, 1);
+	obs_properties_add_float_slider(keys, kKeysPosX, obs_module_text("Keys.PosX"), 0.0, 1.0, 0.01);
+	obs_properties_add_float_slider(keys, kKeysPosY, obs_module_text("Keys.PosY"), 0.0, 1.0, 0.01);
+	obs_properties_add_float_slider(keys, kKeysSize, obs_module_text("Keys.Size"), 0.4, 4.0, 0.05);
+
+	obs_property_t *kfont = obs_properties_add_list(keys, kKeysFont, obs_module_text("Keys.Font"),
+							OBS_COMBO_TYPE_EDITABLE, OBS_COMBO_FORMAT_STRING);
+	for (const auto &f : kFonts)
+		obs_property_list_add_string(kfont, f[0], f[1]);
+
+	obs_properties_add_color(keys, kKeysColor, obs_module_text("Keys.Color"));
+	obs_properties_add_bool(keys, kKeysShadow, obs_module_text("Keys.Shadow"));
+	obs_properties_add_bool(keys, kKeysBand, obs_module_text("Keys.Band"));
+	obs_properties_add_color(keys, kKeysBandColor, obs_module_text("Keys.BandColor"));
 	obs_properties_add_group(props, "grp_keys", obs_module_text("Group.Keys"), OBS_GROUP_NORMAL, keys);
 
 	/* ---------------- Marca-texto ---------------- */

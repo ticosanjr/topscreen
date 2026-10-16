@@ -17,11 +17,14 @@ void config_defaults(obs_data_t *s)
 	obs_data_set_default_int(s, kBgMode, def.bg.mode);
 	obs_data_set_default_int(s, kBgColorA, static_cast<long long>(def.bg.color_a));
 	obs_data_set_default_int(s, kBgColorB, static_cast<long long>(def.bg.color_b));
-	obs_data_set_default_double(s, kBgPadding, def.bg.padding);
+	obs_data_set_default_string(s, kBgImage, def.bg.image.c_str());
+	obs_data_set_default_double(s, kBgPaddingX, def.bg.padding_x);
+	obs_data_set_default_double(s, kBgPaddingY, def.bg.padding_y);
 	obs_data_set_default_double(s, kBgCornerRadius, def.bg.corner_radius);
 	obs_data_set_default_bool(s, kBgShadow, def.bg.shadow);
 	obs_data_set_default_double(s, kBgShadowAlpha, def.bg.shadow_alpha);
 	obs_data_set_default_double(s, kBgShadowBlur, def.bg.shadow_blur);
+	obs_data_set_default_double(s, kBgShadowOffset, def.bg.shadow_offset);
 
 	obs_data_set_default_bool(s, kCursorEnabled, def.cursor.enabled);
 	obs_data_set_default_int(s, kCursorStyle, def.cursor.style);
@@ -69,6 +72,14 @@ void config_defaults(obs_data_t *s)
 	obs_data_set_default_bool(s, kKeysModifiersOnly, def.keys.modifiers_only);
 	obs_data_set_default_double(s, kKeysTtlMs, def.keys.ttl_ms);
 	obs_data_set_default_int(s, kKeysMax, def.keys.max_keys);
+	obs_data_set_default_double(s, kKeysPosX, def.keys.pos_x);
+	obs_data_set_default_double(s, kKeysPosY, def.keys.pos_y);
+	obs_data_set_default_double(s, kKeysSize, def.keys.size);
+	obs_data_set_default_string(s, kKeysFont, def.keys.font.c_str());
+	obs_data_set_default_int(s, kKeysColor, static_cast<long long>(def.keys.color));
+	obs_data_set_default_bool(s, kKeysShadow, def.keys.shadow);
+	obs_data_set_default_bool(s, kKeysBand, def.keys.band);
+	obs_data_set_default_int(s, kKeysBandColor, static_cast<long long>(def.keys.band_color));
 
 	obs_data_set_default_bool(s, kHighlightEnabled, def.highlight.enabled);
 	obs_data_set_default_double(s, kHighlightHoldMs, def.highlight.hold_ms);
@@ -84,11 +95,15 @@ void config_load(obs_data_t *s, Config *c)
 	c->bg.mode = static_cast<int>(obs_data_get_int(s, kBgMode));
 	c->bg.color_a = static_cast<uint32_t>(obs_data_get_int(s, kBgColorA));
 	c->bg.color_b = static_cast<uint32_t>(obs_data_get_int(s, kBgColorB));
-	c->bg.padding = obs_data_get_double(s, kBgPadding);
+	const char *bgimg = obs_data_get_string(s, kBgImage);
+	c->bg.image = bgimg ? bgimg : "";
+	c->bg.padding_x = obs_data_get_double(s, kBgPaddingX);
+	c->bg.padding_y = obs_data_get_double(s, kBgPaddingY);
 	c->bg.corner_radius = obs_data_get_double(s, kBgCornerRadius);
 	c->bg.shadow = obs_data_get_bool(s, kBgShadow);
 	c->bg.shadow_alpha = obs_data_get_double(s, kBgShadowAlpha);
 	c->bg.shadow_blur = obs_data_get_double(s, kBgShadowBlur);
+	c->bg.shadow_offset = obs_data_get_double(s, kBgShadowOffset);
 
 	c->cursor.enabled = obs_data_get_bool(s, kCursorEnabled);
 	c->cursor.style = static_cast<int>(obs_data_get_int(s, kCursorStyle));
@@ -137,6 +152,15 @@ void config_load(obs_data_t *s, Config *c)
 	c->keys.modifiers_only = obs_data_get_bool(s, kKeysModifiersOnly);
 	c->keys.ttl_ms = obs_data_get_double(s, kKeysTtlMs);
 	c->keys.max_keys = static_cast<int>(obs_data_get_int(s, kKeysMax));
+	c->keys.pos_x = obs_data_get_double(s, kKeysPosX);
+	c->keys.pos_y = obs_data_get_double(s, kKeysPosY);
+	c->keys.size = obs_data_get_double(s, kKeysSize);
+	const char *kfont = obs_data_get_string(s, kKeysFont);
+	c->keys.font = kfont ? kfont : "fonts/DejaVuSans-Bold.ttf";
+	c->keys.color = static_cast<uint32_t>(obs_data_get_int(s, kKeysColor));
+	c->keys.shadow = obs_data_get_bool(s, kKeysShadow);
+	c->keys.band = obs_data_get_bool(s, kKeysBand);
+	c->keys.band_color = static_cast<uint32_t>(obs_data_get_int(s, kKeysBandColor));
 
 	c->highlight.enabled = obs_data_get_bool(s, kHighlightEnabled);
 	c->highlight.hold_ms = obs_data_get_double(s, kHighlightHoldMs);
@@ -152,11 +176,14 @@ void config_store(obs_data_t *s, const Config &c)
 	obs_data_set_int(s, kBgMode, c.bg.mode);
 	obs_data_set_int(s, kBgColorA, static_cast<long long>(c.bg.color_a));
 	obs_data_set_int(s, kBgColorB, static_cast<long long>(c.bg.color_b));
-	obs_data_set_double(s, kBgPadding, c.bg.padding);
+	obs_data_set_string(s, kBgImage, c.bg.image.c_str());
+	obs_data_set_double(s, kBgPaddingX, c.bg.padding_x);
+	obs_data_set_double(s, kBgPaddingY, c.bg.padding_y);
 	obs_data_set_double(s, kBgCornerRadius, c.bg.corner_radius);
 	obs_data_set_bool(s, kBgShadow, c.bg.shadow);
 	obs_data_set_double(s, kBgShadowAlpha, c.bg.shadow_alpha);
 	obs_data_set_double(s, kBgShadowBlur, c.bg.shadow_blur);
+	obs_data_set_double(s, kBgShadowOffset, c.bg.shadow_offset);
 
 	obs_data_set_bool(s, kCursorEnabled, c.cursor.enabled);
 	obs_data_set_int(s, kCursorStyle, c.cursor.style);
@@ -204,6 +231,14 @@ void config_store(obs_data_t *s, const Config &c)
 	obs_data_set_bool(s, kKeysModifiersOnly, c.keys.modifiers_only);
 	obs_data_set_double(s, kKeysTtlMs, c.keys.ttl_ms);
 	obs_data_set_int(s, kKeysMax, c.keys.max_keys);
+	obs_data_set_double(s, kKeysPosX, c.keys.pos_x);
+	obs_data_set_double(s, kKeysPosY, c.keys.pos_y);
+	obs_data_set_double(s, kKeysSize, c.keys.size);
+	obs_data_set_string(s, kKeysFont, c.keys.font.c_str());
+	obs_data_set_int(s, kKeysColor, static_cast<long long>(c.keys.color));
+	obs_data_set_bool(s, kKeysShadow, c.keys.shadow);
+	obs_data_set_bool(s, kKeysBand, c.keys.band);
+	obs_data_set_int(s, kKeysBandColor, static_cast<long long>(c.keys.band_color));
 
 	obs_data_set_bool(s, kHighlightEnabled, c.highlight.enabled);
 	obs_data_set_double(s, kHighlightHoldMs, c.highlight.hold_ms);

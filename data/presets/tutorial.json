@@ -7,7 +7,6 @@
         "bg_mode": 0,
         "bg_color_a": 4278190080,
         "bg_color_b": 4278190080,
-        "bg_padding": 48,
         "bg_corner_radius": 12,
         "bg_shadow": true,
         "bg_shadow_alpha": 0.25,
@@ -38,6 +37,8 @@
         "click_sound_enabled": true,
         "click_sound_volume": 0.5,
         "click_sound_left": true,
-        "click_sound_right": false
+        "click_sound_right": false,
+        "bg_padding_x": 48,
+        "bg_padding_y": 48
     }
 }

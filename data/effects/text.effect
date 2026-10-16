@@ -1,7 +1,11 @@
-// TopScreen - efeito de texto (sprites de glifos com cor).
+// TopScreen - efeito de texto (sprites de glifos) e faixa de fundo.
 uniform float4x4 ViewProj;
 uniform texture2d image;
 uniform float4 color;
+
+uniform float2 band_size;
+uniform float  band_radius;
+uniform float4 band_color;
 
 sampler_state def_sampler {
 	Filter   = Linear;
@@ -28,11 +32,35 @@ float4 PSText(VertInOut vert_in) : TARGET
 	return float4(color.rgb, c.a * color.a);
 }
 
+float sdBand(float2 p, float2 b, float r)
+{
+	float2 q = abs(p) - b + r;
+	return min(max(q.x, q.y), 0.0) + length(max(q, 0.0)) - r;
+}
+
+float4 PSBand(VertInOut vert_in) : TARGET
+{
+	float2 p = (vert_in.uv - 0.5) * band_size;
+	float2 h = band_size * 0.5;
+	float  d = sdBand(p, h, band_radius);
+	float  a = (1.0 - smoothstep(-1.0, 1.0, d)) * band_color.a;
+	return float4(band_color.rgb, a);
+}
+
 technique Draw
 {
 	pass
 	{
 		vertex_shader = VSText(vert_in);
 		pixel_shader  = PSText(vert_in);
+	}
+}
+
+technique Band
+{
+	pass
+	{
+		vertex_shader = VSText(vert_in);
+		pixel_shader  = PSBand(vert_in);
 	}
 }

@@ -12,10 +12,10 @@
 namespace topscreen {
 
 /**
- * Renderer de texto (overlay de teclas).
+ * Renderer do overlay de teclas.
  *
- * Gera o atlas a partir de um TTF embutido, cria a textura e desenha os glifos
- * como sprites, com contorno escuro para ficar legivel em qualquer fundo.
+ * Gera o atlas a partir de um TTF (selecionavel), cria as texturas e desenha
+ * faixa de fundo + sombra + texto, tudo configuravel.
  */
 class TextRenderer {
 public:
@@ -25,25 +25,33 @@ public:
 	TextRenderer(const TextRenderer &) = delete;
 	TextRenderer &operator=(const TextRenderer &) = delete;
 
-	/** Carrega o TTF e o efeito (nomes relativos ao modulo). */
 	bool load(const char *ttf_module_file, const char *effect_module_file);
 	void release();
 
-	/** Desenha as teclas, centralizadas na base do alvo. */
-	void draw(const core::KeyRender *items, int count, uint32_t target_w, uint32_t target_h);
+	void draw(const core::KeyRender *items, int count, const core::KeyOverlayConfig &cfg, uint32_t target_w,
+		  uint32_t target_h);
 
 	bool loaded() const { return texture_ != nullptr && effect_ != nullptr; }
 
 private:
+	bool reload_font(const std::string &module_file);
 	float measure(const std::string &text, float scale) const;
 	void draw_string(const std::string &text, float x, float baseline, float scale);
 	void draw_labels(const std::vector<std::string> &labels, float x0, float baseline, float scale, float gap);
+	void draw_band(float x, float y, float w, float h, float radius, uint32_t color);
 
 	core::FontAtlas atlas_;
+	std::string font_path_;
 	gs_texture_t *texture_ = nullptr;
+	gs_texture_t *white_ = nullptr;
 	gs_effect_t *effect_ = nullptr;
+	gs_technique_t *tech_draw_ = nullptr;
+	gs_technique_t *tech_band_ = nullptr;
 	gs_eparam_t *p_image_ = nullptr;
 	gs_eparam_t *p_color_ = nullptr;
+	gs_eparam_t *p_band_size_ = nullptr;
+	gs_eparam_t *p_band_radius_ = nullptr;
+	gs_eparam_t *p_band_color_ = nullptr;
 };
 
 } // namespace topscreen

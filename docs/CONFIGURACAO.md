@@ -14,14 +14,17 @@ Ex.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 |------------|------------|-------|------|-------|--------|
 | — | Efeitos habilitados | `effects_enabled` | bool | — | `true` |
 | Plano de fundo | Ativar fundo | `bg_enabled` | bool | — | `true` |
-| | Estilo | `bg_mode` | int | 0 sólido, 1 vertical, 2 diagonal | `2` |
+| | Estilo | `bg_mode` | int | 0 sólido · 1 vertical · 2 diagonal · 3 imagem | `2` |
 | | Cor A | `bg_color_a` | cor | — | `0xFF20242E` |
 | | Cor B | `bg_color_b` | cor | — | `0xFF3A2E5C` |
-| | Espaçamento (px) | `bg_padding` | double | 0–400 | `64` |
+| | Wallpaper | `bg_image` | string | "" ou `wallpapers/*.jpg` ou caminho absoluto | `""` |
+| | Espaçamento horizontal (px) | `bg_padding_x` | double | 0–400 | `64` |
+| | Espaçamento vertical (px) | `bg_padding_y` | double | 0–400 | `64` |
 | | Cantos arredondados (px) | `bg_corner_radius` | double | 0–200 | `18` |
-| | Sombra | `bg_shadow` | bool | — | `true` |
+| | Sombra da janela | `bg_shadow` | bool | — | `true` |
 | | Opacidade da sombra | `bg_shadow_alpha` | double | 0–1 | `0.35` |
 | | Desfoque da sombra (px) | `bg_shadow_blur` | double | 0–200 | `48` |
+| | Deslocamento vertical da sombra (px) | `bg_shadow_offset` | double | -100–100 | `12` |
 | Cursor | Mostrar cursor | `cursor_enabled` | bool | — | `true` |
 | | Estilo | `cursor_style` | int | 0 macOS · 1 Windows · 2 Breeze · 3 Bibata · 4 Adwaita · 5 GoogleDot · 6 Pointer · 7 DMZ · 8 Yaru · 9 XCursorPro · 10 BibataIce · 11 BibataOriginal | `0` |
 | | Tamanho | `cursor_size` | double | 0.5–4 | `1.4` |
@@ -61,6 +64,14 @@ Ex.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Somente modificadores | `keys_modifiers_only` | bool | — | `false` |
 | | Tempo na tela (ms) | `keys_ttl_ms` | double | 500–8000 | `2000` |
 | | Máximo de teclas | `keys_max` | int | 1–12 | `6` |
+| | Posição X | `keys_pos_x` | double | 0–1 | `0.5` |
+| | Posição Y | `keys_pos_y` | double | 0–1 | `0.93` |
+| | Tamanho do texto | `keys_size` | double | 0.4–4 | `1.0` |
+| | Fonte | `keys_font` | string | `fonts/*.ttf` ou caminho | `fonts/DejaVuSans-Bold.ttf` |
+| | Cor do texto | `keys_color` | cor | — | `0xFFFFFFFF` |
+| | Sombra do texto | `keys_shadow` | bool | — | `true` |
+| | Faixa de fundo | `keys_band` | bool | — | `true` |
+| | Cor da faixa | `keys_band_color` | cor | — | `0x99000000` |
 | Marca-texto | Ativar marca-texto | `highlight_enabled` | bool | — | `true` |
 | | Cor | `highlight_color` | cor | — | `0x6600E0FF` |
 | | Tempo na tela (ms) | `highlight_hold_ms` | double | 0–5000 | `900` |

@@ -17,11 +17,14 @@ struct BackgroundConfig {
 	int mode = static_cast<int>(BgMode::Diagonal);
 	uint32_t color_a = 0xFF20242E; // 0xAABBGGRR
 	uint32_t color_b = 0xFF3A2E5C; // 0xAABBGGRR
-	double padding = 64.0;
+	std::string image;             // caminho/relativo do wallpaper ("" = nenhum)
+	double padding_x = 64.0;
+	double padding_y = 64.0;
 	double corner_radius = 18.0;
 	bool shadow = true;
 	double shadow_alpha = 0.35;
 	double shadow_blur = 48.0;
+	double shadow_offset = 12.0; // deslocamento vertical (px)
 };
 
 struct ClickSoundConfig {

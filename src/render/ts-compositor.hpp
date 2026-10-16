@@ -10,6 +10,8 @@
 #include "render/ts-frame.hpp"
 #include "render/ts-text.hpp"
 
+#include <string>
+
 namespace topscreen {
 
 /**
@@ -39,6 +41,8 @@ private:
 	void validate_params() const;
 	void load_cursor_atlas();
 	void release_cursor_atlas();
+	void load_bg_image(const std::string &path);
+	void release_bg_image();
 
 	gs_effect_t *effect_ = nullptr;
 
@@ -50,6 +54,9 @@ private:
 	gs_eparam_t *p_bg_a_ = nullptr;
 	gs_eparam_t *p_bg_b_ = nullptr;
 	gs_eparam_t *p_bg_mode_ = nullptr;
+	gs_eparam_t *p_bg_tex_ = nullptr;
+	gs_eparam_t *p_bg_tex_enabled_ = nullptr;
+	gs_eparam_t *p_bg_tex_aspect_ = nullptr;
 	gs_eparam_t *p_shadow_alpha_ = nullptr;
 	gs_eparam_t *p_shadow_blur_ = nullptr;
 	gs_eparam_t *p_shadow_offset_ = nullptr;
@@ -95,6 +102,11 @@ private:
 	gs_texture_t *cursor_tex_ = nullptr;
 	core::CursorAtlas cursor_atlas_;
 	std::vector<core::Vec2f> cursor_hotspots_;
+
+	/* Wallpaper de fundo. */
+	gs_texture_t *bg_tex_ = nullptr;
+	std::string bg_loaded_;
+	float bg_aspect_ = 1.0f;
 };
 
 } // namespace topscreen

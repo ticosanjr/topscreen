@@ -26,6 +26,7 @@ enum class BgMode : int {
 	Solid = 0,
 	Vertical = 1,
 	Diagonal = 2,
+	Image = 3,
 };
 
 enum class CursorStyle : int {

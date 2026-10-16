@@ -342,6 +342,11 @@ size_t obs_property_list_add_int(obs_property_t *, const char *, long long)
 	return 0;
 }
 
+size_t obs_property_list_add_string(obs_property_t *, const char *, const char *)
+{
+	return 0;
+}
+
 // ---- obs_hotkey ----
 obs_hotkey_id obs_hotkey_register_source(obs_source_t *, const char *name, const char *,
 					 obs_hotkey_func func, void *data)

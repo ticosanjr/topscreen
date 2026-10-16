@@ -331,6 +331,12 @@ obs_property_t *obs_properties_add_int_slider(obs_properties_t *props, const cha
 	return add_prop(props, name);
 }
 
+obs_property_t *obs_properties_add_path(obs_properties_t *props, const char *name, const char *,
+					enum obs_path_type, const char *, const char *)
+{
+	return add_prop(props, name);
+}
+
 obs_property_t *obs_properties_add_group(obs_properties_t *props, const char *name, const char *,
 					 enum obs_group_type, obs_properties_t *)
 {

@@ -18,6 +18,7 @@ struct BackgroundConfig {
 	uint32_t color_a = 0xFF20242E; // 0xAABBGGRR
 	uint32_t color_b = 0xFF3A2E5C; // 0xAABBGGRR
 	std::string image;             // caminho/relativo do wallpaper ("" = nenhum)
+	std::string image_file;        // imagem do PC (tem prioridade sobre `image`)
 	double padding_x = 64.0;
 	double padding_y = 64.0;
 	double corner_radius = 18.0;

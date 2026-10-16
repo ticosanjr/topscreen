@@ -88,6 +88,9 @@ obs_properties_t *properties_create(void *data)
 	for (const auto &entry : kWallpapers)
 		obs_property_list_add_string(wp, entry[0], entry[1]);
 
+	obs_properties_add_path(bg, kBgImageFile, obs_module_text("Background.ImageFile"), OBS_PATH_FILE,
+				obs_module_text("Background.ImageFile.Filter"), nullptr);
+
 	obs_properties_add_color(bg, kBgColorA, obs_module_text("Background.ColorA"));
 	obs_properties_add_color(bg, kBgColorB, obs_module_text("Background.ColorB"));
 	obs_properties_add_float_slider(bg, kBgPaddingX, obs_module_text("Background.PaddingX"), 0.0, 400.0, 1.0);

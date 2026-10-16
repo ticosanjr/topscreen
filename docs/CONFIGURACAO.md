@@ -18,6 +18,7 @@ Ex.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Cor A | `bg_color_a` | cor | — | `0xFF20242E` |
 | | Cor B | `bg_color_b` | cor | — | `0xFF3A2E5C` |
 | | Wallpaper | `bg_image` | string | "" ou `wallpapers/*.jpg` ou caminho absoluto | `""` |
+| | Imagem do PC | `bg_image_file` | string | caminho de arquivo (tem prioridade) | `""` |
 | | Espaçamento horizontal (px) | `bg_padding_x` | double | 0–400 | `64` |
 | | Espaçamento vertical (px) | `bg_padding_y` | double | 0–400 | `64` |
 | | Cantos arredondados (px) | `bg_corner_radius` | double | 0–200 | `18` |

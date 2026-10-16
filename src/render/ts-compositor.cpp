@@ -287,8 +287,9 @@ void Compositor::render(obs_source_t *filter, const core::Config &cfg, const Fra
 	set_c(p_bg_a_, cfg.bg.color_a);
 	set_c(p_bg_b_, cfg.bg.color_b);
 
-	/* Wallpaper (imagem de fundo) */
-	load_bg_image(active ? cfg.bg.image : std::string());
+	/* Wallpaper (imagem de fundo): arquivo do PC tem prioridade */
+	const std::string bg_path = !cfg.bg.image_file.empty() ? cfg.bg.image_file : cfg.bg.image;
+	load_bg_image(active ? bg_path : std::string());
 	const bool bgimg = bg && cfg.bg.mode == static_cast<int>(core::BgMode::Image) && bg_tex_ != nullptr;
 	set_f(p_bg_tex_enabled_, bgimg ? 1.0f : 0.0f);
 	if (bgimg) {

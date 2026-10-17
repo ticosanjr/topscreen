@@ -8,6 +8,8 @@
 #include <graphics/vec2.h>
 #include <obs-module.h>
 
+#include "core/color.hpp"
+
 namespace topscreen {
 
 namespace {
@@ -209,7 +211,7 @@ void TextRenderer::draw_band(float x, float y, float w, float h, float radius, u
 	if (p_band_radius_)
 		gs_effect_set_float(p_band_radius_, radius);
 	if (p_band_color_)
-		gs_effect_set_color(p_band_color_, color);
+		gs_effect_set_color(p_band_color_, core::abgr_to_argb(color));
 
 	gs_blend_state_push();
 	gs_blend_function(GS_BLEND_SRCALPHA, GS_BLEND_INVSRCALPHA);
@@ -282,7 +284,7 @@ void TextRenderer::draw(const core::KeyRender *items, int count, const core::Key
 	}
 
 	if (p_color_)
-		gs_effect_set_color(p_color_, cfg.color);
+		gs_effect_set_color(p_color_, core::abgr_to_argb(cfg.color));
 	draw_labels(labels, x0, baseline, scale, gap);
 
 	gs_technique_end_pass(tech_draw_);

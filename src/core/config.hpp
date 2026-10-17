@@ -53,8 +53,7 @@ struct SpotlightConfig {
 };
 
 /** Configuracao completa do TopScreen (independente do OBS). */
-struct Config {
-	bool effects_enabled = true;
+struct Config {	bool effects_enabled = true;
 	BackgroundConfig bg;
 	CursorConfig cursor;
 	ZoomConfig zoom;
@@ -66,5 +65,20 @@ struct Config {
 	KeyOverlayConfig keys;
 	HighlighterConfig highlight;
 };
+
+/**
+ * Escolhe o caminho efetivo do wallpaper.
+ *
+ * Regra: a "Imagem do PC" vence se preenchida; senao o wallpaper embutido.
+ * (A interface mantem os dois mutuamente exclusivos.)
+ */
+inline const char *resolve_bg_path(const char *wallpaper, const char *image_file)
+{
+	if (image_file && *image_file)
+		return image_file;
+	if (wallpaper && *wallpaper)
+		return wallpaper;
+	return "";
+}
 
 } // namespace topscreen::core

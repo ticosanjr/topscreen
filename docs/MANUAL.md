@@ -79,8 +79,8 @@ Coloca a tela "flutuando" sobre um fundo, com cantos e sombra.
 | **Ativar fundo** | Liga o fundo + cantos + espaçamento |
 | **Estilo** | Cor sólida, gradiente vertical ou diagonal (usado quando **não** há imagem) |
 | **Cor A / Cor B** | Cores do fundo (B só aparece nos gradientes) |
-| **Wallpaper** | Uma das **12 imagens** que vêm com o plugin. Escolher já aplica |
-| **Imagem do PC** | Botão para escolher um **arquivo do seu PC** (jpg/png/bmp/tga/gif/webp). Tem prioridade sobre o Wallpaper |
+| **Wallpaper** | Uma das **18 imagens** que vêm com o plugin. Escolher já aplica |
+| **Imagem do PC** | Botão para escolher um **arquivo do seu PC** (jpg/png/bmp/tga/gif/webp). Escolher um **limpa** o Wallpaper (são exclusivos) |
 | **Desfoque do wallpaper (px)** | Borra a imagem de fundo (0 = nítida) |
 | **Tipo de desfoque** | Sem desfoque · Suave (box) · **Gaussiano** · Cremoso (bem suave) |
 | **Espaçamento horizontal / vertical (px)** | Margem entre a tela e a borda (X e Y separados) |

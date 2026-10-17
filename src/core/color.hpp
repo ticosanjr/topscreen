@@ -48,4 +48,15 @@ inline Rgba lerp_color(const Rgba &a, const Rgba &b, float t)
 	return out;
 }
 
+/**
+ * Converte a cor do obs_data/propriedades (0xAABBGGRR) para o formato que
+ * `gs_effect_set_color` espera (0xAARRGGBB) - ou seja, troca R e B.
+ *
+ * Sem isso, vermelho aparece como azul na tela.
+ */
+inline uint32_t abgr_to_argb(uint32_t v)
+{
+	return (v & 0xFF00FF00u) | ((v & 0x000000FFu) << 16) | ((v >> 16) & 0x000000FFu);
+}
+
 } // namespace topscreen::core

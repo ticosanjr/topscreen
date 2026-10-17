@@ -24,6 +24,27 @@ const char *const kImageFilter =
 	"Images (*.png *.jpg *.jpeg *.bmp *.tga *.gif *.webp *.PNG *.JPG *.JPEG *.BMP *.TGA *.GIF *.WEBP)"
 	";;All files (*.*)";
 
+/* Wallpaper e Imagem do PC sao mutuamente exclusivos. */
+bool wallpaper_modified(obs_properties_t *props, obs_property_t *p, obs_data_t *settings)
+{
+	(void)props;
+	(void)p;
+	const char *v = obs_data_get_string(settings, kBgImage);
+	if (v && *v)
+		obs_data_set_string(settings, kBgImageFile, "");
+	return true;
+}
+
+bool bg_file_modified(obs_properties_t *props, obs_property_t *p, obs_data_t *settings)
+{
+	(void)props;
+	(void)p;
+	const char *v = obs_data_get_string(settings, kBgImageFile);
+	if (v && *v)
+		obs_data_set_string(settings, kBgImage, "");
+	return true;
+}
+
 void add_click_group(obs_properties_t *props, const char *group_key, const char *title,
 		     const char *effect_key, const char *size_key, const char *color_key,
 		     const char *duration_key, const char *easing_key)
@@ -80,12 +101,14 @@ obs_properties_t *properties_create(void *data)
 	/* Lista NAO-editavel: mostra o rotulo, salva o caminho. */
 	obs_property_t *wp = obs_properties_add_list(bg, kBgImage, obs_module_text("Background.Image"),
 						     OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
+	obs_property_set_modified_callback(wp, wallpaper_modified);
 	obs_property_list_add_string(wp, obs_module_text("Background.Image.None"), "");
 	for (const auto &entry : kWallpapers)
 		obs_property_list_add_string(wp, entry.name, entry.path);
 
-	obs_properties_add_path(bg, kBgImageFile, obs_module_text("Background.ImageFile"), OBS_PATH_FILE,
-				kImageFilter, nullptr);
+	obs_property_t *fp = obs_properties_add_path(bg, kBgImageFile, obs_module_text("Background.ImageFile"),
+						     OBS_PATH_FILE, kImageFilter, nullptr);
+	obs_property_set_modified_callback(fp, bg_file_modified);
 	obs_properties_add_float_slider(bg, kBgImageBlur, obs_module_text("Background.ImageBlur"), 0.0, 60.0, 1.0);
 	obs_property_t *bt = obs_properties_add_list(bg, kBgImageBlurType, obs_module_text("Background.ImageBlurType"),
 						     OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);

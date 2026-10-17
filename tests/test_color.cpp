@@ -23,8 +23,7 @@ TEST(color_pack_roundtrip)
 	}
 }
 
-TEST(color_lerp)
-{
+TEST(color_lerp){
 	const Rgba a{0.0f, 0.0f, 0.0f, 1.0f};
 	const Rgba b{1.0f, 1.0f, 1.0f, 1.0f};
 
@@ -32,4 +31,23 @@ TEST(color_lerp)
 	CHECK_NEAR(lerp_color(a, b, -1.0f).r, 0.0, 1e-6); /* recorta */
 	CHECK_NEAR(lerp_color(a, b, 2.0f).r, 1.0, 1e-6);  /* recorta */
 	CHECK_NEAR(lerp_color(a, b, 0.25f).g, 0.25, 1e-6);
+}
+
+/*
+ * OBS guarda cores em 0xAABBGGRR (obs_data/propriedades) mas
+ * gs_effect_set_color espera 0xAARRGGBB. Sem a troca, vermelho vira azul.
+ */
+TEST(color_abgr_para_argb)
+{
+	/* vermelho: ABGR 0xFF0000FF -> ARGB 0xFFFF0000 */
+	CHECK_EQ(abgr_to_argb(0xFF0000FFu), 0xFFFF0000u);
+	/* azul: ABGR 0xFFFF0000 -> ARGB 0xFF0000FF */
+	CHECK_EQ(abgr_to_argb(0xFFFF0000u), 0xFF0000FFu);
+	/* verde passa igual (canal do meio) */
+	CHECK_EQ(abgr_to_argb(0xFF00FF00u), 0xFF00FF00u);
+	/* branco/preto sao invariantes (nao pegariam o bug) */
+	CHECK_EQ(abgr_to_argb(0xFFFFFFFFu), 0xFFFFFFFFu);
+	CHECK_EQ(abgr_to_argb(0xFF000000u), 0xFF000000u);
+	/* dupla conversao volta ao original */
+	CHECK_EQ(abgr_to_argb(abgr_to_argb(0xFF3A2E5Cu)), 0xFF3A2E5Cu);
 }

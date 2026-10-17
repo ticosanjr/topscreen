@@ -34,10 +34,10 @@ inline void set_v2(gs_eparam_t *p, float x, float y)
 	vec2_set(&v, x, y);
 	gs_effect_set_vec2(p, &v);
 }
-inline void set_c(gs_eparam_t *p, uint32_t c)
+inline void set_c(gs_eparam_t *p, uint32_t abgr)
 {
 	if (p)
-		gs_effect_set_color(p, c);
+		gs_effect_set_color(p, core::abgr_to_argb(abgr));
 }
 
 } // namespace
@@ -296,7 +296,8 @@ void Compositor::render(obs_source_t *filter, const core::Config &cfg, const Fra
 	set_c(p_bg_b_, cfg.bg.color_b);
 
 	/* Wallpaper: se houver imagem (do PC ou embutida), ela e usada. */
-	const std::string bg_path = !cfg.bg.image_file.empty() ? cfg.bg.image_file : cfg.bg.image;
+	const std::string bg_path =
+		core::resolve_bg_path(cfg.bg.image.c_str(), cfg.bg.image_file.c_str());
 	load_bg_image(active ? bg_path : std::string());
 	const bool bgimg = bg && bg_tex_ != nullptr;
 	set_f(p_bg_tex_enabled_, bgimg ? 1.0f : 0.0f);

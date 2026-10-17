@@ -84,6 +84,16 @@ obs_properties_t *properties_create(void *data)
 
 	obs_properties_t *props = obs_properties_create();
 
+	/* ---------------- Perfis (no topo) ---------------- */
+	obs_properties_t *prof = obs_properties_create();
+	obs_property_t *plist = obs_properties_add_list(prof, kProfileCurrent, obs_module_text("Profile.Current"),
+							OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
+	obs_property_list_add_int(plist, obs_module_text("Profile.A"), 0);
+	obs_property_list_add_int(plist, obs_module_text("Profile.B"), 1);
+	obs_property_list_add_int(plist, obs_module_text("Profile.C"), 2);
+	obs_property_list_add_int(plist, obs_module_text("Profile.D"), 3);
+	obs_properties_add_group(props, "grp_profiles", obs_module_text("Group.Profiles"), OBS_GROUP_NORMAL, prof);
+
 	obs_properties_add_bool(props, kEffectsEnabled, obs_module_text("Enabled"));
 
 	/* ---------------- Fundo ---------------- */
@@ -259,15 +269,6 @@ obs_properties_t *properties_create(void *data)
 				 hl);
 
 	/* ---------------- Perfis ---------------- */
-	obs_properties_t *prof = obs_properties_create();
-	obs_property_t *plist = obs_properties_add_list(prof, kProfileCurrent, obs_module_text("Profile.Current"),
-							OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
-	obs_property_list_add_int(plist, obs_module_text("Profile.A"), 0);
-	obs_property_list_add_int(plist, obs_module_text("Profile.B"), 1);
-	obs_property_list_add_int(plist, obs_module_text("Profile.C"), 2);
-	obs_property_list_add_int(plist, obs_module_text("Profile.D"), 3);
-	obs_properties_add_group(props, "grp_profiles", obs_module_text("Group.Profiles"), OBS_GROUP_NORMAL, prof);
-
 	return props;
 }
 

@@ -3,6 +3,7 @@
 #include "audio/ts-click-sound.hpp"
 #include "core/coord.hpp"
 #include "core/keys.hpp"
+#include "core/profiles.hpp"
 #include "hotkeys/ts-hotkeys.hpp"
 #include "input/ts-input.hpp"
 #include "render/ts-compositor.hpp"
@@ -199,6 +200,10 @@ void ts_filter_ctx::apply_profile(int index)
 		obs_data_release(p);
 	}
 	obs_data_release(s);
+
+	/* Estado de sessao: zera o zoom manual e recarrega o som se mudou. */
+	zoom.set_manual(1.0);
+	click_sound.load(cfg.click_sound.file.c_str());
 }
 
 void ts_filter_ctx::do_save_profile()
@@ -332,6 +337,22 @@ void *ts_filter_create(obs_data_t *settings, obs_source_t *source)
 	ctx->current_profile_ = std::max(0, std::min(kProfileCount - 1, static_cast<int>(pc)));
 	ctx->last_profile = ctx->current_profile_;
 	ctx->profile_cache_.store(ctx->current_profile_);
+
+	/* Garante os 4 slots de perfil (semeia variacoes visiveis nos vazios). */
+	{
+		obs_data_t *s = obs_source_get_settings(source);
+		for (int i = 0; i < kProfileCount; ++i) {
+			if (obs_data_get_obj(s, kProfileSlots[i]))
+				continue;
+			obs_data_t *p = obs_data_create();
+			const core::Config seed = core::make_profile_seed(i);
+			config_store(p, seed);
+			obs_data_set_obj(s, kProfileSlots[i], p);
+			obs_data_release(p);
+		}
+		obs_source_update(source, s);
+		obs_data_release(s);
+	}
 
 	ctx->reconfigure_models();
 

@@ -38,6 +38,7 @@ set(TOPSCREEN_CORE_SOURCES
     src/core/evdev.cpp
     src/core/highlighter.cpp
     src/core/cursor_atlas.cpp
+    src/core/profiles.cpp
     src/core/mapping.cpp
     src/core/image.cpp
     src/core/stb_image_impl.cpp

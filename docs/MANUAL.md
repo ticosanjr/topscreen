@@ -236,6 +236,11 @@ alternar sem reajustar tudo:
 
 Os perfis são salvos **junto da cena** (na fonte), então viajam com a coleção.
 
+> **Já vêm com exemplos** para você só alternar e ver a diferença:
+> **A** = padrão · **B** = cliques verde/laranja + zoom 2.0 · **C** = cliques
+> roxo/ciano + zoom 1.4 e fundo vertical · **D** = cliques amarelo/branco e
+> zoom desligado. Trocar de perfil aplica **tudo** de uma vez.
+
 ---
 
 ## 9. Receitas

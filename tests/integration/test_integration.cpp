@@ -216,6 +216,41 @@ TEST(integration_perfis_salvar_e_trocar)
 	CHECK(registry_first() == nullptr);
 }
 
+TEST(integration_perfis_semeados_restauram)
+{
+	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
+
+	obs_source_t *parent = make_parent(1920, 1080);
+	obs_source_t *filter = fakeobs::make_source(&ts_filter_source_info, parent, 0, 0);
+	void *ctx = create_filter(filter);
+	REQUIRE(ctx != nullptr);
+	ts_filter_source_info.video_render(ctx, nullptr);
+
+	FilterControl *ctrl = registry_first();
+	REQUIRE(ctrl != nullptr);
+
+	/* Perfil A (padrao): zoom 1.6 e clique esquerdo branco. */
+	ctrl->select_profile(0);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK_NEAR(obs_data_get_double(filter->settings, core::keys::kZoomAmount), 1.6, 1e-6);
+
+	/* Perfil B: zoom 2.0 e clique esquerdo VERDE (semeado). */
+	ctrl->select_profile(1);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK_NEAR(obs_data_get_double(filter->settings, core::keys::kZoomAmount), 2.0, 1e-6);
+	CHECK_EQ(obs_data_get_int(filter->settings, core::keys::kClickLeftColor),
+		 static_cast<long long>(0xFF00FF00));
+
+	/* Voltar para A tem que restaurar TUDO. */
+	ctrl->select_profile(0);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK_NEAR(obs_data_get_double(filter->settings, core::keys::kZoomAmount), 1.6, 1e-6);
+	CHECK_EQ(obs_data_get_int(filter->settings, core::keys::kClickLeftColor),
+		 static_cast<long long>(0xFFFFFFFF));
+
+	ts_filter_source_info.destroy(ctx);
+}
+
 TEST(integration_render_nao_crasha_sem_efeito)
 {
 	fakeobs::set_data_dir("/diretorio/inexistente");

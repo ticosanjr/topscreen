@@ -49,7 +49,7 @@ reais do OBS. Veja [`docs/TESTES.md`](docs/TESTES.md).
 ### Testes rápidos
 
 ```bash
-./tests/run.sh            # Linux: 107 testes do núcleo
+./tests/run.sh            # Linux: 112 testes do núcleo
 pwsh -File tests\run.ps1  # Windows (ou PowerShell em qualquer SO)
 ```
 

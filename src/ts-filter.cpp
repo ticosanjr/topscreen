@@ -207,7 +207,7 @@ void ts_filter_ctx::apply_profile(int index)
 
 	/* Session state: resets the manual zoom and reloads the sound if it changed. */
 	zoom.set_manual(1.0);
-	click_sound.load(cfg.click_sound.file.c_str());
+	click_sound.load(cfg.click_sound.file_left.c_str(), cfg.click_sound.file_right.c_str());
 }
 
 /**
@@ -397,7 +397,8 @@ void *ts_filter_create(obs_data_t *settings, obs_source_t *source)
 	ctx->reconfigure_models();
 
 	ctx->presets.load();
-	ctx->click_sound.load(ctx->cfg.click_sound.file.c_str());
+	ctx->click_sound.load(ctx->cfg.click_sound.file_left.c_str(),
+				 ctx->cfg.click_sound.file_right.c_str());
 
 	ctx->loaded = ctx->compositor.load();
 	if (!ctx->loaded)
@@ -480,12 +481,12 @@ void ts_filter_tick(void *data, float seconds)
 		if (st.left_pressed) {
 			ctx->clicks.spawn(cx, cy, ctx->time_ms, false);
 			if (ctx->cfg.click_sound.enabled && ctx->cfg.click_sound.left)
-				ctx->click_sound.play();
+				ctx->click_sound.play(false);
 		}
 		if (st.right_pressed) {
 			ctx->clicks.spawn(cx, cy, ctx->time_ms, true);
 			if (ctx->cfg.click_sound.enabled && ctx->cfg.click_sound.right)
-				ctx->click_sound.play();
+				ctx->click_sound.play(true);
 		}
 	}
 

@@ -58,7 +58,9 @@ inline constexpr const char *kClickRightDurationMs = "click_right_duration_ms";
 inline constexpr const char *kClickRightEasing = "click_right_easing";
 
 inline constexpr const char *kClickSoundEnabled = "click_sound_enabled";
-inline constexpr const char *kClickSoundFile = "click_sound_file";
+inline constexpr const char *kClickSoundFile = "click_sound_file"; // legacy (migrates to left/right)
+inline constexpr const char *kClickSoundFileLeft = "click_sound_file_left";
+inline constexpr const char *kClickSoundFileRight = "click_sound_file_right";
 inline constexpr const char *kClickSoundVolume = "click_sound_volume";
 inline constexpr const char *kClickSoundLeft = "click_sound_left";
 inline constexpr const char *kClickSoundRight = "click_sound_right";

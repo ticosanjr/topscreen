@@ -42,7 +42,11 @@ enum class CursorStyle : int {
 	XCursorPro = 9,
 	BibataIce = 10,
 	BibataOriginal = 11,
-	Count = 12,
+	Neon = 12,
+	Dot = 13,
+	Cross = 14,
+	Onyx = 15,
+	Count = 16,
 };
 
 /** Click effect types. */
@@ -51,6 +55,9 @@ enum class ClickEffect : int {
 	Orb = 1,
 	Ring = 2,
 	Force = 3,
+	Glow = 4,
+	Echo = 5,
+	Flare = 6,
 };
 
 enum class ZoomMode : int {

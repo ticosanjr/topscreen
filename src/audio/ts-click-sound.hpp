@@ -7,27 +7,37 @@
 namespace topscreen {
 
 /**
- * Click sound.
+ * Click sounds (left/right button).
  *
- * Decodes the WAV (via core/wav) in load() and plays it through the system audio
- * (PlaySound on Windows; paplay/pw-play/aplay on Linux). Playback through the OBS
- * audio channel is planned for F6 (own source).
+ * Decodes the WAV (via core/wav) in load() and plays through the system
+ * audio (PlaySound on Windows; paplay/pw-play/aplay on Linux). The OBS
+ * channel playback comes with F6 (dedicated source).
+ *
+ * Playback never blocks the video thread: the child is spawned detached
+ * (SIGCHLD ignored) and never waited on.
  */
 class ClickSound {
 public:
-	/** Loads a file relative to the module's data directory. */
-	bool load(const char *module_file);
+	/** Loads the left/right files (module-relative). Unchanged slots are kept. */
+	bool load(const char *left_module_file, const char *right_module_file);
 	void release();
-	void play();
-
-	bool loaded() const { return loaded_; }
-	const core::WavData &wav() const { return wav_; }
+	void play(bool right);
+	bool loaded() const { return left_.loaded || right_.loaded; }
+	const core::WavData &wav() const { return left_.wav; }
 
 private:
+	struct Slot {
+		bool loaded = false;
+		std::string path;
+		core::WavData wav;
+	};
+
+	bool load_slot(Slot *slot, const char *module_file);
+
 	bool loaded_ = false;
-	std::string path_;
+	Slot left_;
+	Slot right_;
 	std::string player_; // Linux: resolved player path
-	core::WavData wav_;
 };
 
 } // namespace topscreen

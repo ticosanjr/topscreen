@@ -74,7 +74,7 @@ That is where all the math and the state logic live — what actually must be ri
 | `test_preset_all_keys.cpp` | `core/preset.*` | all config keys are mapped (guarantees a complete preset) |
 | `test_locale_keys.cpp` | `data/locale/*.ini` | every key used in `obs_module_text()` exists in `en-US.ini`; no orphan keys |
 | `test_profiles.cpp` | `core/profiles.*` | distinct A/B/C/D seeds (colors + zoom), labels, index wrap |
-| `test_wallpapers.cpp` | `src/ts-wallpapers.*` | label/path/stem resolution, case-insensitivity, all 18 built-ins, invalid input |
+| `test_wallpapers.cpp` | `src/ts-wallpapers.*` | label/path/stem resolution, case-insensitivity, all 24 built-ins, invalid input |
 
 | `test_key_overlay.cpp` | `core/key_overlay.*` | key queue, TTL, repeat, modifier filter, limit, combo formatting |
 | `test_wav.cpp` | `core/wav.*` | PCM 8/16/24/32 and float, stereo, errors, and **real files** `data/sounds/*.wav` |
@@ -82,14 +82,14 @@ That is where all the math and the state logic live — what actually must be ri
 | `test_evdev.cpp` | `core/evdev.*` | `input_event` decoding, labels, modifiers, partial records |
 | `test_highlighter.cpp` | `core/highlighter.*` | drag, normalized rectangle, hold/fade, small drag, disabled |
 | `test_docs.cpp` | `docs/` × code | every key in `keys.hpp` is documented; hotkeys from the code are in the reference |
-| `test_cursor_atlas.cpp` | `core/cursor_atlas.*` + `data/cursors/` | TSAT format, hotspots and **real atlas** (12 styles = `CursorStyle::Count`) |
+| `test_cursor_atlas.cpp` | `core/cursor_atlas.*` + `data/cursors/` | TSAT format, hotspots and **real atlas** (16 styles = `CursorStyle::Count`) |
 | `test_image.cpp` | `core/image.*` + `data/wallpapers/` | image decode (reads a **real wallpaper** 1920x1080) and invalid cases |
 | `test_mapping.cpp` | `core/mapping.*` | content area (padding/aspect), forward zoom and **consistency with the shader** (proves the cursor lands on the right pixel at any zoom) |
 
 ## Current numbers
 
 ```
-117 tests | 2188 checks | 0 failures   (core)
+118 tests | 2239 checks | 0 failures   (core)
 19 tests | 132 checks   | 0 failures   (integration with fake libobs)
 ```
 

@@ -17,7 +17,7 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Style | `bg_mode` | int | 0 solid · 1 vertical · 2 diagonal | `2` |
 | | Color A | `bg_color_a` | color | — | `0xFF20242E` |
 | | Color B | `bg_color_b` | color | — | `0xFF3A2E5C` |
-| | Wallpaper | `bg_image` | string | "" or `wallpapers/*.jpg` (18) | `""` |
+| | Wallpaper | `bg_image` | string | "" or `wallpapers/*.jpg` (24) | `""` |
 | | Image from PC | `bg_image_file` | string | file path (**clears** the Wallpaper) | `""` |
 | | Wallpaper blur (px) | `bg_image_blur` | double | 0–60 | `0` |
 | | Blur type | `bg_image_blur_type` | int | 0 none · 1 soft · 2 gaussian · 3 creamy | `2` |
@@ -45,7 +45,7 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Idle time (ms) | `zoom_idle_timeout_ms` | double | 200–10000 | `1500` |
 | | Pan intensity | `zoom_pan_amount` | double | 0–1 | `1.0` |
 | | Centering | `zoom_center_amount` | double | 0–1 | `1.0` |
-| Left click | Effect | `click_left_effect` | int | 0 ripple, 1 orb, 2 ring, 3 force | `0` |
+| Left click | Effect | `click_left_effect` | int | 0 ripple, 1 orb, 2 ring, 3 force, 4 glow, 5 echo, 6 flare | `0` |
 | | Size | `click_left_size` | double | 0.1–4 | `1.0` |
 | | Color | `click_left_color` | color | — | `0xFFFFFFFF` |
 | | Duration (ms) | `click_left_duration_ms` | double | 100–2000 | `650` |
@@ -56,7 +56,9 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Duration (ms) | `click_right_duration_ms` | double | 100–2000 | `700` |
 | | Curve | `click_right_easing` | int | same | `2` |
 | Click sound | Enable sound | `click_sound_enabled` | bool | — | `true` |
-| | File | `click_sound_file` | string | — | `sounds/click-soft.wav` |
+| | Left click sound | `click_sound_file_left` | string | bundled `sounds/*.wav` | `sounds/click-soft.wav` |
+| | Right click sound | `click_sound_file_right` | string | bundled `sounds/*.wav` | `sounds/click-pop.wav` |
+| | Legacy single file | `click_sound_file` | string | migrates to both sides | — |
 | | Volume | `click_sound_volume` | double | 0–1 | `0.6` |
 | | On left click | `click_sound_left` | bool | — | `true` |
 | | On right click | `click_sound_right` | bool | — | `false` |

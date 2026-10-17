@@ -12,7 +12,7 @@
 #include <windows.h>
 #include <mmsystem.h>
 #else
-#include <sys/wait.h>
+#include <csignal>
 #include <unistd.h>
 #endif
 
@@ -51,12 +51,12 @@ std::string find_player()
 
 } // namespace
 
-bool ClickSound::load(const char *module_file)
+bool ClickSound::load_slot(Slot *slot, const char *module_file)
 {
-	release();
-
 	if (!module_file || !*module_file)
 		return false;
+	if (slot->loaded && slot->path == module_file)
+		return true;
 
 	char *file_path = obs_module_file(module_file);
 	if (!file_path) {
@@ -79,56 +79,67 @@ bool ClickSound::load(const char *module_file)
 		return false;
 	}
 
-	path_ = file_path;
+	slot->path = file_path;
 	bfree(file_path);
 
-	wav_ = std::move(wav);
-	loaded_ = true;
+	slot->wav = std::move(wav);
+	slot->loaded = true;
+	return true;
+}
+
+bool ClickSound::load(const char *left_module_file, const char *right_module_file)
+{
+	const bool l = load_slot(&left_, left_module_file);
+	const bool r = load_slot(&right_, right_module_file);
+	loaded_ = l || r;
 
 #if !defined(_WIN32)
+	/* Auto-reap player processes: play() never blocks on waitpid. */
+	static bool sigchld_ignored = false;
+	if (!sigchld_ignored) {
+		::signal(SIGCHLD, SIG_IGN);
+		sigchld_ignored = true;
+	}
 	player_ = find_player();
 	if (player_.empty())
 		blog(LOG_WARNING, "[TopScreen] no audio player found for the click sound");
 #endif
 
-	blog(LOG_INFO, "[TopScreen] sound loaded: %s (%d Hz, %d channels)", module_file, wav_.sample_rate,
-	     wav_.channels);
-	return true;
+	if (loaded_)
+		blog(LOG_INFO, "[TopScreen] sound loaded: L=%s R=%s", left_module_file ? left_module_file : "-",
+		     right_module_file ? right_module_file : "-");
+	return loaded_;
 }
 
 void ClickSound::release()
 {
 	loaded_ = false;
-	path_.clear();
+	left_ = Slot{};
+	right_ = Slot{};
 	player_.clear();
-	wav_ = core::WavData{};
 }
 
-void ClickSound::play()
+void ClickSound::play(bool right)
 {
-	if (!loaded_ || path_.empty())
+	const Slot &slot = right ? right_ : left_;
+	if (!slot.loaded || slot.path.empty())
 		return;
 
 #if defined(_WIN32)
-	PlaySoundA(path_.c_str(), nullptr, SND_ASYNC | SND_FILENAME | SND_NODEFAULT);
+	PlaySoundA(slot.path.c_str(), nullptr, SND_ASYNC | SND_FILENAME | SND_NODEFAULT);
 #else
 	if (player_.empty())
 		return;
 
-	/* Double-fork to avoid blocking and leaving zombies. */
+	/* Detached spawn: SIGCHLD is ignored (see load()), so this never
+	 * blocks the caller waiting for the player. */
 	const pid_t pid = ::fork();
-	if (pid == 0) {
-		::setsid();
-		const pid_t pid2 = ::fork();
-		if (pid2 == 0) {
-			::execl(player_.c_str(), player_.c_str(), path_.c_str(), static_cast<char *>(nullptr));
-			::_exit(127);
-		}
-		::_exit(0);
-	} else if (pid > 0) {
-		int status = 0;
-		::waitpid(pid, &status, 0);
-	}
+	if (pid != 0)
+		return;
+
+	::setsid();
+	::execl(player_.c_str(), player_.c_str(), slot.path.c_str(), static_cast<char *>(nullptr));
+	::_exit(127);
 #endif
 }
 

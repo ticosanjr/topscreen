@@ -61,7 +61,8 @@ void config_defaults(obs_data_t *s)
 	obs_data_set_default_int(s, kClickRightEasing, def.click_right.easing);
 
 	obs_data_set_default_bool(s, kClickSoundEnabled, def.click_sound.enabled);
-	obs_data_set_default_string(s, kClickSoundFile, def.click_sound.file.c_str());
+	obs_data_set_default_string(s, kClickSoundFileLeft, def.click_sound.file_left.c_str());
+	obs_data_set_default_string(s, kClickSoundFileRight, def.click_sound.file_right.c_str());
 	obs_data_set_default_double(s, kClickSoundVolume, def.click_sound.volume);
 	obs_data_set_default_bool(s, kClickSoundLeft, def.click_sound.left);
 	obs_data_set_default_bool(s, kClickSoundRight, def.click_sound.right);
@@ -192,7 +193,18 @@ void config_load(obs_data_t *s, Config *c)
 	c->click_right.easing = static_cast<int>(read_int(s, kClickRightEasing, d.click_right.easing));
 
 	c->click_sound.enabled = read_bool(s, kClickSoundEnabled, d.click_sound.enabled);
-	c->click_sound.file = read_string(s, kClickSoundFile, d.click_sound.file);
+	c->click_sound.file_left = read_string(s, kClickSoundFileLeft, d.click_sound.file_left);
+	c->click_sound.file_right = read_string(s, kClickSoundFileRight, d.click_sound.file_right);
+	/* Migration from the single legacy 'click_sound_file' key. */
+	if (!obs_data_has_user_value(s, kClickSoundFileLeft) &&
+	    !obs_data_has_user_value(s, kClickSoundFileRight) &&
+	    obs_data_has_user_value(s, kClickSoundFile)) {
+		const char *old = obs_data_get_string(s, kClickSoundFile);
+		if (old && *old) {
+			c->click_sound.file_left = old;
+			c->click_sound.file_right = old;
+		}
+	}
 	c->click_sound.volume = read_double(s, kClickSoundVolume, d.click_sound.volume);
 	c->click_sound.left = read_bool(s, kClickSoundLeft, d.click_sound.left);
 	c->click_sound.right = read_bool(s, kClickSoundRight, d.click_sound.right);
@@ -281,7 +293,8 @@ void config_store(obs_data_t *s, const Config &c)
 	obs_data_set_int(s, kClickRightEasing, c.click_right.easing);
 
 	obs_data_set_bool(s, kClickSoundEnabled, c.click_sound.enabled);
-	obs_data_set_string(s, kClickSoundFile, c.click_sound.file.c_str());
+	obs_data_set_string(s, kClickSoundFileLeft, c.click_sound.file_left.c_str());
+	obs_data_set_string(s, kClickSoundFileRight, c.click_sound.file_right.c_str());
 	obs_data_set_double(s, kClickSoundVolume, c.click_sound.volume);
 	obs_data_set_bool(s, kClickSoundLeft, c.click_sound.left);
 	obs_data_set_bool(s, kClickSoundRight, c.click_sound.right);

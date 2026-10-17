@@ -89,6 +89,26 @@ TEST(preset_without_settings_fails)
 	CHECK(!err.empty());
 }
 
+TEST(preset_legacy_click_sound_file_applies_to_both_sides)
+{
+	const std::string text = R"({
+        "name": "Legacy",
+        "description": "legacy single sound file",
+        "settings": {
+            "click_sound_file": "sounds/click-wood.wav"
+        }
+    })";
+
+	Preset p;
+	std::string err;
+	REQUIRE(Preset::from_json(text, &p, &err));
+
+	Config cfg;
+	REQUIRE(p.apply(&cfg, &err));
+	CHECK_EQ(cfg.click_sound.file_left, std::string("sounds/click-wood.wav"));
+	CHECK_EQ(cfg.click_sound.file_right, std::string("sounds/click-wood.wav"));
+}
+
 TEST(preset_real_files_parse)
 {
 	const char *names[] = {"demo.json", "tutorial.json", "presentation.json"};

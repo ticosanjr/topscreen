@@ -198,10 +198,28 @@ float4 apply_click(float4 col, float2 px, float mask, float2 cu, float prog, flo
 		// ring: thin ring
 		float th = max(base * csize * 0.08, aa);
 		a        = (1.0 - smoothstep(th - aa, th + aa, abs(dist - r))) * (1.0 - prog);
-	} else {
+	} else if (type < 3.5) {
 		// force: thick ring
 		float th = max(base * csize * 0.40, aa);
 		a        = (1.0 - smoothstep(th - aa, th + aa, abs(dist - r))) * (1.0 - prog) * 1.2;
+	} else if (type < 4.5) {
+		// glow: soft filled glow
+		a = (1.0 - smoothstep(-aa, r * 0.9 + aa, dist - r * 0.1)) * (1.0 - prog) * 0.55;
+	} else if (type < 5.5) {
+		// echo: double ring
+		float th = max(base * csize * 0.08, aa);
+		float r2 = r * 0.55;
+		float e1 = 1.0 - smoothstep(th - aa, th + aa, abs(dist - r));
+		float e2 = (1.0 - smoothstep(th - aa, th + aa, abs(dist - r2))) * 0.7;
+		a        = (e1 + e2) * (1.0 - prog);
+	} else {
+		// flare: 4-point spark over a small disc
+		float dia = abs(local.x) + abs(local.y);
+		float arm = max(base * csize * 0.10, aa);
+		float a1  = (1.0 - smoothstep(-aa, aa, dist - r * 0.7)) * 0.5;
+		float a2  = (1.0 - smoothstep(arm - aa, arm + aa, dia)) *
+			   (1.0 - smoothstep(-aa, aa, dist - r));
+		a = (a1 + a2) * (1.0 - prog);
 	}
 
 	a *= ccol.a * mask;

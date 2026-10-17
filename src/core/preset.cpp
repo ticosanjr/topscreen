@@ -137,7 +137,18 @@ bool Preset::apply(Config *cfg, std::string *error) const
 
 	/* Click sound */
 	cfg->click_sound.enabled = read_bool(o, kClickSoundEnabled, cfg->click_sound.enabled);
-	cfg->click_sound.file = read_string(o, kClickSoundFile, cfg->click_sound.file);
+	cfg->click_sound.file_left = read_string(o, kClickSoundFileLeft, cfg->click_sound.file_left);
+	cfg->click_sound.file_right =
+		read_string(o, kClickSoundFileRight, cfg->click_sound.file_right);
+	/* Legacy single-file presets apply to both buttons. */
+	if (o.find(kClickSoundFileLeft) == o.end() && o.find(kClickSoundFileRight) == o.end() &&
+	    o.find(kClickSoundFile) != o.end()) {
+		const std::string old = read_string(o, kClickSoundFile, "");
+		if (!old.empty()) {
+			cfg->click_sound.file_left = old;
+			cfg->click_sound.file_right = old;
+		}
+	}
 	cfg->click_sound.volume = read_number(o, kClickSoundVolume, cfg->click_sound.volume);
 	cfg->click_sound.left = read_bool(o, kClickSoundLeft, cfg->click_sound.left);
 	cfg->click_sound.right = read_bool(o, kClickSoundRight, cfg->click_sound.right);

@@ -33,7 +33,8 @@ struct BackgroundConfig {
 
 struct ClickSoundConfig {
 	bool enabled = true;
-	std::string file = "sounds/click-soft.wav";
+	std::string file_left = "sounds/click-soft.wav";
+	std::string file_right = "sounds/click-pop.wav";
 	double volume = 0.6;
 	bool left = true;
 	bool right = false;

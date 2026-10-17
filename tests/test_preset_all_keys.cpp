@@ -60,6 +60,8 @@ TEST(preset_covers_all_keys)
             "click_right_easing": 3,
             "click_sound_enabled": false,
             "click_sound_file": "x.wav",
+            "click_sound_file_left": "l.wav",
+            "click_sound_file_right": "r.wav",
             "click_sound_volume": 0.42,
             "click_sound_left": false,
             "click_sound_right": true,
@@ -144,7 +146,8 @@ TEST(preset_covers_all_keys)
 	CHECK_EQ(c.click_right.easing, 3);
 
 	CHECK(!c.click_sound.enabled);
-	CHECK_EQ(c.click_sound.file, std::string("x.wav"));
+	CHECK_EQ(c.click_sound.file_left, std::string("l.wav"));
+	CHECK_EQ(c.click_sound.file_right, std::string("r.wav"));
 	CHECK_NEAR(c.click_sound.volume, 0.42, 1e-9);
 	CHECK(!c.click_sound.left);
 	CHECK(c.click_sound.right);

@@ -36,6 +36,12 @@ PALETTES = {
     "coral":     ["#2b0b3a", "#ff5c8a", "#ff9f1c", "#ffd166", "#2b0b3a"],
     "galaxy":    ["#0b032d", "#843b62", "#f67e7d", "#6a2c70", "#0b032d"],
     "rainbow":   ["#2d00f7", "#c200fb", "#0075f2", "#ff0a54", "#00e5ff"],
+    "porcelain": ["#e8e4dc", "#cfc8bb", "#f5f2ec", "#a8b5c4", "#e8e4dc"],
+    "sand":      ["#e6d5b8", "#d4a373", "#f4ead5", "#b08968", "#e6d5b8"],
+    "sage":      ["#dfe5d8", "#9caf88", "#5f7161", "#e9f0e4", "#dfe5d8"],
+    "onyx":      ["#08080c", "#1c1c24", "#3a3a4a", "#6a5cff", "#08080c"],
+    "rose":      ["#2b0f1e", "#c86b8a", "#f4a7c3", "#f9e0e8", "#2b0f1e"],
+    "azure":     ["#dbe9f6", "#7fb3e0", "#2f6fb0", "#f2f7fd", "#dbe9f6"],
 }
 
 

@@ -11,7 +11,7 @@ Mode: `auto` reacts on its own · `hotkey` only by hotkey · `always` always on.
 | Feature | Mode | Status | Notes |
 |---------|------|--------|-------------|
 | Replace the pointer (turns off the native one) | auto | ✅ | turns off `capture_cursor`/`show_cursor` on the parent source |
-| **12 cursor styles** | auto | ✅ | macOS, Windows, Breeze, Bibata, Adwaita, GoogleDot, Pointer, DMZ, Yaru, XCursorPro, BibataIce, BibataOriginal |
+| **16 cursor styles** | auto | ✅ | macOS, Windows, Breeze, Bibata, Adwaita, GoogleDot, Pointer, DMZ, Yaru, XCursorPro, BibataIce, BibataOriginal, Neon, Dot, Crosshair, Onyx |
 | Size | auto | ✅ | 0.5–4× |
 | Shadow | auto | ✅ | |
 | Motion smoothing | auto | ✅ | critically damped spring |
@@ -23,7 +23,7 @@ Mode: `auto` reacts on its own · `hotkey` only by hotkey · `always` always on.
 
 | Feature | Mode | Status | Notes |
 |---------|------|--------|-------------|
-| Left button effect | auto | ✅ | ripple / orb / ring / force + color/size/duration/curve |
+| Left button effect | auto | ✅ | ripple / orb / ring / force / glow / echo / flare + color/size/duration/curve |
 | Right button effect | auto | ✅ | independent of the left |
 | Click sound | auto | ✅ | plays through the system audio |
 
@@ -32,7 +32,7 @@ Mode: `auto` reacts on its own · `hotkey` only by hotkey · `always` always on.
 | Feature | Mode | Status | Notes |
 |---------|------|--------|-------------|
 | Background (color/gradient) | always | ✅ | solid, vertical, diagonal |
-| Image background | always | ✅ | 18 built-in wallpapers or an image from your PC |
+| Image background | always | ✅ | 24 built-in wallpapers or an image from your PC |
 | Rounded corners | always | ✅ | |
 | Spacing (padding X and Y) | always | ✅ | separate axes |
 | Window shadow | always | ✅ | opacity, blur and offset |

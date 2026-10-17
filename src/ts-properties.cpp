@@ -17,7 +17,18 @@ namespace {
 const char *const kFonts[][2] = {
 	{"DejaVu Sans Bold", "fonts/DejaVuSans-Bold.ttf"},
 	{"DejaVu Sans", "fonts/DejaVuSans.ttf"},
+	{"DejaVu Sans ExtraLight", "fonts/DejaVuSans-ExtraLight.ttf"},
 	{"DejaVu Sans Mono Bold", "fonts/DejaVuSansMono-Bold.ttf"},
+	{"DejaVu Sans Mono", "fonts/DejaVuSansMono.ttf"},
+	{"DejaVu Serif Bold", "fonts/DejaVuSerif-Bold.ttf"},
+};
+
+/* Bundled click sounds (data/sounds). */
+const char *const kSounds[][2] = {
+	{"Soft", "sounds/click-soft.wav"},     {"Hard", "sounds/click-hard.wav"},
+	{"Pop", "sounds/click-pop.wav"},       {"Tick", "sounds/click-tick.wav"},
+	{"Wood", "sounds/click-wood.wav"},     {"Glass", "sounds/click-glass.wav"},
+	{"Bubble", "sounds/click-bubble.wav"}, {"Thock", "sounds/click-thock.wav"},
 };
 
 /* Image selector filter (hardcoded, as in OBS: avoids escaping risk). */
@@ -62,6 +73,12 @@ void add_click_group(obs_properties_t *props, const char *group_key, const char 
 				  static_cast<int>(ClickEffect::Ring));
 	obs_property_list_add_int(effect, obs_module_text("Click.Effect.Force"),
 				  static_cast<int>(ClickEffect::Force));
+	obs_property_list_add_int(effect, obs_module_text("Click.Effect.Glow"),
+				  static_cast<int>(ClickEffect::Glow));
+	obs_property_list_add_int(effect, obs_module_text("Click.Effect.Echo"),
+				  static_cast<int>(ClickEffect::Echo));
+	obs_property_list_add_int(effect, obs_module_text("Click.Effect.Flare"),
+				  static_cast<int>(ClickEffect::Flare));
 
 	obs_properties_add_float_slider(g, size_key, obs_module_text("Click.Size"), 0.1, 4.0, 0.05);
 	obs_properties_add_color(g, color_key, obs_module_text("Click.Color"));
@@ -176,6 +193,14 @@ obs_properties_t *properties_create(void *data)
 				  static_cast<int>(CursorStyle::BibataIce));
 	obs_property_list_add_int(style, obs_module_text("Cursor.Style.BibataOriginal"),
 				  static_cast<int>(CursorStyle::BibataOriginal));
+	obs_property_list_add_int(style, obs_module_text("Cursor.Style.Neon"),
+				  static_cast<int>(CursorStyle::Neon));
+	obs_property_list_add_int(style, obs_module_text("Cursor.Style.Dot"),
+				  static_cast<int>(CursorStyle::Dot));
+	obs_property_list_add_int(style, obs_module_text("Cursor.Style.Cross"),
+				  static_cast<int>(CursorStyle::Cross));
+	obs_property_list_add_int(style, obs_module_text("Cursor.Style.Onyx"),
+				  static_cast<int>(CursorStyle::Onyx));
 
 	obs_properties_add_float_slider(cur, kCursorSize, obs_module_text("Cursor.Size"), 0.5, 4.0, 0.05);
 	obs_properties_add_float_slider(cur, kCursorSmooth, obs_module_text("Cursor.Smooth"), 0.0, 1.0, 0.01);
@@ -198,6 +223,16 @@ obs_properties_t *properties_create(void *data)
 	/* ---------------- Click sound ---------------- */
 	obs_properties_t *snd = obs_properties_create();
 	obs_properties_add_bool(snd, kClickSoundEnabled, obs_module_text("ClickSound.Enabled"));
+	obs_property_t *sndleft = obs_properties_add_list(snd, kClickSoundFileLeft,
+							 obs_module_text("ClickSound.LeftSound"),
+							 OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
+	obs_property_t *sndright = obs_properties_add_list(snd, kClickSoundFileRight,
+							   obs_module_text("ClickSound.RightSound"),
+							   OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
+	for (const auto &s : kSounds) {
+		obs_property_list_add_string(sndleft, s[0], s[1]);
+		obs_property_list_add_string(sndright, s[0], s[1]);
+	}
 	obs_properties_add_float_slider(snd, kClickSoundVolume, obs_module_text("ClickSound.Volume"), 0.0, 1.0,
 					0.01);
 	obs_properties_add_bool(snd, kClickSoundLeft, obs_module_text("ClickSound.Left"));

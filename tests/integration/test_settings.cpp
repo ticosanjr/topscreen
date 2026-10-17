@@ -157,11 +157,12 @@ TEST(clicksound_fails_gracefully)
 
 	ClickSound snd;
 	CHECK(!snd.loaded());
-	CHECK(!snd.load("sounds/does-not-exist.wav"));
-	snd.play();
+	CHECK(!snd.load("sounds/does-not-exist.wav", "sounds/does-not-exist.wav"));
+	snd.play(false);
+	snd.play(true);
 	CHECK(!snd.loaded());
 
-	CHECK(snd.load("sounds/click-soft.wav"));
+	CHECK(snd.load("sounds/click-soft.wav", "sounds/click-pop.wav"));
 	CHECK(snd.loaded());
 	CHECK(snd.wav().sample_rate > 0);
 	/* Does not actually play in the test (avoids fork/exec in the suite). */

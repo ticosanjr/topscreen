@@ -42,6 +42,10 @@ SOURCES = [
     ("xcursorpro", f"{ICONS}/XCursor-Pro-Light/cursors/left_ptr"),
     ("bibataice", f"{ICONS}/Bibata-Modern-Ice/cursors/left_ptr"),
     ("bibataoriginal", f"{ICONS}/Bibata-Original-Classic/cursors/left_ptr"),
+    ("neon", "__procedural_neon__"),
+    ("dot", "__procedural_dot__"),
+    ("cross", "__procedural_cross__"),
+    ("onyx", "__procedural_onyx__"),
 ]
 
 
@@ -163,9 +167,25 @@ def procedural(kind):
     if kind == "mac":
         # macOS: black fill, thin white outline
         return rasterize(MAC_POLY, (0, 0, 0, 255), (255, 255, 255, 235), 0.9)
-    else:
+    if kind == "win":
         # Windows: white fill, black outline
         return rasterize(WIN_POLY, (255, 255, 255, 255), (0, 0, 0, 255), 1.0)
+    if kind == "neon":
+        # Neon: glowing cyan arrow for dark scenes
+        return rasterize(MAC_POLY, (0, 229, 255, 255), (8, 16, 38, 255), 1.0)
+    if kind == "dot":
+        # Dot: coral disc, centered hotspot (touch-style)
+        poly = [(12 + 5 * math.cos(2 * math.pi * i / 16),
+                 12 + 5 * math.sin(2 * math.pi * i / 16)) for i in range(16)]
+        return rasterize(poly, (255, 92, 138, 255), (255, 255, 255, 255), 0.7)
+    if kind == "cross":
+        # Cross: precision crosshair, centered hotspot
+        poly = [(11, 3), (13, 3), (13, 11), (21, 11), (21, 13), (13, 13),
+                (13, 21), (11, 21), (11, 13), (3, 13), (3, 11), (11, 11)]
+        return rasterize(poly, (255, 255, 255, 255), (20, 20, 30, 255), 0.8)
+    else:
+        # Onyx: navy arrow with a gold outline (elegant dark theme)
+        return rasterize(WIN_POLY, (26, 26, 46, 255), (255, 209, 102, 255), 0.9)
 
 
 # ---------------------------------------------------------------------------
@@ -202,6 +222,26 @@ def main():
             cells.append(procedural("win"))
             meta.append({"name": name, "hotspot": [round(0.8 / 24, 4), round(0.6 / 24, 4)]})
             print(f"[atlas] {name}: procedural windows")
+            continue
+        if src == "__procedural_neon__":
+            cells.append(procedural("neon"))
+            meta.append({"name": name, "hotspot": [round(1.2 / 24, 4), round(1.0 / 24, 4)]})
+            print(f"[atlas] {name}: procedural neon")
+            continue
+        if src == "__procedural_dot__":
+            cells.append(procedural("dot"))
+            meta.append({"name": name, "hotspot": [0.5, 0.5]})
+            print(f"[atlas] {name}: procedural dot")
+            continue
+        if src == "__procedural_cross__":
+            cells.append(procedural("cross"))
+            meta.append({"name": name, "hotspot": [0.5, 0.5]})
+            print(f"[atlas] {name}: procedural cross")
+            continue
+        if src == "__procedural_onyx__":
+            cells.append(procedural("onyx"))
+            meta.append({"name": name, "hotspot": [round(0.8 / 24, 4), round(0.6 / 24, 4)]})
+            print(f"[atlas] {name}: procedural onyx")
             continue
 
         if not os.path.exists(src):

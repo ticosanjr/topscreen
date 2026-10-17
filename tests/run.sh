@@ -17,6 +17,7 @@ echo "Compilando testes com ${CXX} ..."
     -DTOPSCREEN_SOURCE_DIR="\"${ROOT}\"" \
     "${ROOT}"/tests/*.cpp \
     "${ROOT}"/src/core/*.cpp \
+    "${ROOT}/src/ts-wallpapers.cpp" \
     -o "${OUT}"
 
 echo "Rodando testes ..."

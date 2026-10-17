@@ -40,7 +40,9 @@ public:
 
 private:
 	InputState cur_;
-	InputState prev_;
+	/* So as bordas de subida sao comparadas; sem copiar listas de teclas. */
+	bool prev_left_ = false;
+	bool prev_right_ = false;
 	void *platform_ = nullptr;
 };
 

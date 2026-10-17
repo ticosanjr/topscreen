@@ -88,7 +88,7 @@ TEST(integration_ciclo_de_vida_do_filtro)
 	for (int i = 0; i < 10; ++i)
 		ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
 
-	REQUIRE(fakeobs::hotkey_count() >= 7);
+	REQUIRE(fakeobs::hotkey_count() >= 12);
 
 	/* Toggle de efeitos via hotkey. */
 	const int toggle = fakeobs::find_hotkey("TopScreen.ToggleEffects");
@@ -142,6 +142,78 @@ TEST(integration_todos_os_presets_e_toggle_background)
 	fakeobs::invoke_hotkey(tg, true);
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
 	CHECK(!obs_data_get_bool(filter->settings, core::keys::kBgEnabled) != !before);
+
+	ts_filter_source_info.destroy(ctx);
+}
+
+TEST(integration_hotkeys_todas_as_acoes)
+{
+	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
+
+	obs_source_t *parent = make_parent(1280, 720);
+	obs_source_t *filter = fakeobs::make_source(&ts_filter_source_info, parent, 0, 0);
+
+	void *ctx = create_filter(filter);
+	REQUIRE(ctx != nullptr);
+	ts_filter_source_info.video_render(ctx, nullptr);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+
+	FilterControl *ctrl = registry_first();
+	REQUIRE(ctrl != nullptr);
+
+	const char *names[] = {"TopScreen.ToggleEffects", "TopScreen.ToggleBackground",
+			       "TopScreen.ZoomIn",	      "TopScreen.ZoomOut",
+			       "TopScreen.ResetZoom",	      "TopScreen.NextPreset",
+			       "TopScreen.PrevPreset",	      "TopScreen.ProfileA",
+			       "TopScreen.ProfileB",	      "TopScreen.ProfileC",
+			       "TopScreen.ProfileD",	      "TopScreen.ProfileSave"};
+	for (const char *n : names)
+		REQUIRE(fakeobs::find_hotkey(n) >= 0);
+
+	/* pressed=false nao faz nada (early-return do callback). */
+	const bool fx0 = ctrl->effects_enabled();
+	ctrl->select_profile(0);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	fakeobs::invoke_hotkey(fakeobs::find_hotkey("TopScreen.ToggleEffects"), false);
+	fakeobs::invoke_hotkey(fakeobs::find_hotkey("TopScreen.ProfileC"), false);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK(ctrl->effects_enabled() == fx0);
+	CHECK_EQ(ctrl->current_profile(), 0);
+
+	/* pressed=true: cada acao chega ao filtro. */
+	fakeobs::invoke_hotkey(fakeobs::find_hotkey("TopScreen.ToggleEffects"), true);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK(ctrl->effects_enabled() == !fx0);
+
+	const bool bg0 = obs_data_get_bool(filter->settings, core::keys::kBgEnabled);
+	fakeobs::invoke_hotkey(fakeobs::find_hotkey("TopScreen.ToggleBackground"), true);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK(obs_data_get_bool(filter->settings, core::keys::kBgEnabled) == !bg0);
+
+	fakeobs::invoke_hotkey(fakeobs::find_hotkey("TopScreen.ZoomIn"), true);
+	fakeobs::invoke_hotkey(fakeobs::find_hotkey("TopScreen.ZoomOut"), true);
+	fakeobs::invoke_hotkey(fakeobs::find_hotkey("TopScreen.ResetZoom"), true);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+
+	fakeobs::invoke_hotkey(fakeobs::find_hotkey("TopScreen.NextPreset"), true);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK(ctrl->current_preset() >= 0 && ctrl->current_preset() < ctrl->preset_count());
+	fakeobs::invoke_hotkey(fakeobs::find_hotkey("TopScreen.PrevPreset"), true);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK(ctrl->current_preset() >= 0 && ctrl->current_preset() < ctrl->preset_count());
+
+	const char *profiles[] = {"TopScreen.ProfileA", "TopScreen.ProfileB", "TopScreen.ProfileC",
+				   "TopScreen.ProfileD"};
+	for (int i = 0; i < 4; ++i) {
+		fakeobs::invoke_hotkey(fakeobs::find_hotkey(profiles[i]), true);
+		ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+		CHECK_EQ(ctrl->current_profile(), i);
+	}
+
+	fakeobs::invoke_hotkey(fakeobs::find_hotkey("TopScreen.ProfileSave"), true);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK(obs_data_get_obj(filter->settings, core::keys::kProfileSlots[ctrl->current_profile()]) !=
+	      nullptr);
 
 	ts_filter_source_info.destroy(ctx);
 }

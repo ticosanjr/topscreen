@@ -1,5 +1,6 @@
 #include "font_atlas.hpp"
 
+#include <algorithm>
 #include <cmath>
 #include <cstring>
 
@@ -17,10 +18,11 @@ namespace topscreen::core {
 
 const Glyph *FontAtlas::glyph(int code) const
 {
-	for (const auto &g : glyphs) {
-		if (g.code == code)
-			return &g;
-	}
+	/* glyphs e ordenado por code: busca binaria em vez de varredura linear. */
+	auto it = std::lower_bound(glyphs.begin(), glyphs.end(), code,
+				   [](const Glyph &g, int value) { return g.code < value; });
+	if (it != glyphs.end() && it->code == code)
+		return &(*it);
 	return nullptr;
 }
 

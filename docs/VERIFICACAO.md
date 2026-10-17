@@ -41,9 +41,10 @@ Adicione uma **Captura de Tela** e o filtro **TopScreen FX**. Depois:
 
 ## 3. Atalhos
 
-**Configurações → Atalhos → TopScreen** deve listar as 7 ações
+**Configurações → Atalhos → TopScreen** deve listar as 12 ações
 (`ToggleEffects`, `ToggleBackground`, `ZoomIn`, `ZoomOut`, `ResetZoom`,
-`NextPreset`, `PrevPreset`).
+`NextPreset`, `PrevPreset`, `ProfileA`, `ProfileB`, `ProfileC`, `ProfileD`,
+`ProfileSave`).
 
 ## 4. Input por plataforma
 

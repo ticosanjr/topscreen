@@ -1,9 +1,8 @@
 #include "ts-presets.hpp"
 
-#include <fstream>
-#include <sstream>
-
 #include <obs-module.h>
+
+#include "core/file.hpp"
 
 namespace topscreen {
 
@@ -21,15 +20,9 @@ bool read_module_file(const char *name, std::string *out)
 	if (!path)
 		return false;
 
-	std::ifstream in(path);
+	const bool ok = core::read_file_text(path, out);
 	bfree(path);
-	if (!in)
-		return false;
-
-	std::ostringstream ss;
-	ss << in.rdbuf();
-	*out = ss.str();
-	return true;
+	return ok;
 }
 
 } // namespace

@@ -32,7 +32,7 @@ Modo: `auto` reage sozinho · `hotkey` só por atalho · `always` sempre ligado.
 | Recurso | Modo | Status | Observações |
 |---------|------|--------|-------------|
 | Fundo (cor/gradiente) | sempre | ✅ | sólido, vertical, diagonal |
-| Fundo por imagem | sempre | ✅ | 12 wallpapers embutidos ou imagem do seu PC |
+| Fundo por imagem | sempre | ✅ | 18 wallpapers embutidos ou imagem do seu PC |
 | Cantos arredondados | sempre | ✅ | |
 | Espaçamento (padding X e Y) | sempre | ✅ | eixos separados |
 | Sombra da janela | sempre | ✅ | opacidade, desfoque e deslocamento |

@@ -18,14 +18,19 @@ void Input::stop()
 
 void Input::poll()
 {
-	prev_ = cur_;
+	/* So as bordas de subida usam o estado anterior; as listas de teclas
+	 * sao transientes por tick e nao precisam ser copiadas. */
+	const bool was_left = prev_left_;
+	const bool was_right = prev_right_;
+	prev_left_ = cur_.left;
+	prev_right_ = cur_.right;
 
 	InputState s;
 	if (platform_)
 		ts_input_platform_poll(platform_, &s);
 
-	s.left_pressed = s.left && !prev_.left;
-	s.right_pressed = s.right && !prev_.right;
+	s.left_pressed = s.left && !was_left;
+	s.right_pressed = s.right && !was_right;
 
 	cur_ = s;
 }

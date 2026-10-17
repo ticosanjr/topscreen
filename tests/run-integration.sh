@@ -37,7 +37,7 @@ echo "Compilando integracao ..."
     -DTOPSCREEN_VERSION='"0.0.0-test"' \
     -DTOPSCREEN_TEST_DATA_DIR="\"$ROOT/data\"" \
     "$ROOT/tests/test_main.cpp" \
-    "$ROOT/tests/integration/test_integration.cpp" \
+    "$ROOT"/tests/integration/*.cpp \
     "$ROOT/tests/harness/fake_libobs.cpp" \
     $SRC_FILES \
     -o "$OUT"

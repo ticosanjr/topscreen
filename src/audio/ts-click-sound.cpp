@@ -3,10 +3,10 @@
 #include <obs-module.h>
 
 #include <cstdlib>
-#include <fstream>
-#include <iterator>
 #include <string>
 #include <vector>
+
+#include "core/file.hpp"
 
 #if defined(_WIN32)
 #include <windows.h>
@@ -64,14 +64,12 @@ bool ClickSound::load(const char *module_file)
 		return false;
 	}
 
-	std::ifstream in(file_path, std::ios::binary);
-	if (!in) {
+	std::vector<uint8_t> bytes;
+	const bool ok = core::read_file_bytes(file_path, &bytes);
+	if (!ok) {
 		bfree(file_path);
 		return false;
 	}
-
-	const std::vector<uint8_t> bytes((std::istreambuf_iterator<char>(in)),
-					 std::istreambuf_iterator<char>());
 
 	std::string err;
 	core::WavData wav;

@@ -15,7 +15,7 @@ para o OBS, como um filtro, para você usar numa cena.
 - Uma **Captura de Tela** (Display/Screen Capture) como fonte no OBS
 
 > No Linux, para o overlay de teclas é preciso dar permissão de leitura em
-> `/dev/input` (ver §9).
+> `/dev/input` (ver §10).
 
 ---
 
@@ -98,7 +98,7 @@ Coloca a tela "flutuando" sobre um fundo, com cantos e sombra.
 | Opção | O que faz |
 |-------|-----------|
 | **Mostrar cursor** | Desenha o cursor próprio (desliga o nativo) |
-| **Estilo** | Um dos 7 cursores (ver abaixo) |
+| **Estilo** | Um dos 12 cursores (ver abaixo) |
 | **Tamanho** | Escala do cursor (1.0 = padrão) |
 | **Suavização** | 0 = **segue o mouse exatamente**; acima disso, desliza (estilo "screen recorder") |
 | **Inclinação na curva (sway)** | O cursor inclina levemente ao virar |
@@ -201,6 +201,8 @@ Em **Configurações → Atalhos → TopScreen**:
 | **Ativar/desativar fundo** | Liga/desliga só o fundo/cantos |
 | **Zoom in / Zoom out / Resetar zoom** | Zoom manual |
 | **Próximo preset / Preset anterior** | Troca de preset |
+| **Ativar perfil A / B / C / D** | Aplica o perfil (todas as configurações dele) |
+| **Salvar no perfil atual** | Grava os ajustes no perfil ativo |
 
 **Linux/Wayland:** atalhos globais do OBS podem não funcionar fora do X11;
 use os atalhos com o OBS em foco, ou o **obs-websocket** para disparar ações.
@@ -270,7 +272,7 @@ Já vêm com exemplos, para você só alternar e ver a diferença:
 
 ---
 
-## 9. Linux: permissão para o overlay de teclas
+## 10. Linux: permissão para o overlay de teclas
 
 O overlay lê as teclas de `/dev/input` (evdev), o que funciona em X11 **e**
 Wayland. Exige permissão:
@@ -290,7 +292,7 @@ TOPSCREEN_DEBUG_KEY=Ctrl obs
 
 ---
 
-## 10. Desempenho
+## 11. Desempenho
 
 - Os efeitos rodam na **GPU**, no processo do OBS (sem gravação, sem cópia).
 - Custo maior: **sombra** (desfoque) e **motion blur**. Se o PC for fraco:
@@ -301,7 +303,7 @@ TOPSCREEN_DEBUG_KEY=Ctrl obs
 
 ---
 
-## 11. Solução de problemas
+## 12. Solução de problemas
 
 **O filtro não faz nada (passa direto)**
 - Veja o log: `obs --verbose 2>&1 | grep -i topscreen`. Se aparecer
@@ -328,7 +330,7 @@ TOPSCREEN_DEBUG_KEY=Ctrl obs
   quiser um acompanhamento mais suave no meio da tela.
 
 **Sem teclas no overlay (Linux)**
-- Aplique a regra udev do §9.
+- Aplique a regra udev do §10.
 
 **O dock não aparece**
 - O build não tinha Qt6/obs-frontend-api. Instale `qt6-base-dev` e reinstale.
@@ -338,7 +340,7 @@ TOPSCREEN_DEBUG_KEY=Ctrl obs
 
 ---
 
-## 12. FAQ
+## 13. FAQ
 
 **Preciso gravar?**
 Não. O TopScreen só entrega a imagem ao OBS. Quem grava/transmite é o OBS.
@@ -361,7 +363,7 @@ Não, o instalador padrão usa a pasta de plugins do usuário.
 
 ---
 
-## 13. Limitações atuais
+## 14. Limitações atuais
 
 - **Webcam bubble** e **zoom em região** ainda não foram implementados.
 - O **som de clique** usa o áudio do sistema (não o canal de áudio da fonte).

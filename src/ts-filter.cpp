@@ -3,6 +3,7 @@
 #include "audio/ts-click-sound.hpp"
 #include "core/coord.hpp"
 #include "core/keys.hpp"
+#include "core/math.hpp"
 #include "core/profiles.hpp"
 #include "hotkeys/ts-hotkeys.hpp"
 #include "input/ts-input.hpp"
@@ -39,11 +40,6 @@ enum ActionBits : uint32_t {
 	A_SAVE_PROFILE = 1u << 10,
 };
 
-double clamp01(double v)
-{
-	return v < 0.0 ? 0.0 : (v > 1.0 ? 1.0 : v);
-}
-
 /**
  * Desativa o cursor nativo da fonte-pai (ex.: Captura de Tela).
  *
@@ -62,7 +58,7 @@ void disable_parent_cursor(obs_source_t *parent)
 	if (!props)
 		return;
 
-	static const char *const kCursorKeys[] = {"capture_cursor", "show_cursor", "draw_cursor"};
+	static const char *const kCursorKeys[] = {"capture_cursor", "show_cursor"};
 
 	bool found = false;
 	for (const char *key : kCursorKeys) {
@@ -466,8 +462,8 @@ void ts_filter_tick(void *data, float seconds)
 					static_cast<double>(ctx->target_h)};
 		const core::Vec2f c = core::screen_to_content(st.x, st.y, mon);
 
-		const double cx = clamp01(c.x);
-		const double cy = clamp01(c.y);
+		const double cx = core::clamp01(c.x);
+		const double cy = core::clamp01(c.y);
 
 		ctx->cursor.set_target(cx, cy, ctx->time_ms);
 		ctx->zoom.set_cursor(cx, cy, ctx->time_ms);
@@ -506,7 +502,7 @@ void ts_filter_tick(void *data, float seconds)
 		ctx->keys.collect(ctx->time_ms, ctx->frame.keys, FrameState::kMaxKeys);
 	ctx->frame.highlight = ctx->highlight.render();
 	ctx->frame.zoom_blur = ctx->cfg.motion_blur.enabled
-				       ? clamp01(std::fabs(ctx->zoom.zoom_velocity()) * ctx->cfg.motion_blur.amount * 0.5)
+				       ? core::clamp01(std::fabs(ctx->zoom.zoom_velocity()) * ctx->cfg.motion_blur.amount * 0.5)
 				       : 0.0;
 
 	/* Publica estado para o dock (thread da UI). */
@@ -533,7 +529,7 @@ void ts_filter_render(void *data, gs_effect_t *effect)
 		ctx->target_h = obs_source_get_base_height(target);
 	}
 
-	/* T2.1: uma unica vez, desativa o cursor nativo da fonte-pai. */
+	/* Desativa o cursor nativo da fonte-pai uma unica vez (dentro do render). */
 	if (!ctx->parent_cursor_checked) {
 		ctx->parent_cursor_checked = true;
 		disable_parent_cursor(obs_filter_get_parent(ctx->source));

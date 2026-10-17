@@ -40,10 +40,21 @@ const char *wallpaper_path_for(const char *value)
 	if (!value || !*value)
 		return nullptr;
 
-	for (const WallpaperEntry &w : kWallpapers) {
+	/* Stems dos caminhos embutidos, calculados uma unica vez. */
+	static std::string stems[kWallpaperCount];
+	static bool stems_init = false;
+	if (!stems_init) {
+		for (int i = 0; i < kWallpaperCount; ++i)
+			stems[i] = stem_of(kWallpapers[i].path);
+		stems_init = true;
+	}
+
+	const std::string vs = stem_of(value);
+	for (int i = 0; i < kWallpaperCount; ++i) {
+		const WallpaperEntry &w = kWallpapers[i];
 		if (iequals(value, w.name) || iequals(value, w.path))
 			return w.path;
-		if (iequals(value, stem_of(w.path).c_str()))
+		if (iequals(vs.c_str(), stems[i].c_str()))
 			return w.path;
 	}
 	return nullptr;

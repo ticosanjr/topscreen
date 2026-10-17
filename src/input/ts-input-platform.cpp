@@ -292,6 +292,7 @@ void ts_input_platform_stop(void *state)
 void ts_input_platform_poll(void *state, InputState *out)
 {
 	auto *s = static_cast<LinuxInput *>(state);
+	(void)s;
 
 #if defined(TOPSCREEN_HAVE_X11)
 	const bool x11 = (s->dpy != nullptr);
@@ -329,7 +330,6 @@ void ts_input_platform_poll(void *state, InputState *out)
 
 	/* Teclas: evdev tem prioridade (funciona tambem no Wayland). */
 	bool keys_done = false;
-	(void)keys_done;
 #if defined(TOPSCREEN_HAVE_EVDEV)
 	if (evdev) {
 		for (;;) {
@@ -344,7 +344,8 @@ void ts_input_platform_poll(void *state, InputState *out)
 		const size_t rec = sizeof(struct input_event);
 		if (s->buflen >= rec) {
 			const size_t usable = (s->buflen / rec) * rec;
-			std::vector<core::EvdevKey> events;
+			static thread_local std::vector<core::EvdevKey> events;
+			events.clear();
 			core::evdev_decode(s->buf, usable, rec, &events);
 			std::memmove(s->buf, s->buf + usable, s->buflen - usable);
 			s->buflen -= usable;

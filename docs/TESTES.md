@@ -70,8 +70,8 @@ vive toda a matemática e a lógica de estado — o que de fato precisa estar ce
 ## Números atuais
 
 ```
-113 testes | 2266 verificações | 0 falhas   (núcleo)
-10 testes | 63 verificações   | 0 falhas   (integração com libobs fake)
+117 testes | 2331 verificações | 0 falhas   (núcleo)
+19 testes | 132 verificações  | 0 falhas   (integração com libobs fake)
 ```
 
 ## O que NÃO é coberto (e por quê)
@@ -84,7 +84,7 @@ Estes itens dependem de `libobs`/GPU/OS em execução e não rodam aqui:
 | Integração `obs_source_info` | precisa do OBS em execução | `obs --verbose` e checar o log do TopScreen |
 | Backends de input | precisam de WinAPI/X11 reais | testar cursor/cliques no OBS |
 | Dock Qt | **compila** (stub/Qt real), mas o runtime precisa do OBS | abrir o dock no OBS |
-| Som de clique | ainda é stub (T3.6) | — |
+| Som de clique | toca via áudio do sistema (canal do OBS entra em F6) | testar clique com som no OBS |
 
 > A **compilação** do plugin contra os headers do OBS é checada (camada 2);
 > o que falta é a **execução** dentro do OBS.

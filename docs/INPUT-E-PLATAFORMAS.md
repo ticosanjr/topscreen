@@ -59,8 +59,8 @@ O dock do TopScreen detecta a disponibilidade e informa o que falta.
 |---------|---------|--------|
 | Windows | `src/input/ts-input-platform.cpp` | ✅ cursor + botões (WinAPI) |
 | X11 | `src/input/ts-input-platform.cpp` | ✅ cursor + botões (Xlib, `TOPSCREEN_HAVE_X11`) |
-| evdev | `src/input/ts-input-platform.cpp` | 🟡 stub (Tier 3, F7) |
-| Portal | `src/input/ts-input-platform.cpp` | 🟡 stub (Tier 2, F7) |
+| evdev | `src/input/ts-input-platform.cpp` | ✅ teclado via `/dev/input` (Tier 3) |
+| Portal | `src/input/ts-input-platform.cpp` | ⬜ Tier 2 (F7) |
 
 ## Notas técnicas
 

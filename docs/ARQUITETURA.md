@@ -54,7 +54,8 @@ coberto por testes) e **camada OBS** (fina, apenas liga o núcleo ao libobs).
 | Frame | `src/render/ts-frame.hpp` | Estado por frame (cursor/zoom/cliques) |
 | Input | `src/input/ts-input.*` + `ts-input-platform.cpp` | Estado de cursor/botões/teclas |
 | Hotkeys | `src/hotkeys/ts-hotkeys.{hpp,cpp}` | Registro de atalhos + callbacks |
-| Texto | `src/text/ts-sdf-font.{hpp,cpp}` | Fonte SDF (F5) |
+| Texto | `src/render/ts-text.{hpp,cpp}` + `src/core/font_atlas.*` | Overlay de teclas (atlas de fonte + faixa) |
+| Perfis | `src/core/profiles.{hpp,cpp}` | Slots A/B/C/D + seeds iniciais |
 | Áudio | `src/audio/ts-click-sound.{hpp,cpp}` | Som de clique (F3/F6) |
 | UI | `src/ui/ts-dock.{hpp,cpp}` | Dock Qt (opcional) |
 

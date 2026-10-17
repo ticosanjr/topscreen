@@ -37,7 +37,8 @@ private:
 	bool reload_font(const std::string &module_file);
 	float measure(const std::string &text, float scale) const;
 	void draw_string(const std::string &text, float x, float baseline, float scale);
-	void draw_labels(const std::vector<std::string> &labels, float x0, float baseline, float scale, float gap);
+	void draw_labels(const std::vector<std::string> &labels, const std::vector<float> &widths, float x0,
+			 float baseline, float scale, float gap);
 	void draw_band(float x, float y, float w, float h, float radius, uint32_t color);
 
 	core::FontAtlas atlas_;

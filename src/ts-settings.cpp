@@ -146,8 +146,11 @@ void config_load(obs_data_t *s, Config *c)
 	c->bg.image_blur_type = static_cast<int>(read_int(s, kBgImageBlurType, d.bg.image_blur_type));
 	c->bg.padding_x = read_double(s, kBgPaddingX, d.bg.padding_x);
 	c->bg.padding_y = read_double(s, kBgPaddingY, d.bg.padding_y);
-	/* migracao da chave antiga 'bg_padding' */
-	if (!has_key(s, kBgPaddingX) && !has_key(s, kBgPaddingY) && has_key(s, "bg_padding")) {
+	/* migracao da chave antiga 'bg_padding': so vale se o usuario nunca
+	 * gravou as chaves novas (os defaults sempre existem, entao has_key
+	 * sozinho nunca permitiria migrar). */
+	if (!obs_data_has_user_value(s, kBgPaddingX) && !obs_data_has_user_value(s, kBgPaddingY) &&
+	    obs_data_has_user_value(s, "bg_padding")) {
 		c->bg.padding_x = obs_data_get_double(s, "bg_padding");
 		c->bg.padding_y = c->bg.padding_x;
 	}

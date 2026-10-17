@@ -1,15 +1,9 @@
 #include "zoom.hpp"
 
 #include "geometry.hpp"
+#include "math.hpp"
 
 namespace topscreen::core {
-
-namespace {
-double clamp_range(double v, double lo, double hi)
-{
-	return v < lo ? lo : (v > hi ? hi : v);
-}
-} // namespace
 
 double ZoomModel::stiffness() const
 {

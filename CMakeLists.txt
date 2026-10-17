@@ -128,7 +128,6 @@ if(TOPSCREEN_BUILD_PLUGIN)
         src/input/ts-input.cpp
         src/input/ts-input-platform.cpp
         src/hotkeys/ts-hotkeys.cpp
-        src/text/ts-sdf-font.cpp
         src/audio/ts-click-sound.cpp
         ${TOPSCREEN_CORE_SOURCES}
     )
@@ -198,7 +197,9 @@ endif()
 if(TOPSCREEN_BUILD_TESTS)
     enable_testing()
     file(GLOB TOPSCREEN_TEST_SOURCES CONFIGURE_DEPENDS tests/*.cpp)
-    add_executable(topscreen_tests ${TOPSCREEN_TEST_SOURCES} ${TOPSCREEN_CORE_SOURCES})
+    # ts-wallpapers.cpp nao depende do OBS e tem cobertura unitaria propria.
+    add_executable(topscreen_tests ${TOPSCREEN_TEST_SOURCES} ${TOPSCREEN_CORE_SOURCES}
+        src/ts-wallpapers.cpp)
     target_include_directories(topscreen_tests PRIVATE src third_party)
     target_compile_definitions(topscreen_tests PRIVATE
         TOPSCREEN_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data"

@@ -5,13 +5,11 @@
 
 #include <algorithm>
 #include <cstdio>
-#include <fstream>
-#include <iterator>
-#include <sstream>
 #include <vector>
 
 #include "core/color.hpp"
 #include "core/cursor_atlas.hpp"
+#include "core/file.hpp"
 #include "core/image.hpp"
 #include "core/types.hpp"
 #include "ts-wallpapers.hpp"
@@ -89,13 +87,11 @@ void Compositor::load_cursor_atlas()
 		return;
 	}
 
-	std::ifstream in(path, std::ios::binary);
+	std::vector<uint8_t> bytes;
+	const bool ok = core::read_file_bytes(path, &bytes);
 	bfree(path);
-	if (!in)
+	if (!ok)
 		return;
-
-	const std::vector<uint8_t> bytes((std::istreambuf_iterator<char>(in)),
-					 std::istreambuf_iterator<char>());
 
 	std::string err;
 	if (!core::cursor_atlas_parse(bytes.data(), bytes.size(), &cursor_atlas_, &err)) {
@@ -106,14 +102,12 @@ void Compositor::load_cursor_atlas()
 	/* Hotspots (opcional; se faltar, usa um padrao). */
 	char *jpath = obs_module_file("cursors/atlas.json");
 	if (jpath) {
-		std::ifstream jin(jpath);
-		bfree(jpath);
-		if (jin) {
-			std::ostringstream ss;
-			ss << jin.rdbuf();
+		std::string text;
+		if (core::read_file_text(jpath, &text)) {
 			std::string jerr;
-			core::cursor_hotspots_parse(ss.str(), &cursor_hotspots_, &jerr);
+			core::cursor_hotspots_parse(text, &cursor_hotspots_, &jerr);
 		}
+		bfree(jpath);
 	}
 
 	obs_enter_graphics();
@@ -303,11 +297,6 @@ void Compositor::render(obs_source_t *filter, const core::Config &cfg, const Fra
 	set_f(p_bg_tex_enabled_, bgimg ? 1.0f : 0.0f);
 	set_f(p_bg_blur_, static_cast<float>(cfg.bg.image_blur));
 	set_f(p_bg_blur_type_, static_cast<float>(cfg.bg.image_blur_type));
-
-	if (cfg.bg.image_blur != last_blur_) {
-		last_blur_ = cfg.bg.image_blur;
-		blog(LOG_INFO, "[TopScreen] desfoque do wallpaper: %.0f px", cfg.bg.image_blur);
-	}
 	if (bgimg) {
 		set_f(p_bg_tex_aspect_, bg_aspect_);
 		if (p_bg_tex_)
@@ -399,6 +388,11 @@ void Compositor::render(obs_source_t *filter, const core::Config &cfg, const Fra
 
 void Compositor::load_bg_image(const std::string &raw)
 {
+	/* O caminho pedido raramente muda; evita re-resolver por frame. */
+	if (raw == bg_requested_)
+		return;
+	bg_requested_ = raw;
+
 	/* Auto-correcao: se o valor for o nome de um wallpaper embutido
 	 * (ex.: "Aurora", de versoes/config antigas), converte para o caminho. */
 	std::string path = raw;
@@ -420,19 +414,16 @@ void Compositor::load_bg_image(const std::string &raw)
 		return;
 
 	std::vector<uint8_t> bytes;
-	std::ifstream in(path, std::ios::binary);
-	if (in) {
-		bytes.assign(std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>());
-	} else {
+	if (!core::read_file_bytes(path.c_str(), &bytes)) {
 		char *m = obs_module_file(path.c_str());
 		if (!m) {
 			blog(LOG_WARNING, "[TopScreen] wallpaper nao encontrado: %s", path.c_str());
 			return;
 		}
-		std::ifstream min(m, std::ios::binary);
+		const bool mok = core::read_file_bytes(m, &bytes);
 		bfree(m);
-		if (min)
-			bytes.assign(std::istreambuf_iterator<char>(min), std::istreambuf_iterator<char>());
+		if (!mok)
+			bytes.clear();
 	}
 
 	if (bytes.empty()) {
@@ -470,6 +461,7 @@ void Compositor::release_bg_image()
 		bg_tex_ = nullptr;
 	}
 	bg_loaded_.clear();
+	bg_requested_.clear();
 }
 
 } // namespace topscreen

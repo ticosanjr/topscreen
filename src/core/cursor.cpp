@@ -2,16 +2,13 @@
 
 #include <cmath>
 
+#include "math.hpp"
+
 namespace topscreen::core {
 
 namespace {
 
 constexpr double kIdleFadeMs = 300.0;
-
-double clamp01(double v)
-{
-	return v < 0.0 ? 0.0 : (v > 1.0 ? 1.0 : v);
-}
 
 } // namespace
 
@@ -79,17 +76,21 @@ void CursorModel::update(double now_ms)
 	}
 
 	/* Sway: inclina na direcao do movimento, amortecido pela velocidade. */
-	const double vx = sx_.velocity();
-	const double vy = sy_.velocity();
-	const double speed = std::sqrt(vx * vx + vy * vy);
-	double rot = 0.0;
-	if (speed > 0.001)
-		rot = clamp01(cfg_.sway) * std::atan2(vx, -vy);
-	if (rot > 0.6)
-		rot = 0.6;
-	if (rot < -0.6)
-		rot = -0.6;
-	rotation_ = rot;
+	if (cfg_.sway > 0.0005) {
+		const double vx = sx_.velocity();
+		const double vy = sy_.velocity();
+		const double speed = std::sqrt(vx * vx + vy * vy);
+		double rot = 0.0;
+		if (speed > 0.001)
+			rot = clamp01(cfg_.sway) * std::atan2(vx, -vy);
+		if (rot > 0.6)
+			rot = 0.6;
+		if (rot < -0.6)
+			rot = -0.6;
+		rotation_ = rot;
+	} else {
+		rotation_ = 0.0;
+	}
 }
 
 CursorRender CursorModel::render() const

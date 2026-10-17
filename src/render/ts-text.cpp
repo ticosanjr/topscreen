@@ -2,13 +2,12 @@
 
 #include <algorithm>
 #include <cctype>
-#include <fstream>
-#include <iterator>
 
 #include <graphics/vec2.h>
 #include <obs-module.h>
 
 #include "core/color.hpp"
+#include "core/file.hpp"
 
 namespace topscreen {
 
@@ -20,13 +19,9 @@ bool read_module_bytes(const char *module_file, std::vector<uint8_t> *out)
 	if (!path)
 		return false;
 
-	std::ifstream in(path, std::ios::binary);
+	const bool ok = core::read_file_bytes(path, out);
 	bfree(path);
-	if (!in)
-		return false;
-
-	*out = std::vector<uint8_t>((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
-	return !out->empty();
+	return ok;
 }
 
 std::string upper_copy(const std::string &s)
@@ -189,13 +184,13 @@ void TextRenderer::draw_string(const std::string &text, float x, float baseline,
 	}
 }
 
-void TextRenderer::draw_labels(const std::vector<std::string> &labels, float x0, float baseline, float scale,
-			       float gap)
+void TextRenderer::draw_labels(const std::vector<std::string> &labels, const std::vector<float> &widths,
+				 float x0, float baseline, float scale, float gap)
 {
 	float x = x0;
-	for (const std::string &s : labels) {
-		draw_string(s, x, baseline, scale);
-		x += measure(s, scale) + gap;
+	for (size_t i = 0; i < labels.size(); ++i) {
+		draw_string(labels[i], x, baseline, scale);
+		x += (i < widths.size() ? widths[i] : measure(labels[i], scale)) + gap;
 	}
 }
 
@@ -238,6 +233,8 @@ void TextRenderer::draw(const core::KeyRender *items, int count, const core::Key
 
 	std::vector<std::string> labels;
 	labels.reserve(static_cast<size_t>(count));
+	std::vector<float> widths;
+	widths.reserve(static_cast<size_t>(count));
 	for (int i = 0; i < count; ++i)
 		labels.push_back(upper_copy(items[i].label));
 
@@ -247,8 +244,11 @@ void TextRenderer::draw(const core::KeyRender *items, int count, const core::Key
 	const float line_h = static_cast<float>(atlas_.line_height) * scale;
 
 	float total = 0.0f;
-	for (const std::string &s : labels)
-		total += measure(s, scale);
+	for (const std::string &s : labels) {
+		const float w = measure(s, scale);
+		widths.push_back(w);
+		total += w;
+	}
 	if (labels.size() > 1)
 		total += gap * static_cast<float>(labels.size() - 1);
 
@@ -280,12 +280,12 @@ void TextRenderer::draw(const core::KeyRender *items, int count, const core::Key
 		const float o = std::max(1.0f, 2.0f * scale);
 		const float offs[4][2] = {{-o, 0.0f}, {o, 0.0f}, {0.0f, -o}, {0.0f, o}};
 		for (const auto &of : offs)
-			draw_labels(labels, x0 + of[0], baseline + of[1], scale, gap);
+			draw_labels(labels, widths, x0 + of[0], baseline + of[1], scale, gap);
 	}
 
 	if (p_color_)
 		gs_effect_set_color(p_color_, core::abgr_to_argb(cfg.color));
-	draw_labels(labels, x0, baseline, scale, gap);
+	draw_labels(labels, widths, x0, baseline, scale, gap);
 
 	gs_technique_end_pass(tech_draw_);
 	gs_technique_end(tech_draw_);

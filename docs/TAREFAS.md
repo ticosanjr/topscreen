@@ -43,7 +43,7 @@ Status: ✅ feito · 🟡 parcial · ⬜ pendente.
 | T2.5 | Suavização (spring) do movimento | ✅ |
 | T2.6 | Sway (inclinação na curva) | ✅ |
 | T2.7 | Ocultar cursor parado (idle) e loop | ✅ |
-| T2.8 | Presets de estilo de cursor (macOS/touch distintos) | 🟡 (enum, 1 visual) |
+| T2.8 | Presets de estilo de cursor (12 estilos distintos) | ✅ |
 
 ## F3 — Cliques, som, atalhos, presets
 
@@ -112,15 +112,12 @@ Status: ✅ feito · 🟡 parcial · ⬜ pendente.
 | TD.1 | Texto completo da licença GPL-2.0 (`COPYING`) | ✅ |
 | TD.2 | `CONTRIBUTING.md` e template de PR | ✅ |
 | TD.3 | Ajustar `buildspec.json`/presets para CI oficial | ⬜ |
-| TD.4 | Testes de sanidade do núcleo | ✅ (50 testes + checagem de headers do OBS) |
+| TD.4 | Testes de sanidade do núcleo | ✅ (117 testes + 19 de integração + checagem de headers do OBS) |
 
 ---
 
 ## Próximos passos (ordem sugerida)
 
-1. **Verificação em OBS real** do shader (cursor, cliques, zoom) — marco M1.
-2. **T2.1** ocultar cursor nativo + **T2.2** mapeamento por monitor.
-3. **T3.6** som de clique (decode + playback) e **T3.8** fallback WebSocket.
-4. **T4.7** motion blur.
-5. **T1.8/T1.6** completar o dock.
-6. **F5** texto/teclas/spotlight/webcam.
+1. **F6** fonte de captura própria + áudio pelo canal da fonte (inclui webcam bubble).
+2. **F7** portal `GlobalShortcuts` (Wayland) + polimento de tiers.
+3. Cobertura de runtime do dock Qt (hoje só via OBS real).

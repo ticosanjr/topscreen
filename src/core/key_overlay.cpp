@@ -1,5 +1,7 @@
 #include "key_overlay.hpp"
 
+#include "math.hpp"
+
 namespace topscreen::core {
 
 std::string format_combo(const std::vector<std::string> &modifiers, const std::string &key)
@@ -19,13 +21,6 @@ std::string format_combo(const std::vector<std::string> &modifiers, const std::s
 	}
 	return out;
 }
-
-namespace {
-double clamp01(double v)
-{
-	return v < 0.0 ? 0.0 : (v > 1.0 ? 1.0 : v);
-}
-} // namespace
 
 void KeyOverlayModel::configure(const KeyOverlayConfig &cfg)
 {

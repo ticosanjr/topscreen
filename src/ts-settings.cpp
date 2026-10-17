@@ -90,6 +90,10 @@ void config_defaults(obs_data_t *s)
 	obs_data_set_default_double(s, kHighlightHoldMs, def.highlight.hold_ms);
 	obs_data_set_default_double(s, kHighlightFadeMs, def.highlight.fade_ms);
 	obs_data_set_default_int(s, kHighlightColor, static_cast<long long>(def.highlight.color));
+
+	/* Perfil ativo (indice do slot). Default nao vira "valor do usuario", entao
+	 * uma fonte nova continua sendo tratada como "sem perfil escolhido". */
+	obs_data_set_default_int(s, kProfileCurrent, 0);
 }
 
 namespace {

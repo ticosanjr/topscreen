@@ -18,6 +18,12 @@ struct obs_data {
 	std::map<std::string, long long> ints;
 	std::map<std::string, double> doubles;
 	std::map<std::string, std::string> strings;
+	/* Defaults ficam separados dos valores do usuario (como no OBS real):
+	 * set_default_* NAO cria valor de usuario. */
+	std::map<std::string, bool> def_bools;
+	std::map<std::string, long long> def_ints;
+	std::map<std::string, double> def_doubles;
+	std::map<std::string, std::string> def_strings;
 	std::map<std::string, obs_data_t *> objs;
 };
 

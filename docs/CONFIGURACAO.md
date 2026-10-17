@@ -84,6 +84,9 @@ Ex.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | Perfis | Perfil atual | `profile_current` | int | 0–3 | `0` |
 | | Slots de perfil | `profile_slot_0` … `profile_slot_3` | objeto | Config completa (obs_data aninhado) | — |
 
+> Perfis: trocar de perfil aplica o slot inteiro; edições subsequentes são gravadas
+> no slot ativo (auto-save) e o perfil escolhido é reaplicado ao abrir a fonte.
+
 ## Atalhos
 
 IDs registrados (aparência em **Configurações → Atalhos → TopScreen**):

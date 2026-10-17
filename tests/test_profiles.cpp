@@ -1,6 +1,8 @@
 #include "core/profiles.hpp"
 #include "test_framework.hpp"
 
+#include <string>
+
 using namespace topscreen::core;
 
 TEST(profiles_seed_a_e_padrao)
@@ -53,4 +55,20 @@ TEST(profiles_seed_indice_fora_da_faixa)
 	const Config e = make_profile_seed(4);
 	const Config a = make_profile_seed(0);
 	CHECK_EQ(e.click_left.color, a.click_left.color);
+}
+
+TEST(profiles_rotulos_distintos)
+{
+	CHECK_EQ(std::string(profile_label(0)), std::string("Perfil A"));
+	CHECK_EQ(std::string(profile_label(1)), std::string("Perfil B"));
+	CHECK_EQ(std::string(profile_label(2)), std::string("Perfil C"));
+	CHECK_EQ(std::string(profile_label(3)), std::string("Perfil D"));
+
+	/* Nunca repetidos (era a reclamacao: "todos ainda perfil"). */
+	for (int i = 0; i < 4; ++i)
+		for (int j = i + 1; j < 4; ++j)
+			CHECK(std::string(profile_label(i)) != std::string(profile_label(j)));
+
+	CHECK_EQ(std::string(profile_label(5)), std::string("Perfil B"));
+	CHECK_EQ(profile_index(-1), 3);
 }

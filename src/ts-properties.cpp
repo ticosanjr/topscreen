@@ -2,6 +2,7 @@
 
 #include "core/easing.hpp"
 #include "core/keys.hpp"
+#include "core/profiles.hpp"
 #include "core/types.hpp"
 #include "ts-wallpapers.hpp"
 
@@ -88,10 +89,11 @@ obs_properties_t *properties_create(void *data)
 	obs_properties_t *prof = obs_properties_create();
 	obs_property_t *plist = obs_properties_add_list(prof, kProfileCurrent, obs_module_text("Profile.Current"),
 							OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
-	obs_property_list_add_int(plist, obs_module_text("Profile.A"), 0);
-	obs_property_list_add_int(plist, obs_module_text("Profile.B"), 1);
-	obs_property_list_add_int(plist, obs_module_text("Profile.C"), 2);
-	obs_property_list_add_int(plist, obs_module_text("Profile.D"), 3);
+	/* Rotulos vindos do core: sempre "Perfil A".."Perfil D" (nunca repetidos,
+	 * mesmo que o arquivo de idioma esteja ausente/desatualizado). */
+	for (int i = 0; i < kProfileCount; ++i)
+		obs_property_list_add_int(plist, profile_label(i), i);
+	obs_properties_add_text(prof, "profile_hint", obs_module_text("Profile.Hint"), OBS_TEXT_INFO);
 	obs_properties_add_group(props, "grp_profiles", obs_module_text("Group.Profiles"), OBS_GROUP_NORMAL, prof);
 
 	obs_properties_add_bool(props, kEffectsEnabled, obs_module_text("Enabled"));

@@ -15,6 +15,8 @@
 #include <QVBoxLayout>
 #include <QWidget>
 
+#include "core/keys.hpp"
+#include "core/profiles.hpp"
 #include "ts-registry.hpp"
 
 namespace topscreen {
@@ -58,10 +60,8 @@ public:
 
 		root->addWidget(new QLabel(obs_module_text("Profile.Current"), this));
 		profile_ = new QComboBox(this);
-		profile_->addItem(obs_module_text("Profile.A"));
-		profile_->addItem(obs_module_text("Profile.B"));
-		profile_->addItem(obs_module_text("Profile.C"));
-		profile_->addItem(obs_module_text("Profile.D"));
+		for (int i = 0; i < core::keys::kProfileCount; ++i)
+			profile_->addItem(core::profile_label(i));
 		QObject::connect(profile_, &QComboBox::currentIndexChanged, this, [this](int index) {
 			if (syncing_ || index < 0)
 				return;

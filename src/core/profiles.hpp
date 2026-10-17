@@ -17,4 +17,15 @@ namespace topscreen::core {
  */
 Config make_profile_seed(int index);
 
+/**
+ * Rotulo do slot (0..3): "Perfil A" .. "Perfil D".
+ *
+ * Fica no core (e nao no locale) de proposito: o rotulo precisa ser sempre
+ * distinto, mesmo se o arquivo de idioma estiver ausente/desatualizado.
+ */
+const char *profile_label(int index);
+
+/** Indice normalizado (0..3) de um slot qualquer. */
+int profile_index(int index);
+
 } // namespace topscreen::core

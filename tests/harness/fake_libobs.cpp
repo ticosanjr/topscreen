@@ -149,7 +149,10 @@ bool obs_data_get_bool(obs_data_t *data, const char *name)
 	if (!data || !name)
 		return false;
 	auto it = data->bools.find(name);
-	return it != data->bools.end() ? it->second : false;
+	if (it != data->bools.end())
+		return it->second;
+	auto d = data->def_bools.find(name);
+	return d != data->def_bools.end() ? d->second : false;
 }
 
 long long obs_data_get_int(obs_data_t *data, const char *name)
@@ -157,7 +160,10 @@ long long obs_data_get_int(obs_data_t *data, const char *name)
 	if (!data || !name)
 		return 0;
 	auto it = data->ints.find(name);
-	return it != data->ints.end() ? it->second : 0;
+	if (it != data->ints.end())
+		return it->second;
+	auto d = data->def_ints.find(name);
+	return d != data->def_ints.end() ? d->second : 0;
 }
 
 double obs_data_get_double(obs_data_t *data, const char *name)
@@ -165,7 +171,10 @@ double obs_data_get_double(obs_data_t *data, const char *name)
 	if (!data || !name)
 		return 0.0;
 	auto it = data->doubles.find(name);
-	return it != data->doubles.end() ? it->second : 0.0;
+	if (it != data->doubles.end())
+		return it->second;
+	auto d = data->def_doubles.find(name);
+	return d != data->def_doubles.end() ? d->second : 0.0;
 }
 
 const char *obs_data_get_string(obs_data_t *data, const char *name)
@@ -173,7 +182,10 @@ const char *obs_data_get_string(obs_data_t *data, const char *name)
 	if (!data || !name)
 		return "";
 	auto it = data->strings.find(name);
-	return it != data->strings.end() ? it->second.c_str() : "";
+	if (it != data->strings.end())
+		return it->second.c_str();
+	auto d = data->def_strings.find(name);
+	return d != data->def_strings.end() ? d->second.c_str() : "";
 }
 
 void obs_data_set_bool(obs_data_t *data, const char *name, bool value)
@@ -202,26 +214,26 @@ void obs_data_set_string(obs_data_t *data, const char *name, const char *value)
 
 void obs_data_set_default_bool(obs_data_t *data, const char *name, bool value)
 {
-	if (data && name && data->bools.find(name) == data->bools.end())
-		data->bools[name] = value;
+	if (data && name)
+		data->def_bools[name] = value;
 }
 
 void obs_data_set_default_int(obs_data_t *data, const char *name, long long value)
 {
-	if (data && name && data->ints.find(name) == data->ints.end())
-		data->ints[name] = value;
+	if (data && name)
+		data->def_ints[name] = value;
 }
 
 void obs_data_set_default_double(obs_data_t *data, const char *name, double value)
 {
-	if (data && name && data->doubles.find(name) == data->doubles.end())
-		data->doubles[name] = value;
+	if (data && name)
+		data->def_doubles[name] = value;
 }
 
 void obs_data_set_default_string(obs_data_t *data, const char *name, const char *value)
 {
-	if (data && name && data->strings.find(name) == data->strings.end())
-		data->strings[name] = value ? value : "";
+	if (data && name)
+		data->def_strings[name] = value ? value : "";
 }
 
 bool obs_data_has_user_value(obs_data_t *data, const char *name)
@@ -234,8 +246,10 @@ bool obs_data_has_user_value(obs_data_t *data, const char *name)
 
 bool obs_data_has_default_value(obs_data_t *data, const char *name)
 {
-	/* no stub, defaults sao gravados no mesmo mapa de valores */
-	return obs_data_has_user_value(data, name);
+	if (!data || !name)
+		return false;
+	return data->def_bools.count(name) || data->def_ints.count(name) ||
+	       data->def_doubles.count(name) || data->def_strings.count(name);
 }
 
 void obs_data_set_obj(obs_data_t *data, const char *name, obs_data_t *obj)

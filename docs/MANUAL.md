@@ -224,22 +224,23 @@ copie um arquivo e ajuste — o formato está em [`CONFIGURACAO.md`](CONFIGURACA
 
 ## 8. Perfis (A/B/C/D)
 
-Além dos presets prontos, há **4 perfis** para guardar a *sua* configuração e
-alternar sem reajustar tudo:
+Os **4 perfis** guardam a configuração inteira e trocam tudo de uma vez. O seletor
+fica no **topo** das Propriedades (grupo **Perfis → Perfil atual**) e também no dock.
 
-1. Ajuste tudo do jeito que você quer.
-2. Escolha **Perfil A** (Propriedades → **Perfis**, ou no dock) e clique
-   **Salvar no perfil** (ou use o atalho *Salvar no perfil atual*).
-3. Mude para **Perfil B**, ajuste outra cara, salve de novo.
-4. Depois é só alternar: **atalhos “Ativar perfil A/B/C/D”** (Configurações →
-   Atalhos) ou o seletor no dock.
+- **Trocar de perfil aplica TUDO na hora** (fundo, cursor, cliques, zoom, teclas…).
+- **As suas alterações ficam salvas no perfil ativo automaticamente** — não precisa
+  lembrar de salvar (o botão *Salvar no perfil* e o atalho existem para forçar).
+- O perfil selecionado é reaplicado **ao abrir o OBS**, então o visual volta igual.
+- Atalhos: **Ativar perfil A/B/C/D** e **Salvar no perfil atual**.
 
-Os perfis são salvos **junto da cena** (na fonte), então viajam com a coleção.
+Já vêm com exemplos, para você só alternar e ver a diferença:
 
-> **Já vêm com exemplos** para você só alternar e ver a diferença:
-> **A** = padrão · **B** = cliques verde/laranja + zoom 2.0 · **C** = cliques
-> roxo/ciano + zoom 1.4 e fundo vertical · **D** = cliques amarelo/branco e
-> zoom desligado. Trocar de perfil aplica **tudo** de uma vez.
+| Perfil | Exemplo |
+|---|---|
+| **A** | padrão |
+| **B** | cliques **verde/laranja** + **zoom 2.0** |
+| **C** | cliques **roxo/ciano** + zoom 1.4 e fundo vertical |
+| **D** | cliques **amarelo/branco** e **zoom desligado** |
 
 ---
 

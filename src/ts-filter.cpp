@@ -138,6 +138,7 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 	void reconfigure_models();
 	void request_preset(int index);
 	void apply_profile(int index);
+	void store_profile_slot(int index);
 	void do_save_profile();
 	void process_actions();
 	void reload_from_settings();
@@ -198,6 +199,13 @@ void ts_filter_ctx::apply_profile(int index)
 	if (p) {
 		config_load(p, &cfg);
 		obs_data_release(p);
+	} else {
+		/* Slot vazio (fonte antiga): captura o estado atual em vez de nao fazer
+		 * nada, senao trocar de perfil pareceria "nao funcionar". */
+		p = obs_data_create();
+		config_store(p, cfg);
+		obs_data_set_obj(s, kProfileSlots[index], p);
+		obs_data_release(p);
 	}
 	obs_data_release(s);
 
@@ -206,18 +214,30 @@ void ts_filter_ctx::apply_profile(int index)
 	click_sound.load(cfg.click_sound.file.c_str());
 }
 
-void ts_filter_ctx::do_save_profile()
+/**
+ * Grava a config atual no slot (sem disparar update, para nao realimentar o
+ * ciclo reload -> save -> reload).
+ */
+void ts_filter_ctx::store_profile_slot(int index)
 {
+	if (index < 0 || index >= kProfileCount)
+		return;
+
 	obs_data_t *s = obs_source_get_settings(source);
-	obs_data_t *p = obs_data_create();
+	obs_data_t *p = obs_data_get_obj(s, kProfileSlots[index]);
+	if (!p) {
+		p = obs_data_create();
+		obs_data_set_obj(s, kProfileSlots[index], p);
+	}
 	config_store(p, cfg);
-	obs_data_set_obj(s, kProfileSlots[current_profile_], p);
-	obs_data_set_int(s, kProfileCurrent, current_profile_);
-	obs_source_update(source, s);
 	obs_data_release(p);
 	obs_data_release(s);
+}
 
-	blog(LOG_INFO, "[TopScreen] perfil %d salvo", current_profile_ + 1);
+void ts_filter_ctx::do_save_profile()
+{
+	store_profile_slot(current_profile_);
+	blog(LOG_INFO, "[TopScreen] perfil salvo: %s", core::profile_label(current_profile_));
 }
 
 void ts_filter_ctx::reconfigure_models()
@@ -253,18 +273,31 @@ void ts_filter_ctx::reload_from_settings()
 	const long long pc = obs_data_get_int(s, kProfileCurrent);
 	obs_data_release(s);
 
-	/*
-	 * Se o usuario trocou o perfil (pela lista das Propriedades), aplica o
-	 * slot correspondente. Ao trocar por atalho/dock, last_profile ja e
-	 * atualizado junto, entao nao re-aplica.
-	 */
+	const int want = std::max(0, std::min(kProfileCount - 1, static_cast<int>(pc)));
+
 	if (static_cast<int>(pc) != last_profile) {
+		/*
+		 * Perfil trocado (lista das Propriedades): aplica o slot INTEIRO e
+		 * sincroniza as chaves principais. Sem o push, o proximo reload
+		 * (qualquer outra propriedade) recarregaria as chaves antigas e
+		 * desfaria o perfil.
+		 */
 		last_profile = static_cast<int>(pc);
-		current_profile_ = std::max(0, std::min(kProfileCount - 1, last_profile));
+		current_profile_ = want;
 		apply_profile(current_profile_);
+		reconfigure_models();
+		push_settings();
+		blog(LOG_INFO, "[TopScreen] perfil ativado: %s", core::profile_label(current_profile_));
+		return;
 	}
 
+	/*
+	 * Edicao normal: o perfil ativo acompanha o que esta na tela (auto-save),
+	 * para as mudancas do usuario nao se perderem ao trocar de perfil.
+	 */
+	current_profile_ = want;
 	reconfigure_models();
+	store_profile_slot(current_profile_);
 }
 
 void ts_filter_ctx::process_actions()
@@ -311,7 +344,7 @@ void ts_filter_ctx::process_actions()
 			apply_profile(i);
 			reconfigure_models();
 			push_settings();
-			blog(LOG_INFO, "[TopScreen] perfil %d ativado", i + 1);
+			blog(LOG_INFO, "[TopScreen] perfil ativado: %s", core::profile_label(i));
 		}
 	}
 	if (act & A_SAVE_PROFILE)
@@ -352,6 +385,17 @@ void *ts_filter_create(obs_data_t *settings, obs_source_t *source)
 		}
 		obs_source_update(source, s);
 		obs_data_release(s);
+	}
+
+	/*
+	 * Se o usuario ja escolheu um perfil (valor de usuario em profile_current,
+	 * ex.: colecao salva), o estado da fonte E o perfil. Sem isto, reabrir o OBS
+	 * deixava "Perfil B" selecionado com o visual padrao.
+	 */
+	const bool picked = obs_data_has_user_value(settings, kProfileCurrent);
+	if (picked) {
+		ctx->apply_profile(ctx->current_profile_);
+		ctx->push_settings();
 	}
 
 	ctx->reconfigure_models();

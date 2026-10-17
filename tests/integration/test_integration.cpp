@@ -15,6 +15,8 @@
 #endif
 
 #include "core/keys.hpp"
+#include "core/profiles.hpp"
+#include "core/types.hpp"
 #include "ts-filter.hpp"
 #include "ts-registry.hpp"
 
@@ -50,9 +52,16 @@ obs_source_t *make_parent(uint32_t w, uint32_t h)
 
 void *create_filter(obs_source_t *filter)
 {
-	obs_data_t *settings = obs_data_create();
-	ts_filter_source_info.get_defaults(settings);
-	return ts_filter_source_info.create(settings, filter);
+	/* No OBS real, o obs_data passado ao create E o da propria fonte. */
+	ts_filter_source_info.get_defaults(filter->settings);
+	return ts_filter_source_info.create(filter->settings, filter);
+}
+
+/* Simula a lista de perfis nas Propriedades: grava profile_current e chama update. */
+void set_profile_from_properties(obs_source_t *filter, void *ctx, int index)
+{
+	obs_data_set_int(filter->settings, core::keys::kProfileCurrent, index);
+	ts_filter_source_info.update(ctx, filter->settings);
 }
 
 } // namespace
@@ -249,6 +258,112 @@ TEST(integration_perfis_semeados_restauram)
 		 static_cast<long long>(0xFFFFFFFF));
 
 	ts_filter_source_info.destroy(ctx);
+}
+
+TEST(integration_perfil_da_lista_restaura_tudo)
+{
+	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
+
+	obs_source_t *parent = make_parent(1920, 1080);
+	obs_source_t *filter = fakeobs::make_source(&ts_filter_source_info, parent, 0, 0);
+	void *ctx = create_filter(filter);
+	REQUIRE(ctx != nullptr);
+	ts_filter_source_info.video_render(ctx, nullptr);
+
+	/* Perfil B (semeado): zoom 2.0 + clique esquerdo verde. */
+	set_profile_from_properties(filter, ctx, 1);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK_NEAR(obs_data_get_double(filter->settings, core::keys::kZoomAmount), 2.0, 1e-6);
+	CHECK_EQ(obs_data_get_int(filter->settings, core::keys::kClickLeftColor),
+		 static_cast<long long>(0xFF00FF00));
+
+	/* As chaves principais tem que ir junto, senao o proximo reload desfaz o perfil. */
+	CHECK(obs_data_has_user_value(filter->settings, core::keys::kZoomAmount));
+
+	/* Mexer em OUTRA propriedade nao pode desfazer o perfil ativo. */
+	obs_data_set_bool(filter->settings, core::keys::kHighlightEnabled, false);
+	ts_filter_source_info.update(ctx, filter->settings);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK_NEAR(obs_data_get_double(filter->settings, core::keys::kZoomAmount), 2.0, 1e-6);
+	CHECK_EQ(obs_data_get_int(filter->settings, core::keys::kClickLeftColor),
+		 static_cast<long long>(0xFF00FF00));
+
+	/* Perfil C (semeado): roxo/ciano + zoom 1.4. */
+	set_profile_from_properties(filter, ctx, 2);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK_NEAR(obs_data_get_double(filter->settings, core::keys::kZoomAmount), 1.4, 1e-6);
+	CHECK_EQ(obs_data_get_int(filter->settings, core::keys::kClickLeftColor),
+		 static_cast<long long>(0xFFFF5C7C));
+
+	ts_filter_source_info.destroy(ctx);
+	CHECK(registry_first() == nullptr);
+}
+
+TEST(integration_perfil_guarda_edicao_do_usuario)
+{
+	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
+
+	obs_source_t *parent = make_parent(1920, 1080);
+	obs_source_t *filter = fakeobs::make_source(&ts_filter_source_info, parent, 0, 0);
+	void *ctx = create_filter(filter);
+	REQUIRE(ctx != nullptr);
+	ts_filter_source_info.video_render(ctx, nullptr);
+
+	/* Vai para o perfil D (zoom desligado). */
+	set_profile_from_properties(filter, ctx, 3);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK_EQ(obs_data_get_int(filter->settings, core::keys::kZoomMode),
+		 static_cast<long long>(core::ZoomMode::Off));
+
+	/* Usuario muda a cor do clique esquerdo (valor que nao existe em nenhum seed). */
+	obs_data_set_int(filter->settings, core::keys::kClickLeftColor,
+			 static_cast<long long>(0xFF112233));
+	ts_filter_source_info.update(ctx, filter->settings);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+
+	/* Troca para A e volta para D: a edicao tem que ter ficado no perfil D. */
+	set_profile_from_properties(filter, ctx, 0);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK_EQ(obs_data_get_int(filter->settings, core::keys::kClickLeftColor),
+		 static_cast<long long>(0xFFFFFFFF));
+
+	set_profile_from_properties(filter, ctx, 3);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK_EQ(obs_data_get_int(filter->settings, core::keys::kClickLeftColor),
+		 static_cast<long long>(0xFF112233));
+
+	ts_filter_source_info.destroy(ctx);
+}
+
+TEST(integration_perfil_escolhido_sobrevive_ao_reinicio)
+{
+	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
+
+	obs_source_t *parent = make_parent(1920, 1080);
+	obs_source_t *filter = fakeobs::make_source(&ts_filter_source_info, parent, 0, 0);
+	void *ctx = create_filter(filter);
+	REQUIRE(ctx != nullptr);
+	ts_filter_source_info.video_render(ctx, nullptr);
+
+	/* Escolhe o perfil B e "fecha o OBS". */
+	set_profile_from_properties(filter, ctx, 1);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	ts_filter_source_info.destroy(ctx);
+
+	/* "Reabre o OBS": a colecao salva tem profile_current + os slots. */
+	obs_data_t saved = *filter->settings;
+	obs_source_t *f2 = fakeobs::make_source(&ts_filter_source_info, parent, 0, 0);
+	*f2->settings = saved;
+	void *ctx2 = ts_filter_source_info.create(f2->settings, f2);
+	REQUIRE(ctx2 != nullptr);
+	ts_filter_source_info.video_tick(ctx2, 1.0f / 60.0f);
+
+	/* O estado tem que ser o do perfil B (nao o padrao). */
+	CHECK_NEAR(obs_data_get_double(f2->settings, core::keys::kZoomAmount), 2.0, 1e-6);
+	CHECK_EQ(obs_data_get_int(f2->settings, core::keys::kClickLeftColor),
+		 static_cast<long long>(0xFF00FF00));
+
+	ts_filter_source_info.destroy(ctx2);
 }
 
 TEST(integration_render_nao_crasha_sem_efeito)

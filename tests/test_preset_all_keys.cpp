@@ -23,6 +23,7 @@ TEST(preset_cobre_todas_as_chaves)
             "bg_image": "wallpapers/ocean.jpg",
             "bg_image_file": "/tmp/minha.jpg",
             "bg_image_blur": 9,
+            "bg_image_blur_type": 3,
             "bg_padding_x": 11,
             "bg_padding_y": 12,
             "bg_corner_radius": 12,
@@ -46,6 +47,7 @@ TEST(preset_cobre_todas_as_chaves)
             "zoom_duration_ms": 222,
             "zoom_idle_timeout_ms": 555,
             "zoom_pan_amount": 0.77,
+            "zoom_center_amount": 0.5,
             "click_left_effect": 3,
             "click_left_size": 1.7,
             "click_left_color": 999,
@@ -101,6 +103,7 @@ TEST(preset_cobre_todas_as_chaves)
 	CHECK_EQ(c.bg.image, std::string("wallpapers/ocean.jpg"));
 	CHECK_EQ(c.bg.image_file, std::string("/tmp/minha.jpg"));
 	CHECK_NEAR(c.bg.image_blur, 9.0, 1e-9);
+	CHECK_EQ(c.bg.image_blur_type, 3);
 	CHECK_NEAR(c.bg.padding_x, 11.0, 1e-9);
 	CHECK_NEAR(c.bg.padding_y, 12.0, 1e-9);
 	CHECK_NEAR(c.bg.corner_radius, 12.0, 1e-9);
@@ -126,6 +129,7 @@ TEST(preset_cobre_todas_as_chaves)
 	CHECK_NEAR(c.zoom.duration_ms, 222.0, 1e-9);
 	CHECK_NEAR(c.zoom.idle_timeout_ms, 555.0, 1e-9);
 	CHECK_NEAR(c.zoom.pan_amount, 0.77, 1e-9);
+	CHECK_NEAR(c.zoom.center_amount, 0.5, 1e-9);
 
 	CHECK_EQ(c.click_left.effect, 3);
 	CHECK_NEAR(c.click_left.size, 1.7, 1e-9);

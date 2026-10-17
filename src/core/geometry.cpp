@@ -89,4 +89,13 @@ double clamp_focus_keep(double source_pos, double focus, double zoom)
 	return focus;
 }
 
+double center_focus_for(double source_pos, double zoom)
+{
+	if (zoom <= 1.0001)
+		return 0.5;
+
+	const double f = (source_pos * zoom - 0.5) / (zoom - 1.0);
+	return clamp_focus(f, zoom);
+}
+
 } // namespace topscreen::core

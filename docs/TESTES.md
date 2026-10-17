@@ -70,7 +70,7 @@ vive toda a matemática e a lógica de estado — o que de fato precisa estar ce
 ## Números atuais
 
 ```
-100 testes | 2059 verificações | 0 falhas   (núcleo)
+105 testes | 2177 verificações | 0 falhas   (núcleo)
 5 testes  | 27 verificações   | 0 falhas   (integração com libobs fake)
 ```
 

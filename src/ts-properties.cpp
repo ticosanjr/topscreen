@@ -87,6 +87,12 @@ obs_properties_t *properties_create(void *data)
 	obs_properties_add_path(bg, kBgImageFile, obs_module_text("Background.ImageFile"), OBS_PATH_FILE,
 				kImageFilter, nullptr);
 	obs_properties_add_float_slider(bg, kBgImageBlur, obs_module_text("Background.ImageBlur"), 0.0, 60.0, 1.0);
+	obs_property_t *bt = obs_properties_add_list(bg, kBgImageBlurType, obs_module_text("Background.ImageBlurType"),
+						     OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
+	obs_property_list_add_int(bt, obs_module_text("Blur.None"), 0);
+	obs_property_list_add_int(bt, obs_module_text("Blur.Soft"), 1);
+	obs_property_list_add_int(bt, obs_module_text("Blur.Gaussian"), 2);
+	obs_property_list_add_int(bt, obs_module_text("Blur.Creamy"), 3);
 
 	obs_properties_add_color(bg, kBgColorA, obs_module_text("Background.ColorA"));
 	obs_properties_add_color(bg, kBgColorB, obs_module_text("Background.ColorB"));
@@ -177,6 +183,8 @@ obs_properties_t *properties_create(void *data)
 	obs_properties_add_float_slider(zoom, kZoomIdleTimeoutMs, obs_module_text("Zoom.IdleTimeoutMs"), 200.0,
 					10000.0, 50.0);
 	obs_properties_add_float_slider(zoom, kZoomPanAmount, obs_module_text("Zoom.PanAmount"), 0.0, 1.0, 0.01);
+	obs_properties_add_float_slider(zoom, kZoomCenterAmount, obs_module_text("Zoom.CenterAmount"), 0.0, 1.0,
+					0.01);
 	obs_properties_add_group(props, "grp_zoom", obs_module_text("Group.Zoom"), OBS_GROUP_NORMAL, zoom);
 
 	/* ---------------- Motion blur ---------------- */

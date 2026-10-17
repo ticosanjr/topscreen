@@ -24,6 +24,7 @@ uniform float  bg_tex_enabled;
 uniform float  bg_tex_aspect; // w/h da imagem
 uniform float  bg_keep_aspect;
 uniform float  bg_blur;       // desfoque do wallpaper (px)
+uniform float  bg_blur_type;  // 0 nenhum, 1 suave(box), 2 gaussiano, 3 cremoso
 uniform float  shadow_alpha;
 uniform float  shadow_blur;
 uniform float2 shadow_offset;
@@ -230,23 +231,33 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 			sc.x = at / ai;
 		float2 buv = (vert_in.uv - 0.5) * sc + 0.5;
 
-		if (bg_blur > 0.01) {
-			// desfoque em 13 amostras (2 aneis), raio proporcional
-			float2 o = (bg_blur * 2.0) / max(target_size, float2(1.0, 1.0));
+		if (bg_blur > 0.01 && bg_blur_type > 0.5) {
+			// 13 amostras (2 aneis); pesos e raio variam por tipo
+			float rmul = 2.0;
+			float w0 = 0.20, w1 = 0.10, w2 = 0.075, wd = 0.025; // suave (box)
+			if (bg_blur_type >= 1.5) {
+				w0 = 0.30; w1 = 0.10; w2 = 0.055; wd = 0.02;   // gaussiano
+			}
+			if (bg_blur_type >= 2.5) {
+				rmul = 3.2; w0 = 0.24; w1 = 0.115; w2 = 0.055; wd = 0.02; // cremoso
+			}
+
+			float2 o = (bg_blur * rmul) / max(target_size, float2(1.0, 1.0));
 			float2 h = o * 0.5;
-			col = bg_tex.Sample(def_sampler, buv) * 0.20;
-			col += bg_tex.Sample(def_sampler, buv + float2(h.x, 0.0)) * 0.10;
-			col += bg_tex.Sample(def_sampler, buv - float2(h.x, 0.0)) * 0.10;
-			col += bg_tex.Sample(def_sampler, buv + float2(0.0, h.y)) * 0.10;
-			col += bg_tex.Sample(def_sampler, buv - float2(0.0, h.y)) * 0.10;
-			col += bg_tex.Sample(def_sampler, buv + float2(o.x, 0.0)) * 0.075;
-			col += bg_tex.Sample(def_sampler, buv - float2(o.x, 0.0)) * 0.075;
-			col += bg_tex.Sample(def_sampler, buv + float2(0.0, o.y)) * 0.075;
-			col += bg_tex.Sample(def_sampler, buv - float2(0.0, o.y)) * 0.075;
-			col += bg_tex.Sample(def_sampler, buv + o) * 0.025;
-			col += bg_tex.Sample(def_sampler, buv - o) * 0.025;
-			col += bg_tex.Sample(def_sampler, buv + float2(o.x, -o.y)) * 0.025;
-			col += bg_tex.Sample(def_sampler, buv - float2(o.x, -o.y)) * 0.025;
+
+			col = bg_tex.Sample(def_sampler, buv) * w0;
+			col += bg_tex.Sample(def_sampler, buv + float2(h.x, 0.0)) * w1;
+			col += bg_tex.Sample(def_sampler, buv - float2(h.x, 0.0)) * w1;
+			col += bg_tex.Sample(def_sampler, buv + float2(0.0, h.y)) * w1;
+			col += bg_tex.Sample(def_sampler, buv - float2(0.0, h.y)) * w1;
+			col += bg_tex.Sample(def_sampler, buv + float2(o.x, 0.0)) * w2;
+			col += bg_tex.Sample(def_sampler, buv - float2(o.x, 0.0)) * w2;
+			col += bg_tex.Sample(def_sampler, buv + float2(0.0, o.y)) * w2;
+			col += bg_tex.Sample(def_sampler, buv - float2(0.0, o.y)) * w2;
+			col += bg_tex.Sample(def_sampler, buv + o) * wd;
+			col += bg_tex.Sample(def_sampler, buv - o) * wd;
+			col += bg_tex.Sample(def_sampler, buv + float2(o.x, -o.y)) * wd;
+			col += bg_tex.Sample(def_sampler, buv - float2(o.x, -o.y)) * wd;
 		} else {
 			col = bg_tex.Sample(def_sampler, buv);
 		}

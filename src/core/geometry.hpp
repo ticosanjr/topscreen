@@ -60,4 +60,15 @@ FocusLimits focus_limits(double source_pos, double zoom);
 /** Limita o foco mantendo o ponto `source_pos` dentro da tela. */
 double clamp_focus_keep(double source_pos, double focus, double zoom);
 
+/**
+ * Foco que coloca o ponto da fonte `source_pos` no CENTRO da tela.
+ *
+ * Resolve `0.5 = f + (s - f) * z` para `f`, com resultado em [0,1]:
+ *   f = (s*z - 0.5) / (z - 1)
+ *
+ * Com isso a vista antecipa as bordas (o canto aparece antes de o mouse
+ * chegar nele) e o cursor fica visivel o tempo todo.
+ */
+double center_focus_for(double source_pos, double zoom);
+
 } // namespace topscreen::core

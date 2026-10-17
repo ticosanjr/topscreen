@@ -34,8 +34,6 @@ void ZoomModel::reset(double now_ms)
 	fy_.reset(0.5);
 	focus_point_x_ = 0.5;
 	focus_point_y_ = 0.5;
-	base_fx_ = 0.5;
-	base_fy_ = 0.5;
 	last_focus_ms_ = now_ms;
 	last_update_ms_ = now_ms;
 	started_ = true;
@@ -46,16 +44,10 @@ void ZoomModel::focus_on(double x, double y, double now_ms)
 	if (!started_)
 		reset(now_ms);
 
+	/* Guarda o ponto focado; o alvo do foco e recalculado no update
+	 * (depende do zoom, que anima). */
 	focus_point_x_ = clamp_range(x, 0.0, 1.0);
 	focus_point_y_ = clamp_range(y, 0.0, 1.0);
-
-	/* Pan: aproxima o foco do cursor UMA vez (nunca a cada frame). */
-	const double pan = clamp_range(cfg_.pan_amount, 0.0, 1.0);
-	base_fx_ = 0.5 + (focus_point_x_ - 0.5) * pan;
-	base_fy_ = 0.5 + (focus_point_y_ - 0.5) * pan;
-
-	fx_.set_target(base_fx_);
-	fy_.set_target(base_fy_);
 	last_focus_ms_ = now_ms;
 }
 
@@ -95,14 +87,23 @@ void ZoomModel::update(double now_ms)
 	zoom_.set_target(target_zoom);
 
 	/*
-	 * Mantem o ponto focado visivel: se o pan deixaria o cursor fora da tela,
-	 * puxa o foco para o limite. Com isso os cantos continuam alcancaveis e o
-	 * cursor nao some.
+	 * Foco = mistura entre "seguir o cursor" (pan) e "manter o cursor no
+	 * centro" (center_amount). Centralizar faz a vista ANTECIPAR as bordas:
+	 * o canto aparece antes de o mouse chegar nele.
 	 */
+	const double pan = clamp_range(cfg_.pan_amount, 0.0, 1.0);
+	const double camt = clamp_range(cfg_.center_amount, 0.0, 1.0);
+
+	auto focus_target = [&](double s) {
+		const double follow = 0.5 + (s - 0.5) * pan;
+		const double center = center_focus_for(s, target_zoom);
+		return follow + (center - follow) * camt;
+	};
+
 	const FocusLimits lx = focus_limits(focus_point_x_, target_zoom);
 	const FocusLimits ly = focus_limits(focus_point_y_, target_zoom);
-	fx_.set_target(clamp_range(base_fx_, lx.lo, lx.hi));
-	fy_.set_target(clamp_range(base_fy_, ly.lo, ly.hi));
+	fx_.set_target(clamp_range(focus_target(focus_point_x_), lx.lo, lx.hi));
+	fy_.set_target(clamp_range(focus_target(focus_point_y_), ly.lo, ly.hi));
 
 	zoom_.update(dt);
 	fx_.update(dt);

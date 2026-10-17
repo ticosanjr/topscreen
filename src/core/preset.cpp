@@ -90,6 +90,7 @@ bool Preset::apply(Config *cfg, std::string *error) const
 	cfg->bg.image = read_string(o, kBgImage, cfg->bg.image);
 	cfg->bg.image_file = read_string(o, kBgImageFile, cfg->bg.image_file);
 	cfg->bg.image_blur = read_number(o, kBgImageBlur, cfg->bg.image_blur);
+	cfg->bg.image_blur_type = read_int(o, kBgImageBlurType, cfg->bg.image_blur_type);
 	cfg->bg.padding_x = read_number(o, kBgPaddingX, cfg->bg.padding_x);
 	cfg->bg.padding_y = read_number(o, kBgPaddingY, cfg->bg.padding_y);
 	cfg->bg.corner_radius = read_number(o, kBgCornerRadius, cfg->bg.corner_radius);
@@ -117,6 +118,7 @@ bool Preset::apply(Config *cfg, std::string *error) const
 	cfg->zoom.duration_ms = read_number(o, kZoomDurationMs, cfg->zoom.duration_ms);
 	cfg->zoom.idle_timeout_ms = read_number(o, kZoomIdleTimeoutMs, cfg->zoom.idle_timeout_ms);
 	cfg->zoom.pan_amount = read_number(o, kZoomPanAmount, cfg->zoom.pan_amount);
+	cfg->zoom.center_amount = read_number(o, kZoomCenterAmount, cfg->zoom.center_amount);
 
 	/* Clique esquerdo */
 	cfg->click_left.effect = read_int(o, kClickLeftEffect, cfg->click_left.effect);

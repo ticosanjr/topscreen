@@ -82,6 +82,51 @@ TEST(zoom_modo_off_nao_aproxima)
 	CHECK_NEAR(m.render().zoom, 1.0, 1e-3);
 }
 
+TEST(zoom_centraliza_o_cursor)
+{
+	ZoomModel m;
+	ZoomConfig cfg;
+	cfg.mode = static_cast<int>(ZoomMode::Auto);
+	cfg.amount = 2.0;
+	cfg.duration_ms = 100.0;
+	cfg.idle_timeout_ms = 100000.0;
+	cfg.center_amount = 1.0;
+	m.configure(cfg);
+	m.reset(0.0);
+
+	m.focus_on(0.5, 0.5, 0.0);
+	double t = 0.0;
+	advance(m, t, 1.0);
+
+	const ZoomRender r = m.render();
+	const double c = r.focus_x + (0.5 - r.focus_x) * r.zoom;
+	CHECK_NEAR(c, 0.5, 0.02); /* cursor no centro */
+}
+
+TEST(zoom_antecipa_o_canto)
+{
+	ZoomModel m;
+	ZoomConfig cfg;
+	cfg.mode = static_cast<int>(ZoomMode::Auto);
+	cfg.amount = 1.6;
+	cfg.duration_ms = 100.0;
+	cfg.idle_timeout_ms = 100000.0;
+	cfg.center_amount = 1.0;
+	m.configure(cfg);
+	m.reset(0.0);
+
+	/* Cursor a 20% da esquerda: a vista ja tem que estar na borda. */
+	m.focus_on(0.2, 0.5, 0.0);
+	double t = 0.0;
+	advance(m, t, 1.5);
+
+	const ZoomRender r = m.render();
+	CHECK(r.focus_x < 0.05);
+
+	/* No pixel mais a esquerda, a fonte amostrada e o canto (0). */
+	const double u_no_pixel_0 = r.focus_x + (0.0 - r.focus_x) / r.zoom;
+	CHECK(u_no_pixel_0 <= 0.02);
+}
 TEST(zoom_foco_alcanca_os_cantos)
 {
 	ZoomModel m;

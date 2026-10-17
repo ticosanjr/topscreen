@@ -82,6 +82,7 @@ Coloca a tela "flutuando" sobre um fundo, com cantos e sombra.
 | **Wallpaper** | Uma das **12 imagens** que vêm com o plugin. Escolher já aplica |
 | **Imagem do PC** | Botão para escolher um **arquivo do seu PC** (jpg/png/bmp/tga/gif/webp). Tem prioridade sobre o Wallpaper |
 | **Desfoque do wallpaper (px)** | Borra a imagem de fundo (0 = nítida) |
+| **Tipo de desfoque** | Sem desfoque · Suave (box) · **Gaussiano** · Cremoso (bem suave) |
 | **Espaçamento horizontal / vertical (px)** | Margem entre a tela e a borda (X e Y separados) |
 | **Manter a proporção da tela** | Evita esticar a tela: ela é reduzida proporcionalmente (deixe ligado) |
 | **Cantos arredondados (px)** | Raio dos cantos da tela |
@@ -151,6 +152,7 @@ Cada botão tem seu próprio efeito, independente.
 | **Velocidade (ms)** | Duração da animação |
 | **Tempo sem foco (ms)** | Após parar, volta ao normal |
 | **Intensidade do pan** | Quanto a tela "acompanha" o mouse |
+| **Centralização** | 0 = segue o mouse; 1 = mantém o mouse no **centro** (a vista **antecipa** as bordas — o canto aparece antes de você chegar nele) |
 
 ### Movimento (motion blur)
 | Opção | O que faz |

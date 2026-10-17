@@ -53,6 +53,36 @@ TEST(geometry_pixel_to_content)
 	CHECK_NEAR(mid.y, 0.5, 1e-9);
 }
 
+TEST(geometry_center_focus)
+{
+	/* Centro da fonte com qualquer zoom -> foco 0.5 (cursor no centro). */
+	CHECK_NEAR(center_focus_for(0.5, 2.0), 0.5, 1e-9);
+
+	/* Bordas -> foco no limite (0/1). */
+	CHECK_NEAR(center_focus_for(0.0, 1.6), 0.0, 1e-9);
+	CHECK_NEAR(center_focus_for(1.0, 1.6), 1.0, 1e-9);
+
+	/*
+	 * Antecipacao: com zoom 1.6, o cursor em s=0.3125 ja poe a vista na
+	 * borda esquerda (foco 0) -> o canto aparece ANTES de o mouse chegar.
+	 */
+	CHECK_NEAR(center_focus_for(0.3125, 1.6), 0.0, 1e-6);
+	CHECK(center_focus_for(0.6, 1.6) > 0.0);
+
+	/* Sem zoom o foco nao importa. */
+	CHECK_NEAR(center_focus_for(0.0, 1.0), 0.5, 1e-9);
+}
+
+TEST(geometry_center_focus_mantem_cursor_visivel)
+{
+	for (double z : {1.3, 1.6, 2.0, 3.0}) {
+		for (double s = 0.0; s <= 1.0; s += 0.05) {
+			const double f = center_focus_for(s, z);
+			const double c = f + (s - f) * z;
+			CHECK(c >= -1e-9 && c <= 1.0 + 1e-9);
+		}
+	}
+}
 TEST(geometry_clamp_focus_cantos)
 {
 	/* Foco em [0,1]: os cantos sao alcancaveis (a janela 1/zoom cabe na fonte). */

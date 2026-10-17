@@ -20,6 +20,7 @@ Ex.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Wallpaper | `bg_image` | string | "" ou `wallpapers/*.jpg` ou caminho absoluto | `""` |
 | | Imagem do PC | `bg_image_file` | string | caminho de arquivo (tem prioridade) | `""` |
 | | Desfoque do wallpaper (px) | `bg_image_blur` | double | 0–60 | `0` |
+| | Tipo de desfoque | `bg_image_blur_type` | int | 0 nenhum · 1 suave · 2 gaussiano · 3 cremoso | `2` |
 | | Espaçamento horizontal (px) | `bg_padding_x` | double | 0–400 | `64` |
 | | Espaçamento vertical (px) | `bg_padding_y` | double | 0–400 | `64` |
 | | Manter proporção da tela | `bg_keep_aspect` | bool | — | `true` |
@@ -42,7 +43,8 @@ Ex.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Intensidade | `zoom_amount` | double | 1–4 | `1.6` |
 | | Velocidade (ms) | `zoom_duration_ms` | double | 100–2000 | `450` |
 | | Tempo sem foco (ms) | `zoom_idle_timeout_ms` | double | 200–10000 | `1500` |
-| | Intensidade do pan | `zoom_pan_amount` | double | 0–1 | `0.25` |
+| | Intensidade do pan | `zoom_pan_amount` | double | 0–1 | `1.0` |
+| | Centralização | `zoom_center_amount` | double | 0–1 | `1.0` |
 | Clique esquerdo | Efeito | `click_left_effect` | int | 0 onda, 1 orbe, 2 anel, 3 força | `0` |
 | | Tamanho | `click_left_size` | double | 0.1–4 | `1.0` |
 | | Cor | `click_left_color` | cor | — | `0xFFFFFFFF` |

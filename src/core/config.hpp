@@ -20,6 +20,7 @@ struct BackgroundConfig {
 	std::string image;             // caminho/relativo do wallpaper ("" = nenhum)
 	std::string image_file;        // imagem do PC (tem prioridade sobre `image`)
 	double image_blur = 0.0;       // desfoque do wallpaper (px)
+	int image_blur_type = 2;       // 0 nenhum, 1 suave, 2 gaussiano, 3 cremoso
 	double padding_x = 64.0;
 	double padding_y = 64.0;
 	double corner_radius = 18.0;

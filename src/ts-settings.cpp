@@ -20,6 +20,7 @@ void config_defaults(obs_data_t *s)
 	obs_data_set_default_string(s, kBgImage, def.bg.image.c_str());
 	obs_data_set_default_string(s, kBgImageFile, def.bg.image_file.c_str());
 	obs_data_set_default_double(s, kBgImageBlur, def.bg.image_blur);
+	obs_data_set_default_int(s, kBgImageBlurType, def.bg.image_blur_type);
 	obs_data_set_default_double(s, kBgPaddingX, def.bg.padding_x);
 	obs_data_set_default_double(s, kBgPaddingY, def.bg.padding_y);
 	obs_data_set_default_double(s, kBgCornerRadius, def.bg.corner_radius);
@@ -45,6 +46,7 @@ void config_defaults(obs_data_t *s)
 	obs_data_set_default_double(s, kZoomDurationMs, def.zoom.duration_ms);
 	obs_data_set_default_double(s, kZoomIdleTimeoutMs, def.zoom.idle_timeout_ms);
 	obs_data_set_default_double(s, kZoomPanAmount, def.zoom.pan_amount);
+	obs_data_set_default_double(s, kZoomCenterAmount, def.zoom.center_amount);
 
 	obs_data_set_default_int(s, kClickLeftEffect, def.click_left.effect);
 	obs_data_set_default_double(s, kClickLeftSize, def.click_left.size);
@@ -137,6 +139,7 @@ void config_load(obs_data_t *s, Config *c)
 	c->bg.image = read_string(s, kBgImage, d.bg.image);
 	c->bg.image_file = read_string(s, kBgImageFile, d.bg.image_file);
 	c->bg.image_blur = read_double(s, kBgImageBlur, d.bg.image_blur);
+	c->bg.image_blur_type = static_cast<int>(read_int(s, kBgImageBlurType, d.bg.image_blur_type));
 	c->bg.padding_x = read_double(s, kBgPaddingX, d.bg.padding_x);
 	c->bg.padding_y = read_double(s, kBgPaddingY, d.bg.padding_y);
 	/* migracao da chave antiga 'bg_padding' */
@@ -167,6 +170,7 @@ void config_load(obs_data_t *s, Config *c)
 	c->zoom.duration_ms = read_double(s, kZoomDurationMs, d.zoom.duration_ms);
 	c->zoom.idle_timeout_ms = read_double(s, kZoomIdleTimeoutMs, d.zoom.idle_timeout_ms);
 	c->zoom.pan_amount = read_double(s, kZoomPanAmount, d.zoom.pan_amount);
+	c->zoom.center_amount = read_double(s, kZoomCenterAmount, d.zoom.center_amount);
 
 	c->click_left.effect = static_cast<int>(read_int(s, kClickLeftEffect, d.click_left.effect));
 	c->click_left.size = read_double(s, kClickLeftSize, d.click_left.size);
@@ -229,6 +233,7 @@ void config_store(obs_data_t *s, const Config &c)
 	obs_data_set_string(s, kBgImage, c.bg.image.c_str());
 	obs_data_set_string(s, kBgImageFile, c.bg.image_file.c_str());
 	obs_data_set_double(s, kBgImageBlur, c.bg.image_blur);
+	obs_data_set_int(s, kBgImageBlurType, c.bg.image_blur_type);
 	obs_data_set_double(s, kBgPaddingX, c.bg.padding_x);
 	obs_data_set_double(s, kBgPaddingY, c.bg.padding_y);
 	obs_data_set_double(s, kBgCornerRadius, c.bg.corner_radius);
@@ -254,6 +259,7 @@ void config_store(obs_data_t *s, const Config &c)
 	obs_data_set_double(s, kZoomDurationMs, c.zoom.duration_ms);
 	obs_data_set_double(s, kZoomIdleTimeoutMs, c.zoom.idle_timeout_ms);
 	obs_data_set_double(s, kZoomPanAmount, c.zoom.pan_amount);
+	obs_data_set_double(s, kZoomCenterAmount, c.zoom.center_amount);
 
 	obs_data_set_int(s, kClickLeftEffect, c.click_left.effect);
 	obs_data_set_double(s, kClickLeftSize, c.click_left.size);

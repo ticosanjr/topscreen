@@ -11,7 +11,8 @@ struct ZoomConfig {
 	double amount = 1.6;         // zoom alvo no modo auto
 	double duration_ms = 450.0;  // velocidade da animacao
 	double idle_timeout_ms = 1500.0; // sem foco -> volta ao normal
-	double pan_amount = 0.25;    // sensibilidade do pan
+	double pan_amount = 1.0;     // quanto o foco "segue" o cursor (0..1)
+	double center_amount = 1.0;  // quanto o cursor fica no CENTRO (0..1)
 	int easing = EASE_IN_OUT_CUBIC;
 };
 
@@ -61,8 +62,6 @@ private:
 	double manual_ = 1.0;
 	double focus_point_x_ = 0.5; // ultimo ponto (fonte) focado
 	double focus_point_y_ = 0.5;
-	double base_fx_ = 0.5;       // alvo do foco (apos o pan)
-	double base_fy_ = 0.5;
 	double last_focus_ms_ = 0.0;
 	double last_update_ms_ = 0.0;
 	bool started_ = false;

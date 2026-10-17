@@ -92,6 +92,30 @@ TEST(mapping_canto_visivel_com_foco_ajustado)
 		}
 	}
 }
+TEST(mapping_antecipa_o_canto)
+{
+	const ContentArea a = content_area(1920, 1080, 64, 64, false);
+	const double z = 1.6;
+	const double s = 0.2;
+
+	/* Com centralizacao, o foco para s=0.2 ja vai para a borda (0). */
+	const double f = center_focus_for(s, z);
+	CHECK_NEAR(f, 0.0, 1e-9);
+
+	/* O canto esquerdo (fonte 0) ja esta na borda do quadro (antecipado). */
+	const double u_no_pixel_0 = f + (0.0 - f) / z;
+	CHECK(u_no_pixel_0 <= 1e-9);
+
+	/* E o cursor continua visivel. */
+	const double c = f + (s - f) * z;
+	CHECK(c >= -1e-9);
+	CHECK(c <= 1.0 + 1e-9);
+
+	const Vec2f p = source_to_pixel(s, s, f, f, z, a);
+	CHECK(p.x >= a.origin.x - 1e-6);
+	CHECK(p.x <= a.origin.x + a.size.x + 1e-6);
+}
+
 TEST(mapping_consistencia_com_shader)
 {
 	const ContentArea a = content_area(1920, 1080, 64, 64, true);

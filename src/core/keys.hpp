@@ -17,6 +17,7 @@ inline constexpr const char *kBgColorB = "bg_color_b";
 inline constexpr const char *kBgImage = "bg_image";
 inline constexpr const char *kBgImageFile = "bg_image_file";
 inline constexpr const char *kBgImageBlur = "bg_image_blur";
+inline constexpr const char *kBgImageBlurType = "bg_image_blur_type";
 inline constexpr const char *kBgPaddingX = "bg_padding_x";
 inline constexpr const char *kBgPaddingY = "bg_padding_y";
 inline constexpr const char *kBgCornerRadius = "bg_corner_radius";
@@ -42,6 +43,7 @@ inline constexpr const char *kZoomAmount = "zoom_amount";
 inline constexpr const char *kZoomDurationMs = "zoom_duration_ms";
 inline constexpr const char *kZoomIdleTimeoutMs = "zoom_idle_timeout_ms";
 inline constexpr const char *kZoomPanAmount = "zoom_pan_amount";
+inline constexpr const char *kZoomCenterAmount = "zoom_center_amount";
 
 inline constexpr const char *kClickLeftEffect = "click_left_effect";
 inline constexpr const char *kClickLeftSize = "click_left_size";

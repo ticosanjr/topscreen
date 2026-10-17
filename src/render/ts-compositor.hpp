@@ -59,6 +59,7 @@ private:
 	gs_eparam_t *p_bg_tex_aspect_ = nullptr;
 	gs_eparam_t *p_bg_keep_aspect_ = nullptr;
 	gs_eparam_t *p_bg_blur_ = nullptr;
+	gs_eparam_t *p_bg_blur_type_ = nullptr;
 	gs_eparam_t *p_shadow_alpha_ = nullptr;
 	gs_eparam_t *p_shadow_blur_ = nullptr;
 	gs_eparam_t *p_shadow_offset_ = nullptr;

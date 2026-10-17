@@ -81,6 +81,8 @@ Ex.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Cor | `highlight_color` | cor | — | `0x6600E0FF` |
 | | Tempo na tela (ms) | `highlight_hold_ms` | double | 0–5000 | `900` |
 | | Desvanecer (ms) | `highlight_fade_ms` | double | 0–2000 | `300` |
+| Perfis | Perfil atual | `profile_current` | int | 0–3 | `0` |
+| | Slots de perfil | `profile_slot_0` … `profile_slot_3` | objeto | Config completa (obs_data aninhado) | — |
 
 ## Atalhos
 
@@ -95,6 +97,11 @@ IDs registrados (aparência em **Configurações → Atalhos → TopScreen**):
 | `TopScreen.ResetZoom` | Resetar zoom |
 | `TopScreen.NextPreset` | Próximo preset |
 | `TopScreen.PrevPreset` | Preset anterior |
+| `TopScreen.ProfileA` | Ativar perfil A |
+| `TopScreen.ProfileB` | Ativar perfil B |
+| `TopScreen.ProfileC` | Ativar perfil C |
+| `TopScreen.ProfileD` | Ativar perfil D |
+| `TopScreen.ProfileSave` | Salvar ajustes no perfil atual |
 
 ## Formato de preset
 

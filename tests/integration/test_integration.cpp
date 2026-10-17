@@ -164,6 +164,58 @@ TEST(integration_overlay_de_teclas)
 	CHECK(registry_first() == nullptr);
 }
 
+TEST(integration_perfis_salvar_e_trocar)
+{
+	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
+
+	obs_source_t *parent = make_parent(1920, 1080);
+	obs_source_t *filter = fakeobs::make_source(&ts_filter_source_info, parent, 0, 0);
+	void *ctx = create_filter(filter);
+	REQUIRE(ctx != nullptr);
+	ts_filter_source_info.video_render(ctx, nullptr);
+
+	FilterControl *ctrl = registry_first();
+	REQUIRE(ctrl != nullptr);
+	CHECK_EQ(ctrl->profile_count(), 4);
+
+	/* Perfil A: estado atual (efeitos ligados) -> salva. */
+	ctrl->select_profile(0);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK_EQ(ctrl->current_profile(), 0);
+	CHECK(ctrl->effects_enabled());
+	ctrl->save_profile();
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+
+	/* Perfil B: efeitos desligados -> salva. */
+	ctrl->select_profile(1);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	ctrl->set_effects_enabled(false);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK(!ctrl->effects_enabled());
+	ctrl->save_profile();
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+
+	/* Volta para A: efeitos ligados de novo. */
+	ctrl->select_profile(0);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK_EQ(ctrl->current_profile(), 0);
+	CHECK(ctrl->effects_enabled());
+
+	/* E para B: desligados. */
+	ctrl->select_profile(1);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK_EQ(ctrl->current_profile(), 1);
+	CHECK(!ctrl->effects_enabled());
+
+	/* Perfil valido fora da faixa nao deve quebrar. */
+	ctrl->select_profile(9);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK(ctrl->current_profile() >= 0 && ctrl->current_profile() < 4);
+
+	ts_filter_source_info.destroy(ctx);
+	CHECK(registry_first() == nullptr);
+}
+
 TEST(integration_render_nao_crasha_sem_efeito)
 {
 	fakeobs::set_data_dir("/diretorio/inexistente");

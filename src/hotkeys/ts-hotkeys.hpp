@@ -13,6 +13,11 @@ enum HotkeyAction {
 	HK_ResetZoom,
 	HK_NextPreset,
 	HK_PrevPreset,
+	HK_ProfileA,
+	HK_ProfileB,
+	HK_ProfileC,
+	HK_ProfileD,
+	HK_ProfileSave,
 	HK_Count,
 };
 
@@ -26,6 +31,9 @@ struct HotkeyContext {
 	virtual void reset_zoom() = 0;
 	virtual void next_preset() = 0;
 	virtual void prev_preset() = 0;
+	/** Ativa um perfil (0..3) e enfileira o salvamento no perfil atual. */
+	virtual void select_profile(int index) = 0;
+	virtual void save_profile() = 0;
 };
 
 struct HotkeyBinding {

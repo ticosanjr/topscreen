@@ -7,7 +7,8 @@ namespace {
 const char *const kHotkeyNames[HK_Count] = {
 	"TopScreen.ToggleEffects",  "TopScreen.ToggleBackground", "TopScreen.ZoomIn",
 	"TopScreen.ZoomOut",        "TopScreen.ResetZoom",        "TopScreen.NextPreset",
-	"TopScreen.PrevPreset",
+	"TopScreen.PrevPreset",     "TopScreen.ProfileA",         "TopScreen.ProfileB",
+	"TopScreen.ProfileC",       "TopScreen.ProfileD",         "TopScreen.ProfileSave",
 };
 
 /* Descricao localizada de cada atalho (literais para o teste de traducao). */
@@ -28,6 +29,16 @@ const char *hotkey_description(int action)
 		return obs_module_text("Hotkey.NextPreset");
 	case HK_PrevPreset:
 		return obs_module_text("Hotkey.PrevPreset");
+	case HK_ProfileA:
+		return obs_module_text("Hotkey.ProfileA");
+	case HK_ProfileB:
+		return obs_module_text("Hotkey.ProfileB");
+	case HK_ProfileC:
+		return obs_module_text("Hotkey.ProfileC");
+	case HK_ProfileD:
+		return obs_module_text("Hotkey.ProfileD");
+	case HK_ProfileSave:
+		return obs_module_text("Hotkey.ProfileSave");
 	default:
 		return "";
 	}
@@ -87,6 +98,21 @@ void ts_hotkey_callback(void *data, obs_hotkey_id id, obs_hotkey_t *key, bool pr
 		break;
 	case HK_PrevPreset:
 		binding->ctx->prev_preset();
+		break;
+	case HK_ProfileA:
+		binding->ctx->select_profile(0);
+		break;
+	case HK_ProfileB:
+		binding->ctx->select_profile(1);
+		break;
+	case HK_ProfileC:
+		binding->ctx->select_profile(2);
+		break;
+	case HK_ProfileD:
+		binding->ctx->select_profile(3);
+		break;
+	case HK_ProfileSave:
+		binding->ctx->save_profile();
 		break;
 	default:
 		break;

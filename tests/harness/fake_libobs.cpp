@@ -238,6 +238,20 @@ bool obs_data_has_default_value(obs_data_t *data, const char *name)
 	return obs_data_has_user_value(data, name);
 }
 
+void obs_data_set_obj(obs_data_t *data, const char *name, obs_data_t *obj)
+{
+	if (data && name)
+		data->objs[name] = obj;
+}
+
+obs_data_t *obs_data_get_obj(obs_data_t *data, const char *name)
+{
+	if (!data || !name)
+		return nullptr;
+	auto it = data->objs.find(name);
+	return it == data->objs.end() ? nullptr : it->second;
+}
+
 // ---- obs_source ----
 obs_data_t *obs_source_get_settings(const obs_source_t *source)
 {

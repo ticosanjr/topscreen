@@ -22,6 +22,13 @@ struct FilterControl {
 	virtual void apply_preset(int index) = 0;
 
 	virtual int input_tier() const = 0;
+
+	/* Perfis (4 slots fixos). select_profile/save_profile tambem existem em
+	 * HotkeyContext (mesma assinatura); a instancia implementa uma vez. */
+	virtual int profile_count() const = 0;
+	virtual int current_profile() const = 0;
+	virtual void select_profile(int index) = 0;
+	virtual void save_profile() = 0;
 };
 
 /** Registra/desregistra um filtro ativo. */

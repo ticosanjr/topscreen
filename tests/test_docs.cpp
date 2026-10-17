@@ -72,7 +72,9 @@ TEST(docs_referencia_cita_atalhos)
 	CHECK(!doc.empty());
 
 	const char *actions[] = {"ToggleEffects", "ToggleBackground", "ZoomIn",
-				 "ZoomOut",       "ResetZoom",        "NextPreset", "PrevPreset"};
+				 "ZoomOut",       "ResetZoom",        "NextPreset",
+				 "PrevPreset",    "ProfileA",         "ProfileB",
+				 "ProfileC",      "ProfileD",         "ProfileSave"};
 	for (const char *a : actions) {
 		++tst::checks();
 		if (!contains(hotkeys, a))

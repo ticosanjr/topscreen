@@ -18,6 +18,7 @@ struct obs_data {
 	std::map<std::string, long long> ints;
 	std::map<std::string, double> doubles;
 	std::map<std::string, std::string> strings;
+	std::map<std::string, obs_data_t *> objs;
 };
 
 struct obs_property {

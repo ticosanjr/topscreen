@@ -56,6 +56,27 @@ public:
 		});
 		root->addWidget(preset_);
 
+		root->addWidget(new QLabel(obs_module_text("Profile.Current"), this));
+		profile_ = new QComboBox(this);
+		profile_->addItem(obs_module_text("Profile.A"));
+		profile_->addItem(obs_module_text("Profile.B"));
+		profile_->addItem(obs_module_text("Profile.C"));
+		profile_->addItem(obs_module_text("Profile.D"));
+		QObject::connect(profile_, &QComboBox::currentIndexChanged, this, [this](int index) {
+			if (syncing_ || index < 0)
+				return;
+			if (FilterControl *c = registry_first())
+				c->select_profile(index);
+		});
+		root->addWidget(profile_);
+
+		auto *saveProfile = new QPushButton(obs_module_text("Dock.SaveProfile"), this);
+		QObject::connect(saveProfile, &QPushButton::clicked, this, [this]() {
+			if (FilterControl *c = registry_first())
+				c->save_profile();
+		});
+		root->addWidget(saveProfile);
+
 		status_ = new QLabel(this);
 		root->addWidget(status_);
 
@@ -90,6 +111,7 @@ private:
 		syncing_ = true;
 		effects_->setEnabled(has);
 		preset_->setEnabled(has);
+		profile_->setEnabled(has);
 
 		if (!has) {
 			rebuild_presets(nullptr);
@@ -101,6 +123,10 @@ private:
 			const int cur = c->current_preset();
 			if (cur >= 0 && cur < preset_->count())
 				preset_->setCurrentIndex(cur);
+
+			const int pc = c->current_profile();
+			if (pc >= 0 && pc < profile_->count())
+				profile_->setCurrentIndex(pc);
 		}
 		syncing_ = false;
 
@@ -123,6 +149,7 @@ private:
 	QLabel *info_ = nullptr;
 	QCheckBox *effects_ = nullptr;
 	QComboBox *preset_ = nullptr;
+	QComboBox *profile_ = nullptr;
 	QLabel *status_ = nullptr;
 	QTimer *timer_ = nullptr;
 	bool syncing_ = false;

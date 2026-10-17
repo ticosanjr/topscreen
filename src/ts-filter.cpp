@@ -12,11 +12,13 @@
 #include "ts-registry.hpp"
 #include "ts-settings.hpp"
 
+#include <algorithm>
 #include <atomic>
 #include <cmath>
 #include <string>
 
 using namespace topscreen;
+using namespace topscreen::core::keys;
 
 namespace {
 
@@ -32,6 +34,8 @@ enum ActionBits : uint32_t {
 	A_NEXT_PRESET = 1u << 6,
 	A_PREV_PRESET = 1u << 7,
 	A_APPLY_PRESET = 1u << 8,
+	A_PROFILE_SET = 1u << 9,
+	A_SAVE_PROFILE = 1u << 10,
 };
 
 double clamp01(double v)
@@ -116,17 +120,24 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 	bool parent_cursor_checked = false;
 	bool prev_left = false;
 
+	int current_profile_ = 0;
+	int last_profile = -1;
+
 	std::atomic<uint32_t> actions_{0};
 	std::atomic<int> pending_effects_{-1};
 	std::atomic<int> pending_preset_{-1};
+	std::atomic<int> pending_profile_{-1};
 	std::atomic<bool> pending_reload_{false};
 	std::atomic<bool> effects_cache_{true};
 	std::atomic<int> preset_cache_{-1};
+	std::atomic<int> profile_cache_{0};
 	std::atomic<int> input_tier_cache_{0};
 
 	void push_settings();
 	void reconfigure_models();
 	void request_preset(int index);
+	void apply_profile(int index);
+	void do_save_profile();
 	void process_actions();
 	void reload_from_settings();
 
@@ -138,6 +149,12 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 	void reset_zoom() override { actions_.fetch_or(A_RESET_ZOOM); }
 	void next_preset() override { actions_.fetch_or(A_NEXT_PRESET); }
 	void prev_preset() override { actions_.fetch_or(A_PREV_PRESET); }
+	void select_profile(int index) override
+	{
+		pending_profile_.store(index);
+		actions_.fetch_or(A_PROFILE_SET);
+	}
+	void save_profile() override { actions_.fetch_or(A_SAVE_PROFILE); }
 
 	/* ---- FilterControl (thread da UI: apenas enfileira / le atomico) ---- */
 	bool effects_enabled() const override { return effects_cache_.load(); }
@@ -155,14 +172,47 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 		actions_.fetch_or(A_APPLY_PRESET);
 	}
 	int input_tier() const override { return input_tier_cache_.load(); }
+
+	/* ---- FilterControl: perfis ---- */
+	int profile_count() const override { return kProfileCount; }
+	int current_profile() const override { return profile_cache_.load(); }
 };
 
 void ts_filter_ctx::push_settings()
 {
 	obs_data_t *s = obs_source_get_settings(source);
 	config_store(s, cfg);
+	obs_data_set_int(s, kProfileCurrent, current_profile_);
 	obs_source_update(source, s);
 	obs_data_release(s);
+}
+
+void ts_filter_ctx::apply_profile(int index)
+{
+	if (index < 0 || index >= kProfileCount)
+		return;
+
+	obs_data_t *s = obs_source_get_settings(source);
+	obs_data_t *p = obs_data_get_obj(s, kProfileSlots[index]);
+	if (p) {
+		config_load(p, &cfg);
+		obs_data_release(p);
+	}
+	obs_data_release(s);
+}
+
+void ts_filter_ctx::do_save_profile()
+{
+	obs_data_t *s = obs_source_get_settings(source);
+	obs_data_t *p = obs_data_create();
+	config_store(p, cfg);
+	obs_data_set_obj(s, kProfileSlots[current_profile_], p);
+	obs_data_set_int(s, kProfileCurrent, current_profile_);
+	obs_source_update(source, s);
+	obs_data_release(p);
+	obs_data_release(s);
+
+	blog(LOG_INFO, "[TopScreen] perfil %d salvo", current_profile_ + 1);
 }
 
 void ts_filter_ctx::reconfigure_models()
@@ -195,7 +245,20 @@ void ts_filter_ctx::reload_from_settings()
 {
 	obs_data_t *s = obs_source_get_settings(source);
 	config_load(s, &cfg);
+	const long long pc = obs_data_get_int(s, kProfileCurrent);
 	obs_data_release(s);
+
+	/*
+	 * Se o usuario trocou o perfil (pela lista das Propriedades), aplica o
+	 * slot correspondente. Ao trocar por atalho/dock, last_profile ja e
+	 * atualizado junto, entao nao re-aplica.
+	 */
+	if (static_cast<int>(pc) != last_profile) {
+		last_profile = static_cast<int>(pc);
+		current_profile_ = std::max(0, std::min(kProfileCount - 1, last_profile));
+		apply_profile(current_profile_);
+	}
+
 	reconfigure_models();
 }
 
@@ -235,6 +298,19 @@ void ts_filter_ctx::process_actions()
 		if (i >= 0)
 			request_preset(i);
 	}
+	if (act & A_PROFILE_SET) {
+		const int i = pending_profile_.exchange(-1);
+		if (i >= 0 && i < kProfileCount) {
+			current_profile_ = i;
+			last_profile = i;
+			apply_profile(i);
+			reconfigure_models();
+			push_settings();
+			blog(LOG_INFO, "[TopScreen] perfil %d ativado", i + 1);
+		}
+	}
+	if (act & A_SAVE_PROFILE)
+		do_save_profile();
 }
 
 /* ------------------------------------------------------------------ */
@@ -251,6 +327,12 @@ void *ts_filter_create(obs_data_t *settings, obs_source_t *source)
 	ctx->source = source;
 
 	config_load(settings, &ctx->cfg);
+
+	const long long pc = obs_data_get_int(settings, kProfileCurrent);
+	ctx->current_profile_ = std::max(0, std::min(kProfileCount - 1, static_cast<int>(pc)));
+	ctx->last_profile = ctx->current_profile_;
+	ctx->profile_cache_.store(ctx->current_profile_);
+
 	ctx->reconfigure_models();
 
 	ctx->presets.load();
@@ -365,6 +447,7 @@ void ts_filter_tick(void *data, float seconds)
 	/* Publica estado para o dock (thread da UI). */
 	ctx->effects_cache_.store(ctx->cfg.effects_enabled);
 	ctx->preset_cache_.store(ctx->presets.current());
+	ctx->profile_cache_.store(ctx->current_profile_);
 	ctx->input_tier_cache_.store(ctx->input.tier());
 }
 

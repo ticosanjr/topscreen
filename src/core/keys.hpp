@@ -83,9 +83,14 @@ inline constexpr const char *kKeysShadow = "keys_shadow";
 inline constexpr const char *kKeysBand = "keys_band";
 inline constexpr const char *kKeysBandColor = "keys_band_color";
 
-inline constexpr const char *kHighlightEnabled = "highlight_enabled";
-inline constexpr const char *kHighlightHoldMs = "highlight_hold_ms";
+inline constexpr const char *kHighlightEnabled = "highlight_enabled";inline constexpr const char *kHighlightHoldMs = "highlight_hold_ms";
 inline constexpr const char *kHighlightFadeMs = "highlight_fade_ms";
 inline constexpr const char *kHighlightColor = "highlight_color";
+
+/* Perfis (4 slots fixos). Cada slot guarda a Config inteira num obs_data aninhado. */
+inline constexpr int kProfileCount = 4;
+inline constexpr const char *kProfileCurrent = "profile_current";
+inline constexpr const char *kProfileSlots[kProfileCount] = {"profile_slot_0", "profile_slot_1", "profile_slot_2",
+							     "profile_slot_3"};
 
 } // namespace topscreen::core::keys

@@ -222,7 +222,23 @@ copie um arquivo e ajuste — o formato está em [`CONFIGURACAO.md`](CONFIGURACA
 
 ---
 
-## 8. Receitas
+## 8. Perfis (A/B/C/D)
+
+Além dos presets prontos, há **4 perfis** para guardar a *sua* configuração e
+alternar sem reajustar tudo:
+
+1. Ajuste tudo do jeito que você quer.
+2. Escolha **Perfil A** (Propriedades → **Perfis**, ou no dock) e clique
+   **Salvar no perfil** (ou use o atalho *Salvar no perfil atual*).
+3. Mude para **Perfil B**, ajuste outra cara, salve de novo.
+4. Depois é só alternar: **atalhos “Ativar perfil A/B/C/D”** (Configurações →
+   Atalhos) ou o seletor no dock.
+
+Os perfis são salvos **junto da cena** (na fonte), então viajam com a coleção.
+
+---
+
+## 9. Receitas
 
 **Demo de produto (parecido com "Screen Studio")**
 - Fundo = Gradiente diagonal, Espaçamento 64, Cantos 18, Sombra ligada

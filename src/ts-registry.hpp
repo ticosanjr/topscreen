@@ -5,10 +5,10 @@
 namespace topscreen {
 
 /**
- * Interface de controle do filtro, exposta ao dock (thread da UI).
+ * Filter control interface, exposed to the dock (UI thread).
  *
- * Todas as implementacoes devem ser seguras para chamada de qualquer thread:
- * as mutacoes sao enfileiradas e aplicadas no video_tick (thread de video).
+ * All implementations must be safe to call from any thread:
+ * the mutations are queued and applied in video_tick (video thread).
  */
 struct FilterControl {
 	virtual ~FilterControl() = default;
@@ -23,19 +23,19 @@ struct FilterControl {
 
 	virtual int input_tier() const = 0;
 
-	/* Perfis (4 slots fixos). select_profile/save_profile tambem existem em
-	 * HotkeyContext (mesma assinatura); a instancia implementa uma vez. */
+	/* Profiles (4 fixed slots). select_profile/save_profile also exist in
+	 * HotkeyContext (same signature); the instance implements them once. */
 	virtual int profile_count() const = 0;
 	virtual int current_profile() const = 0;
 	virtual void select_profile(int index) = 0;
 	virtual void save_profile() = 0;
 };
 
-/** Registra/desregistra um filtro ativo. */
+/** Registers/unregisters an active filter. */
 void registry_add(FilterControl *control);
 void registry_remove(FilterControl *control);
 
-/** Primeiro filtro ativo (ou nullptr). Usado pelo dock. */
+/** First active filter (or nullptr). Used by the dock. */
 FilterControl *registry_first();
 
 } // namespace topscreen

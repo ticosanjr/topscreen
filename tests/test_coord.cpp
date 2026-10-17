@@ -3,7 +3,7 @@
 
 using namespace topscreen::core;
 
-TEST(coord_cantos)
+TEST(coord_corners)
 {
 	const Monitor m{100.0, 50.0, 1920.0, 1080.0};
 
@@ -38,7 +38,7 @@ TEST(coord_contains)
 	CHECK(!monitor_contains(m, -1.0, 500.0));
 }
 
-TEST(coord_monitor_invalido_seguro)
+TEST(coord_invalid_monitor_safe)
 {
 	const Monitor m{0.0, 0.0, 0.0, 0.0};
 	const Vec2f c = screen_to_content(10.0, 10.0, m);

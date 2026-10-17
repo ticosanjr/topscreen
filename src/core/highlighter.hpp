@@ -6,10 +6,10 @@ namespace topscreen::core {
 
 struct HighlighterConfig {
 	bool enabled = true;
-	double hold_ms = 900.0; // tempo visivel apos soltar
-	double fade_ms = 300.0; // duracao do fade
-	uint32_t color = 0x6600E0FF; // 0xAABBGGRR (amarelo translucido)
-	double min_span = 0.02;      // arrasto minimo (evita marcar cliques)
+	double hold_ms = 900.0; // time visible after releasing
+	double fade_ms = 300.0; // fade duration
+	uint32_t color = 0x6600E0FF; // 0xAABBGGRR (translucent yellow)
+	double min_span = 0.02;      // minimum drag (avoids marking clicks)
 };
 
 struct HighlightRender {
@@ -20,10 +20,10 @@ struct HighlightRender {
 };
 
 /**
- * Marca-texto de arrasto.
+ * Drag highlighter.
  *
- * Enquanto o botao esquerdo esta pressionado, registra a regiao arrastada;
- * depois de soltar, mantem visivel por `hold_ms` e desvanece em `fade_ms`.
+ * While the left button is pressed, it records the dragged region;
+ * after releasing, it stays visible for `hold_ms` and fades out in `fade_ms`.
  */
 class HighlighterModel {
 public:

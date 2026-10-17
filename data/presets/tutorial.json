@@ -1,6 +1,6 @@
 {
     "name": "Tutorial",
-    "description": "Fundo solido, cursor suave e som de clique. Base para overlay de teclas.",
+    "description": "Solid background, smooth cursor and click sound. Base for a key overlay.",
     "settings": {
         "effects_enabled": true,
         "bg_enabled": true,

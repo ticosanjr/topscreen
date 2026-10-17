@@ -2,7 +2,7 @@
 
 class QWidget;
 
-/* Stub minimo de QVBoxLayout (apenas para checagem de compilacao do dock). */
+/* Minimal stub for QVBoxLayout (only for the dock compile check). */
 class QVBoxLayout {
 public:
 	explicit QVBoxLayout(QWidget *parent = nullptr) { (void)parent; }

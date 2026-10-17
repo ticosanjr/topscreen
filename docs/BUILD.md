@@ -1,98 +1,99 @@
 # Build
 
-## Build rápido
+## Quick build
 
 ```bash
-./scripts/build.sh                 # plugin + testes, e roda os testes
-./scripts/build.sh --tests-only    # só os testes (não precisa de libobs)
-./scripts/build.sh --no-test       # só compila
+./scripts/build.sh                 # plugin + tests, then run the tests
+./scripts/build.sh --tests-only    # tests only (does not need libobs)
+./scripts/build.sh --no-test       # compile only
 ```
 
-## Remover
+## Remove
 
 ```bash
-./scripts/uninstall-linux.sh            # sistema + usuário
-./scripts/uninstall-linux.sh --system   # só o sistema (resolve "Duplicate library")
+./scripts/uninstall-linux.sh            # system + user
+./scripts/uninstall-linux.sh --system   # system only (fixes "Duplicate library")
 ```
 
-## Instalação rápida
+## Quick install
 
 ### Linux
 
 ```bash
-# dependencias (uma vez)
+# dependencies (once)
 sudo apt update && sudo apt install -y cmake build-essential libobs-dev
-# opcional (dock): sudo apt install -y qt6-base-dev
+# optional (dock): sudo apt install -y qt6-base-dev
 
-./scripts/install-linux.sh            # plugin de usuario (sem sudo)
-./scripts/install-linux.sh --system   # OBS do sistema (usa sudo)
+./scripts/install-linux.sh            # per-user plugin (no sudo)
+./scripts/install-linux.sh --system   # system OBS (uses sudo)
 ```
 
 ### Windows
 
 ```powershell
-# dependencias (uma vez): cmake + Visual Studio Build Tools
+# dependencies (once): cmake + Visual Studio Build Tools
 winget install Kitware.CMake
 winget install Microsoft.VisualStudio.2022.BuildTools
 
-# sem compilar aqui (use um topscreen.dll pronto):
+# without compiling here (use a ready topscreen.dll):
 pwsh -File scripts\install-windows.ps1 -Dll .\topscreen.dll
 
-# compilar + instalar como plugin de usuario:
+# compile + install as a per-user plugin:
 pwsh -File scripts\install-windows.ps1 -ObsDevDir C:\obs-dev
 
-# ou instalar num OBS portable:
+# or install into a portable OBS:
 pwsh -File scripts\install-windows.ps1 -ObsDir D:\OBS
 ```
 
-> **Windows:** compilar exige o **libobs dev** (headers + .lib). Se você só tem o
-> OBS instalado, use `-Dll` com um binário já compilado, ou compile contra uma
-> pasta de desenvolvimento do OBS com `-ObsDevDir`.
+> **Windows:** compiling requires the **libobs dev** (headers + .lib). If you only
+> have OBS installed, use `-Dll` with an already-built binary, or build against an
+> OBS development folder with `-ObsDevDir`.
 
-### Testes (nas duas plataformas)
+### Tests (on both platforms)
 
 ```bash
-./tests/run.sh                                   # Linux (g++ direto)
-cmake -S . -B build-tests -DTOPSCREEN_BUILD_PLUGIN=OFF   # qualquer SO
+./tests/run.sh                                   # Linux (g++ directly)
+cmake -S . -B build-tests -DTOPSCREEN_BUILD_PLUGIN=OFF   # any OS
 cmake --build build-tests && ctest --test-dir build-tests --output-on-failure
 ```
 
 ```powershell
-pwsh -File tests\run.ps1                         # Windows (ou PowerShell em qualquer SO)
+pwsh -File tests\run.ps1                         # Windows (or PowerShell on any OS)
 ```
 
-> **Importante:** o log do OBS vai para o **stderr**. Use `2>&1`:
-> `obs --verbose 2>&1 | grep -i topscreen`, ou veja
+> **Important:** the OBS log goes to **stderr**. Use `2>&1`:
+> `obs --verbose 2>&1 | grep -i topscreen`, or see
 > `~/.config/obs-studio/logs/`.
 
-## Dependências
+## Dependencies
 
 - CMake >= 3.20
-- Compilador com C++20 (MSVC 2019+, GCC 11+, Clang 13+)
-- **libobs** (headers/libs) — venha do pacote de desenvolvimento do OBS, do build
-  oficial de desenvolvimento, ou de um build local do OBS.
-- **Qt6 Widgets** e **obs-frontend-api** (opcionais; necessários para o dock)
-- X11 (`libx11-dev`) no Linux para o backend de input X11
-- `linux/input.h` (linux-libc-dev) para o backend evdev (Tier 3)
+- A compiler with C++20 (MSVC 2019+, GCC 11+, Clang 13+)
+- **libobs** (headers/libs) — from the OBS development package, the official
+  development build, or a local OBS build.
+- **Qt6 Widgets** and **obs-frontend-api** (optional; needed for the dock)
+- X11 (`libx11-dev`) on Linux for the X11 input backend
+- `linux/input.h` (linux-libc-dev) for the evdev backend (Tier 3)
 
-> Este repositório **não** empacota as dependências. O `CMakeLists.txt` procura
-> `libobs` via `find_package(libobs)`; se não achar, cai para `pkg-config libobs`.
+> This repository does **not** bundle the dependencies. `CMakeLists.txt` looks for
+> `libobs` via `find_package(libobs)`; if it does not find it, it falls back to
+> `pkg-config libobs`.
 
 ---
 
 ## Linux
 
-### 1. Obter o libobs
+### 1. Get libobs
 
-**Opção A — pacotes da distro** (quando existirem headers de plugin):
+**Option A — distro packages** (when plugin headers exist):
 
 ```bash
-# Debian/Ubuntu (exemplo; nomes variam por versão)
+# Debian/Ubuntu (example; names vary by version)
 sudo apt install cmake build-essential qt6-base-dev libx11-dev libobs-dev
 ```
 
-**Opção B — build do OBS a partir do fonte** (recomendado para dev de plugin,
-garante headers, `obs-frontend-api` e configs CMake):
+**Option B — build OBS from source** (recommended for plugin dev,
+guarantees headers, `obs-frontend-api` and CMake configs):
 
 ```bash
 git clone --recursive https://github.com/obsproject/obs-studio
@@ -102,23 +103,23 @@ cmake --build build_x86_64 -j
 cmake --install build_x86_64 --prefix "$HOME/obs-dev"
 ```
 
-Aponte o TopScreen para essa instalação:
+Point TopScreen at that installation:
 
 ```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
       -DCMAKE_PREFIX_PATH="$HOME/obs-dev"
 ```
 
-### 2. Compilar
+### 2. Compile
 
 ```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build -j
 ```
 
-### 3. Instalar / testar
+### 3. Install / test
 
-Instalação para o OBS do sistema:
+Install for the system OBS:
 
 ```bash
 sudo cmake --install build
@@ -126,14 +127,14 @@ sudo cmake --install build
 # data: /usr/local/share/obs/obs-plugins/topscreen/
 ```
 
-Modo **portable** (sem instalar): coloque ao lado do binário do OBS:
+**Portable** mode (without installing): put it next to the OBS binary:
 
 ```bash
 cp build/topscreen.so   <obs-portable>/obs-plugins/
 cp -r data/             <obs-portable>/obs-plugins/topscreen/
 ```
 
-Rode o OBS com logs e confirme o carregamento:
+Run OBS with logs and confirm it loaded:
 
 ```bash
 obs --verbose 2>&1 | grep -i topscreen
@@ -143,10 +144,10 @@ obs --verbose 2>&1 | grep -i topscreen
 
 ## Windows
 
-1. Instale **Visual Studio 2022** (Desktop C++) e **CMake**.
-2. Obtenha o **libobs + obs-frontend-api** (build de desenvolvimento do OBS ou
-   compile o OBS com `cmake --preset windows-x64`).
-3. Configure apontando para o OBS/Qt:
+1. Install **Visual Studio 2022** (Desktop C++) and **CMake**.
+2. Get the **libobs + obs-frontend-api** (OBS development build or
+   compile OBS with `cmake --preset windows-x64`).
+3. Configure pointing at OBS/Qt:
 
 ```powershell
 cmake -S . -B build -G "Visual Studio 17 2022" -A x64 `
@@ -154,7 +155,7 @@ cmake -S . -B build -G "Visual Studio 17 2022" -A x64 `
 cmake --build build --config Release
 ```
 
-4. Copie o resultado para o OBS (portable ou instalado):
+4. Copy the result to OBS (portable or installed):
 
 ```
 build\Release\topscreen.dll   ->  <obs>\obs-plugins\64bit\
@@ -163,29 +164,29 @@ data\                         ->  <obs>\obs-plugins\64bit\topscreen\
 
 ---
 
-## Opções de CMake
+## CMake options
 
-| Opção | Padrão | Efeito |
+| Option | Default | Effect |
 |-------|--------|--------|
-| `ENABLE_QT` | `ON` | Compila o dock Qt |
-| `ENABLE_FRONTEND_API` | `ON` | Usa `obs-frontend-api` (necessário para o dock) |
-| `TOPSCREEN_BUILD_TESTS` | `ON` | Compila os testes do núcleo (não dependem do OBS) |
-| `CMAKE_BUILD_TYPE` | `Release` | Tipo de build em geradores single-config |
+| `ENABLE_QT` | `ON` | Builds the Qt dock |
+| `ENABLE_FRONTEND_API` | `ON` | Uses `obs-frontend-api` (needed for the dock) |
+| `TOPSCREEN_BUILD_TESTS` | `ON` | Builds the core tests (they do not depend on OBS) |
+| `CMAKE_BUILD_TYPE` | `Release` | Build type on single-config generators |
 
-Defines automáticos: `TOPSCREEN_VERSION`, `TOPSCREEN_HAVE_QT`,
+Automatic defines: `TOPSCREEN_VERSION`, `TOPSCREEN_HAVE_QT`,
 `TOPSCREEN_HAVE_FRONTEND`, `TOPSCREEN_HAVE_X11`, `TOPSCREEN_HAVE_EVDEV`.
 
 ---
 
-## Testes
+## Tests
 
-Os testes do **núcleo** não dependem de libobs/cmake e rodam em qualquer lugar:
+The **core** tests do not depend on libobs/cmake and run anywhere:
 
 ```bash
-./tests/run.sh          # compila com g++ e roda
+./tests/run.sh          # compiles with g++ and runs
 ```
 
-Com CMake:
+With CMake:
 
 ```bash
 cmake -S . -B build -DTOPSCREEN_BUILD_TESTS=ON
@@ -193,9 +194,10 @@ cmake --build build -j
 ctest --test-dir build --output-on-failure
 ```
 
-Veja [`TESTES.md`](TESTES.md) para a cobertura e o que ainda precisa de um OBS real.
+See [`TESTS.md`](TESTS.md) for the coverage and what still needs a real OBS.
 
-Para checar que o plugin **compila** contra os headers do OBS sem tê-lo instalado:
+To check that the plugin **compiles** against the OBS headers without having it
+installed:
 
 ```bash
 ./tools/check-obs-headers.sh
@@ -205,11 +207,11 @@ Para checar que o plugin **compila** contra os headers do OBS sem tê-lo instala
 
 ## Troubleshooting
 
-- **`find_package(libobs)` falha**: defina `-DCMAKE_PREFIX_PATH` para a pasta do
-  OBS dev, ou garanta um `libobs.pc` no `PKG_CONFIG_PATH`.
-- **Símbolos indefinidos ao carregar**: normalmente é mismatch de ABI entre o
-  libobs usado no build e o OBS em execução — recompile contra a mesma versão.
-- **Dock não aparece**: verifique se Qt6 e `obs-frontend-api` foram encontrados
-  (o configure imprime `TopScreen: Qt=... frontend=...`).
-- **Input não funciona no Linux**: veja `docs/INPUT-E-PLATAFORMAS.md`
-  (X11 habilitado via `TOPSCREEN_HAVE_X11`; evdev exige permissão).
+- **`find_package(libobs)` fails**: set `-DCMAKE_PREFIX_PATH` to the OBS dev
+  folder, or make sure there is a `libobs.pc` in `PKG_CONFIG_PATH`.
+- **Undefined symbols when loading**: usually an ABI mismatch between the
+  libobs used in the build and the running OBS — rebuild against the same version.
+- **Dock does not appear**: check whether Qt6 and `obs-frontend-api` were found
+  (the configure prints `TopScreen: Qt=... frontend=...`).
+- **Input does not work on Linux**: see `docs/INPUT-AND-PLATFORMS.md`
+  (X11 enabled via `TOPSCREEN_HAVE_X11`; evdev requires permission).

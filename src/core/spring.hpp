@@ -3,11 +3,11 @@
 namespace topscreen::core {
 
 /**
- * Mola 1D criticamente amortecida.
+ * Critically damped 1D spring.
  *
- * Usada para suavizar cursor, zoom e pan sem "saltos": o valor persegue o alvo
- * com aceleracao proporcional ao deslocamento e amortecimento proporcional a
- * velocidade. damping = 1.0 => criticamente amortecida (sem overshoot).
+ * Used to smooth the cursor, zoom and pan without "jumps": the value chases the target
+ * with acceleration proportional to the displacement and damping proportional to the
+ * velocity. damping = 1.0 => critically damped (no overshoot).
  */
 class Spring {
 public:

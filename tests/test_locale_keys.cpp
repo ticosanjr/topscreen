@@ -39,7 +39,7 @@ std::set<std::string> ini_keys(const std::string &path)
 	return keys;
 }
 
-/* Coleta as chaves usadas em obs_module_text("...") nos fontes. */
+/* Collects the keys used by obs_module_text("...") across the sources. */
 std::set<std::string> code_locale_keys(const std::string &src_dir)
 {
 	std::set<std::string> keys;
@@ -75,9 +75,9 @@ std::set<std::string> code_locale_keys(const std::string &src_dir)
 
 } // namespace
 
-/* Toda chave usada no codigo precisa existir no en-US.ini (senao o OBS mostra
- * a chave crua na UI). */
-TEST(locale_cobre_obs_module_text)
+/* Every key used in the code must exist in en-US.ini (otherwise OBS shows the
+ * raw key in the UI). */
+TEST(locale_covers_obs_module_text)
 {
 	const auto code = code_locale_keys(std::string(TOPSCREEN_SOURCE_DIR) + "/src");
 	CHECK(!code.empty());
@@ -88,27 +88,22 @@ TEST(locale_cobre_obs_module_text)
 	for (const auto &k : code) {
 		++tst::checks();
 		if (en.find(k) == en.end())
-			tst::fail(__FILE__, __LINE__, "chave sem traducao em en-US.ini: " + k);
+			tst::fail(__FILE__, __LINE__, "key missing from en-US.ini: " + k);
 	}
 }
 
-/* pt-BR e en-US devem ter exatamente o mesmo conjunto de chaves. */
-TEST(locale_pt_en_paridade)
+/* en-US.ini must not carry leftover, unused keys. */
+TEST(locale_en_has_no_orphan_keys)
 {
+	const auto code = code_locale_keys(std::string(TOPSCREEN_SOURCE_DIR) + "/src");
 	const auto en = ini_keys(std::string(TOPSCREEN_TEST_DATA_DIR) + "/locale/en-US.ini");
-	const auto pt = ini_keys(std::string(TOPSCREEN_TEST_DATA_DIR) + "/locale/pt-BR.ini");
 
+	CHECK(!code.empty());
 	CHECK(!en.empty());
-	CHECK(!pt.empty());
 
 	for (const auto &k : en) {
 		++tst::checks();
-		if (pt.find(k) == pt.end())
-			tst::fail(__FILE__, __LINE__, "pt-BR.ini sem a chave (presente em en-US): " + k);
-	}
-	for (const auto &k : pt) {
-		++tst::checks();
-		if (en.find(k) == en.end())
-			tst::fail(__FILE__, __LINE__, "en-US.ini sem a chave (presente em pt-BR): " + k);
+		if (code.find(k) == code.end())
+			tst::fail(__FILE__, __LINE__, "key in en-US.ini is not used by the code: " + k);
 	}
 }

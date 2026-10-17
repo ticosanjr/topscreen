@@ -1,6 +1,6 @@
 #pragma once
 
-// Micro-framework de testes (sem dependencias externas).
+// Micro test framework (no external dependencies).
 
 #include <cmath>
 #include <cstdio>
@@ -57,7 +57,7 @@ struct Registrar {
 	do {                                                                                       \
 		++::tst::checks();                                                                 \
 		if (!(cond))                                                                       \
-			::tst::fail(__FILE__, __LINE__, "CHECK falhou: " #cond);                    \
+			::tst::fail(__FILE__, __LINE__, "CHECK failed: " #cond);                    \
 	} while (0)
 
 #define CHECK_NEAR(a, b, eps)                                                                      \
@@ -84,7 +84,7 @@ struct Registrar {
 	do {                                                                                       \
 		++::tst::checks();                                                                 \
 		if (!(cond)) {                                                                      \
-			::tst::fail(__FILE__, __LINE__, "REQUIRE falhou: " #cond);                  \
+			::tst::fail(__FILE__, __LINE__, "REQUIRE failed: " #cond);                  \
 			return;                                                                     \
 		}                                                                                  \
 	} while (0)

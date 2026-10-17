@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 #
-# Build (e opcionalmente instala) o TopScreen no Linux, detectando o libobs.
+# Builds (and optionally installs) TopScreen on Linux, detecting libobs.
 #
-# Uso:
-#   scripts/build-install.sh                 # so compila
-#   scripts/build-install.sh --diagnose      # mostra o ambiente (nao compila)
-#   scripts/build-install.sh --system        # instala no OBS do sistema (sudo)
-#   scripts/build-install.sh --prefix DIR    # instala sob DIR (ex.: build do OBS)
-#   scripts/build-install.sh --dir DIR       # copia para a pasta de plugins DIR
-#   scripts/build-install.sh --pause         # espera Enter no final (duplo-clique)
+# Usage:
+#   scripts/build-install.sh                 # build only
+#   scripts/build-install.sh --diagnose      # show the environment (no build)
+#   scripts/build-install.sh --system        # install into the system OBS (sudo)
+#   scripts/build-install.sh --prefix DIR    # install under DIR (e.g. OBS build)
+#   scripts/build-install.sh --dir DIR       # copy to the plugins folder DIR
+#   scripts/build-install.sh --pause         # wait for Enter at the end (double-click)
 #
 set -uo pipefail
 
@@ -34,11 +34,11 @@ while [ $# -gt 0 ]; do
 	--diagnose) DIAGNOSE=1; shift ;;
 	-j) JOBS="${2:?}"; shift 2 ;;
 	-h | --help) sed -n '2,13p' "$0"; exit 0 ;;
-	*) echo "opcao desconhecida: $1"; exit 2 ;;
+	*) echo "unknown option: $1"; exit 2 ;;
 	esac
 done
 
-# Estilo desligado se nao for terminal.
+# Style off if not a terminal.
 if [ -t 1 ]; then
 	B=$'\033[1m'; Y=$'\033[33m'; R=$'\033[31m'; G=$'\033[32m'; N=$'\033[0m'
 else
@@ -50,20 +50,20 @@ warn() { printf '%s%s%s\n' "$Y" "$*" "$N"; }
 err() { printf '%s%s%s\n' "$R" "$*" "$N" >&2; }
 ok() { printf '%s%s%s\n' "$G" "$*" "$N"; }
 
-FINAL="script encerrado"
+FINAL="script finished"
 on_exit() {
 	local code=$?
-	printf '\n%s (codigo %d)\n' "$FINAL" "$code"
+	printf '\n%s (code %d)\n' "$FINAL" "$code"
 	if [ "$PAUSE" = 1 ]; then
-		read -r -p "Pressione Enter para fechar..." _ || true
+		read -r -p "Press Enter to close..." _ || true
 	fi
 	exit "$code"
 }
 trap on_exit EXIT
-trap 'err "erro na linha $LINENO"' ERR
+trap 'err "error on line $LINENO"' ERR
 
 # ---------------------------------------------------------------------------
-# Detecta ambiente
+# Detects environment
 # ---------------------------------------------------------------------------
 detect_libobs() {
 	HDR=""
@@ -86,18 +86,18 @@ detect_libobs() {
 }
 
 diagnose() {
-	log "=== Diagnostico do TopScreen ==="
+	log "=== TopScreen diagnostics ==="
 	echo "uname:        $(uname -srm)"
-	echo "cmake:        $(command -v cmake || echo AUSENTE)"
-	echo "g++:          $(command -v g++ || echo AUSENTE)"
-	echo "pkg-config:   $(command -v pkg-config || echo AUSENTE)"
-	echo "qt6 (pkg):    $(pkg-config --modversion Qt6Widgets 2>/dev/null || echo AUSENTE)"
-	echo "obs binario:  $(command -v obs || echo AUSENTE)"
-	echo "obs versao:   $(obs --version 2>/dev/null || echo '?')"
+	echo "cmake:        $(command -v cmake || echo MISSING)"
+	echo "g++:          $(command -v g++ || echo MISSING)"
+	echo "pkg-config:   $(command -v pkg-config || echo MISSING)"
+	echo "qt6 (pkg):    $(pkg-config --modversion Qt6Widgets 2>/dev/null || echo MISSING)"
+	echo "obs binary:   $(command -v obs || echo MISSING)"
+	echo "obs version:  $(obs --version 2>/dev/null || echo '?')"
 
 	detect_libobs
-	echo "libobs header: ${HDR:-AUSENTE}"
-	echo "libobs lib:    ${LIB:-AUSENTE}"
+	echo "libobs header: ${HDR:-MISSING}"
+	echo "libobs lib:    ${LIB:-MISSING}"
 
 	echo "plugin dirs:"
 	for d in /usr/lib/*/obs-plugins /usr/lib/obs-plugins /usr/local/lib/obs-plugins; do
@@ -106,12 +106,12 @@ diagnose() {
 	echo "log dir:      ${HOME}/.config/obs-studio/logs"
 	echo
 	if [ -n "$HDR" ] && [ -n "$LIB" ]; then
-		ok "libobs OK: o build deve funcionar."
+		ok "libobs OK: the build should work."
 	else
-		warn "libobs (dev) ausente. Instale: sudo apt install libobs-dev"
-		warn "ou use o PPA: sudo add-apt-repository ppa:obsproject/obs-studio && sudo apt update && sudo apt install libobs-dev"
+		warn "libobs (dev) missing. Install: sudo apt install libobs-dev"
+		warn "or use the PPA: sudo add-apt-repository ppa:obsproject/obs-studio && sudo apt update && sudo apt install libobs-dev"
 	fi
-	FINAL="diagnostico concluido"
+	FINAL="diagnostics complete"
 }
 
 # ---------------------------------------------------------------------------
@@ -121,53 +121,53 @@ if [ "$DIAGNOSE" = 1 ]; then
 fi
 
 command -v cmake >/dev/null || {
-	err "cmake nao encontrado."
-	err "  Instale: sudo apt install cmake build-essential"
-	FINAL="falhou: falta cmake"
+	err "cmake not found."
+	err "  Install: sudo apt install cmake build-essential"
+	FINAL="failed: cmake missing"
 	exit 1
 }
 command -v g++ >/dev/null || {
-	err "g++ nao encontrado. Instale: sudo apt install build-essential"
-	FINAL="falhou: falta g++"
+	err "g++ not found. Install: sudo apt install build-essential"
+	FINAL="failed: g++ missing"
 	exit 1
 }
 
 detect_libobs
 if [ -z "$HDR" ] || [ -z "$LIB" ]; then
-	err "libobs (dev) nao encontrado."
+	err "libobs (dev) not found."
 	err "  Ubuntu/Debian: sudo apt install libobs-dev"
-	err "  ou PPA: sudo add-apt-repository ppa:obsproject/obs-studio && sudo apt update && sudo apt install libobs-dev"
-	warn "  Rode 'scripts/build-install.sh --diagnose' para ver o ambiente."
-	FINAL="falhou: falta libobs-dev"
+	err "  or PPA: sudo add-apt-repository ppa:obsproject/obs-studio && sudo apt update && sudo apt install libobs-dev"
+	warn "  Run 'scripts/build-install.sh --diagnose' to see the environment."
+	FINAL="failed: libobs-dev missing"
 	exit 1
 fi
 
 log "libobs: headers=$HDR  lib=$LIB"
 
 # ---------------------------------------------------------------------------
-log "Configurando ..."
+log "Configuring ..."
 cmake -S "$ROOT" -B "$BUILD" -DCMAKE_BUILD_TYPE=Release \
 	-DLIBOBS_INCLUDE_DIR="$HDR" -DLIBOBS_LIBRARY="$LIB"
 RC=$?
 if [ $RC -ne 0 ]; then
-	err "cmake falhou ao configurar (codigo $RC). Veja as mensagens acima."
-	FINAL="falhou: configure"
+	err "cmake failed to configure (code $RC). See the messages above."
+	FINAL="failed: configure"
 	exit $RC
 fi
 
-log "Compilando (-j$JOBS) ..."
+log "Building (-j$JOBS) ..."
 cmake --build "$BUILD" -j"$JOBS"
 RC=$?
 if [ $RC -ne 0 ]; then
-	err "compilacao falhou (codigo $RC)."
-	FINAL="falhou: compilacao"
+	err "build failed (code $RC)."
+	FINAL="failed: build"
 	exit $RC
 fi
 
 SO="$BUILD/topscreen.so"
 [ -f "$SO" ] || {
-	err "topscreen.so nao gerado em $BUILD"
-	FINAL="falhou: binario ausente"
+	err "topscreen.so not generated in $BUILD"
+	FINAL="failed: binary missing"
 	exit 1
 }
 ok "OK: $SO"
@@ -175,14 +175,14 @@ ok "OK: $SO"
 # ---------------------------------------------------------------------------
 case "$MODE" in
 build)
-	log "Build concluido. Para instalar:"
-	echo "  scripts/build-install.sh --user             # so para voce (sem sudo)"
-	echo "  scripts/build-install.sh --system           # OBS do sistema (sudo)"
+	log "Build complete. To install:"
+	echo "  scripts/build-install.sh --user             # just for you (no sudo)"
+	echo "  scripts/build-install.sh --system           # system OBS (sudo)"
 	echo "  scripts/build-install.sh --dir <plugins>    # portable/custom"
-	FINAL="build concluido"
+	FINAL="build complete"
 	;;
 system)
-	# Descobre a pasta de plugins que o OBS usa (multiarch no Debian/Ubuntu).
+	# Finds the plugins folder OBS uses (multiarch on Debian/Ubuntu).
 	PLUGDIR=""
 	for d in /usr/lib/*/obs-plugins; do
 		[ -d "$d" ] && {
@@ -193,65 +193,72 @@ system)
 	[ -n "$PLUGDIR" ] || PLUGDIR="/usr/lib/obs-plugins"
 	DATADIR="/usr/share/obs/obs-plugins/topscreen"
 
-	log "Instalando para o OBS do sistema:"
+	log "Installing into the system OBS:"
 	echo "  plugin: $PLUGDIR/topscreen.so"
-	echo "  dados:  $DATADIR/"
+	echo "  data:   $DATADIR/"
 
-	sudo mkdir -p "$PLUGDIR" "$DATADIR"
+	sudo mkdir -p "$PLUGDIR"
+	# Full sync: drop stale files from previous versions (e.g. old locales).
+	sudo rm -rf "$DATADIR"
+	sudo mkdir -p "$DATADIR"
 	sudo cp -f "$SO" "$PLUGDIR/topscreen.so"
 	sudo cp -rf "$ROOT/data/." "$DATADIR/"
 
-	# Remove instalacao antiga no lugar errado (ex.: /usr/lib/obs-plugins).
+	# Removes an old installation in the wrong place (e.g. /usr/lib/obs-plugins).
 	if [ "$PLUGDIR" != "/usr/lib/obs-plugins" ] && [ -f /usr/lib/obs-plugins/topscreen.so ]; then
-		warn "removendo instalacao antiga em /usr/lib/obs-plugins/topscreen.so"
+		warn "removing old installation at /usr/lib/obs-plugins/topscreen.so"
 		sudo rm -f /usr/lib/obs-plugins/topscreen.so
 	fi
 
-	ok "Instalado. Reinicie o OBS."
-	FINAL="instalado em $PLUGDIR"
+	ok "Installed. Restart OBS."
+	FINAL="installed in $PLUGDIR"
 	;;
 user)
 	P="$HOME/.config/obs-studio/plugins/topscreen"
-	log "Instalando como plugin de usuario (sem sudo): $P"
+	log "Installing as a user plugin (no sudo): $P"
+	# Full sync: drop stale files from previous versions (e.g. old locales).
+	rm -rf "$P/data"
 	mkdir -p "$P/bin/64bit" "$P/data"
 	cp -f "$SO" "$P/bin/64bit/topscreen.so"
 	cp -rf "$ROOT/data/." "$P/data/"
-	ok "Instalado. Reinicie o OBS."
-	FINAL="instalado em $P"
+	ok "Installed. Restart OBS."
+	FINAL="installed in $P"
 	;;
 prefix)
-	log "Instalando em prefixo $TARGET_PREFIX ..."
+	log "Installing into prefix $TARGET_PREFIX ..."
 	SUDO=""
 	[ -w "$TARGET_PREFIX" ] || SUDO="sudo"
 	${SUDO} cmake --install "$BUILD" --prefix "$TARGET_PREFIX"
-	ok "Instalado. Reinicie o OBS."
-	FINAL="instalado em $TARGET_PREFIX"
+	ok "Installed. Restart OBS."
+	FINAL="installed in $TARGET_PREFIX"
 	;;
 dir)
 	[ -n "$TARGET_DIR" ] || {
-		err "--dir vazio"
+		err "--dir empty"
 		exit 2
 	}
-	log "Copiando para $TARGET_DIR ..."
+	log "Copying to $TARGET_DIR ..."
 	mkdir -p "$TARGET_DIR"
 	cp -f "$SO" "$TARGET_DIR/topscreen.so"
 	if [ -n "$DATA_DIR" ]; then
+		rm -rf "$DATA_DIR"
 		mkdir -p "$DATA_DIR"
 		cp -rf "$ROOT/data/." "$DATA_DIR/"
-		ok "Dados em $DATA_DIR"
+		ok "Data in $DATA_DIR"
 	else
+		rm -rf "$TARGET_DIR/topscreen"
 		mkdir -p "$TARGET_DIR/topscreen"
 		cp -rf "$ROOT/data/." "$TARGET_DIR/topscreen/"
-		ok "Dados em $TARGET_DIR/topscreen"
+		ok "Data in $TARGET_DIR/topscreen"
 	fi
-	ok "Instalado. Reinicie o OBS."
-	FINAL="instalado em $TARGET_DIR"
+	ok "Installed. Restart OBS."
+	FINAL="installed in $TARGET_DIR"
 	;;
 esac
 
 cat <<'EOF'
 
-Para ver o log do TopScreen (o OBS escreve no stderr):
+To see the TopScreen log (OBS writes to stderr):
   obs --verbose 2>&1 | grep -iE "topscreen|Loaded Modules"
-  # ou abra ~/.config/obs-studio/logs/ (arquivo mais recente)
+  # or open ~/.config/obs-studio/logs/ (most recent file)
 EOF

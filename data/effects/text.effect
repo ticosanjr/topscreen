@@ -1,4 +1,4 @@
-// TopScreen - efeito de texto (sprites de glifos) e faixa de fundo.
+// TopScreen - text effect (glyph sprites) and background band.
 uniform float4x4 ViewProj;
 uniform texture2d image;
 uniform float4 color;

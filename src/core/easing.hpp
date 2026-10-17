@@ -2,7 +2,7 @@
 
 namespace topscreen::core {
 
-/** Funcoes de easing (entrada 0..1, saida 0..1). */
+/** Easing functions (input 0..1, output 0..1). */
 enum Easing {
 	EASE_LINEAR = 0,
 	EASE_IN_CUBIC = 1,
@@ -16,7 +16,7 @@ double ease_in_cubic(double t);
 double ease_out_cubic(double t);
 double ease_in_out_cubic(double t);
 
-/** Aplica o easing pelo id, recortando t em 0..1. */
+/** Applies the easing by id, clamping t to 0..1. */
 double ease_apply(int easing, double t);
 
 } // namespace topscreen::core

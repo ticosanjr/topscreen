@@ -1,41 +1,41 @@
 # Roadmap
 
-Cada fase entrega algo utilizável e tem critério de aceite verificável.
+Each phase delivers something usable and has a verifiable acceptance criterion.
 
-> **Verificação:** a lógica do núcleo é coberta por testes automatizados
-> (`docs/TESTES.md`). O shader e a integração com o OBS ainda precisam de uma
-> passada em um OBS real — marcados com 🟡 mesmo quando implementados.
+> **Verification:** the core logic is covered by automated tests
+> (`docs/TESTS.md`). The shader and the OBS integration still need a pass on a
+> real OBS — marked with 🟡 even when implemented.
 
-| Fase | Entrega | Critério de aceite | Status |
+| Phase | Delivery | Acceptance criterion | Status |
 |------|---------|--------------------|--------|
-| **F0** | Skeleton do plugin: módulo carrega, filtro passthrough, CMake Win/Linux | Carrega no OBS portable sem crash; filtro não altera a imagem | ✅ |
-| **F1** | Fundo (cor/gradiente), cantos arredondados, padding, sombra, propriedades, presets + dock inicial | Visual "bonito" ao vivo, < 1 ms GPU no preset padrão | ✅ |
-| **F2** | Cursor: estilo, tamanho, sombra, suavização, sway, idle/loop | Cursor nativo ocultado; cursor próprio segue suave | ✅ |
-| **F3** | Cliques L/R (efeitos + cor/tamanho/duração/curva), som, atalhos, presets | Hotkeys na aba do OBS; L e R distintos; presets por atalho | ✅ |
-| **F4** | Zoom/Pan: mola, auto-zoom (clique/cursor), zoom manual, pan leve | Curva/duração/velocidade/inatividade ajustáveis; sem "salto" | ✅ |
-| **F5** | Overlay de teclas, spotlight, marca-texto de arrasto (webcam bubble → F6) | Texto nítido em qualquer escala | ✅ (sem webcam) |
-| **F6** | Fonte de captura própria + áudio próprio | Escolher a tela na UI do TopScreen; áudio pelo canal da fonte | ⬜ |
-| **F7** | Paridade Wayland: portal `GlobalShortcuts` + evdev, CI 2 versões do OBS, polimento | Matriz de input verde em X11 e Wayland | ⬜ |
+| **F0** | Plugin skeleton: module loads, passthrough filter, Win/Linux CMake | Loads in portable OBS without crashing; the filter does not change the image | ✅ |
+| **F1** | Background (color/gradient), rounded corners, padding, shadow, properties, presets + initial dock | "Nice" look live, < 1 ms GPU on the default preset | ✅ |
+| **F2** | Cursor: style, size, shadow, smoothing, sway, idle/loop | Native cursor hidden; own cursor follows smoothly | ✅ |
+| **F3** | L/R clicks (effects + color/size/duration/curve), sound, hotkeys, presets | Hotkeys in the OBS tab; L and R distinct; presets by hotkey | ✅ |
+| **F4** | Zoom/Pan: spring, auto-zoom (click/cursor), manual zoom, light pan | Adjustable curve/duration/speed/idle; no "jump" | ✅ |
+| **F5** | Key overlay, spotlight, drag highlighter (webcam bubble → F6) | Sharp text at any scale | ✅ (no webcam) |
+| **F6** | Own capture source + own audio | Choose the screen in the TopScreen UI; audio through the source channel | ⬜ |
+| **F7** | Wayland parity: `GlobalShortcuts` portal + evdev, CI 2 OBS versions, polish | Input matrix green on X11 and Wayland | ⬜ |
 
-### Detalhe do que está implementado vs verificado
+### Detail of what is implemented vs verified
 
-| Fase | Implementado | Verificado por testes | Verificado no OBS |
+| Phase | Implemented | Verified by tests | Verified in OBS |
 |------|--------------|-----------------------|-------------------|
-| F0 | sim | — | sim |
-| F1 | sim | sim (núcleo) | sim |
-| F2 | sim | sim (núcleo) | sim |
-| F3 | sim (som via áudio do sistema) | sim (núcleo) | sim |
-| F4 | sim | sim (núcleo) | sim |
+| F0 | yes | — | yes |
+| F1 | yes | yes (core) | yes |
+| F2 | yes | yes (core) | yes |
+| F3 | yes (sound via system audio) | yes (core) | yes |
+| F4 | yes | yes (core) | yes |
 
-## Metas transversais
+## Cross-cutting goals
 
-- 0,5–1,5 ms de GPU/frame @1080p60 no preset padrão.
-- < 1% de CPU ocioso.
-- Sem alocações no caminho quente de render.
-- Sem readback de frame.
+- 0.5–1.5 ms of GPU/frame @1080p60 on the default preset.
+- < 1% idle CPU.
+- No allocations on the hot render path.
+- No frame readback.
 
-## Marcos de qualidade
+## Quality milestones
 
-- **M1 (após F3)**: plugin utilizável de ponta a ponta para captura "bonita" ao vivo.
-- **M2 (após F5)**: paridade de features com a lista de efeitos ao vivo.
-- **M3 (após F7)**: paridade de plataforma Windows/X11/Wayland.
+- **M1 (after F3)**: plugin usable end to end for "nice" live capture.
+- **M2 (after F5)**: feature parity with the live effects list.
+- **M3 (after F7)**: Windows/X11/Wayland platform parity.

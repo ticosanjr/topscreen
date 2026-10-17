@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 #
-# Compila o TopScreen (plugin + testes) e roda os testes do nucleo.
+# Builds TopScreen (plugin + tests) and runs the core tests.
 #
-# Uso:
-#   scripts/build.sh                 # plugin + testes, e roda os testes
-#   scripts/build.sh --tests-only    # so os testes (nao precisa de libobs)
-#   scripts/build.sh --no-test       # so compila
-#   scripts/build.sh -- <args cmake> # argumentos extras para o cmake
+# Usage:
+#   scripts/build.sh                 # plugin + tests, and runs the tests
+#   scripts/build.sh --tests-only    # tests only (no libobs needed)
+#   scripts/build.sh --no-test       # build only
+#   scripts/build.sh -- <cmake args> # extra arguments for cmake
 #
 set -uo pipefail
 
@@ -32,23 +32,23 @@ log() { printf '\033[1m%s\033[0m\n' "$*"; }
 err() { printf '\033[31m%s\033[0m\n' "$*" >&2; }
 
 command -v cmake >/dev/null || {
-	err "cmake nao encontrado. Instale: sudo apt install cmake build-essential"
+	err "cmake not found. Install: sudo apt install cmake build-essential"
 	exit 1
 }
 
 PLUGIN=ON
 [ "$TESTS_ONLY" = 1 ] && PLUGIN=OFF
 
-log "Configurando (plugin=$PLUGIN) ..."
+log "Configuring (plugin=$PLUGIN) ..."
 cmake -S "$ROOT" -B "$BUILD" -DCMAKE_BUILD_TYPE=Release \
 	-DTOPSCREEN_BUILD_PLUGIN="$PLUGIN" -DTOPSCREEN_BUILD_TESTS=ON "${EXTRA[@]}" || exit $?
 
-log "Compilando (-j$JOBS) ..."
+log "Building (-j$JOBS) ..."
 cmake --build "$BUILD" -j"$JOBS" || exit $?
 
 if [ "$RUN_TESTS" = 1 ]; then
-	log "Rodando testes ..."
+	log "Running tests ..."
 	ctest --test-dir "$BUILD" --output-on-failure || exit $?
 fi
 
-log "Build concluido (build: $BUILD)"
+log "Build complete (build: $BUILD)"

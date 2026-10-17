@@ -28,7 +28,7 @@ void Spring::set_target(double target)
 
 double Spring::update(double dt)
 {
-	/* Limita dt para estabilidade em quedas de frame. */
+	/* Clamps dt for stability during frame drops. */
 	if (dt > 0.05)
 		dt = 0.05;
 	if (dt <= 0.0)
@@ -38,9 +38,9 @@ double Spring::update(double dt)
 	const double c = 2.0 * damping_ * std::sqrt(k);
 
 	/*
-	 * Integracao semi-implicita e estavel apenas se h <= ~0.25/sqrt(k).
-	 * Para rigidezes altas subdividimos o passo (substeps), evitando
-	 * divergencia quando o frame rate cai.
+	 * Semi-implicit integration is stable only if h <= ~0.25/sqrt(k).
+	 * For high stiffness we subdivide the step (substeps), avoiding
+	 * divergence when the frame rate drops.
 	 */
 	double max_h = (k > 0.0) ? (0.25 / std::sqrt(k)) : dt;
 	if (max_h <= 0.0 || max_h > dt)

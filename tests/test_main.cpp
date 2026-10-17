@@ -13,9 +13,9 @@ int main()
 		try {
 			c.fn();
 		} catch (const std::exception &e) {
-			tst::fail(__FILE__, __LINE__, std::string("excecao: ") + e.what());
+			tst::fail(__FILE__, __LINE__, std::string("exception: ") + e.what());
 		} catch (...) {
-			tst::fail(__FILE__, __LINE__, "excecao desconhecida");
+			tst::fail(__FILE__, __LINE__, "unknown exception");
 		}
 		if (tst::failures() > before) {
 			++failed;
@@ -25,7 +25,7 @@ int main()
 		}
 	}
 
-	std::printf("\nTotal: %zu testes | %d verificacoes | %d falhas\n", reg.size(), tst::checks(),
+	std::printf("\nTotal: %zu tests | %d checks | %d failures\n", reg.size(), tst::checks(),
 		    tst::failures());
 	return failed == 0 ? 0 : 1;
 }

@@ -7,9 +7,9 @@
 namespace topscreen::core {
 
 /**
- * Conversao de cor.
+ * Color conversion.
  *
- * O OBS armazena cores como inteiro no formato 0xAABBGGRR (byte baixo = R).
+ * OBS stores colors as an integer in the 0xAABBGGRR format (low byte = R).
  */
 inline Rgba unpack_abgr(uint32_t c)
 {
@@ -33,7 +33,7 @@ inline uint32_t pack_abgr(const Rgba &c)
 	return q(c.r) | (q(c.g) << 8) | (q(c.b) << 16) | (q(c.a) << 24);
 }
 
-/** Interpolacao linear entre duas cores (t recortado em 0..1). */
+/** Linear interpolation between two colors (t clamped to 0..1). */
 inline Rgba lerp_color(const Rgba &a, const Rgba &b, float t)
 {
 	if (t < 0.0f)
@@ -49,10 +49,10 @@ inline Rgba lerp_color(const Rgba &a, const Rgba &b, float t)
 }
 
 /**
- * Converte a cor do obs_data/propriedades (0xAABBGGRR) para o formato que
- * `gs_effect_set_color` espera (0xAARRGGBB) - ou seja, troca R e B.
+ * Converts the color from obs_data/properties (0xAABBGGRR) to the format that
+ * `gs_effect_set_color` expects (0xAARRGGBB) - that is, it swaps R and B.
  *
- * Sem isso, vermelho aparece como azul na tela.
+ * Without this, red appears as blue on screen.
  */
 inline uint32_t abgr_to_argb(uint32_t v)
 {

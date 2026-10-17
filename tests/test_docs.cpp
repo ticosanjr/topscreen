@@ -19,7 +19,7 @@ std::string read_text(const std::string &path)
 	return ss.str();
 }
 
-/* Extrai os valores das constantes de src/core/keys.hpp. */
+/* Extracts the values of the constants declared in src/core/keys.hpp. */
 std::set<std::string> keys_from_header(const std::string &path)
 {
 	std::set<std::string> keys;
@@ -44,11 +44,11 @@ bool contains(const std::string &haystack, const std::string &needle)
 
 } // namespace
 
-/* A referencia de configuracao deve documentar TODAS as chaves. */
-TEST(docs_documentam_todas_as_chaves)
+/* The configuration reference must document EVERY key. */
+TEST(docs_document_every_key)
 {
 	const std::string keys_hpp = std::string(TOPSCREEN_SOURCE_DIR) + "/src/core/keys.hpp";
-	const std::string config_md = std::string(TOPSCREEN_SOURCE_DIR) + "/docs/CONFIGURACAO.md";
+	const std::string config_md = std::string(TOPSCREEN_SOURCE_DIR) + "/docs/CONFIGURATION.md";
 
 	const auto keys = keys_from_header(keys_hpp);
 	CHECK(!keys.empty());
@@ -59,16 +59,16 @@ TEST(docs_documentam_todas_as_chaves)
 	for (const auto &k : keys) {
 		++tst::checks();
 		if (!contains(doc, k))
-			tst::fail(__FILE__, __LINE__, "chave ausente em docs/CONFIGURACAO.md: " + k);
+			tst::fail(__FILE__, __LINE__, "key missing from docs/CONFIGURATION.md: " + k);
 	}
 }
 
-/* Os atalhos do codigo devem estar na referencia com o id TopScreen.<Acao>. */
-TEST(docs_referencia_cita_atalhos)
+/* Every hotkey in the code must be listed in the reference as TopScreen.<Action>. */
+TEST(docs_reference_lists_hotkeys)
 {
 	const std::string hotkeys =
 		read_text(std::string(TOPSCREEN_SOURCE_DIR) + "/src/hotkeys/ts-hotkeys.cpp");
-	const std::string doc = read_text(std::string(TOPSCREEN_SOURCE_DIR) + "/docs/CONFIGURACAO.md");
+	const std::string doc = read_text(std::string(TOPSCREEN_SOURCE_DIR) + "/docs/CONFIGURATION.md");
 	CHECK(!doc.empty());
 
 	const char *actions[] = {"ToggleEffects", "ToggleBackground", "ZoomIn",
@@ -78,11 +78,11 @@ TEST(docs_referencia_cita_atalhos)
 	for (const char *a : actions) {
 		++tst::checks();
 		if (!contains(hotkeys, a))
-			tst::fail(__FILE__, __LINE__, std::string("acao de atalho ausente no codigo: ") + a);
+			tst::fail(__FILE__, __LINE__, std::string("hotkey action missing from the code: ") + a);
 
 		++tst::checks();
 		const std::string id = std::string("TopScreen.") + a;
 		if (!contains(doc, id))
-			tst::fail(__FILE__, __LINE__, "atalho ausente em docs/CONFIGURACAO.md: " + id);
+			tst::fail(__FILE__, __LINE__, "hotkey missing from docs/CONFIGURATION.md: " + id);
 	}
 }

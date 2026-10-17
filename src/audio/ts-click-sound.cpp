@@ -21,7 +21,7 @@ namespace topscreen {
 namespace {
 
 #if !defined(_WIN32)
-/** Procura um player de audio no PATH (paplay/pw-play/aplay). */
+/** Looks for an audio player in PATH (paplay/pw-play/aplay). */
 std::string find_player()
 {
 	const char *candidates[] = {"paplay", "pw-play", "aplay"};
@@ -60,7 +60,7 @@ bool ClickSound::load(const char *module_file)
 
 	char *file_path = obs_module_file(module_file);
 	if (!file_path) {
-		blog(LOG_WARNING, "[TopScreen] som nao encontrado: %s", module_file);
+		blog(LOG_WARNING, "[TopScreen] sound not found: %s", module_file);
 		return false;
 	}
 
@@ -74,7 +74,7 @@ bool ClickSound::load(const char *module_file)
 	std::string err;
 	core::WavData wav;
 	if (!core::wav_parse(bytes.data(), bytes.size(), &wav, &err)) {
-		blog(LOG_WARNING, "[TopScreen] WAV invalido (%s): %s", module_file, err.c_str());
+		blog(LOG_WARNING, "[TopScreen] invalid WAV (%s): %s", module_file, err.c_str());
 		bfree(file_path);
 		return false;
 	}
@@ -88,10 +88,10 @@ bool ClickSound::load(const char *module_file)
 #if !defined(_WIN32)
 	player_ = find_player();
 	if (player_.empty())
-		blog(LOG_WARNING, "[TopScreen] nenhum player de audio encontrado para o som de clique");
+		blog(LOG_WARNING, "[TopScreen] no audio player found for the click sound");
 #endif
 
-	blog(LOG_INFO, "[TopScreen] som carregado: %s (%d Hz, %d canais)", module_file, wav_.sample_rate,
+	blog(LOG_INFO, "[TopScreen] sound loaded: %s (%d Hz, %d channels)", module_file, wav_.sample_rate,
 	     wav_.channels);
 	return true;
 }
@@ -115,7 +115,7 @@ void ClickSound::play()
 	if (player_.empty())
 		return;
 
-	/* Double-fork para nao bloquear nem deixar zumbis. */
+	/* Double-fork to avoid blocking and leaving zombies. */
 	const pid_t pid = ::fork();
 	if (pid == 0) {
 		::setsid();

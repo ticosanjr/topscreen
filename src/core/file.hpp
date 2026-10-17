@@ -7,7 +7,7 @@
 
 namespace topscreen::core {
 
-/* Leitura de arquivos pequenos (fontes, atlas, presets, wallpapers). */
+/* Reading small files (fonts, atlas, presets, wallpapers). */
 inline bool read_file_bytes(const char *path, std::vector<uint8_t> *out)
 {
 	if (!path || !out)

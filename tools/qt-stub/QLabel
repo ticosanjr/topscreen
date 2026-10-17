@@ -3,7 +3,7 @@
 #include "QString"
 #include "QWidget"
 
-/* Stub minimo de QLabel (apenas para checagem de compilacao do dock). */
+/* Minimal stub for QLabel (only for the dock compile check). */
 class QLabel : public QWidget {
 public:
 	explicit QLabel(const QString &text, QWidget *parent = nullptr) : QWidget(parent) { (void)text; }

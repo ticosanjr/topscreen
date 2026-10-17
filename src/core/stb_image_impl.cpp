@@ -1,4 +1,4 @@
-// Instancia a implementacao do stb_image neste translation unit.
+// Instantiates the stb_image implementation in this translation unit.
 #if defined(__GNUC__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-function"

@@ -12,7 +12,7 @@ namespace topscreen::core {
 inline constexpr uint32_t kCursorAtlasVersion = 1;
 inline constexpr char kCursorAtlasMagic[4] = {'T', 'S', 'A', 'T'};
 
-/** Atlas de cursores: `count` celulas de `cell` x `cell` (RGBA8, empilhadas). */
+/** Cursor atlas: `count` cells of `cell` x `cell` (RGBA8, stacked). */
 struct CursorAtlas {
 	uint32_t cell = 0;
 	uint32_t count = 0;
@@ -23,10 +23,10 @@ struct CursorAtlas {
 	bool empty() const { return count == 0 || pixels.empty(); }
 };
 
-/** Le o formato TSAT (magic/version/cell/count + pixels RGBA8). */
+/** Reads the TSAT format (magic/version/cell/count + RGBA8 pixels). */
 bool cursor_atlas_parse(const uint8_t *data, size_t size, CursorAtlas *out, std::string *error);
 
-/** Le os hotspots (0..1) do atlas.json, na mesma ordem das celulas. */
+/** Reads the hotspots (0..1) from atlas.json, in the same order as the cells. */
 bool cursor_hotspots_parse(const std::string &json_text, std::vector<Vec2f> *out, std::string *error);
 
 } // namespace topscreen::core

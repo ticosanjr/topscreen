@@ -3,10 +3,10 @@
 #include <cstdint>
 
 /**
- * Tipos e enums compartilhados do nucleo (independentes do OBS).
+ * Core shared types and enums (independent of OBS).
  *
- * Os valores inteiros dos enums sao estaveis: eles sao persistidos em obs_data
- * e usados em arquivos de preset. Nao reordene sem migrar.
+ * The integer values of the enums are stable: they are persisted in obs_data
+ * and used in preset files. Do not reorder without migrating.
  */
 namespace topscreen::core {
 
@@ -45,7 +45,7 @@ enum class CursorStyle : int {
 	Count = 12,
 };
 
-/** Tipos de efeito de clique. */
+/** Click effect types. */
 enum class ClickEffect : int {
 	Ripple = 0,
 	Orb = 1,

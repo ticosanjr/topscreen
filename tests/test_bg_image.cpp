@@ -6,18 +6,18 @@
 using namespace topscreen::core;
 
 /*
- * A interface mantem "wallpaper" e "imagem do PC" mutuamente exclusivos; esta
- * funcao define quem vence se os dois vierem preenchidos (arquivo do PC).
+ * The UI keeps "wallpaper" and "PC image" mutually exclusive; this
+ * function defines which one wins if both come filled in (the PC file).
  */
 TEST(bg_resolve_path)
 {
 	CHECK_EQ(std::string(resolve_bg_path("wallpapers/aurora.jpg", "")),
 		 std::string("wallpapers/aurora.jpg"));
 
-	CHECK_EQ(std::string(resolve_bg_path("wallpapers/aurora.jpg", "/tmp/minha.png")),
-		 std::string("/tmp/minha.png"));
+	CHECK_EQ(std::string(resolve_bg_path("wallpapers/aurora.jpg", "/tmp/my-image.png")),
+		 std::string("/tmp/my-image.png"));
 
-	CHECK_EQ(std::string(resolve_bg_path("", "/tmp/minha.png")), std::string("/tmp/minha.png"));
+	CHECK_EQ(std::string(resolve_bg_path("", "/tmp/my-image.png")), std::string("/tmp/my-image.png"));
 
 	CHECK_EQ(std::string(resolve_bg_path("", "")), std::string(""));
 

@@ -3,7 +3,7 @@
 #include "QString"
 #include "QWidget"
 
-/* Stub minimo de QCheckBox (apenas para checagem de compilacao do dock). */
+/* Minimal stub for QCheckBox (only for the dock compile check). */
 class QCheckBox : public QWidget {
 public:
 	explicit QCheckBox(const QString &text, QWidget *parent = nullptr) : QWidget(parent) { (void)text; }

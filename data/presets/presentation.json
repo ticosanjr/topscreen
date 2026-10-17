@@ -1,6 +1,6 @@
 {
-    "name": "Apresentacao",
-    "description": "Fundo escuro, sem zoom e sem som. Foco em legibilidade.",
+    "name": "Presentation",
+    "description": "Dark background, no zoom and no sound. Focus on readability.",
     "settings": {
         "effects_enabled": true,
         "bg_enabled": true,

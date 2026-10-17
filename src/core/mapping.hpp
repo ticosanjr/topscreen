@@ -5,28 +5,28 @@
 namespace topscreen::core {
 
 /**
- * Area (em pixels de saida) onde a tela capturada e desenhada.
+ * Area (in output pixels) where the captured screen is drawn.
  *
- * Determinada pelo padding (x/y) e, opcionalmente, por "manter proporcao".
+ * Determined by the padding (x/y) and, optionally, by "keep aspect".
  */
 struct ContentArea {
-	Vec2f origin; // canto superior esquerdo
-	Vec2f size;   // largura/altura
+	Vec2f origin; // top-left corner
+	Vec2f size;   // width/height
 };
 
 ContentArea content_area(double target_w, double target_h, double pad_x, double pad_y, bool keep_aspect);
 
 /**
- * Posicao EXIBIDA (content uv) de um ponto da FONTE (source uv).
+ * DISPLAYED position (content uv) of a point of the SOURCE (source uv).
  *
- * Com zoom `z` e foco `f`, um ponto `s` da fonte aparece em `f + (s - f) * z`
- * (zoom "para frente": o que esta longe do foco se afasta dele).
+ * With zoom `z` and focus `f`, a point `s` of the source appears at `f + (s - f) * z`
+ * ("forward" zoom: what is far from the focus moves away from it).
  *
- * Isto e o inverso da amostragem do shader (`u = f + (c - f) / z`).
+ * This is the inverse of the shader's sampling (`u = f + (c - f) / z`).
  */
 Vec2f source_to_display(double s_x, double s_y, double focus_x, double focus_y, double zoom);
 
-/** Pixel de saida de um ponto da fonte (fonte -> exibicao -> pixel). */
+/** Output pixel of a source point (source -> display -> pixel). */
 Vec2f source_to_pixel(double s_x, double s_y, double focus_x, double focus_y, double zoom,
 		      const ContentArea &area);
 

@@ -1,11 +1,11 @@
 name: Build plugin
 
-# Workflow manual (best-effort) para compilar o plugin contra o libobs.
-# Execute em Actions > Build plugin > Run workflow.
+# Manual workflow (best-effort) to build the plugin against libobs.
+# Run it in Actions > Build plugin > Run workflow.
 #
-# O build do plugin depende do libobs/obs-frontend-api/Qt6 do ambiente. Ajuste
-# CMAKE_PREFIX_PATH conforme a instalacao (ver docs/BUILD.md). O job de testes
-# do nucleo (tests.yml) roda automaticamente em push/PR.
+# The plugin build depends on the environment's libobs/obs-frontend-api/Qt6. Adjust
+# CMAKE_PREFIX_PATH according to the installation (see docs/BUILD.md). The core
+# tests job (tests.yml) runs automatically on push/PR.
 
 on:
   workflow_dispatch:
@@ -26,14 +26,14 @@ jobs:
           if pkg-config --exists libobs; then
             cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
           else
-            echo "::warning::libobs não encontrado. Defina CMAKE_PREFIX_PATH para uma instalação do OBS."
+            echo "::warning::libobs not found. Set CMAKE_PREFIX_PATH to an OBS installation."
             cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DTOPSCREEN_BUILD_TESTS=ON || true
           fi
 
       - name: Build
         run: cmake --build build -j || true
 
-      - name: Tests (se compilou)
+      - name: Tests (if it built)
         run: ctest --test-dir build --output-on-failure || true
 
   windows:

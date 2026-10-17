@@ -15,11 +15,11 @@
 namespace topscreen {
 
 /**
- * Compositor: dona do efeito GPU do TopScreen.
+ * Compositor: owns the TopScreen GPU effect.
  *
- * Recebe o frame da fonte-pai via obs_source_process_filter_* e desenha a
- * composicao (fundo, cantos, sombra, zoom/pan, cursor e efeitos de clique)
- * em um unico passe.
+ * Receives the parent source's frame via obs_source_process_filter_* and draws the
+ * composition (background, corners, shadow, zoom/pan, cursor and click effects)
+ * in a single pass.
  */
 class Compositor {
 public:
@@ -87,7 +87,7 @@ private:
 	gs_eparam_t *p_highlight_color_ = nullptr;
 	gs_eparam_t *p_highlight_alpha_ = nullptr;
 
-	/* Slots de clique explicitos (o shader nao usa arrays de uniform). */
+	/* Explicit click slots (the shader does not use uniform arrays). */
 	struct ClickParams {
 		gs_eparam_t *pos = nullptr;
 		gs_eparam_t *prog = nullptr;
@@ -101,12 +101,12 @@ private:
 
 	TextRenderer text_;
 
-	/* Atlas de cursores (bitmaps dos estilos). */
+	/* Cursor atlas (style bitmaps). */
 	gs_texture_t *cursor_tex_ = nullptr;
 	core::CursorAtlas cursor_atlas_;
 	std::vector<core::Vec2f> cursor_hotspots_;
 
-	/* Wallpaper de fundo. */
+	/* Background wallpaper. */
 	gs_texture_t *bg_tex_ = nullptr;
 	std::string bg_loaded_;
 	std::string bg_requested_;

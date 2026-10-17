@@ -46,7 +46,7 @@ bool TextRenderer::reload_font(const std::string &module_file)
 
 	std::vector<uint8_t> ttf;
 	if (!read_module_bytes(module_file.c_str(), &ttf)) {
-		blog(LOG_WARNING, "[TopScreen] fonte nao encontrada: %s", module_file.c_str());
+		blog(LOG_WARNING, "[TopScreen] font not found: %s", module_file.c_str());
 		return false;
 	}
 
@@ -56,7 +56,7 @@ bool TextRenderer::reload_font(const std::string &module_file)
 	core::FontAtlas atlas;
 	std::string err;
 	if (!core::font_atlas_build(ttf.data(), ttf.size(), opt, &atlas, &err)) {
-		blog(LOG_WARNING, "[TopScreen] falha ao gerar o atlas da fonte: %s", err.c_str());
+		blog(LOG_WARNING, "[TopScreen] failed to build the font atlas: %s", err.c_str());
 		return false;
 	}
 
@@ -71,7 +71,7 @@ bool TextRenderer::reload_font(const std::string &module_file)
 	obs_leave_graphics();
 
 	if (!texture_) {
-		blog(LOG_WARNING, "[TopScreen] falha ao criar a textura da fonte");
+		blog(LOG_WARNING, "[TopScreen] failed to create the font texture");
 		return false;
 	}
 
@@ -91,7 +91,7 @@ bool TextRenderer::load(const char *ttf_module_file, const char *effect_module_f
 
 	char *fx_path = obs_module_file(effect_module_file);
 	if (!fx_path) {
-		blog(LOG_WARNING, "[TopScreen] efeito de texto nao encontrado: %s", effect_module_file);
+		blog(LOG_WARNING, "[TopScreen] text effect not found: %s", effect_module_file);
 		return false;
 	}
 
@@ -107,7 +107,7 @@ bool TextRenderer::load(const char *ttf_module_file, const char *effect_module_f
 	bfree(fx_path);
 
 	if (!effect_) {
-		blog(LOG_WARNING, "[TopScreen] falha ao criar o efeito de texto");
+		blog(LOG_WARNING, "[TopScreen] failed to create the text effect");
 		release();
 		return false;
 	}

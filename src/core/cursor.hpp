@@ -8,13 +8,13 @@ namespace topscreen::core {
 struct CursorConfig {
 	bool enabled = true;
 	int style = static_cast<int>(CursorStyle::MacOs);
-	double size = 1.4;     // multiplicador de tamanho
+	double size = 1.4;     // size multiplier
 	bool shadow = true;
-	double smooth = 0.0;   // 0 = segue o mouse exatamente
-	double sway = 0.0;     // 0..1 -> inclinacao na curva
-	bool hide_idle = true; // oculta quando parado
+	double smooth = 0.0;   // 0 = follows the mouse exactly
+	double sway = 0.0;     // 0..1 -> tilt on the curve
+	bool hide_idle = true; // hides when idle
 	double idle_delay_ms = 1200.0;
-	bool loop = false; // volta ao inicio quando parado
+	bool loop = false; // returns to the start when idle
 	double loop_ms = 4000.0;
 };
 
@@ -28,22 +28,22 @@ struct CursorRender {
 };
 
 /**
- * Modelo de cursor: suavizacao, sway, idle e loop.
+ * Cursor model: smoothing, sway, idle and loop.
  *
- * Trabalha em coordenadas de conteudo (0..1). Nao desenha nada; apenas produz
- * o estado que o compositor usa para renderizar.
+ * Works in content coordinates (0..1). Draws nothing; it only produces
+ * the state that the compositor uses to render.
  */
 class CursorModel {
 public:
 	void configure(const CursorConfig &cfg);
 
-	/** Define a posicao inicial (e o ponto de retorno do loop). */
+	/** Sets the starting position (and the loop's return point). */
 	void reset(double x, double y, double now_ms);
 
-	/** Define a posicao alvo (posicao real do ponteiro). */
+	/** Sets the target position (real pointer position). */
 	void set_target(double x, double y, double now_ms);
 
-	/** Avanca a simulacao ate now_ms. */
+	/** Advances the simulation up to now_ms. */
 	void update(double now_ms);
 
 	CursorRender render() const;

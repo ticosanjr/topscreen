@@ -4,7 +4,7 @@
     "author": "TopScreen contributors",
     "website": "https://example.invalid/topscreen",
     "displayName": "TopScreen",
-    "description": "Efeitos de captura de tela ao vivo para OBS Studio.",
+    "description": "Live screen capture effects for OBS Studio.",
     "platformConfig": {
         "macos": {
             "bundleId": "com.example.topscreen"

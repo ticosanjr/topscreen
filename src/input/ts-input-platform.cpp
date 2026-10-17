@@ -1,13 +1,13 @@
 #include "ts-input.hpp"
 
 /*
- * Backends de input por plataforma.
+ * Platform input backends.
  *
- *   - Windows: WinAPI (cursor + botoes + scan de teclas)  -> Tier 1
- *   - Linux:   X11 para cursor/botoes (Tier 1) e evdev para teclas (Tier 3)
- *   - Sem backend: degradacao graciosa (Tier 4)
+ *   - Windows: WinAPI (cursor + buttons + key scan)  -> Tier 1
+ *   - Linux:   X11 for cursor/buttons (Tier 1) and evdev for keys (Tier 3)
+ *   - No backend: graceful degradation (Tier 4)
  *
- * Tier 2 (portal GlobalShortcuts) entra em F7; ver docs/INPUT-E-PLATAFORMAS.md.
+ * Tier 2 (GlobalShortcuts portal) is planned for F7; see docs/INPUT-AND-PLATFORMS.md.
  */
 
 #if defined(_WIN32)
@@ -244,7 +244,7 @@ int evdev_open_keyboard()
 			continue;
 
 		if (evdev_is_keyboard(fd)) {
-			blog(LOG_INFO, "[TopScreen] evdev: usando %s", path);
+			blog(LOG_INFO, "[TopScreen] evdev: using %s", path);
 			return fd;
 		}
 		::close(fd);
@@ -263,13 +263,13 @@ void *ts_input_platform_start(obs_source_t *source)
 #if defined(TOPSCREEN_HAVE_X11)
 	s->dpy = XOpenDisplay(nullptr);
 	if (!s->dpy)
-		blog(LOG_INFO, "[TopScreen] X11 indisponivel (cursor/rotação por X11 desativados)");
+		blog(LOG_INFO, "[TopScreen] X11 unavailable (X11 cursor/rotation disabled)");
 #endif
 
 #if defined(TOPSCREEN_HAVE_EVDEV)
 	s->fd = evdev_open_keyboard();
 	if (s->fd < 0)
-		blog(LOG_INFO, "[TopScreen] evdev indisponivel (permissao em /dev/input?)");
+		blog(LOG_INFO, "[TopScreen] evdev unavailable (permission on /dev/input?)");
 #endif
 
 	return s;
@@ -308,7 +308,7 @@ void ts_input_platform_poll(void *state, InputState *out)
 
 	out->key_count = 0;
 
-	/* Cursor e botoes (X11) */
+	/* Cursor and buttons (X11) */
 #if defined(TOPSCREEN_HAVE_X11)
 	if (x11) {
 		Window root = DefaultRootWindow(s->dpy);
@@ -328,7 +328,7 @@ void ts_input_platform_poll(void *state, InputState *out)
 	}
 #endif
 
-	/* Teclas: evdev tem prioridade (funciona tambem no Wayland). */
+	/* Keys: evdev has priority (it also works on Wayland). */
 	bool keys_done = false;
 #if defined(TOPSCREEN_HAVE_EVDEV)
 	if (evdev) {
@@ -367,7 +367,7 @@ void ts_input_platform_poll(void *state, InputState *out)
 	}
 #endif
 
-	/* Fallback de teclas por X11 */
+	/* X11 key fallback */
 #if defined(TOPSCREEN_HAVE_X11)
 	if (x11 && !keys_done) {
 		char keys[32] = {};
@@ -393,7 +393,7 @@ void ts_input_platform_poll(void *state, InputState *out)
 	}
 #endif
 
-	/* Tier: 1 se ha cursor nativo (X11); 3 se so temos teclas via evdev. */
+	/* Tier: 1 if there is a native cursor (X11); 3 if we only have keys via evdev. */
 	if (x11)
 		out->tier = 1;
 	else if (evdev)
@@ -406,7 +406,7 @@ void ts_input_platform_poll(void *state, InputState *out)
 
 #else
 
-/* Sem backend nativo: input indisponivel (degradacao graciosa - Tier 4). */
+/* No native backend: input unavailable (graceful degradation - Tier 4). */
 
 #include <cstdlib>
 
@@ -433,8 +433,8 @@ void ts_input_platform_poll(void *state, InputState *out)
 	out->key_count = 0;
 
 	/*
-	 * Gancho de depuracao: com TOPSCREEN_DEBUG_KEY definida, injeta essa tecla
-	 * periodicamente para que o overlay possa ser testado sem back-end de input.
+	 * Debug hook: with TOPSCREEN_DEBUG_KEY defined, injects that key
+	 * periodically so the overlay can be tested without an input back-end.
 	 */
 	static int counter = 0;
 	const char *debug = std::getenv("TOPSCREEN_DEBUG_KEY");

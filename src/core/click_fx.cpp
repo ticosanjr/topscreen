@@ -4,7 +4,7 @@ namespace topscreen::core {
 
 void ClickFxModel::spawn(double x, double y, double now_ms, bool right)
 {
-	/* Procura um slot livre; se nao houver, recicla o mais antigo. */
+	/* Looks for a free slot; if there is none, recycles the oldest. */
 	int index = -1;
 	for (int i = 0; i < kMaxSlots; ++i) {
 		const int idx = (next_ + i) % kMaxSlots;

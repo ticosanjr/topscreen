@@ -1,11 +1,11 @@
-# Fontes
+# Fonts
 
 ## DejaVuSans-Bold.ttf
 
-- Origem: projeto DejaVu (https://dejavu-fonts.github.io/).
-- Licença: Bitstream Vera Fonts Copyright + adições em domínio público
-  (ver `http://dejavu-fonts.org/wiki/License`). Redistribuição permitida.
-- Uso: geração do atlas de texto para o overlay de teclas.
+- Source: DejaVu project (https://dejavu-fonts.github.io/).
+- License: Bitstream Vera Fonts Copyright + public domain additions
+  (see `http://dejavu-fonts.org/wiki/License`). Redistribution permitted.
+- Use: generation of the text atlas for the key overlay.
 
-Se quiser trocar a fonte, substitua este arquivo (mesmo nome) ou aponte em
-`src/render/ts-compositor.cpp` (`text_.load("fonts/<arquivo>.ttf", ...)`).
+If you want to change the font, replace this file (same name) or point to it in
+`src/render/ts-compositor.cpp` (`text_.load("fonts/<file>.ttf", ...)`).

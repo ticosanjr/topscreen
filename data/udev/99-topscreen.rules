@@ -1,11 +1,11 @@
-# TopScreen - acesso a /dev/input para input passivo (Tier 3, Linux/Wayland).
+# TopScreen - access to /dev/input for passive input (Tier 3, Linux/Wayland).
 #
-# Instale em /etc/udev/rules.d/99-topscreen.rules e recarregue:
+# Install in /etc/udev/rules.d/99-topscreen.rules and reload:
 #   sudo cp 99-topscreen.rules /etc/udev/rules.d/
 #   sudo udevadm control --reload-rules && sudo udevadm trigger
 #
-# O tag "uaccess" faz o logind conceder acesso a sessao ativa.
-# Alternativa (menos granular): adicionar o usuario ao grupo "input".
+# The "uaccess" tag makes logind grant access to the active session.
+# Alternative (less granular): add the user to the "input" group.
 
 SUBSYSTEM=="input", GROUP="input"
 

@@ -16,7 +16,7 @@ std::string effect_path()
 	return std::string(TOPSCREEN_TEST_DATA_DIR) + "/effects/topscreen.effect";
 }
 
-/* Le o .effect removendo comentarios de linha. */
+/* Reads the .effect removing line comments. */
 std::string read_effect()
 {
 	std::ifstream in(effect_path());
@@ -31,7 +31,7 @@ std::string read_effect()
 	return out.str();
 }
 
-/* Le os nomes de uniform declarados no .effect (ignora comentarios). */
+/* Reads the uniform names declared in the .effect (ignores comments). */
 std::set<std::string> read_uniforms(bool *has_draw_technique)
 {
 	std::set<std::string> names;
@@ -71,11 +71,11 @@ std::set<std::string> read_uniforms(bool *has_draw_technique)
 } // namespace
 
 /*
- * O compositor (ts-compositor.cpp) faz lookup destes uniforms por nome, sem
- * checagem em runtime. Se o shader renomear/remover um deles, o efeito falha
- * em silencio. Este teste pega essa divergencia.
+ * The compositor (ts-compositor.cpp) looks up these uniforms by name, with no
+ * runtime check. If the shader renames/removes one of them, the effect fails
+ * silently. This test catches that divergence.
  */
-TEST(shader_tem_uniforms_esperados)
+TEST(shader_has_expected_uniforms)
 {
 	bool has_draw = false;
 	const std::set<std::string> uniforms = read_uniforms(&has_draw);
@@ -104,12 +104,12 @@ TEST(shader_tem_uniforms_esperados)
 	for (const char *name : required) {
 		++tst::checks();
 		if (uniforms.find(name) == uniforms.end())
-			tst::fail(__FILE__, __LINE__, std::string("uniform ausente no shader: ") + name);
+			tst::fail(__FILE__, __LINE__, std::string("uniform missing from shader: ") + name);
 	}
 }
 
-/* O shader deve conter a tecnica usada pelo filtro. */
-TEST(shader_tem_tecnica_draw)
+/* The shader must contain the technique used by the filter. */
+TEST(shader_has_draw_technique)
 {
 	bool has_draw = false;
 	read_uniforms(&has_draw);
@@ -126,13 +126,13 @@ std::string read_text_file(const std::string &path)
 	return out.str();
 }
 
-/* Checagens estruturais basicas de um .effect. */
+/* Basic structural checks of a .effect. */
 void check_effect_structure(const std::string &name)
 {
 	const std::string text = read_text_file(std::string(TOPSCREEN_TEST_DATA_DIR) + "/effects/" + name);
 	++tst::checks();
 	if (text.empty()) {
-		tst::fail(__FILE__, __LINE__, "effect vazio ou ausente: " + name);
+		tst::fail(__FILE__, __LINE__, "effect empty or missing: " + name);
 		return;
 	}
 
@@ -145,45 +145,45 @@ void check_effect_structure(const std::string &name)
 	}
 	++tst::checks();
 	if (balance != 0)
-		tst::fail(__FILE__, __LINE__, "chaves desbalanceadas em " + name);
+		tst::fail(__FILE__, __LINE__, "unbalanced braces in " + name);
 
 	++tst::checks();
 	if (text.find("technique ") == std::string::npos)
-		tst::fail(__FILE__, __LINE__, "sem tecnica em " + name);
+		tst::fail(__FILE__, __LINE__, "no technique in " + name);
 	++tst::checks();
 	if (text.find("pass") == std::string::npos)
-		tst::fail(__FILE__, __LINE__, "sem pass em " + name);
+		tst::fail(__FILE__, __LINE__, "no pass in " + name);
 	++tst::checks();
 	if (text.find("vertex_shader") == std::string::npos)
-		tst::fail(__FILE__, __LINE__, "sem vertex_shader em " + name);
+		tst::fail(__FILE__, __LINE__, "no vertex_shader in " + name);
 	++tst::checks();
 	if (text.find("pixel_shader") == std::string::npos)
-		tst::fail(__FILE__, __LINE__, "sem pixel_shader em " + name);
+		tst::fail(__FILE__, __LINE__, "no pixel_shader in " + name);
 	++tst::checks();
 	if (text.find("uniform float4x4 ViewProj") == std::string::npos)
-		tst::fail(__FILE__, __LINE__, "sem ViewProj em " + name);
+		tst::fail(__FILE__, __LINE__, "no ViewProj in " + name);
 }
 
 } // namespace
 
-TEST(shader_estrutura_dos_efeitos)
+TEST(shader_effects_structure)
 {
 	check_effect_structure("topscreen.effect");
 	check_effect_structure("text.effect");
 }
 
 /*
- * Invariantes de compatibilidade: os shaders do OBS nao usam arrays de uniform
- * nem loops, e o translator pode nao cobrir sign()/length(). Mantemos o mesmo
- * estilo para reduzir risco de falha silenciosa em runtime.
+ * Compatibility invariants: OBS shaders do not use uniform arrays or loops,
+ * and the translator may not cover sign()/length(). We keep the same style to
+ * reduce the risk of silent runtime failure.
  */
-TEST(shader_evita_construcoes_arriscadas)
+TEST(shader_avoids_risky_constructs)
 {
 	const std::string text = read_effect();
 
 	++tst::checks();
 	if (text.find("uniform") != std::string::npos) {
-		// nenhuma declaracao de uniform pode conter '[' (array)
+		// no uniform declaration may contain '[' (array)
 		std::istringstream in(text);
 		std::string line;
 		while (std::getline(in, line)) {
@@ -191,7 +191,7 @@ TEST(shader_evita_construcoes_arriscadas)
 			std::string kw;
 			ss >> kw;
 			if (kw == "uniform" && line.find('[') != std::string::npos) {
-				tst::fail(__FILE__, __LINE__, "shader usa array de uniform: " + line);
+				tst::fail(__FILE__, __LINE__, "shader uses uniform array: " + line);
 				break;
 			}
 		}
@@ -199,13 +199,13 @@ TEST(shader_evita_construcoes_arriscadas)
 
 	++tst::checks();
 	if (text.find("for (") != std::string::npos)
-		tst::fail(__FILE__, __LINE__, "shader usa loop 'for' (evitar)");
+		tst::fail(__FILE__, __LINE__, "shader uses 'for' loop (avoid)");
 
 	++tst::checks();
 	if (text.find("sign(") != std::string::npos)
-		tst::fail(__FILE__, __LINE__, "shader usa sign() (evitar)");
+		tst::fail(__FILE__, __LINE__, "shader uses sign() (avoid)");
 
 	++tst::checks();
 	if (text.find("length(") != std::string::npos)
-		tst::fail(__FILE__, __LINE__, "shader usa length() (evitar)");
+		tst::fail(__FILE__, __LINE__, "shader uses length() (avoid)");
 }

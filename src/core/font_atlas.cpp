@@ -18,7 +18,7 @@ namespace topscreen::core {
 
 const Glyph *FontAtlas::glyph(int code) const
 {
-	/* glyphs e ordenado por code: busca binaria em vez de varredura linear. */
+	/* glyphs is ordered by code: binary search instead of linear scan. */
 	auto it = std::lower_bound(glyphs.begin(), glyphs.end(), code,
 				   [](const Glyph &g, int value) { return g.code < value; });
 	if (it != glyphs.end() && it->code == code)
@@ -54,11 +54,11 @@ bool font_atlas_build(const uint8_t *ttf, size_t ttf_size, const FontAtlasOption
 	};
 
 	if (!ttf || ttf_size == 0)
-		return fail("sem dados da fonte");
+		return fail("no font data");
 
 	stbtt_fontinfo info;
 	if (!stbtt_InitFont(&info, ttf, 0))
-		return fail("TTF invalido");
+		return fail("invalid TTF");
 
 	const float scale = stbtt_ScaleForPixelHeight(&info, static_cast<float>(options.pixel_height));
 

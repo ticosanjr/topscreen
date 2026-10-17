@@ -14,7 +14,7 @@ constexpr double kIdleFadeMs = 300.0;
 
 double CursorModel::stiffness() const
 {
-	/* smooth 0 -> mola macia, smooth 1 -> mola dura. */
+	/* smooth 0 -> soft spring, smooth 1 -> stiff spring. */
 	const double s = clamp01(cfg_.smooth);
 	return 20.0 + s * 380.0;
 }
@@ -60,14 +60,14 @@ void CursorModel::update(double now_ms)
 	if (dt < 0.0)
 		dt = 0.0;
 
-	/* Loop: apos ficar parado tempo suficiente, volta ao ponto inicial. */
+	/* Loop: after being idle long enough, returns to the starting point. */
 	if (cfg_.loop && (now_ms - last_move_ms_) >= cfg_.loop_ms) {
 		sx_.set_target(start_x_);
 		sy_.set_target(start_y_);
 	}
 
 	if (cfg_.smooth <= 0.001) {
-		/* Sem suavizacao: segue o mouse exatamente. */
+		/* No smoothing: follows the mouse exactly. */
 		sx_.reset(sx_.target());
 		sy_.reset(sy_.target());
 	} else {
@@ -75,7 +75,7 @@ void CursorModel::update(double now_ms)
 		sy_.update(dt);
 	}
 
-	/* Sway: inclina na direcao do movimento, amortecido pela velocidade. */
+	/* Sway: tilts toward the movement direction, damped by speed. */
 	if (cfg_.sway > 0.0005) {
 		const double vx = sx_.velocity();
 		const double vy = sy_.velocity();

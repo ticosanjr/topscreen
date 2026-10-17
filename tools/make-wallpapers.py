@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-Gera os wallpapers embutidos do TopScreen (estilo macOS: gradientes suaves).
+Generates the TopScreen built-in wallpapers (macOS style: soft gradients).
 
-Saida: data/wallpapers/*.jpg (1920x1080).
+Output: data/wallpapers/*.jpg (1920x1080).
 
-Uso: python3 tools/make-wallpapers.py
+Usage: python3 tools/make-wallpapers.py
 """
 import os
 import random
@@ -16,7 +16,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "data", "wallpapers")
 SIZE = (1920, 1080)
 
-# nome -> paleta (3-5 cores)  -- inspiradas nas wallpapers do macOS
+# name -> palette (3-5 colors)  -- inspired by the macOS wallpapers
 PALETTES = {
     "aurora":    ["#0b2a4a", "#0f6a6a", "#2fd0a8", "#7b4bd8", "#0b2a4a"],
     "sunset":    ["#2b1055", "#7b2ff7", "#f107a3", "#ff8a3d", "#2b1055"],
@@ -45,7 +45,7 @@ def hex2rgb(h):
 
 
 def mesh(colors, seed):
-    """Gradiente em malha: pontos coloridos numa grade pequena, upscale suave."""
+    """Mesh gradient: colored points on a small grid, smooth upscale."""
     random.seed(seed)
     sw, sh = 24, 14
     small = Image.new("RGB", (sw, sh), colors[0])
@@ -79,14 +79,14 @@ def build(name, palette, seed):
     colors = [hex2rgb(c) for c in palette]
     img = mesh(colors, seed)
 
-    # luz suave (highlight) em um ponto aleatorio
+    # soft light (highlight) at a random point
     random.seed(seed + 1)
     cx, cy = random.randrange(200, SIZE[0] - 200), random.randrange(100, SIZE[1] - 100)
     r = random.randrange(500, 900)
     hm = radial_mask(SIZE, cx, cy, r, r * 0.6).point(lambda v: int(v * 0.22))
     img = Image.composite(Image.new("RGB", SIZE, (255, 255, 255)), img, hm)
 
-    # vinheta
+    # vignette
     vm = vignette(SIZE, 0.30)
     dark = Image.new("RGB", SIZE, tuple(int(c * 0.55) for c in colors[0]))
     img = Image.composite(img, dark, vm)
@@ -102,7 +102,7 @@ def main():
         path = os.path.join(OUT, f"{name}.jpg")
         img.save(path, "JPEG", quality=92, optimize=True)
         print(f"[wallpaper] {name}: {os.path.getsize(path)//1024} KB")
-    print(f"[wallpaper] OK: {len(PALETTES)} em data/wallpapers/")
+    print(f"[wallpaper] OK: {len(PALETTES)} in data/wallpapers/")
 
 
 if __name__ == "__main__":

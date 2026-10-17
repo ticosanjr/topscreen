@@ -1,290 +1,292 @@
-# Manual do usuário — TopScreen
+# User manual — TopScreen
 
-O **TopScreen** é um plugin de **efeitos de captura de tela ao vivo** para o OBS.
-Ele aplica cursor bonito, efeitos de clique, zoom suave, fundo com cantos
-arredondados, overlay de teclas e mais — **ao vivo**, sem gravar e sem editar.
+**TopScreen** is a **live screen-capture effects** plugin for OBS.
+It applies a nice cursor, click effects, smooth zoom, a background with rounded
+corners, a key overlay and more — **live**, without recording and without editing.
 
-Ele **não grava** e **não gera arquivo**: entrega a imagem processada direto
-para o OBS, como um filtro, para você usar numa cena.
-
----
-
-## 1. Requisitos
-
-- **OBS Studio 30.0+** (Windows ou Linux)
-- Uma **Captura de Tela** (Display/Screen Capture) como fonte no OBS
-
-> No Linux, para o overlay de teclas é preciso dar permissão de leitura em
-> `/dev/input` (ver §10).
+It **does not record** and **does not produce a file**: it delivers the processed
+image straight to OBS, as a filter, for you to use in a scene.
 
 ---
 
-## 2. Instalação
+## 1. Requirements
+
+- **OBS Studio 30.0+** (Windows or Linux)
+- A **Display Capture** (Display/Screen Capture) as a source in OBS
+
+> On Linux, the key overlay requires read permission on
+> `/dev/input` (see §10).
+
+---
+
+## 2. Installation
 
 **Linux**
 ```bash
-./scripts/install-linux.sh            # plugin de usuário (sem sudo)
+./scripts/install-linux.sh            # per-user plugin (no sudo)
 ```
 
 **Windows**
 ```powershell
-pwsh -File scripts\install-windows.ps1                    # plugin de usuário
-pwsh -File scripts\install-windows.ps1 -ObsDir D:\OBS     # OBS portable
+pwsh -File scripts\install-windows.ps1                    # per-user plugin
+pwsh -File scripts\install-windows.ps1 -ObsDir D:\OBS     # portable OBS
 ```
 
-Detalhes e opções avançadas em [`BUILD.md`](BUILD.md).
+Details and advanced options in [`BUILD.md`](BUILD.md).
 
 ---
 
-## 3. Primeiros passos
+## 3. Getting started
 
-1. No OBS, adicione uma fonte **Captura de Tela** e escolha a tela.
-2. Clique com o botão direito na fonte → **Filtros** → **+** → **TopScreen FX**.
-3. Ajuste em **Propriedades** (as abas/grupos estão descritos no §5).
-4. Crie atalhos em **Configurações → Atalhos → TopScreen** (§6).
-5. (Opcional) Escolha um **preset** pronto com o atalho *Próximo preset*.
+1. In OBS, add a **Display Capture** source and pick the screen.
+2. Right-click the source → **Filters** → **+** → **TopScreen FX**.
+3. Adjust in **Properties** (the tabs/groups are described in §5).
+4. Create hotkeys in **Settings → Hotkeys → TopScreen** (§6).
+5. (Optional) Choose a ready **preset** with the *Next preset* hotkey.
 
-> **Dica:** abra o dock **TopScreen** (menu **Exibir → Docks → TopScreen**) para
-> ver o estado e trocar de preset rapidamente.
-
----
-
-## 4. Conceitos
-
-### Modo de cada recurso
-Alguns recursos podem ficar **ligados**, **desligados** ou **por atalho**.
-O **Efeitos habilitados** (topo das Propriedades) é o "mestre": desliga tudo de
-uma vez (útil como push-to-talk de efeitos).
-
-### Cursor próprio
-Ao ativar os efeitos, o TopScreen **desliga o cursor nativo da captura** e
-desenha o dele, suavizado e escalável. Por isso você vê **um só cursor**.
-
-### Coordenadas
-Os efeitos trabalham sobre a **área capturada**. O cursor é mapeado do mouse
-para essa área (assumindo a captura no canto superior esquerdo da tela).
+> **Tip:** open the **TopScreen** dock (menu **View → Docks → TopScreen**) to
+> see the state and switch presets quickly.
 
 ---
 
-## 5. Referência de uso (por grupo das Propriedades)
+## 4. Concepts
 
-### Efeitos habilitados
-Liga/desliga **todos** os efeitos do filtro.
+### Mode of each feature
+Some features can be **on**, **off** or **by hotkey**.
+The **Effects enabled** (top of Properties) is the "master": it turns everything
+off at once (useful as push-to-talk for effects).
 
-### Plano de fundo
-Coloca a tela "flutuando" sobre um fundo, com cantos e sombra.
+### Own cursor
+When the effects are enabled, TopScreen **turns off the native cursor of the
+capture** and draws its own, smoothed and scalable. That is why you see **a
+single cursor**.
 
-| Opção | O que faz |
+### Coordinates
+The effects work over the **captured area**. The cursor is mapped from the mouse
+to that area (assuming the capture is at the top-left corner of the screen).
+
+---
+
+## 5. Usage reference (by Properties group)
+
+### Effects enabled
+Turns **all** filter effects on/off.
+
+### Background
+Places the screen "floating" over a background, with corners and shadow.
+
+| Option | What it does |
 |-------|-----------|
-| **Ativar fundo** | Liga o fundo + cantos + espaçamento |
-| **Estilo** | Cor sólida, gradiente vertical ou diagonal (usado quando **não** há imagem) |
-| **Cor A / Cor B** | Cores do fundo (B só aparece nos gradientes) |
-| **Wallpaper** | Uma das **18 imagens** que vêm com o plugin. Escolher já aplica |
-| **Imagem do PC** | Botão para escolher um **arquivo do seu PC** (jpg/png/bmp/tga/gif/webp). Escolher um **limpa** o Wallpaper (são exclusivos) |
-| **Desfoque do wallpaper (px)** | Borra a imagem de fundo (0 = nítida) |
-| **Tipo de desfoque** | Sem desfoque · Suave (box) · **Gaussiano** · Cremoso (bem suave) |
-| **Espaçamento horizontal / vertical (px)** | Margem entre a tela e a borda (X e Y separados) |
-| **Manter a proporção da tela** | Evita esticar a tela: ela é reduzida proporcionalmente (deixe ligado) |
-| **Cantos arredondados (px)** | Raio dos cantos da tela |
-| **Sombra da janela** (sub-grupo) | |
-| ↳ **Ligar sombra** | Liga/desliga a sombra atrás da tela |
-| ↳ **Intensidade** | Quão forte é a sombra (0 = invisível, 1 = forte) |
-| ↳ **Suavidade / tamanho** | Quão suave e grande é a sombra |
-| ↳ **Distância para baixo** | Move a sombra para baixo (efeito de relevo) |
+| **Enable background** | Turns on the background + corners + spacing |
+| **Style** | Solid color, vertical or diagonal gradient (used when there is **no** image) |
+| **Color A / Color B** | Background colors (B only shows in gradients) |
+| **Wallpaper** | One of the **18 images** that ship with the plugin. Choosing one applies it |
+| **Image from PC** | Button to choose a **file from your PC** (jpg/png/bmp/tga/gif/webp). Choosing one **clears** the Wallpaper (they are mutually exclusive) |
+| **Wallpaper blur (px)** | Blurs the background image (0 = sharp) |
+| **Blur type** | No blur · Soft (box) · **Gaussian** · Creamy (very soft) |
+| **Horizontal / vertical spacing (px)** | Margin between the screen and the edge (separate X and Y) |
+| **Keep screen aspect ratio** | Avoids stretching the screen: it is scaled down proportionally (leave it on) |
+| **Rounded corners (px)** | Radius of the screen corners |
+| **Window shadow** (sub-group) | |
+| ↳ **Enable shadow** | Turns the shadow behind the screen on/off |
+| ↳ **Intensity** | How strong the shadow is (0 = invisible, 1 = strong) |
+| ↳ **Softness / size** | How soft and large the shadow is |
+| ↳ **Downward distance** | Moves the shadow down (emboss effect) |
 
-> O fundo aparece **atrás** da tela. Sem imagem, use o **Estilo** (cor/gradiente).
+> The background appears **behind** the screen. Without an image, use the **Style** (color/gradient).
 
 ### Cursor
-| Opção | O que faz |
+| Option | What it does |
 |-------|-----------|
-| **Mostrar cursor** | Desenha o cursor próprio (desliga o nativo) |
-| **Estilo** | Um dos 12 cursores (ver abaixo) |
-| **Tamanho** | Escala do cursor (1.0 = padrão) |
-| **Suavização** | 0 = **segue o mouse exatamente**; acima disso, desliza (estilo "screen recorder") |
-| **Inclinação na curva (sway)** | O cursor inclina levemente ao virar |
-| **Sombra do cursor** | Sombra para destacar do fundo |
-| **Ocultar quando parado / Delay** | Some quando você para de mexer |
-| **Voltar ao início quando parado / Tempo** | Cursor "volta" (vídeos em loop) |
+| **Show cursor** | Draws the own cursor (turns off the native one) |
+| **Style** | One of the 12 cursors (see below) |
+| **Size** | Cursor scale (1.0 = default) |
+| **Smoothing** | 0 = **follows the mouse exactly**; above that, it glides ("screen recorder" style) |
+| **Curve tilt (sway)** | The cursor tilts slightly when turning |
+| **Cursor shadow** | Shadow to make it stand out from the background |
+| **Hide when idle / Delay** | Disappears when you stop moving |
+| **Return to start when idle / Time** | Cursor "returns" (looping videos) |
 
-**Estilos de cursor disponíveis (12)**
+**Cursor styles available (12)**
 
-| Estilo | Aparência |
+| Style | Appearance |
 |--------|-----------|
-| macOS (clássico) | Seta preta com contorno branco |
-| Windows (clássico) | Seta branca com contorno preto |
-| Breeze (KDE) | Seta do tema Breeze |
-| Bibata (moderno) | Seta arredondada moderna (Bibata Modern Classic) |
-| Adwaita | Seta do tema Adwaita (GNOME) |
-| Google Dot | Círculo com ponto (estilo Google) |
-| Mão (pointer) | Mão apontando |
-| DMZ (clássico X11) | Seta clássica do tema DMZ-White |
-| Yaru (Ubuntu) | Seta do tema Yaru |
-| XCursor Pro | Seta do tema XCursor-Pro |
-| Bibata Ice (azul) | Bibata com destaque azul |
-| Bibata Original | Bibata na forma original |
+| macOS (classic) | Black arrow with a white outline |
+| Windows (classic) | White arrow with a black outline |
+| Breeze (KDE) | Arrow from the Breeze theme |
+| Bibata (modern) | Modern rounded arrow (Bibata Modern Classic) |
+| Adwaita | Arrow from the Adwaita theme (GNOME) |
+| Google Dot | Circle with a dot (Google style) |
+| Hand (pointer) | Pointing hand |
+| DMZ (classic X11) | Classic arrow from the DMZ-White theme |
+| Yaru (Ubuntu) | Arrow from the Yaru theme |
+| XCursor Pro | Arrow from the XCursor-Pro theme |
+| Bibata Ice (blue) | Bibata with a blue highlight |
+| Bibata Original | Bibata in its original form |
 
-> Os bitmaps são gerados por `tools/make-cursor-atlas.py` (lê temas de cursor
-> instalados em `/usr/share/icons`) e ficam em `data/cursors/`.
+> The bitmaps are generated by `tools/make-cursor-atlas.py` (reads cursor themes
+> installed in `/usr/share/icons`) and live in `data/cursors/`.
 
-### Clique esquerdo / Clique direito
-Cada botão tem seu próprio efeito, independente.
+### Left click / Right click
+Each button has its own independent effect.
 
-| Opção | O que faz |
+| Option | What it does |
 |-------|-----------|
-| **Efeito** | Onda (ripple), Orbe, Anel ou Força |
-| **Tamanho / Cor / Duração / Curva** | Aparência e tempo do efeito |
+| **Effect** | Ripple (wave), Orb, Ring or Force |
+| **Size / Color / Duration / Curve** | Appearance and timing of the effect |
 
-### Som de clique
-| Opção | O que faz |
+### Click sound
+| Option | What it does |
 |-------|-----------|
-| **Ativar som** | Toca um clique curto |
-| **Volume** | Volume do som |
-| **No clique esquerdo / direito** | Em quais botões tocar |
+| **Enable sound** | Plays a short click |
+| **Volume** | Sound volume |
+| **On left / right click** | Which buttons trigger it |
 
-> O som toca no **áudio do sistema** (entra no OBS pela sua captura de Áudio do
-> Desktop). Ainda não sai pelo canal de áudio da própria fonte.
+> The sound plays through the **system audio** (it enters OBS through your Desktop
+> Audio capture). It does not yet come out through the source's own audio channel.
 
 ### Zoom
-| Opção | O que faz |
+| Option | What it does |
 |-------|-----------|
-| **Modo** | `Desligado`, `Automático` (segue cliques/cursor) ou `Manual` |
-| **Intensidade** | Quanto amplia (1.0 = sem zoom) |
-| **Velocidade (ms)** | Duração da animação |
-| **Tempo sem foco (ms)** | Após parar, volta ao normal |
-| **Intensidade do pan** | Quanto a tela "acompanha" o mouse |
-| **Centralização** | 0 = segue o mouse; 1 = mantém o mouse no **centro** (a vista **antecipa** as bordas — o canto aparece antes de você chegar nele) |
+| **Mode** | `Off`, `Automatic` (follows clicks/cursor) or `Manual` |
+| **Intensity** | How much it magnifies (1.0 = no zoom) |
+| **Speed (ms)** | Animation duration |
+| **Idle time (ms)** | After stopping, returns to normal |
+| **Pan intensity** | How much the screen "follows" the mouse |
+| **Centering** | 0 = follows the mouse; 1 = keeps the mouse in the **center** (the view **anticipates** the edges — the corner appears before you get to it) |
 
-### Movimento (motion blur)
-| Opção | O que faz |
+### Movement (motion blur)
+| Option | What it does |
 |-------|-----------|
-| **Desfoque de movimento** | Borrão radial durante o zoom |
-| **Intensidade** | Força do borrão |
+| **Motion blur** | Radial blur during zoom |
+| **Intensity** | Blur strength |
 
 ### Spotlight
-| Opção | O que faz |
+| Option | What it does |
 |-------|-----------|
-| **Ativar spotlight** | Escurece tudo menos um círculo que segue o cursor |
-| **Raio** | Tamanho do círculo |
-| **Escurecimento** | Quanto escurece fora do círculo |
+| **Enable spotlight** | Darkens everything except a circle that follows the cursor |
+| **Radius** | Size of the circle |
+| **Dimming** | How much it darkens outside the circle |
 
-### Teclas
-| Opção | O que faz |
+### Keys
+| Option | What it does |
 |-------|-----------|
-| **Mostrar teclas digitadas** | Mostra o que você digita na tela |
-| **Somente modificadores** | Mostra só Ctrl/Shift/Alt/Win |
-| **Tempo na tela (ms)** | Quanto tempo cada tecla fica |
-| **Máximo de teclas** | Quantas teclas simultâneas mostrar |
-| **Posição X / Y** | Onde a faixa fica (0 = esquerda/topo, 1 = direita/base) |
-| **Tamanho do texto** | Escala do texto |
-| **Fonte** | DejaVu Sans Bold / Sans / Mono Bold, ou um caminho de `.ttf` |
-| **Cor do texto** | Cor das letras |
-| **Sombra do texto** | Contorno escuro para legibilidade |
-| **Faixa de fundo / Cor da faixa** | Retângulo arredondado atrás do texto e sua cor |
+| **Show typed keys** | Shows what you type on screen |
+| **Modifiers only** | Shows only Ctrl/Shift/Alt/Win |
+| **On-screen time (ms)** | How long each key stays |
+| **Max keys** | How many simultaneous keys to show |
+| **Position X / Y** | Where the band sits (0 = left/top, 1 = right/bottom) |
+| **Text size** | Text scale |
+| **Font** | DejaVu Sans Bold / Sans / Mono Bold, or a path to a `.ttf` |
+| **Text color** | Letter color |
+| **Text shadow** | Dark outline for readability |
+| **Background band / Band color** | Rounded rectangle behind the text and its color |
 
-### Marca-texto
-| Opção | O que faz |
+### Highlighter
+| Option | What it does |
 |-------|-----------|
-| **Ativar marca-texto** | Destaca a região que você arrasta com o botão esquerdo |
-| **Cor** | Cor do destaque (use alfa < 255 para translúcido) |
-| **Tempo na tela (ms)** | Quanto tempo fica após soltar |
-| **Desvanecer (ms)** | Duração do fade |
+| **Enable highlighter** | Highlights the region you drag with the left button |
+| **Color** | Highlight color (use alpha < 255 for translucent) |
+| **On-screen time (ms)** | How long it stays after you release |
+| **Fade (ms)** | Fade duration |
 
 ---
 
-## 6. Atalhos
+## 6. Hotkeys
 
-Em **Configurações → Atalhos → TopScreen**:
+In **Settings → Hotkeys → TopScreen**:
 
-| Ação | Efeito |
+| Action | Effect |
 |------|--------|
-| **Ativar/desativar efeitos** | Liga/desliga tudo (mestre) |
-| **Ativar/desativar fundo** | Liga/desliga só o fundo/cantos |
-| **Zoom in / Zoom out / Resetar zoom** | Zoom manual |
-| **Próximo preset / Preset anterior** | Troca de preset |
-| **Ativar perfil A / B / C / D** | Aplica o perfil (todas as configurações dele) |
-| **Salvar no perfil atual** | Grava os ajustes no perfil ativo |
+| **Enable/disable effects** | Turns everything on/off (master) |
+| **Enable/disable background** | Turns only the background/corners on/off |
+| **Zoom in / Zoom out / Reset zoom** | Manual zoom |
+| **Next preset / Previous preset** | Switch preset |
+| **Activate profile A / B / C / D** | Applies the profile (all of its settings) |
+| **Save to current profile** | Writes the adjustments to the active profile |
 
-**Linux/Wayland:** atalhos globais do OBS podem não funcionar fora do X11;
-use os atalhos com o OBS em foco, ou o **obs-websocket** para disparar ações.
+**Linux/Wayland:** global OBS hotkeys may not work outside X11;
+use the hotkeys with OBS focused, or **obs-websocket** to trigger actions.
 
 ---
 
 ## 7. Presets
 
-Presets prontos (arquivos em `data/presets/`):
+Ready presets (files in `data/presets/`):
 
-| Preset | Cara |
+| Preset | Look |
 |--------|------|
-| **Demo** | Gradiente, cursor destacado, zoom automático |
-| **Tutorial** | Fundo sólido, som de clique, cursor suave |
-| **Apresentacao** | Fundo escuro, sem zoom, sem som |
+| **Demo** | Gradient, highlighted cursor, automatic zoom |
+| **Tutorial** | Solid background, click sound, soft cursor |
+| **Apresentacao** | Dark background, no zoom, no sound |
 
-Troque com o atalho *Próximo/Anterior preset* (ou pelo dock). Para criar o seu,
-copie um arquivo e ajuste — o formato está em [`CONFIGURACAO.md`](CONFIGURACAO.md).
+Switch with the *Next/Previous preset* hotkey (or via the dock). To create your
+own, copy a file and adjust it — the format is in [`CONFIGURATION.md`](CONFIGURATION.md).
 
 ---
 
-## 8. Perfis (A/B/C/D)
+## 8. Profiles (A/B/C/D)
 
-Os **4 perfis** guardam a configuração inteira e trocam tudo de uma vez. O seletor
-fica no **topo** das Propriedades (grupo **Perfis → Perfil atual**) e também no dock.
+The **4 profiles** store the entire configuration and switch everything at once.
+The selector is at the **top** of Properties (group **Profiles → Current profile**)
+and in the dock as well.
 
-- **Trocar de perfil aplica TUDO na hora** (fundo, cursor, cliques, zoom, teclas…).
-- **As suas alterações ficam salvas no perfil ativo automaticamente** — não precisa
-  lembrar de salvar (o botão *Salvar no perfil* e o atalho existem para forçar).
-- O perfil selecionado é reaplicado **ao abrir o OBS**, então o visual volta igual.
-- Atalhos: **Ativar perfil A/B/C/D** e **Salvar no perfil atual**.
+- **Switching profile applies EVERYTHING immediately** (background, cursor, clicks, zoom, keys…).
+- **Your changes are saved into the active profile automatically** — no need to
+  remember to save (the *Save to profile* button and hotkey exist to force it).
+- The selected profile is re-applied **when OBS opens**, so the look comes back the same.
+- Hotkeys: **Activate profile A/B/C/D** and **Save to current profile**.
 
-Já vêm com exemplos, para você só alternar e ver a diferença:
+They already ship with examples, so you can just switch and see the difference:
 
-| Perfil | Exemplo |
+| Profile | Example |
 |---|---|
-| **A** | padrão |
-| **B** | cliques **verde/laranja** + **zoom 2.0** |
-| **C** | cliques **roxo/ciano** + zoom 1.4 e fundo vertical |
-| **D** | cliques **amarelo/branco** e **zoom desligado** |
+| **A** | default |
+| **B** | **green/orange** clicks + **zoom 2.0** |
+| **C** | **purple/cyan** clicks + zoom 1.4 and vertical background |
+| **D** | **yellow/white** clicks and **zoom off** |
 
 ---
 
-## 9. Receitas
+## 9. Recipes
 
-**Demo de produto (parecido com "Screen Studio")**
-- Fundo = Gradiente diagonal, Espaçamento 64, Cantos 18, Sombra ligada
-- Cursor = Tamanho 1.6, Suavização 0.8, sway 0.4
-- Zoom = Automático, Intensidade 1.6
-- Clique esquerdo = Onda; Direito = Orbe
+**Product demo (similar to "Screen Studio")**
+- Background = Diagonal gradient, Spacing 64, Corners 18, Shadow on
+- Cursor = Size 1.6, Smoothing 0.8, sway 0.4
+- Zoom = Automatic, Intensity 1.6
+- Left click = Ripple; Right = Orb
 
-**Tutorial / aula**
-- Fundo = Cor sólida, Cantos 12
-- Teclas = ligado, Tempo 2000 ms
-- Som de clique = ligado (volume 0.5)
-- Zoom = Automático, Intensidade 1.4
+**Tutorial / class**
+- Background = Solid color, Corners 12
+- Keys = on, Time 2000 ms
+- Click sound = on (volume 0.5)
+- Zoom = Automatic, Intensity 1.4
 
-**Apresentação / reunião**
-- Fundo = Cor escura, Espaçamento 80
-- Zoom = Desligado
-- Spotlight = disponível por atalho (quando quiser destacar)
+**Presentation / meeting**
+- Background = Dark color, Spacing 80
+- Zoom = Off
+- Spotlight = available by hotkey (when you want to highlight)
 
 **Live coding**
-- Teclas = ligado, Máximo 6
-- Zoom = Automático leve (1.3)
-- Marca-texto = ligado para destacar trechos de código
+- Keys = on, Max 6
+- Zoom = light Automatic (1.3)
+- Highlighter = on to highlight code snippets
 
 ---
 
-## 10. Linux: permissão para o overlay de teclas
+## 10. Linux: permission for the key overlay
 
-O overlay lê as teclas de `/dev/input` (evdev), o que funciona em X11 **e**
-Wayland. Exige permissão:
+The overlay reads keys from `/dev/input` (evdev), which works on X11 **and**
+Wayland. It requires permission:
 
 ```bash
 sudo cp data/udev/99-topscreen.rules /etc/udev/rules.d/
 sudo udevadm control --reload-rules && sudo udevadm trigger
-# relogar a sessão ajuda
+# logging back in helps
 ```
 
-Sem isso, o plugin avisa no log (`evdev indisponivel`) e o overlay não aparece.
-Para testar mesmo assim:
+Without this, the plugin warns in the log (`evdev unavailable`) and the overlay
+does not appear. To test anyway:
 
 ```bash
 TOPSCREEN_DEBUG_KEY=Ctrl obs
@@ -292,85 +294,82 @@ TOPSCREEN_DEBUG_KEY=Ctrl obs
 
 ---
 
-## 11. Desempenho
+## 11. Performance
 
-- Os efeitos rodam na **GPU**, no processo do OBS (sem gravação, sem cópia).
-- Custo maior: **sombra** (desfoque) e **motion blur**. Se o PC for fraco:
-  reduza o **Desfoque da sombra** ou desligue o **Movimento**.
-- Resoluções altas + monitor de 60 Hz são tranquilos; monitores de 120/144 Hz
-  custam mais.
-- Em render por software (sem GPU, ex.: `llvmpipe`), tudo funciona, mas mais lento.
+- The effects run on the **GPU**, in the OBS process (no recording, no copy).
+- Higher cost: **shadow** (blur) and **motion blur**. If the PC is weak:
+  reduce the **Shadow blur** or turn off **Movement**.
+- High resolutions + a 60 Hz monitor are fine; 120/144 Hz monitors cost more.
+- In software rendering (no GPU, e.g. `llvmpipe`), everything works, but slower.
 
 ---
 
-## 12. Solução de problemas
+## 12. Troubleshooting
 
-**O filtro não faz nada (passa direto)**
-- Veja o log: `obs --verbose 2>&1 | grep -i topscreen`. Se aparecer
-  `falha ao criar o efeito`, o arquivo `data/effects/topscreen.effect` não foi
-  encontrado — reinstale.
+**The filter does nothing (passes straight through)**
+- Check the log: `obs --verbose 2>&1 | grep -i topscreen`. If
+  `failed to create the effect` appears, the file `data/effects/topscreen.effect`
+  was not found — reinstall.
 
-**O plugin não aparece / "Duplicate library"**
-- Você tem o plugin instalado em dois lugares. Fique com **um** só
-  (usuário **ou** sistema). Veja [`BUILD.md`](BUILD.md).
+**The plugin does not show up / "Duplicate library"**
+- You have the plugin installed in two places. Keep only **one**
+  (per-user **or** system). See [`BUILD.md`](BUILD.md).
 
-**Vejo dois cursores**
-- A captura estava com cursor nativo ligado. O TopScreen desliga
-  `capture_cursor`/`show_cursor` automaticamente — se a sua fonte usar outro
-  nome, desligue manualmente a opção de cursor da fonte.
+**I see two cursors**
+- The capture had the native cursor enabled. TopScreen turns off
+  `capture_cursor`/`show_cursor` automatically — if your source uses another
+  name, turn off the source's cursor option manually.
 
-**O cursor está atrasado**
-- **Suavização** em `0` faz o cursor seguir o mouse **exatamente**. Valores
-  maiores adicionam deslize (de propósito).
-- **Inclinação na curva** em `0` remove a inclinação.
+**The cursor lags**
+- **Smoothing** at `0` makes the cursor follow the mouse **exactly**. Higher
+  values add glide (on purpose).
+- **Curve tilt** at `0` removes the tilt.
 
-**O zoom corta os cantos / o cursor some no canto**
-- Isso foi corrigido: o foco agora **acompanha** o cursor até as bordas
-  (a janela visível sempre cabe na tela). Reduza **Intensidade do pan** só se
-  quiser um acompanhamento mais suave no meio da tela.
+**Zoom cuts off the corners / the cursor disappears at the edge**
+- This has been fixed: the focus now **follows** the cursor to the edges
+  (the visible window always fits on screen). Reduce **Pan intensity** only if
+  you want smoother tracking in the middle of the screen.
 
-**Sem teclas no overlay (Linux)**
-- Aplique a regra udev do §10.
+**No keys in the overlay (Linux)**
+- Apply the udev rule from §10.
 
-**O dock não aparece**
-- O build não tinha Qt6/obs-frontend-api. Instale `qt6-base-dev` e reinstale.
+**The dock does not appear**
+- The build did not have Qt6/obs-frontend-api. Install `qt6-base-dev` and reinstall.
 
-**Zoom "pula" ou treme**
-- Aumente **Velocidade (ms)** e reduza **Intensidade**.
+**Zoom "jumps" or shakes**
+- Increase **Speed (ms)** and reduce **Intensity**.
 
 ---
 
 ## 13. FAQ
 
-**Preciso gravar?**
-Não. O TopScreen só entrega a imagem ao OBS. Quem grava/transmite é o OBS.
+**Do I need to record?**
+No. TopScreen only delivers the image to OBS. OBS is what records/streams.
 
-**Ele deixa editar depois?**
-Não — por definição é só **ao vivo**. Para edição posterior use um editor.
+**Does it let me edit afterwards?**
+No — by definition it is **live only**. For later editing use an editor.
 
-**Funciona com "Captura de Janela" ou "Captura de Jogo"?**
-Sim, o filtro funciona sobre qualquer fonte de vídeo. A seleção de tela é sua,
-na fonte.
+**Does it work with "Window Capture" or "Game Capture"?**
+Yes, the filter works on any video source. The screen selection is yours, on the source.
 
-**Consigo usar dois filtros TopScreen ao mesmo tempo?**
-Sim, mas cada um é independente; o dock controla o **primeiro** filtro ativo.
+**Can I use two TopScreen filters at the same time?**
+Yes, but each one is independent; the dock controls the **first** active filter.
 
-**Dá para desligar só o fundo num momento específico?**
-Sim: atalho **Ativar/desativar fundo**.
+**Can I turn off only the background at a specific moment?**
+Yes: hotkey **Enable/disable background**.
 
-**Windows: preciso de admin?**
-Não, o instalador padrão usa a pasta de plugins do usuário.
+**Windows: do I need admin?**
+No, the default installer uses the per-user plugins folder.
 
 ---
 
-## 14. Limitações atuais
+## 14. Current limitations
 
-- **Webcam bubble** e **zoom em região** ainda não foram implementados.
-- O **som de clique** usa o áudio do sistema (não o canal de áudio da fonte).
-- **Atalhos globais no Wayland** dependem do compositor (portal ainda não
-  implementado).
-- A **fonte de captura própria** (escolher a tela dentro do TopScreen) está
-  planejada; hoje você usa a Captura de Tela do OBS.
+- **Webcam bubble** and **zoom into a region** have not been implemented yet.
+- The **click sound** uses the system audio (not the source's audio channel).
+- **Global hotkeys on Wayland** depend on the compositor (portal not implemented yet).
+- The **own capture source** (choosing the screen inside TopScreen) is
+  planned; today you use OBS's Display Capture.
 
-Veja o que está pronto em [`TAREFAS.md`](TAREFAS.md) e como verificar em
-[`VERIFICACAO.md`](VERIFICACAO.md).
+See what is ready in [`TASKS.md`](TASKS.md) and how to verify it in
+[`VERIFICATION.md`](VERIFICATION.md).

@@ -19,7 +19,7 @@ public:
 			return false;
 		skip_ws();
 		if (pos_ != s_.size()) {
-			fail(error, "conteudo extra apos o valor");
+			fail(error, "extra content after the value");
 			return false;
 		}
 		return true;
@@ -30,7 +30,7 @@ private:
 	{
 		if (error) {
 			char buf[128];
-			std::snprintf(buf, sizeof(buf), "JSON: %s (posicao %zu)", msg, pos_);
+			std::snprintf(buf, sizeof(buf), "JSON: %s (position %zu)", msg, pos_);
 			*error = buf;
 		}
 	}
@@ -58,7 +58,7 @@ private:
 	{
 		char c;
 		if (!peek(&c)) {
-			fail(error, "valor inesperado no fim do texto");
+			fail(error, "unexpected value at end of text");
 			return false;
 		}
 
@@ -97,7 +97,7 @@ private:
 		while (true) {
 			skip_ws();
 			if (!peek(&c) || c != '"') {
-				fail(error, "esperava chave de objeto");
+				fail(error, "expected object key");
 				return false;
 			}
 			std::string key;
@@ -106,7 +106,7 @@ private:
 
 			skip_ws();
 			if (!peek(&c) || c != ':') {
-				fail(error, "esperava ':'");
+				fail(error, "expected ':'");
 				return false;
 			}
 			++pos_;
@@ -119,7 +119,7 @@ private:
 
 			skip_ws();
 			if (!peek(&c)) {
-				fail(error, "objeto nao terminado");
+				fail(error, "unterminated object");
 				return false;
 			}
 			if (c == ',') {
@@ -130,7 +130,7 @@ private:
 				++pos_;
 				return true;
 			}
-			fail(error, "esperava ',' ou '}'");
+			fail(error, "expected ',' or '}'");
 			return false;
 		}
 	}
@@ -157,7 +157,7 @@ private:
 
 			skip_ws();
 			if (!peek(&c)) {
-				fail(error, "array nao terminado");
+				fail(error, "unterminated array");
 				return false;
 			}
 			if (c == ',') {
@@ -168,7 +168,7 @@ private:
 				++pos_;
 				return true;
 			}
-			fail(error, "esperava ',' ou ']'");
+			fail(error, "expected ',' or ']'");
 			return false;
 		}
 	}
@@ -183,7 +183,7 @@ private:
 				return true;
 			if (c == '\\') {
 				if (pos_ >= s_.size()) {
-					fail(error, "escape incompleto");
+					fail(error, "incomplete escape");
 					return false;
 				}
 				const char e = s_[pos_++];
@@ -213,9 +213,9 @@ private:
 					out->push_back('\t');
 					break;
 				case 'u': {
-					/* Decodifica \uXXXX simples (BMP basic). */
+					/* Decodes simple \uXXXX (basic BMP). */
 					if (pos_ + 4 > s_.size()) {
-						fail(error, "escape unicode incompleto");
+						fail(error, "incomplete unicode escape");
 						return false;
 					}
 					unsigned cp = 0;
@@ -229,7 +229,7 @@ private:
 						else if (h >= 'A' && h <= 'F')
 							cp |= static_cast<unsigned>(h - 'A' + 10);
 						else {
-							fail(error, "hex invalido em \\u");
+							fail(error, "invalid hex in \\u");
 							return false;
 						}
 					}
@@ -247,14 +247,14 @@ private:
 					break;
 				}
 				default:
-					fail(error, "escape invalido");
+					fail(error, "invalid escape");
 					return false;
 				}
 			} else {
 				out->push_back(c);
 			}
 		}
-		fail(error, "string nao terminada");
+		fail(error, "unterminated string");
 		return false;
 	}
 
@@ -271,14 +271,14 @@ private:
 				break;
 		}
 		if (pos_ == start) {
-			fail(error, "numero invalido");
+			fail(error, "invalid number");
 			return false;
 		}
 		const std::string token = s_.substr(start, pos_ - start);
 		char *end = nullptr;
 		const double v = std::strtod(token.c_str(), &end);
 		if (end == token.c_str() || *end != '\0') {
-			fail(error, "numero invalido");
+			fail(error, "invalid number");
 			return false;
 		}
 		out->type = Value::Number;
@@ -300,7 +300,7 @@ private:
 			out->boolean = false;
 			return true;
 		}
-		fail(error, "literal invalido");
+		fail(error, "invalid literal");
 		return false;
 	}
 
@@ -311,7 +311,7 @@ private:
 			out->type = Value::Null;
 			return true;
 		}
-		fail(error, "literal invalido");
+		fail(error, "invalid literal");
 		return false;
 	}
 

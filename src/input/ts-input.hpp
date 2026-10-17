@@ -6,7 +6,7 @@
 
 namespace topscreen {
 
-/** Estado de input (cursor + botoes + teclas) capturado por tick. */
+/** Input state (cursor + buttons + keys) captured per tick. */
 struct InputState {
 	static constexpr int kMaxKeyEvents = 8;
 
@@ -14,20 +14,20 @@ struct InputState {
 	double y = 0.0;
 	bool left = false;
 	bool right = false;
-	bool left_pressed = false;  /* borda de subida neste tick */
-	bool right_pressed = false; /* borda de subida neste tick */
+	bool left_pressed = false;  /* rising edge this tick */
+	bool right_pressed = false; /* rising edge this tick */
 	bool available = false;
 
-	/* Teclas com borda de subida neste tick (para o overlay). */
+	/* Keys with a rising edge this tick (for the overlay). */
 	std::string key_labels[kMaxKeyEvents];
 	bool key_modifier[kMaxKeyEvents] = {};
 	int key_count = 0;
 
-	/* Tier de capacidade: 0 = indisponivel, 1 = nativo, 2 = portal, 3 = evdev. */
+	/* Capability tier: 0 = unavailable, 1 = native, 2 = portal, 3 = evdev. */
 	int tier = 0;
 };
 
-/** Gerenciador de input independente de plataforma. */
+/** Platform-independent input manager. */
 class Input {
 public:
 	void start(obs_source_t *source);
@@ -40,13 +40,13 @@ public:
 
 private:
 	InputState cur_;
-	/* So as bordas de subida sao comparadas; sem copiar listas de teclas. */
+	/* Only the rising edges are compared; without copying key lists. */
 	bool prev_left_ = false;
 	bool prev_right_ = false;
 	void *platform_ = nullptr;
 };
 
-/* ---- Interface de backend (implementada em ts-input-platform.cpp) ---- */
+/* ---- Backend interface (implemented in ts-input-platform.cpp) ---- */
 void *ts_input_platform_start(obs_source_t *source);
 void ts_input_platform_stop(void *state);
 void ts_input_platform_poll(void *state, InputState *out);

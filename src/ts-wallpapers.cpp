@@ -40,7 +40,7 @@ const char *wallpaper_path_for(const char *value)
 	if (!value || !*value)
 		return nullptr;
 
-	/* Stems dos caminhos embutidos, calculados uma unica vez. */
+	/* Stems of the built-in paths, computed only once. */
 	static std::string stems[kWallpaperCount];
 	static bool stems_init = false;
 	if (!stems_init) {

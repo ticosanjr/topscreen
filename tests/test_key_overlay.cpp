@@ -13,7 +13,7 @@ TEST(key_format_combo)
 	CHECK_EQ(format_combo({"Ctrl", "", "Alt"}, "X"), std::string("Ctrl + Alt + X"));
 }
 
-TEST(key_press_e_collect)
+TEST(key_press_and_collect)
 {
 	KeyOverlayModel m;
 	KeyOverlayConfig cfg;
@@ -30,7 +30,7 @@ TEST(key_press_e_collect)
 	CHECK_EQ(out[1].label, std::string("B"));
 }
 
-TEST(key_expira_por_ttl)
+TEST(key_expires_by_ttl)
 {
 	KeyOverlayModel m;
 	KeyOverlayConfig cfg;
@@ -44,7 +44,7 @@ TEST(key_expira_por_ttl)
 	CHECK_EQ(m.active_count(), 0);
 }
 
-TEST(key_repetir_reinicia_tempo)
+TEST(key_repeat_restarts_time)
 {
 	KeyOverlayModel m;
 	KeyOverlayConfig cfg;
@@ -59,7 +59,7 @@ TEST(key_repetir_reinicia_tempo)
 	CHECK_EQ(m.active_count(), 0); /* 2000 - 900 = 1100 >= ttl */
 }
 
-TEST(key_modifiers_only_filtra)
+TEST(key_modifiers_only_filters)
 {
 	KeyOverlayModel m;
 	KeyOverlayConfig cfg;
@@ -72,7 +72,7 @@ TEST(key_modifiers_only_filtra)
 	CHECK_EQ(m.active_count(), 1);
 }
 
-TEST(key_limite_de_teclas)
+TEST(key_key_limit)
 {
 	KeyOverlayModel m;
 	KeyOverlayConfig cfg;
@@ -87,7 +87,7 @@ TEST(key_limite_de_teclas)
 
 	KeyRender out[8];
 	m.collect(3.0, out, 8);
-	CHECK_EQ(out[0].label, std::string("B")); /* "A" foi descartada */
+	CHECK_EQ(out[0].label, std::string("B")); /* "A" was discarded */
 	CHECK_EQ(out[2].label, std::string("D"));
 }
 
@@ -101,7 +101,7 @@ TEST(key_clear)
 	CHECK_EQ(m.active_count(), 0);
 }
 
-TEST(key_desabilitado_ignora)
+TEST(key_disabled_ignores)
 {
 	KeyOverlayModel m;
 	KeyOverlayConfig cfg;

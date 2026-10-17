@@ -11,7 +11,7 @@ namespace {
 const char *const kPresetFiles[] = {
 	"presets/demo.json",
 	"presets/tutorial.json",
-	"presets/apresentacao.json",
+	"presets/presentation.json",
 };
 
 bool read_module_file(const char *name, std::string *out)
@@ -34,14 +34,14 @@ int PresetStore::load()
 	for (const char *file : kPresetFiles) {
 		std::string text;
 		if (!read_module_file(file, &text)) {
-			blog(LOG_WARNING, "[TopScreen] preset nao encontrado: %s", file);
+			blog(LOG_WARNING, "[TopScreen] preset not found: %s", file);
 			continue;
 		}
 
 		core::Preset p;
 		std::string err;
 		if (!core::Preset::from_json(text, &p, &err)) {
-			blog(LOG_WARNING, "[TopScreen] preset invalido %s: %s", file, err.c_str());
+			blog(LOG_WARNING, "[TopScreen] invalid preset %s: %s", file, err.c_str());
 			continue;
 		}
 		presets_.push_back(std::move(p));
@@ -65,7 +65,7 @@ bool PresetStore::apply(int index, core::Config *cfg)
 
 	std::string err;
 	if (!presets_[index].apply(cfg, &err)) {
-		blog(LOG_WARNING, "[TopScreen] falha ao aplicar preset: %s", err.c_str());
+		blog(LOG_WARNING, "[TopScreen] failed to apply preset: %s", err.c_str());
 		return false;
 	}
 

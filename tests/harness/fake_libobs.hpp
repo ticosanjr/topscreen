@@ -1,10 +1,10 @@
 #pragma once
 
-// "libobs fake" para testes de integracao (sem OBS real).
+// "Fake libobs" for integration tests (without a real OBS).
 //
-// O codigo do plugin e compilado contra os headers REAIS do OBS e linkado
-// contra estas implementacoes. Os tipos publicos sao opacos, entao podemos
-// definir os structs aqui.
+// The plugin code is compiled against the REAL OBS headers and linked
+// against these implementations. The public types are opaque, so we can
+// define the structs here.
 
 #include <obs-module.h>
 
@@ -18,8 +18,8 @@ struct obs_data {
 	std::map<std::string, long long> ints;
 	std::map<std::string, double> doubles;
 	std::map<std::string, std::string> strings;
-	/* Defaults ficam separados dos valores do usuario (como no OBS real):
-	 * set_default_* NAO cria valor de usuario. */
+	/* Defaults are kept separate from user values (as in real OBS):
+	 * set_default_* does NOT create a user value. */
 	std::map<std::string, bool> def_bools;
 	std::map<std::string, long long> def_ints;
 	std::map<std::string, double> def_doubles;
@@ -46,19 +46,19 @@ struct obs_source {
 
 namespace fakeobs {
 
-/** Define o diretorio de dados resolvido por obs_module_file(). */
+/** Sets the data directory resolved by obs_module_file(). */
 void set_data_dir(const std::string &dir);
 
-/** Cria uma fonte fake (sem registrar). */
+/** Creates a fake source (without registering). */
 obs_source_t *make_source(const obs_source_info *info, obs_source_t *parent, uint32_t w, uint32_t h);
 
-/** Ultima fonte registrada por obs_register_source(). */
+/** Last source registered by obs_register_source(). */
 const obs_source_info *registered_source();
 
-/** Indice do atalho registrado com este nome (-1 se nao houver). */
+/** Index of the hotkey registered with this name (-1 if none). */
 int find_hotkey(const char *name);
 
-/** Dispara o atalho no indice (pressed=true/false). */
+/** Triggers the hotkey at the index (pressed=true/false). */
 void invoke_hotkey(int index, bool pressed);
 
 int hotkey_count();

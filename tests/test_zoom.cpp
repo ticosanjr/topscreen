@@ -13,7 +13,7 @@ void advance(ZoomModel &m, double &t, double seconds, double dt = 1.0 / 60.0)
 }
 } // namespace
 
-TEST(zoom_manual_step_e_limites)
+TEST(zoom_manual_step_and_limits)
 {
 	ZoomModel m;
 	ZoomConfig cfg;
@@ -24,20 +24,20 @@ TEST(zoom_manual_step_e_limites)
 	m.manual_step(1.25);
 	CHECK_NEAR(m.manual(), 1.25, 1e-9);
 	m.manual_step(0.8);
-	CHECK_NEAR(m.manual(), 1.0, 1e-9); /* nunca abaixo de 1 */
+	CHECK_NEAR(m.manual(), 1.0, 1e-9); /* never below 1 */
 	for (int i = 0; i < 40; ++i)
 		m.manual_step(2.0);
 	CHECK(m.manual() <= 8.0 + 1e-9);
 }
 
-TEST(zoom_auto_aproxima_com_foco_recente)
+TEST(zoom_auto_zooms_with_recent_focus)
 {
 	ZoomModel m;
 	ZoomConfig cfg;
 	cfg.mode = static_cast<int>(ZoomMode::Auto);
 	cfg.amount = 2.0;
 	cfg.duration_ms = 200.0;
-	cfg.idle_timeout_ms = 100000.0; /* nao expira durante o teste */
+	cfg.idle_timeout_ms = 100000.0; /* does not expire during the test */
 	cfg.pan_amount = 1.0;
 	m.configure(cfg);
 	m.reset(0.0);
@@ -48,7 +48,7 @@ TEST(zoom_auto_aproxima_com_foco_recente)
 	CHECK(m.render().zoom > 1.5);
 }
 
-TEST(zoom_auto_volta_ao_normal_no_idle)
+TEST(zoom_auto_returns_to_normal_on_idle)
 {
 	ZoomModel m;
 	ZoomConfig cfg;
@@ -64,12 +64,12 @@ TEST(zoom_auto_volta_ao_normal_no_idle)
 	advance(m, t, 0.4);
 	CHECK(m.render().zoom > 1.2);
 
-	/* Passa o idle_timeout: deve retornar para 1.0. */
+	/* Passes the idle_timeout: must return to 1.0. */
 	advance(m, t, 2.0);
 	CHECK_NEAR(m.render().zoom, 1.0, 0.02);
 }
 
-TEST(zoom_modo_off_nao_aproxima)
+TEST(zoom_off_mode_does_not_zoom)
 {
 	ZoomModel m;
 	ZoomConfig cfg;
@@ -82,7 +82,7 @@ TEST(zoom_modo_off_nao_aproxima)
 	CHECK_NEAR(m.render().zoom, 1.0, 1e-3);
 }
 
-TEST(zoom_centraliza_o_cursor)
+TEST(zoom_centers_the_cursor)
 {
 	ZoomModel m;
 	ZoomConfig cfg;
@@ -100,10 +100,10 @@ TEST(zoom_centraliza_o_cursor)
 
 	const ZoomRender r = m.render();
 	const double c = r.focus_x + (0.5 - r.focus_x) * r.zoom;
-	CHECK_NEAR(c, 0.5, 0.02); /* cursor no centro */
+	CHECK_NEAR(c, 0.5, 0.02); /* cursor at the center */
 }
 
-TEST(zoom_antecipa_o_canto)
+TEST(zoom_anticipates_corner)
 {
 	ZoomModel m;
 	ZoomConfig cfg;
@@ -115,7 +115,7 @@ TEST(zoom_antecipa_o_canto)
 	m.configure(cfg);
 	m.reset(0.0);
 
-	/* Cursor a 20% da esquerda: a vista ja tem que estar na borda. */
+	/* Cursor at 20% from the left: the view must already be at the edge. */
 	m.focus_on(0.2, 0.5, 0.0);
 	double t = 0.0;
 	advance(m, t, 1.5);
@@ -123,11 +123,11 @@ TEST(zoom_antecipa_o_canto)
 	const ZoomRender r = m.render();
 	CHECK(r.focus_x < 0.05);
 
-	/* No pixel mais a esquerda, a fonte amostrada e o canto (0). */
+	/* At the leftmost pixel, the sampled source is the corner (0). */
 	const double u_no_pixel_0 = r.focus_x + (0.0 - r.focus_x) / r.zoom;
 	CHECK(u_no_pixel_0 <= 0.02);
 }
-TEST(zoom_foco_alcanca_os_cantos)
+TEST(zoom_focus_reaches_corners)
 {
 	ZoomModel m;
 	ZoomConfig cfg;
@@ -139,7 +139,7 @@ TEST(zoom_foco_alcanca_os_cantos)
 	m.configure(cfg);
 	m.reset(0.0);
 
-	/* Canto inferior direito da fonte. */
+	/* Bottom-right corner of the source. */
 	m.focus_on(1.0, 1.0, 0.0);
 	double t = 0.0;
 	advance(m, t, 1.0);
@@ -147,12 +147,12 @@ TEST(zoom_foco_alcanca_os_cantos)
 	CHECK(r.focus_x > 0.9);
 	CHECK(r.focus_y > 0.9);
 
-	/* O ponto da fonte (1,1) tem que aparecer DENTRO da tela. */
+	/* The source point (1,1) must appear INSIDE the screen. */
 	const double d = r.focus_x + (1.0 - r.focus_x) * r.zoom;
 	CHECK(d <= 1.0 + 1e-6);
 }
 
-TEST(zoom_canto_esquerdo_com_pan_pequeno)
+TEST(zoom_left_corner_with_small_pan)
 {
 	ZoomModel m;
 	ZoomConfig cfg;
@@ -160,7 +160,7 @@ TEST(zoom_canto_esquerdo_com_pan_pequeno)
 	cfg.amount = 1.6;
 	cfg.duration_ms = 100.0;
 	cfg.idle_timeout_ms = 100000.0;
-	cfg.pan_amount = 0.25; /* pan "suave": mesmo assim o canto deve ser alcancado */
+	cfg.pan_amount = 0.25; /* "soft" pan: even so the corner must be reached */
 	m.configure(cfg);
 	m.reset(0.0);
 
@@ -169,17 +169,17 @@ TEST(zoom_canto_esquerdo_com_pan_pequeno)
 	advance(m, t, 1.5);
 
 	const ZoomRender r = m.render();
-	/* o foco tem que ser puxado para perto de 0 (nao ficar em 0.375) */
+	/* the focus must be pulled close to 0 (not stay at 0.375) */
 	CHECK(r.focus_x < 0.1);
 	CHECK(r.focus_y < 0.1);
 
-	/* e o ponto (0,0) tem que estar visivel (0 <= d <= 1) */
+	/* and the point (0,0) must be visible (0 <= d <= 1) */
 	const double d = r.focus_x + (0.0 - r.focus_x) * r.zoom;
 	CHECK(d >= -1e-6);
 	CHECK(d <= 1.0 + 1e-6);
 }
 
-TEST(zoom_pan_nao_decai_com_o_tempo)
+TEST(zoom_pan_does_not_decay_over_time)
 {
 	ZoomModel m;
 	ZoomConfig cfg;
@@ -196,7 +196,7 @@ TEST(zoom_pan_nao_decai_com_o_tempo)
 	advance(m, t, 1.0);
 	const double fx1 = m.render().focus_x;
 
-	/* muito tempo depois, o foco nao pode ter "decaido" para o centro */
+	/* much later, the focus must not have "decayed" toward the center */
 	advance(m, t, 3.0);
 	const double fx2 = m.render().focus_x;
 	CHECK_NEAR(fx1, fx2, 1e-6);

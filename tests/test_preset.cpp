@@ -28,11 +28,11 @@ std::string read_file(const std::string &path, bool *ok)
 
 } // namespace
 
-TEST(preset_from_json_e_apply)
+TEST(preset_from_json_and_apply)
 {
 	const std::string text = R"({
-        "name": "Teste",
-        "description": "preset de teste",
+        "name": "Test",
+        "description": "test preset",
         "settings": {
             "effects_enabled": true,
             "bg_enabled": true,
@@ -49,10 +49,10 @@ TEST(preset_from_json_e_apply)
 	Preset p;
 	std::string err;
 	REQUIRE(Preset::from_json(text, &p, &err));
-	CHECK_EQ(p.name, std::string("Teste"));
+	CHECK_EQ(p.name, std::string("Test"));
 
 	Config cfg;
-	cfg.bg.padding_x = 999.0; /* sera sobrescrito */
+	cfg.bg.padding_x = 999.0; /* will be overwritten */
 	REQUIRE(p.apply(&cfg, &err));
 
 	CHECK_EQ(cfg.bg.mode, 1);
@@ -64,7 +64,7 @@ TEST(preset_from_json_e_apply)
 	CHECK_NEAR(cfg.zoom.amount, 2.5, 1e-9);
 }
 
-TEST(preset_valores_ausentes_mantidos)
+TEST(preset_missing_values_kept)
 {
 	const std::string text = R"({"name":"X","settings":{"bg_padding_x":10}})";
 	Preset p;
@@ -77,11 +77,11 @@ TEST(preset_valores_ausentes_mantidos)
 	REQUIRE(p.apply(&cfg, &err));
 
 	CHECK_NEAR(cfg.bg.padding_x, 10.0, 1e-9);
-	CHECK_NEAR(cfg.bg.corner_radius, 42.0, 1e-9); /* nao estava no preset */
+	CHECK_NEAR(cfg.bg.corner_radius, 42.0, 1e-9); /* was not in the preset */
 	CHECK_NEAR(cfg.zoom.amount, 3.0, 1e-9);
 }
 
-TEST(preset_sem_settings_falha)
+TEST(preset_without_settings_fails)
 {
 	Preset p;
 	std::string err;
@@ -89,9 +89,9 @@ TEST(preset_sem_settings_falha)
 	CHECK(!err.empty());
 }
 
-TEST(preset_arquivos_reais_parseiam)
+TEST(preset_real_files_parse)
 {
-	const char *names[] = {"demo.json", "tutorial.json", "apresentacao.json"};
+	const char *names[] = {"demo.json", "tutorial.json", "presentation.json"};
 	for (const char *n : names) {
 		const std::string path = std::string(TOPSCREEN_TEST_DATA_DIR) + "/presets/" + n;
 		bool ok = false;
@@ -102,12 +102,12 @@ TEST(preset_arquivos_reais_parseiam)
 		std::string err;
 		++tst::checks();
 		if (!Preset::from_json(text, &p, &err))
-			tst::fail(__FILE__, __LINE__, "preset invalido: " + path + " -> " + err);
+			tst::fail(__FILE__, __LINE__, "invalid preset: " + path + " -> " + err);
 
 		Config cfg;
 		++tst::checks();
 		if (!p.apply(&cfg, &err))
-			tst::fail(__FILE__, __LINE__, "apply falhou: " + path + " -> " + err);
+			tst::fail(__FILE__, __LINE__, "apply failed: " + path + " -> " + err);
 
 		CHECK(!p.name.empty());
 	}

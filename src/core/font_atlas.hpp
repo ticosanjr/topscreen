@@ -7,23 +7,23 @@
 
 namespace topscreen::core {
 
-/** Metrica de um glifo dentro do atlas. */
+/** Metrics of a glyph inside the atlas. */
 struct Glyph {
 	int code = 0;
-	int x = 0; // posicao no atlas (px)
+	int x = 0; // position in the atlas (px)
 	int y = 0;
-	int w = 0; // tamanho (px)
+	int w = 0; // size (px)
 	int h = 0;
-	int xoff = 0; // deslocamento do canto esquerdo em relacao ao avanco (px)
-	int yoff = 0; // deslocamento do topo em relacao a baseline (px)
-	int advance = 0; // avanco horizontal (px)
+	int xoff = 0; // offset of the left edge relative to the advance (px)
+	int yoff = 0; // offset of the top relative to the baseline (px)
+	int advance = 0; // horizontal advance (px)
 };
 
 /**
- * Atlas de glifos em RGBA8 (branco + alfa), gerado a partir de um TTF.
+ * Glyph atlas in RGBA8 (white + alpha), generated from a TTF.
  *
- * O RGB e sempre branco; o alfa carrega a cobertura. Isso permite colorir o
- * texto no shader (ex.: branco com contorno escuro).
+ * The RGB is always white; the alpha carries the coverage. This allows coloring the
+ * text in the shader (e.g.: white with a dark outline).
  */
 struct FontAtlas {
 	int width = 0;
@@ -31,7 +31,7 @@ struct FontAtlas {
 	int line_height = 0;
 	int ascent = 0;
 	std::vector<uint8_t> pixels; // RGBA8
-	std::vector<Glyph> glyphs;   // ordenado por `code`
+	std::vector<Glyph> glyphs;   // ordered by `code`
 
 	const Glyph *glyph(int code) const;
 };
@@ -41,7 +41,7 @@ struct FontAtlasOptions {
 	int padding = 1;
 };
 
-/** Constroi o atlas a partir dos bytes de um TTF. */
+/** Builds the atlas from the bytes of a TTF. */
 bool font_atlas_build(const uint8_t *ttf, size_t ttf_size, const FontAtlasOptions &options, FontAtlas *out,
 		      std::string *error);
 

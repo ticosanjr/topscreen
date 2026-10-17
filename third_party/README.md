@@ -2,10 +2,10 @@
 
 ## stb_truetype.h
 
-- Origem: https://github.com/nothings/stb
-- Licença: dual — **MIT** ou **Public Domain (Unlicense)**.
-- Uso: geração do atlas de glifos a partir do TTF embutido (`src/core/font_atlas.cpp`).
-- Implementação instanciada em `src/core/stb_truetype_impl.cpp`.
+- Source: https://github.com/nothings/stb
+- License: dual - **MIT** or **Public Domain (Unlicense)**.
+- Use: generation of the glyph atlas from the embedded TTF (`src/core/font_atlas.cpp`).
+- Implementation instantiated in `src/core/stb_truetype_impl.cpp`.
 
-Arquivos de terceiros não seguem o estilo do projeto; avisos do compilador são
-silenciados apenas no translation unit que instancia a implementação.
+Third-party files do not follow the project style; compiler warnings are
+silenced only in the translation unit that instantiates the implementation.

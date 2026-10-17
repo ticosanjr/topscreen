@@ -1,33 +1,33 @@
-# Documentação — TopScreen
+# Documentation — TopScreen
 
-Comece pelo **manual do usuário**.
+Start with the **user manual**.
 
-## Para quem usa
+## For users
 
-| Documento | Conteúdo |
+| Document | Contents |
 |-----------|----------|
-| [`MANUAL.md`](MANUAL.md) | **Manual do usuário**: instalar, usar cada recurso, atalhos, receitas, FAQ |
-| [`CONFIGURACAO.md`](CONFIGURACAO.md) | Referência de todas as opções, presets e atalhos |
-| [`EFEITOS.md`](EFEITOS.md) | Catálogo de efeitos e o que está implementado |
-| [`INPUT-E-PLATAFORMAS.md`](INPUT-E-PLATAFORMAS.md) | Cursor/teclas por SO; permissão no Linux; paridade Wayland |
-| [`BUILD.md`](BUILD.md) | Compilar e instalar (Linux/Windows) |
-| [`VERIFICACAO.md`](VERIFICACAO.md) | Roteiro para validar num OBS real |
-| [`TESTES.md`](TESTES.md) | Testes automatizados: como rodar e o que cobrem |
+| [`MANUAL.md`](MANUAL.md) | **User manual**: install, use each feature, hotkeys, recipes, FAQ |
+| [`CONFIGURATION.md`](CONFIGURATION.md) | Reference for every option, preset and hotkey |
+| [`EFFECTS.md`](EFFECTS.md) | Effect catalog and what is implemented |
+| [`INPUT-AND-PLATFORMS.md`](INPUT-AND-PLATFORMS.md) | Cursor/keys per OS; permission on Linux; Wayland parity |
+| [`BUILD.md`](BUILD.md) | Build and install (Linux/Windows) |
+| [`VERIFICATION.md`](VERIFICATION.md) | Script to validate on a real OBS |
+| [`TESTS.md`](TESTS.md) | Automated tests: how to run and what they cover |
 
-## Para quem desenvolve
+## For developers
 
-| Documento | Conteúdo |
+| Document | Contents |
 |-----------|----------|
-| [`PLANO.md`](PLANO.md) | Objetivo, decisões, escopo, riscos |
-| [`ARQUITETURA.md`](ARQUITETURA.md) | Arquitetura, módulos, pipeline |
-| [`ROADMAP.md`](ROADMAP.md) | Fases e critérios de aceite |
-| [`TAREFAS.md`](TAREFAS.md) | Quebra de tarefas e status |
-| [`../CONTRIBUTING.md`](../CONTRIBUTING.md) | Como contribuir |
+| [`PLAN.md`](PLAN.md) | Goal, decisions, scope, risks |
+| [`ARCHITECTURE.md`](ARCHITECTURE.md) | Architecture, modules, pipeline |
+| [`ROADMAP.md`](ROADMAP.md) | Phases and acceptance criteria |
+| [`TASKS.md`](TASKS.md) | Task breakdown and status |
+| [`../CONTRIBUTING.md`](../CONTRIBUTING.md) | How to contribute |
 
-## Primeiros passos
+## Getting started
 
-1. Instale: `./scripts/install-linux.sh` (Linux) ou
+1. Install: `./scripts/install-linux.sh` (Linux) or
    `pwsh -File scripts\install-windows.ps1` (Windows).
-2. No OBS: **Captura de Tela** → **Filtros** → **+** → **TopScreen FX**.
-3. Ajuste em Propriedades e crie atalhos em **Configurações → Atalhos**.
-4. Roteiro completo em [`MANUAL.md`](MANUAL.md).
+2. In OBS: **Display Capture** → **Filters** → **+** → **TopScreen FX**.
+3. Adjust in Properties and create hotkeys in **Settings → Hotkeys**.
+4. Full script in [`MANUAL.md`](MANUAL.md).

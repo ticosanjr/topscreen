@@ -46,7 +46,7 @@ bool Preset::from_json(const std::string &text, Preset *out, std::string *error)
 
 	if (!root.is_object()) {
 		if (error)
-			*error = "preset: raiz nao e um objeto";
+			*error = "preset: root is not an object";
 		return false;
 	}
 
@@ -61,7 +61,7 @@ bool Preset::from_json(const std::string &text, Preset *out, std::string *error)
 	const json::Value *settings = root.find("settings");
 	if (!settings || !settings->is_object()) {
 		if (error)
-			*error = "preset: falta o objeto 'settings'";
+			*error = "preset: missing the 'settings' object";
 		return false;
 	}
 
@@ -73,7 +73,7 @@ bool Preset::apply(Config *cfg, std::string *error) const
 {
 	if (!settings_.is_object()) {
 		if (error)
-			*error = "preset: 'settings' nao e um objeto";
+			*error = "preset: 'settings' is not an object";
 		return false;
 	}
 
@@ -82,7 +82,7 @@ bool Preset::apply(Config *cfg, std::string *error) const
 
 	cfg->effects_enabled = read_bool(o, kEffectsEnabled, cfg->effects_enabled);
 
-	/* Fundo */
+	/* Background */
 	cfg->bg.enabled = read_bool(o, kBgEnabled, cfg->bg.enabled);
 	cfg->bg.mode = read_int(o, kBgMode, cfg->bg.mode);
 	cfg->bg.color_a = static_cast<uint32_t>(read_number(o, kBgColorA, cfg->bg.color_a));
@@ -120,14 +120,14 @@ bool Preset::apply(Config *cfg, std::string *error) const
 	cfg->zoom.pan_amount = read_number(o, kZoomPanAmount, cfg->zoom.pan_amount);
 	cfg->zoom.center_amount = read_number(o, kZoomCenterAmount, cfg->zoom.center_amount);
 
-	/* Clique esquerdo */
+	/* Left click */
 	cfg->click_left.effect = read_int(o, kClickLeftEffect, cfg->click_left.effect);
 	cfg->click_left.size = read_number(o, kClickLeftSize, cfg->click_left.size);
 	cfg->click_left.color = static_cast<uint32_t>(read_number(o, kClickLeftColor, cfg->click_left.color));
 	cfg->click_left.duration_ms = read_number(o, kClickLeftDurationMs, cfg->click_left.duration_ms);
 	cfg->click_left.easing = read_int(o, kClickLeftEasing, cfg->click_left.easing);
 
-	/* Clique direito */
+	/* Right click */
 	cfg->click_right.effect = read_int(o, kClickRightEffect, cfg->click_right.effect);
 	cfg->click_right.size = read_number(o, kClickRightSize, cfg->click_right.size);
 	cfg->click_right.color =
@@ -135,7 +135,7 @@ bool Preset::apply(Config *cfg, std::string *error) const
 	cfg->click_right.duration_ms = read_number(o, kClickRightDurationMs, cfg->click_right.duration_ms);
 	cfg->click_right.easing = read_int(o, kClickRightEasing, cfg->click_right.easing);
 
-	/* Som de clique */
+	/* Click sound */
 	cfg->click_sound.enabled = read_bool(o, kClickSoundEnabled, cfg->click_sound.enabled);
 	cfg->click_sound.file = read_string(o, kClickSoundFile, cfg->click_sound.file);
 	cfg->click_sound.volume = read_number(o, kClickSoundVolume, cfg->click_sound.volume);
@@ -151,7 +151,7 @@ bool Preset::apply(Config *cfg, std::string *error) const
 	cfg->spotlight.radius = read_number(o, kSpotlightRadius, cfg->spotlight.radius);
 	cfg->spotlight.dim = read_number(o, kSpotlightDim, cfg->spotlight.dim);
 
-	/* Teclas */
+	/* Keys */
 	cfg->keys.enabled = read_bool(o, kKeysEnabled, cfg->keys.enabled);
 	cfg->keys.modifiers_only = read_bool(o, kKeysModifiersOnly, cfg->keys.modifiers_only);
 	cfg->keys.ttl_ms = read_number(o, kKeysTtlMs, cfg->keys.ttl_ms);
@@ -165,7 +165,7 @@ bool Preset::apply(Config *cfg, std::string *error) const
 	cfg->keys.band = read_bool(o, kKeysBand, cfg->keys.band);
 	cfg->keys.band_color = static_cast<uint32_t>(read_number(o, kKeysBandColor, cfg->keys.band_color));
 
-	/* Marca-texto */
+	/* Highlighter */
 	cfg->highlight.enabled = read_bool(o, kHighlightEnabled, cfg->highlight.enabled);
 	cfg->highlight.hold_ms = read_number(o, kHighlightHoldMs, cfg->highlight.hold_ms);
 	cfg->highlight.fade_ms = read_number(o, kHighlightFadeMs, cfg->highlight.fade_ms);

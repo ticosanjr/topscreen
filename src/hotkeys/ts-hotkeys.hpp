@@ -4,7 +4,7 @@
 
 namespace topscreen {
 
-/** Acoes de atalho (indice estavel - nao reordenar sem migrar configs). */
+/** Hotkey actions (stable index - do not reorder without migrating configs). */
 enum HotkeyAction {
 	HK_ToggleEffects = 0,
 	HK_ToggleBackground,
@@ -21,7 +21,7 @@ enum HotkeyAction {
 	HK_Count,
 };
 
-/** Interface implementada pelo filtro para reagir a atalhos. */
+/** Interface implemented by the filter to react to hotkeys. */
 struct HotkeyContext {
 	virtual ~HotkeyContext() = default;
 	virtual void toggle_effects() = 0;
@@ -31,7 +31,7 @@ struct HotkeyContext {
 	virtual void reset_zoom() = 0;
 	virtual void next_preset() = 0;
 	virtual void prev_preset() = 0;
-	/** Ativa um perfil (0..3) e enfileira o salvamento no perfil atual. */
+	/** Activates a profile (0..3) and queues saving into the current profile. */
 	virtual void select_profile(int index) = 0;
 	virtual void save_profile() = 0;
 };
@@ -43,7 +43,7 @@ struct HotkeyBinding {
 
 void ts_hotkey_callback(void *data, obs_hotkey_id id, obs_hotkey_t *key, bool pressed);
 
-/** Registra/desregistra os atalhos do TopScreen na fonte. */
+/** Registers/unregisters the TopScreen hotkeys on the source. */
 class Hotkeys {
 public:
 	void register_all(obs_source_t *source, HotkeyContext *ctx);

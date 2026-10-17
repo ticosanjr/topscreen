@@ -2,7 +2,7 @@
 
 namespace topscreen {
 
-/** Registra/desregistra o dock do TopScreen no OBS (no-op sem Qt). */
+/** Registers/unregisters the TopScreen dock in OBS (no-op without Qt). */
 void ts_dock_register();
 void ts_dock_unregister();
 

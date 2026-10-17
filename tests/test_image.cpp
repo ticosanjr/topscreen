@@ -20,7 +20,7 @@ std::vector<uint8_t> read_bytes(const std::string &path)
 }
 } // namespace
 
-TEST(image_decodifica_wallpaper_real)
+TEST(image_decodes_real_wallpaper)
 {
 	const auto bytes = read_bytes(std::string(TOPSCREEN_TEST_DATA_DIR) + "/wallpapers/ocean.jpg");
 	REQUIRE(!bytes.empty());
@@ -35,7 +35,7 @@ TEST(image_decodifica_wallpaper_real)
 	CHECK(!img.empty());
 }
 
-TEST(image_rejeita_dados_invalidos)
+TEST(image_rejects_invalid_data)
 {
 	Image img;
 	std::string err;

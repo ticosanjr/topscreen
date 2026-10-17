@@ -3,7 +3,7 @@
 
 using namespace topscreen::core;
 
-TEST(click_spawn_e_expiracao)
+TEST(click_spawn_and_expiration)
 {
 	ClickFxModel m;
 	ClickConfig left;
@@ -19,16 +19,16 @@ TEST(click_spawn_e_expiracao)
 	CHECK_NEAR(out[0].progress, 0.0, 1e-9);
 	CHECK_NEAR(out[0].x, 0.2, 1e-9);
 
-	/* Metade da duracao. */
+	/* Half of the duration. */
 	CHECK_EQ(m.collect(300.0, out, ClickFxModel::kMaxSlots), 1);
 	CHECK_NEAR(out[0].progress, 0.5, 1e-9);
 
-	/* Expirado. */
+	/* Expired. */
 	m.tick(700.0);
 	CHECK_EQ(m.active_count(), 0);
 }
 
-TEST(click_esquerdo_e_direito_distintos)
+TEST(click_left_and_right_distinct)
 {
 	ClickFxModel m;
 	ClickConfig l;
@@ -60,7 +60,7 @@ TEST(click_esquerdo_e_direito_distintos)
 	CHECK(found_orb);
 }
 
-TEST(click_recicla_slot_quando_cheio)
+TEST(click_recycles_slot_when_full)
 {
 	ClickFxModel m;
 	ClickConfig c;
@@ -75,7 +75,7 @@ TEST(click_recicla_slot_quando_cheio)
 	CHECK_EQ(m.active_count(), ClickFxModel::kMaxSlots);
 }
 
-TEST(click_progress_saturado)
+TEST(click_progress_saturated)
 {
 	ClickFxModel m;
 	ClickConfig c;
@@ -84,7 +84,7 @@ TEST(click_progress_saturado)
 	m.spawn(0.5, 0.5, 0.0, false);
 
 	ClickRender out[ClickFxModel::kMaxSlots];
-	/* Antes de tick remover, coletar com tempo muito maior satura em 1. */
+	/* Before tick removes it, collecting with a much larger time saturates at 1. */
 	m.collect(1000.0, out, ClickFxModel::kMaxSlots);
 	CHECK_NEAR(out[0].progress, 1.0, 1e-9);
 }

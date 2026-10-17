@@ -8,7 +8,7 @@ using namespace topscreen::core;
 
 namespace {
 
-/* Monta um registro de input_event (24 bytes) com type/code/value. */
+/* Builds an input_event record (24 bytes) with type/code/value. */
 std::vector<uint8_t> record(uint16_t type, uint16_t code, int32_t value)
 {
 	std::vector<uint8_t> r(24, 0);
@@ -33,7 +33,7 @@ std::vector<uint8_t> concat(std::initializer_list<std::vector<uint8_t>> parts)
 
 } // namespace
 
-TEST(evdev_decode_press_e_release)
+TEST(evdev_decode_press_and_release)
 {
 	const auto data = concat({record(1, 30, 1),  /* KEY_A press */
 				  record(1, 30, 0)}); /* KEY_A release */
@@ -47,7 +47,7 @@ TEST(evdev_decode_press_e_release)
 	CHECK(!keys[1].pressed);
 }
 
-TEST(evdev_decode_ignora_tipos_nao_tecla)
+TEST(evdev_decode_ignores_non_key_types)
 {
 	const auto data = concat({
 		record(0, 0, 0),    /* EV_SYN */
@@ -62,9 +62,9 @@ TEST(evdev_decode_ignora_tipos_nao_tecla)
 	CHECK(keys[0].pressed);
 }
 
-TEST(evdev_decode_registro_parcial_ignorado)
+TEST(evdev_decode_partial_record_ignored)
 {
-	std::vector<uint8_t> data(24 + 10, 0); /* 1 registro + 10 bytes soltos */
+	std::vector<uint8_t> data(24 + 10, 0); /* 1 record + 10 loose bytes */
 	data[16] = 1;
 	data[18] = 30;
 	data[20] = 1;
@@ -74,7 +74,7 @@ TEST(evdev_decode_registro_parcial_ignorado)
 	CHECK_EQ(static_cast<int>(keys.size()), 1);
 }
 
-TEST(evdev_decode_sem_dados)
+TEST(evdev_decode_no_data)
 {
 	std::vector<EvdevKey> keys;
 	CHECK(!evdev_decode(nullptr, 0, kEvdevRecord64, &keys));
@@ -92,7 +92,7 @@ TEST(evdev_labels)
 	CHECK_EQ(evdev_key_label(999), std::string(""));
 }
 
-TEST(evdev_modificadores)
+TEST(evdev_modifiers)
 {
 	CHECK(evdev_key_is_modifier(29));  /* LeftCtrl */
 	CHECK(evdev_key_is_modifier(42));  /* LeftShift */

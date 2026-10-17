@@ -22,7 +22,8 @@ jobs:
           g++ -std=c++20 -O1 -g -Wall -Wextra \
             -I src \
             -DTOPSCREEN_TEST_DATA_DIR="$PWD/data" \
-            tests/*.cpp src/core/*.cpp \
+            -DTOPSCREEN_SOURCE_DIR="$PWD" \
+            tests/*.cpp src/core/*.cpp src/ts-wallpapers.cpp \
             -o topscreen_tests
           ./topscreen_tests
 
@@ -32,10 +33,12 @@ jobs:
         run: |
           $files = @(Get-ChildItem tests/*.cpp | ForEach-Object { $_.FullName })
           $core  = @(Get-ChildItem src/core/*.cpp | ForEach-Object { $_.FullName })
+          $extra = @("$PWD/src/ts-wallpapers.cpp")
           g++ -std=c++20 -O1 -g -Wall -Wextra `
             -I src `
             -DTOPSCREEN_TEST_DATA_DIR="$PWD/data" `
-            @files @core `
+            -DTOPSCREEN_SOURCE_DIR="$PWD" `
+            @files @core @extra `
             -o topscreen_tests.exe
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           .\topscreen_tests.exe

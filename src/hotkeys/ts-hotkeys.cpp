@@ -11,7 +11,7 @@ const char *const kHotkeyNames[HK_Count] = {
 	"TopScreen.ProfileC",       "TopScreen.ProfileD",         "TopScreen.ProfileSave",
 };
 
-/* Descricao localizada de cada atalho (literais para o teste de traducao). */
+/* Localized description of each hotkey (literals for the translation test). */
 const char *hotkey_description(int action)
 {
 	switch (action) {

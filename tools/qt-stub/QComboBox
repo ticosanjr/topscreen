@@ -6,7 +6,7 @@
 
 #include <vector>
 
-/* Stub minimo de QComboBox (apenas para checagem de compilacao do dock). */
+/* Minimal stub for QComboBox (only for the dock compile check). */
 class QComboBox : public QWidget {
 public:
 	explicit QComboBox(QWidget *parent = nullptr) : QWidget(parent) {}

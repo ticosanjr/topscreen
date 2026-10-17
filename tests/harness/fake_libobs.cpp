@@ -7,7 +7,7 @@
 #include <fstream>
 
 // ---------------------------------------------------------------------------
-// Estado interno
+// Internal state
 // ---------------------------------------------------------------------------
 namespace {
 
@@ -85,7 +85,7 @@ int hotkey_count()
 } // namespace fakeobs
 
 // ---------------------------------------------------------------------------
-// Implementacao da API do OBS
+// OBS API implementation
 // ---------------------------------------------------------------------------
 
 extern "C" {
@@ -276,7 +276,7 @@ void obs_source_update(obs_source_t *source, obs_data_t *settings)
 {
 	if (!source || !settings)
 		return;
-	// Nosso get_settings devolve o proprio objeto; copia por seguranca.
+	// Our get_settings returns the object itself; copy for safety.
 	*source->settings = *settings;
 }
 
@@ -429,7 +429,7 @@ gs_effect_t *gs_effect_create_from_file(const char *file, char **error)
 		*error = nullptr;
 	if (!file)
 		return nullptr;
-	// Valida que o arquivo existe (exercita a resolucao de caminho de dados).
+	// Validates that the file exists (exercises data path resolution).
 	std::ifstream in(file);
 	if (!in)
 		return nullptr;

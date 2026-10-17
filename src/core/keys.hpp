@@ -1,10 +1,10 @@
 #pragma once
 
 /**
- * Nomes das chaves de configuracao.
+ * Configuration key names.
  *
- * Fonte unica de verdade, usada tanto pelo mapeamento obs_data (plugin) quanto
- * pelos arquivos de preset (nucleo).
+ * Single source of truth, used both by the obs_data mapping (plugin) and
+ * by the preset files (core).
  */
 namespace topscreen::core::keys {
 
@@ -87,7 +87,7 @@ inline constexpr const char *kHighlightEnabled = "highlight_enabled";inline cons
 inline constexpr const char *kHighlightFadeMs = "highlight_fade_ms";
 inline constexpr const char *kHighlightColor = "highlight_color";
 
-/* Perfis (4 slots fixos). Cada slot guarda a Config inteira num obs_data aninhado. */
+/* Profiles (4 fixed slots). Each slot stores the entire Config in a nested obs_data. */
 inline constexpr int kProfileCount = 4;
 inline constexpr const char *kProfileCurrent = "profile_current";
 inline constexpr const char *kProfileSlots[kProfileCount] = {"profile_slot_0", "profile_slot_1", "profile_slot_2",

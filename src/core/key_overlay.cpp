@@ -38,7 +38,7 @@ void KeyOverlayModel::press(const std::string &label, bool is_modifier, double n
 	if (cfg_.modifiers_only && !is_modifier)
 		return;
 
-	/* Se a tecla ja esta visivel, apenas reinicia o tempo. */
+	/* If the key is already visible, just resets the timer. */
 	for (auto &e : entries_) {
 		if (e.label == label) {
 			e.born_ms = now_ms;
@@ -48,7 +48,7 @@ void KeyOverlayModel::press(const std::string &label, bool is_modifier, double n
 
 	entries_.push_back({label, now_ms, is_modifier});
 
-	/* Respeita o limite, descartando as mais antigas. */
+	/* Respects the limit, discarding the oldest ones. */
 	while (static_cast<int>(entries_.size()) > cfg_.max_keys)
 		entries_.erase(entries_.begin());
 }

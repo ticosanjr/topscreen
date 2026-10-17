@@ -7,15 +7,15 @@
 namespace topscreen {
 
 /**
- * Som de clique.
+ * Click sound.
  *
- * Faz o decode do WAV (via core/wav) no load() e toca via audio do sistema
- * (PlaySound no Windows; paplay/pw-play/aplay no Linux). O playback pelo canal
- * de audio do OBS entra em F6 (fonte propria).
+ * Decodes the WAV (via core/wav) in load() and plays it through the system audio
+ * (PlaySound on Windows; paplay/pw-play/aplay on Linux). Playback through the OBS
+ * audio channel is planned for F6 (own source).
  */
 class ClickSound {
 public:
-	/** Carrega um arquivo relativo ao diretorio de dados do modulo. */
+	/** Loads a file relative to the module's data directory. */
 	bool load(const char *module_file);
 	void release();
 	void play();
@@ -26,7 +26,7 @@ public:
 private:
 	bool loaded_ = false;
 	std::string path_;
-	std::string player_; // Linux: caminho do player resolvido
+	std::string player_; // Linux: resolved player path
 	core::WavData wav_;
 };
 

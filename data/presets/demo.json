@@ -1,6 +1,6 @@
 {
     "name": "Demo",
-    "description": "Fundo em gradiente, cantos arredondados, cursor destacado e zoom automatico.",
+    "description": "Gradient background, rounded corners, highlighted cursor and automatic zoom.",
     "settings": {
         "effects_enabled": true,
         "bg_enabled": true,

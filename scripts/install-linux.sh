@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 #
-# Instala o TopScreen no Linux (jeito simples).
+# Installs TopScreen on Linux (simple way).
 #
-# Uso:
-#   scripts/install-linux.sh            # plugin de usuario (sem sudo)
-#   scripts/install-linux.sh --system   # OBS do sistema (usa sudo)
+# Usage:
+#   scripts/install-linux.sh            # user plugin (no sudo)
+#   scripts/install-linux.sh --system   # system OBS (uses sudo)
 #
 set -uo pipefail
 
@@ -15,22 +15,22 @@ while [ $# -gt 0 ]; do
 	case "$1" in
 	--system | --user) MODE="$1"; shift ;;
 	-h | --help) sed -n '2,9p' "$0"; exit 0 ;;
-	*) echo "opcao desconhecida: $1"; exit 2 ;;
+	*) echo "unknown option: $1"; exit 2 ;;
 	esac
 done
 
-# ---- dependencias ----
+# ---- dependencies ----
 missing=()
 command -v cmake >/dev/null || missing+=("cmake")
 command -v g++ >/dev/null || missing+=("build-essential")
 [ -f /usr/include/obs/obs-module.h ] || missing+=("libobs-dev")
 
 if [ "${#missing[@]}" -gt 0 ]; then
-	echo "Faltam dependencias: ${missing[*]}"
+	echo "Missing dependencies: ${missing[*]}"
 	echo
-	echo "Instale com:"
+	echo "Install with:"
 	echo "  sudo apt update && sudo apt install -y cmake build-essential libobs-dev"
-	echo "  # para o dock (opcional): sudo apt install -y qt6-base-dev"
+	echo "  # for the dock (optional): sudo apt install -y qt6-base-dev"
 	exit 1
 fi
 
@@ -41,12 +41,12 @@ rc=$?
 if [ $rc -eq 0 ]; then
 	cat <<EOF
 
-Proximo passo (teclas no Linux): aplique a regra udev para o overlay funcionar
+Next step (keys on Linux): apply the udev rule so the overlay works
   sudo cp "$ROOT/data/udev/99-topscreen.rules" /etc/udev/rules.d/
   sudo udevadm control --reload-rules && sudo udevadm trigger
-  # relogar a sessao ajuda
+  # logging the session back in helps
 
-No OBS: Captura de Tela -> Filtros -> + -> "TopScreen FX".
+In OBS: Screen Capture -> Filters -> + -> "TopScreen FX".
 EOF
 fi
 

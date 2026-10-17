@@ -4,7 +4,7 @@
 
 using namespace topscreen::core;
 
-TEST(mapping_area_sem_padding)
+TEST(mapping_area_without_padding)
 {
 	const ContentArea a = content_area(1920, 1080, 0, 0, false);
 	CHECK_NEAR(a.origin.x, 0.0, 1e-9);
@@ -13,7 +13,7 @@ TEST(mapping_area_sem_padding)
 	CHECK_NEAR(a.size.y, 1080.0, 1e-9);
 }
 
-TEST(mapping_area_com_padding)
+TEST(mapping_area_with_padding)
 {
 	const ContentArea a = content_area(1920, 1080, 64, 64, false);
 	CHECK_NEAR(a.origin.x, 64.0, 1e-9);
@@ -22,9 +22,9 @@ TEST(mapping_area_com_padding)
 	CHECK_NEAR(a.size.y, 952.0, 1e-9);
 }
 
-TEST(mapping_area_manter_proporcao)
+TEST(mapping_area_keep_aspect)
 {
-	/* 1920x1080 com padding 64/64: sc = min(1792/1920, 952/1080) = 0.88148... */
+	/* 1920x1080 with padding 64/64: sc = min(1792/1920, 952/1080) = 0.88148... */
 	const ContentArea a = content_area(1920, 1080, 64, 64, true);
 	const double sc = 952.0 / 1080.0;
 	CHECK_NEAR(a.size.x, 1920.0 * sc, 1e-6);
@@ -33,44 +33,44 @@ TEST(mapping_area_manter_proporcao)
 	CHECK_NEAR(a.origin.y, (1080.0 - 1080.0 * sc) * 0.5, 1e-6);
 }
 
-TEST(mapping_zoom_identidade)
+TEST(mapping_zoom_identity)
 {
 	const Vec2f d = source_to_display(0.3, 0.7, 0.5, 0.5, 1.0);
 	CHECK_NEAR(d.x, 0.3, 1e-9);
 	CHECK_NEAR(d.y, 0.7, 1e-9);
 }
 
-TEST(mapping_zoom_para_frente)
+TEST(mapping_zoom_forward)
 {
-	/* Com foco 0.5 e zoom 2, um ponto 0.1 fora do foco aparece 0.2 fora. */
+	/* With focus 0.5 and zoom 2, a point 0.1 away from the focus appears 0.2 away. */
 	const Vec2f d = source_to_display(0.6, 0.4, 0.5, 0.5, 2.0);
 	CHECK_NEAR(d.x, 0.7, 1e-9);
 	CHECK_NEAR(d.y, 0.3, 1e-9);
 
-	/* E o inverso da amostragem do shader: u = f + (d - f)/z. */
+	/* And it is the inverse of the shader sampling: u = f + (d - f)/z. */
 	const double u = 0.5 + (d.x - 0.5) / 2.0;
 	CHECK_NEAR(u, 0.6, 1e-9);
 }
 
-TEST(mapping_fonte_para_pixel)
+TEST(mapping_source_to_pixel)
 {
 	const ContentArea a = content_area(1920, 1080, 64, 64, false);
-	/* centro da fonte -> centro do conteudo */
+	/* source center -> content center */
 	const Vec2f c = source_to_pixel(0.5, 0.5, 0.5, 0.5, 1.0, a);
 	CHECK_NEAR(c.x, 64.0 + 0.5 * 1792.0, 1e-6);
 	CHECK_NEAR(c.y, 64.0 + 0.5 * 952.0, 1e-6);
 
-	/* canto superior esquerdo da fonte -> canto do conteudo */
+	/* top-left corner of the source -> content corner */
 	const Vec2f tl = source_to_pixel(0.0, 0.0, 0.5, 0.5, 1.0, a);
 	CHECK_NEAR(tl.x, 64.0, 1e-6);
 	CHECK_NEAR(tl.y, 64.0, 1e-6);
 }
 
 /*
- * Os cantos: com o foco ajustado para manter o ponto visivel, um ponto da
- * BORDA tem que aparecer dentro da area de conteudo (nao some da tela).
+ * The corners: with the focus adjusted to keep the point visible, a point on
+ * the EDGE has to appear inside the content area (it does not vanish off screen).
  */
-TEST(mapping_canto_visivel_com_foco_ajustado)
+TEST(mapping_corner_visible_with_adjusted_focus)
 {
 	const ContentArea a = content_area(1920, 1080, 64, 64, true);
 	const double pontos[] = {0.0, 0.25, 0.5, 0.75, 1.0};
@@ -78,7 +78,7 @@ TEST(mapping_canto_visivel_com_foco_ajustado)
 
 	for (double s : pontos) {
 		for (double z : zooms) {
-			/* pior caso: foco centralizado (pan 0) -> o clamp tem que puxar */
+			/* worst case: centered focus (pan 0) -> the clamp has to pull */
 			const double f = clamp_focus_keep(s, 0.5, z);
 			const Vec2f d = source_to_display(s, s, f, f, z);
 			CHECK(d.x >= -1e-9 && d.x <= 1.0 + 1e-9);
@@ -92,21 +92,21 @@ TEST(mapping_canto_visivel_com_foco_ajustado)
 		}
 	}
 }
-TEST(mapping_antecipa_o_canto)
+TEST(mapping_anticipates_corner)
 {
 	const ContentArea a = content_area(1920, 1080, 64, 64, false);
 	const double z = 1.6;
 	const double s = 0.2;
 
-	/* Com centralizacao, o foco para s=0.2 ja vai para a borda (0). */
+	/* With centering, the focus for s=0.2 already goes to the edge (0). */
 	const double f = center_focus_for(s, z);
 	CHECK_NEAR(f, 0.0, 1e-9);
 
-	/* O canto esquerdo (fonte 0) ja esta na borda do quadro (antecipado). */
+	/* The left corner (source 0) is already at the frame edge (anticipated). */
 	const double u_no_pixel_0 = f + (0.0 - f) / z;
 	CHECK(u_no_pixel_0 <= 1e-9);
 
-	/* E o cursor continua visivel. */
+	/* And the cursor remains visible. */
 	const double c = f + (s - f) * z;
 	CHECK(c >= -1e-9);
 	CHECK(c <= 1.0 + 1e-9);
@@ -116,7 +116,7 @@ TEST(mapping_antecipa_o_canto)
 	CHECK(p.x <= a.origin.x + a.size.x + 1e-6);
 }
 
-TEST(mapping_consistencia_com_shader)
+TEST(mapping_consistency_with_shader)
 {
 	const ContentArea a = content_area(1920, 1080, 64, 64, true);
 	const double f = 0.42;
@@ -127,11 +127,11 @@ TEST(mapping_consistencia_com_shader)
 			const double cx = i / 10.0;
 			const double cy = j / 10.0;
 
-			/* o que o shader amostra para este pixel */
+			/* what the shader samples for this pixel */
 			const double ux = f + (cx - f) / z;
 			const double uy = f + (cy - f) / z;
 
-			/* o overlay naquele ponto da fonte deve cair no MESMO pixel */
+			/* the overlay at that source point must land on the SAME pixel */
 			const Vec2f p = source_to_pixel(ux, uy, f, f, z, a);
 			CHECK_NEAR(p.x, a.origin.x + cx * a.size.x, 1e-6);
 			CHECK_NEAR(p.y, a.origin.y + cy * a.size.y, 1e-6);

@@ -2,7 +2,7 @@
 
 #include <string>
 
-/* Stub minimo de QString (apenas para checagem de compilacao do dock). */
+/* Minimal stub for QString (only for the dock compile check). */
 class QString {
 public:
 	QString() = default;

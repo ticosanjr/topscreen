@@ -18,7 +18,7 @@ namespace topscreen {
 
 namespace {
 
-/* Setters com guarda: um uniform ausente nao pode derrubar o OBS. */
+/* Guarded setters: a missing uniform cannot crash OBS. */
 inline void set_f(gs_eparam_t *p, float v)
 {
 	if (p)
@@ -52,7 +52,7 @@ bool Compositor::load()
 
 	char *path = obs_module_file("effects/topscreen.effect");
 	if (!path) {
-		blog(LOG_ERROR, "[TopScreen] obs_module_file(effects/topscreen.effect) falhou");
+		blog(LOG_ERROR, "[TopScreen] obs_module_file(effects/topscreen.effect) failed");
 		return false;
 	}
 
@@ -63,17 +63,17 @@ bool Compositor::load()
 	bfree(path);
 
 	if (!effect_) {
-		blog(LOG_ERROR, "[TopScreen] falha ao criar o efeito topscreen.effect");
+		blog(LOG_ERROR, "[TopScreen] failed to create the topscreen.effect effect");
 		return false;
 	}
 
 	cache_params();
 	validate_params();
 
-	/* Overlay de teclas (melhor esforco: se faltar fonte/efeito, segue sem). */
+	/* Key overlay (best effort: if the font/effect is missing, proceeds without it). */
 	text_.load("fonts/DejaVuSans-Bold.ttf", "effects/text.effect");
 
-	/* Atlas de cursores (melhor esforco: sem ele, usa o cursor procedural). */
+	/* Cursor atlas (best effort: without it, uses the procedural cursor). */
 	load_cursor_atlas();
 
 	return true;
@@ -83,7 +83,7 @@ void Compositor::load_cursor_atlas()
 {
 	char *path = obs_module_file("cursors/atlas.rgba");
 	if (!path) {
-		blog(LOG_WARNING, "[TopScreen] atlas de cursores nao encontrado (usando procedural)");
+		blog(LOG_WARNING, "[TopScreen] cursor atlas not found (using procedural)");
 		return;
 	}
 
@@ -95,11 +95,11 @@ void Compositor::load_cursor_atlas()
 
 	std::string err;
 	if (!core::cursor_atlas_parse(bytes.data(), bytes.size(), &cursor_atlas_, &err)) {
-		blog(LOG_WARNING, "[TopScreen] atlas de cursores invalido: %s", err.c_str());
+		blog(LOG_WARNING, "[TopScreen] invalid cursor atlas: %s", err.c_str());
 		return;
 	}
 
-	/* Hotspots (opcional; se faltar, usa um padrao). */
+	/* Hotspots (optional; if missing, uses a default). */
 	char *jpath = obs_module_file("cursors/atlas.json");
 	if (jpath) {
 		std::string text;
@@ -116,11 +116,11 @@ void Compositor::load_cursor_atlas()
 	obs_leave_graphics();
 
 	if (!cursor_tex_) {
-		blog(LOG_WARNING, "[TopScreen] falha ao criar a textura do atlas de cursores");
+		blog(LOG_WARNING, "[TopScreen] failed to create the cursor atlas texture");
 		return;
 	}
 
-	blog(LOG_INFO, "[TopScreen] atlas de cursores: %u estilos (%ux%u)", cursor_atlas_.count,
+	blog(LOG_INFO, "[TopScreen] cursor atlas: %u styles (%ux%u)", cursor_atlas_.count,
 	     cursor_atlas_.width(), cursor_atlas_.height());
 }
 
@@ -219,7 +219,7 @@ void Compositor::validate_params() const
 
 	for (const Named &n : checks) {
 		if (!n.param)
-			blog(LOG_WARNING, "[TopScreen] uniform ausente no shader: %s", n.name);
+			blog(LOG_WARNING, "[TopScreen] missing uniform in shader: %s", n.name);
 	}
 }
 
@@ -289,7 +289,7 @@ void Compositor::render(obs_source_t *filter, const core::Config &cfg, const Fra
 	set_c(p_bg_a_, cfg.bg.color_a);
 	set_c(p_bg_b_, cfg.bg.color_b);
 
-	/* Wallpaper: se houver imagem (do PC ou embutida), ela e usada. */
+	/* Wallpaper: if there is an image (from the PC or built-in), it is used. */
 	const std::string bg_path =
 		core::resolve_bg_path(cfg.bg.image.c_str(), cfg.bg.image_file.c_str());
 	load_bg_image(active ? bg_path : std::string());
@@ -342,7 +342,7 @@ void Compositor::render(obs_source_t *filter, const core::Config &cfg, const Fra
 			gs_effect_set_texture(p_cursor_tex_, cursor_tex_);
 	}
 
-	/* Motion blur do zoom */
+	/* Zoom motion blur */
 	set_f(p_zoom_blur_, active ? static_cast<float>(st.zoom_blur) : 0.0f);
 
 	/* Spotlight */
@@ -351,7 +351,7 @@ void Compositor::render(obs_source_t *filter, const core::Config &cfg, const Fra
 	set_f(p_spotlight_radius_, static_cast<float>(cfg.spotlight.radius));
 	set_f(p_spotlight_dim_, static_cast<float>(cfg.spotlight.dim));
 
-	/* Marca-texto de arrasto */
+	/* Drag highlighter */
 	const bool hl = active && st.highlight.active;
 	set_f(p_highlight_active_, hl ? 1.0f : 0.0f);
 	{
@@ -364,7 +364,7 @@ void Compositor::render(obs_source_t *filter, const core::Config &cfg, const Fra
 	set_c(p_highlight_color_, st.highlight.color);
 	set_f(p_highlight_alpha_, static_cast<float>(st.highlight.alpha));
 
-	/* Cliques (ate kShaderClickSlots, slots explicitos) */
+	/* Clicks (up to kShaderClickSlots, explicit slots) */
 	int used = st.click_count;
 	if (used > kShaderClickSlots)
 		used = kShaderClickSlots;
@@ -381,20 +381,20 @@ void Compositor::render(obs_source_t *filter, const core::Config &cfg, const Fra
 
 	obs_source_process_filter_end(filter, effect_, w, h);
 
-	/* Overlay de teclas por cima do resultado. */
+	/* Key overlay on top of the result. */
 	if (active && cfg.keys.enabled && st.key_count > 0)
 		text_.draw(st.keys, st.key_count, cfg.keys, w, h);
 }
 
 void Compositor::load_bg_image(const std::string &raw)
 {
-	/* O caminho pedido raramente muda; evita re-resolver por frame. */
+	/* The requested path rarely changes; avoids re-resolving per frame. */
 	if (raw == bg_requested_)
 		return;
 	bg_requested_ = raw;
 
-	/* Auto-correcao: se o valor for o nome de um wallpaper embutido
-	 * (ex.: "Aurora", de versoes/config antigas), converte para o caminho. */
+	/* Auto-correction: if the value is the name of a built-in wallpaper
+	 * (e.g.: "Aurora", from old versions/config), converts it to the path. */
 	std::string path = raw;
 	if (const char *w = wallpaper_path_for(path.c_str()))
 		path = w;
@@ -417,7 +417,7 @@ void Compositor::load_bg_image(const std::string &raw)
 	if (!core::read_file_bytes(path.c_str(), &bytes)) {
 		char *m = obs_module_file(path.c_str());
 		if (!m) {
-			blog(LOG_WARNING, "[TopScreen] wallpaper nao encontrado: %s", path.c_str());
+			blog(LOG_WARNING, "[TopScreen] wallpaper not found: %s", path.c_str());
 			return;
 		}
 		const bool mok = core::read_file_bytes(m, &bytes);
@@ -427,14 +427,14 @@ void Compositor::load_bg_image(const std::string &raw)
 	}
 
 	if (bytes.empty()) {
-		blog(LOG_WARNING, "[TopScreen] wallpaper vazio/ilegivel: %s", path.c_str());
+		blog(LOG_WARNING, "[TopScreen] empty/unreadable wallpaper: %s", path.c_str());
 		return;
 	}
 
 	core::Image img;
 	std::string err;
 	if (!core::image_decode(bytes.data(), bytes.size(), &img, &err)) {
-		blog(LOG_WARNING, "[TopScreen] wallpaper invalido (%s): %s", path.c_str(), err.c_str());
+		blog(LOG_WARNING, "[TopScreen] invalid wallpaper (%s): %s", path.c_str(), err.c_str());
 		return;
 	}
 
@@ -449,7 +449,7 @@ void Compositor::load_bg_image(const std::string &raw)
 	if (bg_tex_)
 		blog(LOG_INFO, "[TopScreen] wallpaper: %s (%dx%d)", path.c_str(), img.width, img.height);
 	else
-		blog(LOG_WARNING, "[TopScreen] falha ao criar a textura do wallpaper: %s", path.c_str());
+		blog(LOG_WARNING, "[TopScreen] failed to create the wallpaper texture: %s", path.c_str());
 }
 
 void Compositor::release_bg_image()

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Compila e roda a suite de testes do nucleo (sem libobs/cmake).
+# Compiles and runs the core test suite (no libobs/cmake).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -9,7 +9,7 @@ OUT="${OUT_DIR}/topscreen_tests"
 
 mkdir -p "$OUT_DIR"
 
-echo "Compilando testes com ${CXX} ..."
+echo "Compiling tests with ${CXX} ..."
 "${CXX}" -std=c++20 -O1 -g -Wall -Wextra \
     -I "${ROOT}/src" \
     -I "${ROOT}/third_party" \
@@ -20,5 +20,5 @@ echo "Compilando testes com ${CXX} ..."
     "${ROOT}/src/ts-wallpapers.cpp" \
     -o "${OUT}"
 
-echo "Rodando testes ..."
+echo "Running tests ..."
 "${OUT}"

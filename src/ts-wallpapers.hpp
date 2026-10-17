@@ -3,11 +3,11 @@
 namespace topscreen {
 
 struct WallpaperEntry {
-	const char *name; // rotulo exibido
-	const char *path; // caminho relativo ao modulo
+	const char *name; // displayed label
+	const char *path; // path relative to the module
 };
 
-/** Wallpapers embutidos (data/wallpapers). */
+/** Built-in wallpapers (data/wallpapers). */
 inline constexpr WallpaperEntry kWallpapers[] = {
 	{"Aurora", "wallpapers/aurora.jpg"},     {"Sunset", "wallpapers/sunset.jpg"},
 	{"Monterey", "wallpapers/monterey.jpg"}, {"Ventura", "wallpapers/ventura.jpg"},
@@ -23,9 +23,9 @@ inline constexpr WallpaperEntry kWallpapers[] = {
 inline constexpr int kWallpaperCount = sizeof(kWallpapers) / sizeof(kWallpapers[0]);
 
 /**
- * Se `value` for o rotulo/base de um wallpaper embutido (ex.: "Aurora" ou
- * "aurora"), devolve o caminho relativo ("wallpapers/aurora.jpg").
- * Caso contrario devolve nullptr (trata como caminho normal).
+ * If `value` is the label/base of a built-in wallpaper (e.g.: "Aurora" or
+ * "aurora"), returns the relative path ("wallpapers/aurora.jpg").
+ * Otherwise returns nullptr (treats it as a normal path).
  */
 const char *wallpaper_path_for(const char *value);
 

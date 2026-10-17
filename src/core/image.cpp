@@ -16,17 +16,17 @@ bool image_decode(const uint8_t *data, size_t size, Image *out, std::string *err
 {
 	auto fail = [&](const char *msg) {
 		if (error)
-			*error = std::string("imagem: ") + msg;
+			*error = std::string("image: ") + msg;
 		return false;
 	};
 
 	if (!data || size == 0)
-		return fail("sem dados");
+		return fail("no data");
 
 	int w = 0, h = 0, comp = 0;
 	stbi_uc *pixels = stbi_load_from_memory(data, static_cast<int>(size), &w, &h, &comp, 4);
 	if (!pixels)
-		return fail("formato nao suportado");
+		return fail("unsupported format");
 
 	const size_t total = static_cast<size_t>(w) * h * 4u;
 	out->width = w;
@@ -36,7 +36,7 @@ bool image_decode(const uint8_t *data, size_t size, Image *out, std::string *err
 	return true;
 }
 
-// Garante que a implementacao (definida em stb_image_impl.cpp) esta linkada.
+// Ensures the implementation (defined in stb_image_impl.cpp) is linked.
 void image_link_anchor(void);
 
 } // namespace topscreen::core

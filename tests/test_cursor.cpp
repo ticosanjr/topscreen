@@ -13,7 +13,7 @@ void advance(CursorModel &m, double &t, double seconds, double dt = 1.0 / 60.0)
 }
 } // namespace
 
-TEST(cursor_posicao_inicial)
+TEST(cursor_initial_position)
 {
 	CursorModel m;
 	CursorConfig cfg;
@@ -25,7 +25,7 @@ TEST(cursor_posicao_inicial)
 	CHECK_NEAR(r.size, cfg.size, 1e-9);
 }
 
-TEST(cursor_persegue_alvo)
+TEST(cursor_follows_target)
 {
 	CursorModel m;
 	CursorConfig cfg;
@@ -39,7 +39,7 @@ TEST(cursor_persegue_alvo)
 	CHECK_NEAR(r.y, 1.0, 1e-2);
 }
 
-TEST(cursor_idle_reduz_opacidade)
+TEST(cursor_idle_reduces_opacity)
 {
 	CursorModel m;
 	CursorConfig cfg;
@@ -49,15 +49,15 @@ TEST(cursor_idle_reduz_opacidade)
 	m.reset(0.5, 0.5, 0.0);
 
 	double t = 0.0;
-	advance(m, t, 0.5); /* antes do delay */
+	advance(m, t, 0.5); /* before the delay */
 	CHECK(m.render().opacity > 0.99);
 
-	advance(m, t, 2.0); /* bem apos delay + fade */
+	advance(m, t, 2.0); /* well past delay + fade */
 	CHECK(m.render().opacity < 0.01);
 	CHECK(!m.visible());
 }
 
-TEST(cursor_sem_hide_idle_mantem_opacidade)
+TEST(cursor_without_hide_idle_keeps_opacity)
 {
 	CursorModel m;
 	CursorConfig cfg;
@@ -69,7 +69,7 @@ TEST(cursor_sem_hide_idle_mantem_opacidade)
 	CHECK_NEAR(m.render().opacity, 1.0, 1e-9);
 }
 
-TEST(cursor_loop_volta_ao_inicio)
+TEST(cursor_loop_returns_to_start)
 {
 	CursorModel m;
 	CursorConfig cfg;
@@ -82,15 +82,15 @@ TEST(cursor_loop_volta_ao_inicio)
 	m.set_target(0.9, 0.9, 0.0);
 	double t = 0.0;
 	advance(m, t, 1.0);
-	CHECK(m.render().x > 0.5); /* ja se moveu para longe */
+	CHECK(m.render().x > 0.5); /* already moved far away */
 
-	/* Fica parado: apos loop_ms deve voltar para perto do inicio. */
+	/* Stays still: after loop_ms it must return close to the start. */
 	advance(m, t, 4.0);
 	CHECK_NEAR(m.render().x, 0.1, 0.05);
 	CHECK_NEAR(m.render().y, 0.1, 0.05);
 }
 
-TEST(cursor_desabilitado_invisivel)
+TEST(cursor_disabled_invisible)
 {
 	CursorModel m;
 	CursorConfig cfg;

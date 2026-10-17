@@ -82,10 +82,10 @@ TEST(wav_pcm16_mono)
 	CHECK_NEAR(w.samples[1], 0.5, 1e-4);
 }
 
-TEST(wav_pcm16_estereo_frame_count)
+TEST(wav_pcm16_stereo_frame_count)
 {
 	std::vector<uint8_t> data;
-	for (int i = 0; i < 8; ++i) { /* 4 frames x 2 canais */
+	for (int i = 0; i < 8; ++i) { /* 4 frames x 2 channels */
 		auto s = le16(1000);
 		data.insert(data.end(), s.begin(), s.end());
 	}
@@ -98,7 +98,7 @@ TEST(wav_pcm16_estereo_frame_count)
 	CHECK_EQ(static_cast<int>(w.frame_count()), 4);
 }
 
-TEST(wav_pcm8_sem_sinal)
+TEST(wav_pcm8_unsigned)
 {
 	const std::vector<uint8_t> data = {128, 255}; /* 0.0, ~0.992 */
 	const auto bytes = make_wav(1, 1, 8000, 8, data);
@@ -109,7 +109,7 @@ TEST(wav_pcm8_sem_sinal)
 	CHECK_NEAR(w.samples[1], 127.0 / 128.0, 1e-6);
 }
 
-TEST(wav_pcm24_extensao_de_sinal)
+TEST(wav_pcm24_sign_extension)
 {
 	/* +0.5 => 0x400000 (little-endian 00 00 40) */
 	const std::vector<uint8_t> pos = {0x00, 0x00, 0x40};
@@ -132,7 +132,7 @@ TEST(wav_float32)
 	CHECK_NEAR(w.samples[0], 0.25, 1e-6);
 }
 
-TEST(wav_erros)
+TEST(wav_errors)
 {
 	WavData w;
 	std::string err;
@@ -145,14 +145,14 @@ TEST(wav_erros)
 	bad_magic[0] = 'X';
 	CHECK(!wav_parse(bad_magic.data(), bad_magic.size(), &w, &err));
 
-	/* formato nao suportado (2 = ADPCM) */
+	/* unsupported format (2 = ADPCM) */
 	const auto adpcm = make_wav(2, 1, 44100, 16, {0, 0});
 	CHECK(!wav_parse(adpcm.data(), adpcm.size(), &w, &err));
 
 	CHECK(!wav_parse(nullptr, 0, &w, &err));
 }
 
-TEST(wav_arquivos_reais)
+TEST(wav_real_files)
 {
 #ifdef TOPSCREEN_TEST_DATA_DIR
 	const char *files[] = {"click-soft.wav", "click-hard.wav"};
@@ -167,7 +167,7 @@ TEST(wav_arquivos_reais)
 		std::string err;
 		++tst::checks();
 		if (!wav_parse(bytes.data(), bytes.size(), &w, &err))
-			tst::fail(__FILE__, __LINE__, "WAV invalido: " + path + " -> " + err);
+			tst::fail(__FILE__, __LINE__, "invalid WAV: " + path + " -> " + err);
 
 		CHECK(!w.empty());
 		CHECK_EQ(w.sample_rate, 44100);

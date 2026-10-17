@@ -1,6 +1,6 @@
-// Instancia a implementacao do stb_truetype neste translation unit.
+// Instantiates the stb_truetype implementation in this translation unit.
 //
-// Avisos de terceiros sao silenciados aqui (nao temos controle sobre o header).
+// Third-party warnings are silenced here (we have no control over the header).
 #if defined(__GNUC__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-function"

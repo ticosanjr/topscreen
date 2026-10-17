@@ -26,7 +26,7 @@ bool load_font(std::vector<uint8_t> *out)
 
 } // namespace
 
-TEST(font_atlas_constroi_a_partir_do_ttf)
+TEST(font_atlas_builds_from_ttf)
 {
 	std::vector<uint8_t> ttf;
 	bool ok = load_font(&ttf);
@@ -41,14 +41,14 @@ TEST(font_atlas_constroi_a_partir_do_ttf)
 
 	CHECK_EQ(atlas.width, 512);
 	CHECK(atlas.height > 0);
-	CHECK_EQ(atlas.height & (atlas.height - 1), 0); // potencia de 2
+	CHECK_EQ(atlas.height & (atlas.height - 1), 0); // power of 2
 	CHECK(atlas.line_height > 0);
 	CHECK(atlas.ascent > 0);
 	CHECK_EQ(static_cast<int>(atlas.glyphs.size()), 95); // ASCII 32..126
 	CHECK_EQ(static_cast<int>(atlas.pixels.size()), atlas.width * atlas.height * 4);
 }
 
-TEST(font_atlas_metricas_por_glifo)
+TEST(font_atlas_per_glyph_metrics)
 {
 	std::vector<uint8_t> ttf;
 	REQUIRE(load_font(&ttf));
@@ -66,14 +66,14 @@ TEST(font_atlas_metricas_por_glifo)
 
 	const Glyph *space = atlas.glyph(' ');
 	REQUIRE(space != nullptr);
-	CHECK_EQ(space->w, 0); // espaco nao tem bitmap
+	CHECK_EQ(space->w, 0); // space has no bitmap
 	CHECK(space->advance > 0);
 
 	const Glyph *missing = atlas.glyph(1000);
 	CHECK(missing == nullptr);
 }
 
-TEST(font_atlas_alfa_tem_pixels)
+TEST(font_atlas_alpha_has_pixels)
 {
 	std::vector<uint8_t> ttf;
 	REQUIRE(load_font(&ttf));
@@ -92,13 +92,13 @@ TEST(font_atlas_alfa_tem_pixels)
 			const size_t idx = (static_cast<size_t>(A->y + y) * atlas.width + (A->x + x)) * 4u;
 			if (atlas.pixels[idx + 3] > 0)
 				++set_pixels;
-			CHECK_EQ(atlas.pixels[idx + 0], 255); // RGB branco
+			CHECK_EQ(atlas.pixels[idx + 0], 255); // white RGB
 		}
 	}
 	CHECK(set_pixels > 0);
 }
 
-TEST(font_atlas_rejeita_dados_invalidos)
+TEST(font_atlas_rejects_invalid_data)
 {
 	FontAtlas atlas;
 	std::string err;

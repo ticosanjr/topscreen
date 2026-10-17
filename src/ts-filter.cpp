@@ -24,8 +24,8 @@ using namespace topscreen::core::keys;
 
 namespace {
 
-/* Acoes enfileiradas por hotkeys (thread de hotkey) e pelo dock (thread da UI).
- * Sao consumidas no video_tick, garantindo acesso single-thread aos modelos. */
+/* Actions queued by hotkeys (hotkey thread) and by the dock (UI thread).
+ * They are consumed in video_tick, guaranteeing single-thread access to the models. */
 enum ActionBits : uint32_t {
 	A_TOGGLE_EFFECTS = 1u << 0,
 	A_SET_EFFECTS = 1u << 1,
@@ -41,13 +41,13 @@ enum ActionBits : uint32_t {
 };
 
 /**
- * Desativa o cursor nativo da fonte-pai (ex.: Captura de Tela).
+ * Disables the parent source's native cursor (e.g.: Display Capture).
  *
- * Fontes diferentes usam nomes diferentes para a mesma opcao:
- *   - "capture_cursor": Windows (monitor_capture) e alguns backends
+ * Different sources use different names for the same option:
+ *   - "capture_cursor": Windows (monitor_capture) and some backends
  *   - "show_cursor":    Linux (xshm_input), macOS (screen_capture)
  *
- * Fazemos isso para poder desenhar o nosso cursor sem duplicar.
+ * We do this so we can draw our own cursor without duplicating it.
  */
 void disable_parent_cursor(obs_source_t *parent)
 {
@@ -74,25 +74,25 @@ void disable_parent_cursor(obs_source_t *parent)
 		obs_source_update(parent, s);
 		obs_data_release(s);
 
-		blog(LOG_INFO, "[TopScreen] cursor nativo da captura desativado (%s, estava %s)", key,
-		     was ? "ligado" : "desligado");
+		blog(LOG_INFO, "[TopScreen] capture native cursor disabled (%s, was %s)", key,
+		     was ? "on" : "off");
 		found = true;
 	}
 
 	if (!found)
-		blog(LOG_INFO, "[TopScreen] fonte-pai nao expoe opcao de cursor nativo (%s)",
+		blog(LOG_INFO, "[TopScreen] parent source does not expose a native cursor option (%s)",
 		     parent ? obs_source_get_name(parent) : "?");
 
 	obs_properties_destroy(props);
 }
 
 /**
- * Instancia do filtro TopScreen.
+ * TopScreen filter instance.
  *
- * Concorrencia:
- *  - cfg/modelos: somente a thread de video (tick/render) apos o create.
- *  - hotkeys/UI: enfileiram acoes (atomico); o tick aplica.
- *  - update(): apenas marca "reload"; o tick recarrega do obs_data.
+ * Concurrency:
+ *  - cfg/models: only the video thread (tick/render) after create.
+ *  - hotkeys/UI: queue actions (atomic); the tick applies them.
+ *  - update(): only flags "reload"; the tick reloads from obs_data.
  */
 struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 	obs_source_t *source = nullptr;
@@ -139,7 +139,7 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 	void process_actions();
 	void reload_from_settings();
 
-	/* ---- HotkeyContext (thread de hotkey: apenas enfileira) ---- */
+	/* ---- HotkeyContext (hotkey thread: only queues) ---- */
 	void toggle_effects() override { actions_.fetch_or(A_TOGGLE_EFFECTS); }
 	void toggle_background() override { actions_.fetch_or(A_TOGGLE_BG); }
 	void zoom_in() override { actions_.fetch_or(A_ZOOM_IN); }
@@ -154,7 +154,7 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 	}
 	void save_profile() override { actions_.fetch_or(A_SAVE_PROFILE); }
 
-	/* ---- FilterControl (thread da UI: apenas enfileira / le atomico) ---- */
+	/* ---- FilterControl (UI thread: only queues / reads atomic) ---- */
 	bool effects_enabled() const override { return effects_cache_.load(); }
 	void set_effects_enabled(bool on) override
 	{
@@ -171,7 +171,7 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 	}
 	int input_tier() const override { return input_tier_cache_.load(); }
 
-	/* ---- FilterControl: perfis ---- */
+	/* ---- FilterControl: profiles ---- */
 	int profile_count() const override { return kProfileCount; }
 	int current_profile() const override { return profile_cache_.load(); }
 };
@@ -196,8 +196,8 @@ void ts_filter_ctx::apply_profile(int index)
 		config_load(p, &cfg);
 		obs_data_release(p);
 	} else {
-		/* Slot vazio (fonte antiga): captura o estado atual em vez de nao fazer
-		 * nada, senao trocar de perfil pareceria "nao funcionar". */
+		/* Empty slot (legacy source): capture the current state instead of doing
+		 * nothing, otherwise switching profiles would look like "not working". */
 		p = obs_data_create();
 		config_store(p, cfg);
 		obs_data_set_obj(s, kProfileSlots[index], p);
@@ -205,14 +205,14 @@ void ts_filter_ctx::apply_profile(int index)
 	}
 	obs_data_release(s);
 
-	/* Estado de sessao: zera o zoom manual e recarrega o som se mudou. */
+	/* Session state: resets the manual zoom and reloads the sound if it changed. */
 	zoom.set_manual(1.0);
 	click_sound.load(cfg.click_sound.file.c_str());
 }
 
 /**
- * Grava a config atual no slot (sem disparar update, para nao realimentar o
- * ciclo reload -> save -> reload).
+ * Writes the current config into the slot (without firing update, to avoid
+ * feeding the reload -> save -> reload cycle).
  */
 void ts_filter_ctx::store_profile_slot(int index)
 {
@@ -233,7 +233,7 @@ void ts_filter_ctx::store_profile_slot(int index)
 void ts_filter_ctx::do_save_profile()
 {
 	store_profile_slot(current_profile_);
-	blog(LOG_INFO, "[TopScreen] perfil salvo: %s", core::profile_label(current_profile_));
+	blog(LOG_INFO, "[TopScreen] profile saved: %s", core::profile_label(current_profile_));
 }
 
 void ts_filter_ctx::reconfigure_models()
@@ -253,13 +253,13 @@ void ts_filter_ctx::request_preset(int index)
 
 	std::string err;
 	if (!presets.apply(index, &cfg)) {
-		blog(LOG_WARNING, "[TopScreen] preset invalido (%d)", index);
+		blog(LOG_WARNING, "[TopScreen] invalid preset (%d)", index);
 		return;
 	}
 
 	reconfigure_models();
 	push_settings();
-	blog(LOG_INFO, "[TopScreen] preset aplicado: %s", presets.name(index).c_str());
+	blog(LOG_INFO, "[TopScreen] preset applied: %s", presets.name(index).c_str());
 }
 
 void ts_filter_ctx::reload_from_settings()
@@ -273,23 +273,23 @@ void ts_filter_ctx::reload_from_settings()
 
 	if (static_cast<int>(pc) != last_profile) {
 		/*
-		 * Perfil trocado (lista das Propriedades): aplica o slot INTEIRO e
-		 * sincroniza as chaves principais. Sem o push, o proximo reload
-		 * (qualquer outra propriedade) recarregaria as chaves antigas e
-		 * desfaria o perfil.
+		 * Profile switched (Properties list): applies the ENTIRE slot and
+		 * syncs the main keys. Without the push, the next reload
+		 * (any other property) would reload the old keys and
+		 * undo the profile.
 		 */
 		last_profile = static_cast<int>(pc);
 		current_profile_ = want;
 		apply_profile(current_profile_);
 		reconfigure_models();
 		push_settings();
-		blog(LOG_INFO, "[TopScreen] perfil ativado: %s", core::profile_label(current_profile_));
+		blog(LOG_INFO, "[TopScreen] profile activated: %s", core::profile_label(current_profile_));
 		return;
 	}
 
 	/*
-	 * Edicao normal: o perfil ativo acompanha o que esta na tela (auto-save),
-	 * para as mudancas do usuario nao se perderem ao trocar de perfil.
+	 * Normal edit: the active profile follows what is on screen (auto-save),
+	 * so the user's changes are not lost when switching profiles.
 	 */
 	current_profile_ = want;
 	reconfigure_models();
@@ -340,7 +340,7 @@ void ts_filter_ctx::process_actions()
 			apply_profile(i);
 			reconfigure_models();
 			push_settings();
-			blog(LOG_INFO, "[TopScreen] perfil ativado: %s", core::profile_label(i));
+			blog(LOG_INFO, "[TopScreen] profile activated: %s", core::profile_label(i));
 		}
 	}
 	if (act & A_SAVE_PROFILE)
@@ -367,7 +367,7 @@ void *ts_filter_create(obs_data_t *settings, obs_source_t *source)
 	ctx->last_profile = ctx->current_profile_;
 	ctx->profile_cache_.store(ctx->current_profile_);
 
-	/* Garante os 4 slots de perfil (semeia variacoes visiveis nos vazios). */
+	/* Guarantees the 4 profile slots (seeds visible variations into the empty ones). */
 	{
 		obs_data_t *s = obs_source_get_settings(source);
 		for (int i = 0; i < kProfileCount; ++i) {
@@ -384,9 +384,9 @@ void *ts_filter_create(obs_data_t *settings, obs_source_t *source)
 	}
 
 	/*
-	 * Se o usuario ja escolheu um perfil (valor de usuario em profile_current,
-	 * ex.: colecao salva), o estado da fonte E o perfil. Sem isto, reabrir o OBS
-	 * deixava "Perfil B" selecionado com o visual padrao.
+	 * If the user already chose a profile (user value in profile_current,
+	 * e.g.: saved collection), the source state IS the profile. Without this, reopening OBS
+	 * left "Profile B" selected with the default look.
 	 */
 	const bool picked = obs_data_has_user_value(settings, kProfileCurrent);
 	if (picked) {
@@ -401,7 +401,7 @@ void *ts_filter_create(obs_data_t *settings, obs_source_t *source)
 
 	ctx->loaded = ctx->compositor.load();
 	if (!ctx->loaded)
-		blog(LOG_WARNING, "[TopScreen] falha ao carregar o efeito (passthrough)");
+		blog(LOG_WARNING, "[TopScreen] failed to load the effect (passthrough)");
 
 	ctx->cursor.reset(0.5, 0.5, 0.0);
 	ctx->zoom.reset(0.0);
@@ -413,7 +413,7 @@ void *ts_filter_create(obs_data_t *settings, obs_source_t *source)
 
 	registry_add(ctx);
 
-	blog(LOG_INFO, "[TopScreen] filtro criado (presets=%d)", ctx->presets.count());
+	blog(LOG_INFO, "[TopScreen] filter created (presets=%d)", ctx->presets.count());
 
 	return ctx;
 }
@@ -435,7 +435,7 @@ void ts_filter_update(void *data, obs_data_t *settings)
 {
 	UNUSED_PARAMETER(settings);
 	auto *ctx = static_cast<ts_filter_ctx *>(data);
-	/* Nao mexe no cfg aqui (thread da UI); o tick recarrega. */
+	/* Does not touch cfg here (UI thread); the tick reloads. */
 	ctx->pending_reload_.store(true);
 }
 
@@ -451,7 +451,7 @@ void ts_filter_tick(void *data, float seconds)
 
 	ctx->input.poll();
 
-	/* Teclas alimentam o overlay mesmo sem cursor disponivel. */
+	/* Keys feed the overlay even without a cursor available. */
 	for (int i = 0; i < ctx->input.state().key_count; ++i)
 		ctx->keys.press(ctx->input.state().key_labels[i], ctx->input.state().key_modifier[i],
 				ctx->time_ms);
@@ -468,7 +468,7 @@ void ts_filter_tick(void *data, float seconds)
 		ctx->cursor.set_target(cx, cy, ctx->time_ms);
 		ctx->zoom.set_cursor(cx, cy, ctx->time_ms);
 
-		/* Marca-texto de arrasto (botao esquerdo). */
+		/* Drag highlighter (left button). */
 		if (st.left_pressed)
 			ctx->highlight.begin(cx, cy, ctx->time_ms);
 		else if (st.left)
@@ -505,7 +505,7 @@ void ts_filter_tick(void *data, float seconds)
 				       ? core::clamp01(std::fabs(ctx->zoom.zoom_velocity()) * ctx->cfg.motion_blur.amount * 0.5)
 				       : 0.0;
 
-	/* Publica estado para o dock (thread da UI). */
+	/* Publishes state to the dock (UI thread). */
 	ctx->effects_cache_.store(ctx->cfg.effects_enabled);
 	ctx->preset_cache_.store(ctx->presets.current());
 	ctx->profile_cache_.store(ctx->current_profile_);
@@ -522,14 +522,14 @@ void ts_filter_render(void *data, gs_effect_t *effect)
 		return;
 	}
 
-	/* A fonte-alvo só é garantidamente válida dentro dos callbacks de render. */
+	/* The target source is only guaranteed valid inside the render callbacks. */
 	obs_source_t *target = obs_filter_get_target(ctx->source);
 	if (target) {
 		ctx->target_w = obs_source_get_base_width(target);
 		ctx->target_h = obs_source_get_base_height(target);
 	}
 
-	/* Desativa o cursor nativo da fonte-pai uma unica vez (dentro do render). */
+	/* Disables the parent source's native cursor only once (inside render). */
 	if (!ctx->parent_cursor_checked) {
 		ctx->parent_cursor_checked = true;
 		disable_parent_cursor(obs_filter_get_parent(ctx->source));

@@ -23,10 +23,10 @@ namespace topscreen {
 namespace {
 
 /**
- * Dock do TopScreen.
+ * TopScreen dock.
  *
- * Operacoes do usuario sao enfileiradas no FilterControl (registro), que as
- * aplica na thread de video. O estado e atualizado por um QTimer.
+ * User operations are queued in the FilterControl (registry), which applies
+ * them on the video thread. The state is updated by a QTimer.
  */
 class TopScreenDock : public QWidget {
 public:

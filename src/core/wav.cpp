@@ -31,7 +31,7 @@ float sample_to_float(const uint8_t *p, int bits, uint16_t format)
 
 	switch (bits) {
 	case 8:
-		/* PCM 8 bits e sem sinal. */
+		/* 8-bit PCM is unsigned. */
 		return (static_cast<int>(p[0]) - 128) / 128.0f;
 	case 16: {
 		const int16_t v = static_cast<int16_t>(rd_u16(p));
@@ -40,7 +40,7 @@ float sample_to_float(const uint8_t *p, int bits, uint16_t format)
 	case 24: {
 		int32_t v = p[0] | (p[1] << 8) | (p[2] << 16);
 		if (v & 0x800000)
-			v |= ~0xFFFFFF; /* extensao de sinal */
+			v |= ~0xFFFFFF; /* sign extension */
 		return v / 8388608.0f;
 	}
 	case 32: {
@@ -63,9 +63,9 @@ bool wav_parse(const uint8_t *data, size_t size, WavData *out, std::string *erro
 	};
 
 	if (!data || size < 12)
-		return fail("arquivo muito curto");
+		return fail("file too short");
 	if (!fourcc(data, "RIFF") || !fourcc(data + 8, "WAVE"))
-		return fail("nao e um RIFF/WAVE");
+		return fail("not a RIFF/WAVE");
 
 	uint16_t format = 0;
 	uint16_t channels = 0;
@@ -80,11 +80,11 @@ bool wav_parse(const uint8_t *data, size_t size, WavData *out, std::string *erro
 		const uint32_t chunk_size = rd_u32(data + pos + 4);
 		const size_t body = pos + 8;
 		if (body + chunk_size > size)
-			break; /* chunk truncado */
+			break; /* truncated chunk */
 
 		if (fourcc(id, "fmt ")) {
 			if (chunk_size < 16)
-				return fail("chunk fmt curto");
+				return fail("short fmt chunk");
 			format = rd_u16(data + body);
 			channels = rd_u16(data + body + 2);
 			sample_rate = rd_u32(data + body + 4);
@@ -94,21 +94,21 @@ bool wav_parse(const uint8_t *data, size_t size, WavData *out, std::string *erro
 			sample_bytes = chunk_size;
 		}
 
-		pos = body + chunk_size + (chunk_size & 1u); /* padding par */
+		pos = body + chunk_size + (chunk_size & 1u); /* even padding */
 	}
 
 	if (format != 1 && format != 3)
-		return fail("formato nao suportado (apenas PCM/float)");
+		return fail("unsupported format (only PCM/float)");
 	if (channels == 0)
-		return fail("sem canais");
+		return fail("no channels");
 	if (sample_rate == 0)
-		return fail("sample rate invalido");
+		return fail("invalid sample rate");
 	if (bits != 8 && bits != 16 && bits != 24 && bits != 32)
-		return fail("bits por amostra nao suportado");
+		return fail("unsupported bits per sample");
 	if (format == 3 && bits != 32)
-		return fail("float exige 32 bits");
+		return fail("float requires 32 bits");
 	if (!sample_data || sample_bytes == 0)
-		return fail("sem chunk data");
+		return fail("no data chunk");
 
 	const size_t bytes_per_sample = bits / 8u;
 	const size_t total_samples = sample_bytes / bytes_per_sample;

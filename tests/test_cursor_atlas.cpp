@@ -37,7 +37,7 @@ std::string cursors_dir()
 
 } // namespace
 
-TEST(cursor_atlas_arquivo_real)
+TEST(cursor_atlas_real_file)
 {
 	const auto bytes = read_bytes(cursors_dir() + "/atlas.rgba");
 	REQUIRE(!bytes.empty());
@@ -48,7 +48,7 @@ TEST(cursor_atlas_arquivo_real)
 
 	CHECK(atlas.cell == 128);
 	CHECK(atlas.count > 0);
-	/* um estilo por CursorStyle */
+	/* one style per CursorStyle */
 	CHECK_EQ(static_cast<int>(atlas.count), static_cast<int>(CursorStyle::Count));
 	CHECK(atlas.height() == atlas.cell * atlas.count);
 	CHECK_EQ(static_cast<int>(atlas.pixels.size()),
@@ -73,7 +73,7 @@ TEST(cursor_atlas_hotspots_json)
 	}
 }
 
-TEST(cursor_atlas_rejeita_dados_invalidos)
+TEST(cursor_atlas_rejects_invalid_data)
 {
 	CursorAtlas atlas;
 	std::string err;
@@ -82,12 +82,12 @@ TEST(cursor_atlas_rejeita_dados_invalidos)
 	const std::vector<uint8_t> curto = {1, 2, 3};
 	CHECK(!cursor_atlas_parse(curto.data(), curto.size(), &atlas, &err));
 
-	/* magic errado */
+	/* wrong magic */
 	std::vector<uint8_t> ruim(64, 0);
 	ruim[0] = 'X';
 	CHECK(!cursor_atlas_parse(ruim.data(), ruim.size(), &atlas, &err));
 
-	/* header ok mas dados faltando */
+	/* header ok but data missing */
 	std::vector<uint8_t> truncado(16, 0);
 	truncado[0] = 'T';
 	truncado[1] = 'S';
@@ -95,7 +95,7 @@ TEST(cursor_atlas_rejeita_dados_invalidos)
 	truncado[3] = 'T';
 	truncado[4] = 1;              /* version */
 	truncado[8] = 128;            /* cell */
-	truncado[12] = 2;             /* count (sem pixels) */
+	truncado[12] = 2;             /* count (no pixels) */
 	CHECK(!cursor_atlas_parse(truncado.data(), truncado.size(), &atlas, &err));
 	CHECK(!err.empty());
 }

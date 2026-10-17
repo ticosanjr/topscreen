@@ -9,24 +9,24 @@
 namespace topscreen {
 
 /**
- * Carrega e aplica presets embutidos (arquivos .json em data/presets).
+ * Loads and applies built-in presets (.json files in data/presets).
  *
- * Os arquivos sao resolvidos via obs_module_file(), portanto funcionam tanto
- * instalados quanto em modo portable.
+ * The files are resolved via obs_module_file(), so they work both
+ * installed and in portable mode.
  */
 class PresetStore {
 public:
-	/** Carrega os presets conhecidos. Retorna quantos foram carregados. */
+	/** Loads the known presets. Returns how many were loaded. */
 	int load();
 
 	int count() const { return static_cast<int>(presets_.size()); }
 	int current() const { return current_; }
 	const std::string &name(int index) const;
 
-	/** Aplica o preset `index` sobre a config. Retorna false se invalido. */
+	/** Applies preset `index` onto the config. Returns false if invalid. */
 	bool apply(int index, core::Config *cfg);
 
-	/** Avanca/retrocede ciclicamente. Retorna o novo indice (-1 se vazio). */
+	/** Advances/goes back cyclically. Returns the new index (-1 if empty). */
 	int next();
 	int prev();
 

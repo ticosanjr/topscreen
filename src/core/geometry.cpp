@@ -43,8 +43,8 @@ double clamp_focus(double focus, double zoom)
 {
 	(void)zoom;
 	/*
-	 * Com foco em [0,1] a janela visivel (1/zoom) sempre cabe na fonte.
-	 * Nao ha margem extra: exigir margem era o que impedia chegar aos cantos.
+	 * With focus in [0,1] the visible window (1/zoom) always fits in the source.
+	 * There is no extra margin: requiring a margin was what prevented reaching the corners.
 	 */
 	if (focus < 0.0)
 		focus = 0.0;
@@ -63,8 +63,8 @@ FocusLimits focus_limits(double source_pos, double zoom)
 	}
 
 	/*
-	 * c = foco + (fonte - foco) * zoom  deve ficar em [0,1]:
-	 *   foco <= fonte*zoom/(zoom-1)   e   foco >= (fonte*zoom - 1)/(zoom-1)
+	 * c = focus + (source - focus) * zoom  must stay in [0,1]:
+	 *   focus <= source*zoom/(zoom-1)   and   focus >= (source*zoom - 1)/(zoom-1)
 	 */
 	const double z = zoom - 1.0;
 	l.lo = (source_pos * zoom - 1.0) / z;

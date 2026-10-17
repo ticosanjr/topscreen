@@ -19,17 +19,17 @@ struct ClickRender {
 	double x = 0.0;
 	double y = 0.0;
 	double progress = 0.0; // 0..1
-	double eased = 0.0;    // easing aplicado
+	double eased = 0.0;    // applied easing
 	double size = 1.0;
 	uint32_t color = 0xFFFFFFFF;
 	int effect = 0;
 };
 
 /**
- * Modelo de efeitos de clique.
+ * Click effects model.
  *
- * Mantem uma fila de animacoes ativas (esquerdo/direito independentes) e
- * descarta as expiradas. Nao desenha; o compositor consome o resultado.
+ * Keeps a queue of active animations (left/right independent) and
+ * discards the expired ones. Draws nothing; the compositor consumes the result.
  */
 class ClickFxModel {
 public:
@@ -40,12 +40,12 @@ public:
 
 	void spawn(double x, double y, double now_ms, bool right);
 
-	/** Remove animacoes expiradas. */
+	/** Removes expired animations. */
 	void tick(double now_ms);
 
 	int active_count() const;
 
-	/** Preenche ate `max` entradas e retorna quantas foram escritas. */
+	/** Fills up to `max` entries and returns how many were written. */
 	int collect(double now_ms, ClickRender *out, int max) const;
 
 private:

@@ -3,7 +3,7 @@
 
 using namespace topscreen::core::json;
 
-TEST(json_objeto_simples)
+TEST(json_simple_object)
 {
 	Value v;
 	std::string err;
@@ -30,7 +30,7 @@ TEST(json_objeto_simples)
 	CHECK(d->is_null());
 }
 
-TEST(json_aninhado_e_array)
+TEST(json_nested_and_array)
 {
 	Value v;
 	std::string err;
@@ -48,7 +48,7 @@ TEST(json_aninhado_e_array)
 	CHECK_NEAR((*list->array)[2].as_number(), 3.0, 1e-9);
 }
 
-TEST(json_numeros_negativos_e_fracionarios)
+TEST(json_negative_and_fractional_numbers)
 {
 	Value v;
 	std::string err;
@@ -59,13 +59,13 @@ TEST(json_numeros_negativos_e_fracionarios)
 	CHECK_NEAR((*v.array)[2].as_number(), 0.25, 1e-9);
 }
 
-TEST(json_erros)
+TEST(json_errors)
 {
 	Value v;
 	std::string err;
 	CHECK(!parse("{\"a\": }", &v, &err));
 	CHECK(!parse("[1, 2", &v, &err));
-	CHECK(!parse("{\"a\":1} lixo", &v, &err));
+	CHECK(!parse("{\"a\":1} junk", &v, &err));
 	CHECK(!parse("", &v, &err));
 	CHECK(!err.empty());
 }
@@ -77,5 +77,5 @@ TEST(json_escape_unicode)
 	REQUIRE(parse("{\"s\": \"\\u00e9\"}", &v, &err));
 	const Value *s = v.find("s");
 	REQUIRE(s != nullptr && s->is_string());
-	CHECK_EQ(s->as_string(), std::string("\xc3\xa9")); // 'é' em UTF-8
+	CHECK_EQ(s->as_string(), std::string("\xc3\xa9")); // U+00E9 in UTF-8
 }

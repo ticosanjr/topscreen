@@ -12,7 +12,7 @@ struct Value;
 using Object = std::map<std::string, Value>;
 using Array = std::vector<Value>;
 
-/** Valor JSON minimo (sem dependencias externas). */
+/** Minimal JSON value (no external dependencies). */
 struct Value {
 	enum Type { Null, Bool, Number, String, Object_, Array_ };
 
@@ -30,7 +30,7 @@ struct Value {
 	bool is_object() const { return type == Object_; }
 	bool is_array() const { return type == Array_; }
 
-	/** Busca uma chave se este valor for um objeto. */
+	/** Looks up a key if this value is an object. */
 	const Value *find(const std::string &key) const
 	{
 		if (type != Object_ || !object)
@@ -39,15 +39,15 @@ struct Value {
 		return it == object->end() ? nullptr : &it->second;
 	}
 
-	/** Acesso a string ("" se nao for string). */
+	/** String access ("" if not a string). */
 	std::string as_string() const { return type == String ? str : std::string(); }
-	/** Acesso a numero (0 se nao for numero). */
+	/** Number access (0 if not a number). */
 	double as_number() const { return type == Number ? number : 0.0; }
-	/** Acesso a booleano (false se nao for bool). */
+	/** Boolean access (false if not a bool). */
 	bool as_bool() const { return type == Bool ? boolean : false; }
 };
 
-/** Faz o parse de um texto JSON. Retorna false e preenche `error` em caso de erro. */
+/** Parses a JSON text. Returns false and fills `error` on failure. */
 bool parse(const std::string &text, Value *out, std::string *error);
 
 } // namespace topscreen::core::json

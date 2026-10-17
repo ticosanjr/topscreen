@@ -7,26 +7,26 @@
 
 namespace topscreen::core {
 
-/** Evento de tecla decodificado de /dev/input (Tier 3 - evdev). */
+/** Key event decoded from /dev/input (Tier 3 - evdev). */
 struct EvdevKey {
 	int code = 0;
 	bool pressed = false;
 };
 
-/** Tamanho de struct input_event em 64-bit (timeval 16 + u16 + u16 + s32). */
+/** Size of struct input_event on 64-bit (timeval 16 + u16 + u16 + s32). */
 inline constexpr size_t kEvdevRecord64 = 24;
 
-/** Rotulo legivel para um keycode do Linux ("" se desconhecido). */
+/** Readable label for a Linux keycode ("" if unknown). */
 std::string evdev_key_label(int code);
 
-/** true se o keycode e um modificador (Ctrl/Shift/Alt/Meta). */
+/** true if the keycode is a modifier (Ctrl/Shift/Alt/Meta). */
 bool evdev_key_is_modifier(int code);
 
 /**
- * Decodifica registros de input_event (EV_KEY).
+ * Decodes input_event records (EV_KEY).
  *
- * `record_size` e o tamanho de struct input_event no host (varia por ABI).
- * Retorna true se ao menos um registro completo foi lido.
+ * `record_size` is the size of struct input_event on the host (varies by ABI).
+ * Returns true if at least one complete record was read.
  */
 bool evdev_decode(const uint8_t *data, size_t size, size_t record_size, std::vector<EvdevKey> *out);
 

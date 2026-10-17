@@ -1,55 +1,55 @@
-// TopScreen - efeito principal.
+// TopScreen - main effect.
 //
-// Fundo (solido/gradiente), cantos arredondados (SDF com anti-aliasing),
-// padding, sombra aproximada, zoom/pan, cursor e efeitos de clique, tudo em
-// um unico passe. A sintaxe e compilada pelo OBS para HLSL (D3D11) e GLSL
+// Background (solid/gradient), rounded corners (SDF with anti-aliasing),
+// padding, approximate shadow, zoom/pan, cursor and click effects, all in
+// a single pass. The syntax is compiled by OBS to HLSL (D3D11) and GLSL
 // (OpenGL).
 //
-// Nota: assim como os shaders do proprio OBS, este efeito NAO usa arrays de
-// uniform nem loops - os efeitos de clique usam 4 slots explicitos.
+// Note: like OBS's own shaders, this effect does NOT use uniform arrays
+// or loops - the click effects use 4 explicit slots.
 
 uniform float4x4 ViewProj;
 uniform texture2d image;
 
-uniform float2 target_size;   // resolucao de saida (px)
-uniform float2 content_pad;   // padding interno (px) - x/y
-uniform float  corner_radius; // raio dos cantos (px)
+uniform float2 target_size;   // output resolution (px)
+uniform float2 content_pad;   // internal padding (px) - x/y
+uniform float  corner_radius; // corner radius (px)
 uniform float  zoom;          // >= 1
-uniform float2 zoom_focus;    // 0..1 (centro do zoom)
+uniform float2 zoom_focus;    // 0..1 (zoom center)
 uniform float4 bg_a;
 uniform float4 bg_b;
-uniform float  bg_mode;       // 0 solido, 1 vertical, 2 diagonal, 3 imagem
+uniform float  bg_mode;       // 0 solid, 1 vertical, 2 diagonal, 3 image
 uniform texture2d bg_tex;     // wallpaper
 uniform float  bg_tex_enabled;
-uniform float  bg_tex_aspect; // w/h da imagem
+uniform float  bg_tex_aspect; // image w/h
 uniform float  bg_keep_aspect;
-uniform float  bg_blur;       // desfoque do wallpaper (px)
-uniform float  bg_blur_type;  // 0 nenhum, 1 suave(box), 2 gaussiano, 3 cremoso
+uniform float  bg_blur;       // wallpaper blur (px)
+uniform float  bg_blur_type;  // 0 none, 1 soft(box), 2 gaussian, 3 creamy
 uniform float  shadow_alpha;
 uniform float  shadow_blur;
 uniform float2 shadow_offset;
 
 uniform float  cursor_enabled;
-uniform float2 cursor_pos;      // coordenada de conteudo (0..1)
-uniform float  cursor_scale;    // multiplicador de tamanho
+uniform float2 cursor_pos;      // content coordinate (0..1)
+uniform float  cursor_scale;    // size multiplier
 uniform float  cursor_opacity;
 uniform float  cursor_rotation; // rad
 uniform float  cursor_shadow;
 
-// Cursor por bitmap (atlas). Se indisponivel, cai no fallback procedural.
+// Bitmap cursor (atlas). If unavailable, falls back to procedural.
 uniform texture2d cursor_tex;
 uniform float  cursor_tex_enabled;
-uniform float2 cursor_cell_off;   // uv da celula selecionada no atlas
-uniform float2 cursor_cell_scale; // tamanho da celula em uv
-uniform float2 cursor_hotspot;    // 0..1 (ponto quente dentro do icone)
+uniform float2 cursor_cell_off;   // uv of the selected cell in the atlas
+uniform float2 cursor_cell_scale; // cell size in uv
+uniform float2 cursor_hotspot;    // 0..1 (hotspot inside the icon)
 
-uniform float  zoom_blur;        // 0..1 (motion blur do zoom)
+uniform float  zoom_blur;        // 0..1 (zoom motion blur)
 uniform float  spotlight_enabled;
-uniform float  spotlight_radius; // fracao do menor lado
+uniform float  spotlight_radius; // fraction of the shorter side
 uniform float  spotlight_dim;    // 0..1
 
 uniform float  highlight_active;
-uniform float4 highlight_rect;   // x0,y0,x1,y1 (conteudo 0..1)
+uniform float4 highlight_rect;   // x0,y0,x1,y1 (content 0..1)
 uniform float4 highlight_color;  // rgba
 uniform float  highlight_alpha;
 
@@ -98,19 +98,19 @@ VertInOut VSDefault(VertInOut vert_in)
 	return vert_out;
 }
 
-// Sinal (evita depender de sign() no translator do OBS).
+// Sign (avoids depending on sign() in the OBS translator).
 float sgn(float x)
 {
 	return x < 0.0 ? -1.0 : 1.0;
 }
 
-// Comprimento (evita depender de length()).
+// Length (avoids depending on length()).
 float len2(float2 v)
 {
 	return sqrt(dot(v, v));
 }
 
-// Rotacao 2D.
+// 2D rotation.
 float2 rotate2(float2 p, float a)
 {
 	float s = sin(a);
@@ -118,14 +118,14 @@ float2 rotate2(float2 p, float a)
 	return float2(c * p.x - s * p.y, s * p.x + c * p.y);
 }
 
-// Distancia assinada a um retangulo arredondado centrado na origem.
+// Signed distance to a rounded rectangle centered at the origin.
 float sd_round_box(float2 p, float2 half_extents, float radius)
 {
 	float2 q = abs(p) - half_extents + radius;
 	return min(max(q.x, q.y), 0.0) + len2(max(q, 0.0)) - radius;
 }
 
-// Distancia assinada a um triangulo (para o cursor).
+// Signed distance to a triangle (for the cursor).
 float sd_triangle(float2 p, float2 p0, float2 p1, float2 p2)
 {
 	float2 e0 = p1 - p0;
@@ -147,7 +147,7 @@ float sd_triangle(float2 p, float2 p0, float2 p1, float2 p2)
 	return -sqrt(d.x) * sgn(d.y);
 }
 
-// Tamanho da area de conteudo (descontando o padding; com opcao de manter proporcao).
+// Size of the content area (minus the padding; with an option to keep aspect ratio).
 float2 content_size()
 {
 	float2 area = max(target_size - content_pad * 2.0, float2(1.0, 1.0));
@@ -158,17 +158,17 @@ float2 content_size()
 	return area;
 }
 
-// Canto superior esquerdo da area de conteudo.
+// Top-left corner of the content area.
 float2 content_origin()
 {
 	return (target_size - content_size()) * 0.5;
 }
 
-// Posicao EXIBIDA, em pixels, de um ponto da FONTE (content uv).
+// DISPLAYED position, in pixels, of a SOURCE point (content uv).
 //
-// A tela e amostrada com u = f + (c - f)/zoom; logo um ponto da fonte s
-// aparece em c = f + (s - f)*zoom. Inverter isso aqui e o que faz cursor,
-// cliques, spotlight e marca-texto ficarem colados no lugar certo.
+// The screen is sampled with u = f + (c - f)/zoom; so a source point s
+// appears at c = f + (s - f)*zoom. Inverting this here is what keeps cursor,
+// clicks, spotlight and highlight glued to the right place.
 float2 content_to_pixel(float2 cu)
 {
 	float2 cs = content_size();
@@ -176,7 +176,7 @@ float2 content_to_pixel(float2 cu)
 	return su * cs + content_origin();
 }
 
-// Compoe um efeito de clique sobre a cor atual.
+// Composes a click effect over the current color.
 float4 apply_click(float4 col, float2 px, float mask, float2 cu, float prog, float csize,
 		   float4 ccol, float type)
 {
@@ -188,18 +188,18 @@ float4 apply_click(float4 col, float2 px, float mask, float2 cu, float prog, flo
 	float  a     = 0.0;
 
 	if (type < 0.5) {
-		// ripple: anel com borda media
+		// ripple: ring with a medium edge
 		float th = max(base * csize * 0.18, aa);
 		a        = (1.0 - smoothstep(th - aa, th + aa, abs(dist - r))) * (1.0 - prog);
 	} else if (type < 1.5) {
-		// orb: disco preenchido que cresce e some
+		// orb: filled disc that grows and fades
 		a = (1.0 - smoothstep(-aa, aa, dist - r)) * (1.0 - prog) * 0.8;
 	} else if (type < 2.5) {
-		// ring: anel fino
+		// ring: thin ring
 		float th = max(base * csize * 0.08, aa);
 		a        = (1.0 - smoothstep(th - aa, th + aa, abs(dist - r))) * (1.0 - prog);
 	} else {
-		// force: anel grosso
+		// force: thick ring
 		float th = max(base * csize * 0.40, aa);
 		a        = (1.0 - smoothstep(th - aa, th + aa, abs(dist - r))) * (1.0 - prog) * 1.2;
 	}
@@ -219,7 +219,7 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 	float  radius       = min(corner_radius, min(content_half.x, content_half.y));
 	radius              = max(radius, 0.0);
 
-	// Fundo: imagem (se houver) tem prioridade sobre cor/gradiente
+	// Background: image (if present) takes priority over color/gradient
 	float4 col = bg_a;
 	if (bg_tex_enabled > 0.5) {
 		float at = target_size.x / max(target_size.y, 1.0);
@@ -232,14 +232,14 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 		float2 buv = (vert_in.uv - 0.5) * sc + 0.5;
 
 		if (bg_blur > 0.01 && bg_blur_type > 0.5) {
-			// 13 amostras (2 aneis); pesos e raio variam por tipo
+			// 13 samples (2 rings); weights and radius vary by type
 			float rmul = 2.0;
-			float w0 = 0.20, w1 = 0.10, w2 = 0.075, wd = 0.025; // suave (box)
+			float w0 = 0.20, w1 = 0.10, w2 = 0.075, wd = 0.025; // soft (box)
 			if (bg_blur_type >= 1.5) {
-				w0 = 0.30; w1 = 0.10; w2 = 0.055; wd = 0.02;   // gaussiano
+				w0 = 0.30; w1 = 0.10; w2 = 0.055; wd = 0.02;   // gaussian
 			}
 			if (bg_blur_type >= 2.5) {
-				rmul = 3.2; w0 = 0.24; w1 = 0.115; w2 = 0.055; wd = 0.02; // cremoso
+				rmul = 3.2; w0 = 0.24; w1 = 0.115; w2 = 0.055; wd = 0.02; // creamy
 			}
 
 			float2 o = (bg_blur * rmul) / max(target_size, float2(1.0, 1.0));
@@ -267,7 +267,7 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 		col = lerp(bg_a, bg_b, saturate((vert_in.uv.x + vert_in.uv.y) * 0.5));
 	}
 
-	// Sombra aproximada
+	// Approximate shadow
 	if (shadow_alpha > 0.001) {
 		float2 sp = p - shadow_offset;
 		float  ds = sd_round_box(sp, content_half + shadow_blur, radius + shadow_blur);
@@ -275,7 +275,7 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 		col.rgb   = lerp(col.rgb, float3(0.0, 0.0, 0.0), s * shadow_alpha);
 	}
 
-	// Conteudo: mascara de canto com anti-aliasing
+	// Content: corner mask with anti-aliasing
 	float dc   = sd_round_box(p, content_half, radius);
 	float mask = 1.0 - smoothstep(-1.0, 1.0, dc);
 
@@ -286,7 +286,7 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 
 		float4 screen;
 		if (zoom_blur > 0.001) {
-			// Motion blur radial (aprox. do movimento do zoom)
+			// Radial motion blur (approx. of the zoom movement)
 			float2 d = (uv_screen - zoom_focus) * zoom_blur * 0.03;
 			screen = image.Sample(def_sampler, uv_screen - d);
 			screen += image.Sample(def_sampler, uv_screen);
@@ -298,7 +298,7 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 
 		col = lerp(col, screen, mask);
 
-		// Efeitos de clique (4 slots explicitos)
+		// Click effects (4 explicit slots)
 		if (click_count > 0.5)
 			col = apply_click(col, px, mask, click0_pos, click0_prog, click0_size, click0_color,
 					  click0_type);
@@ -312,7 +312,7 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 			col = apply_click(col, px, mask, click3_pos, click3_prog, click3_size, click3_color,
 					  click3_type);
 
-		// Marca-texto de arrasto
+		// Drag highlight
 		if (highlight_active > 0.5) {
 			float2 hp0 = content_to_pixel(highlight_rect.xy);
 			float2 hp1 = content_to_pixel(highlight_rect.zw);
@@ -324,7 +324,7 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 			col.rgb    = lerp(col.rgb, highlight_color.rgb, saturate(ha));
 		}
 
-		// Spotlight: escurece fora de um circulo que segue o cursor
+		// Spotlight: darkens outside a circle that follows the cursor
 		if (spotlight_enabled > 0.5) {
 			float2 cpx = content_to_pixel(cursor_pos);
 			float  rad = spotlight_radius * min(target_size.x, target_size.y);
@@ -340,7 +340,7 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 			float  icon  = max(target_size.y * 0.030 * cursor_scale, 8.0);
 
 			if (cursor_tex_enabled > 0.5) {
-				// ancora = centro do icone para o hotspot cair no ponteiro
+				// anchor = icon center so the hotspot lands on the pointer
 				float2 anchor = (float2(0.5, 0.5) - cursor_hotspot) * icon;
 				float2 cuv    = (local - anchor) / icon + 0.5;
 
@@ -360,7 +360,7 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 					col.rgb = lerp(col.rgb, ic.rgb, saturate(ic.a * cursor_opacity * mask));
 				}
 			} else {
-				// Fallback procedural (seta clara com borda escura)
+				// Procedural fallback (light arrow with dark border)
 				float  u     = max(target_size.y * 0.001 * cursor_scale, 0.5);
 				float  corta = max(1.0, u * 0.12);
 				float2 a0    = float2(0.0, 0.0) * u;

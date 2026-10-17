@@ -5,27 +5,27 @@
 namespace topscreen::core {
 
 /**
- * Configuracao inicial de um slot de perfil (0..3).
+ * Initial configuration of a profile slot (0..3).
  *
- * Os slots ja nascem com variacoes VISIVEIS (cor dos cliques, zoom e fundo),
- * para dar para alternar entre perfis sem precisar salvar antes.
+ * The slots are born with VISIBLE variations (click color, zoom and background),
+ * so you can switch between profiles without having to save first.
  *
- *   A (0): padrao
- *   B (1): cliques verde/laranja + zoom forte (2.0)
- *   C (2): cliques roxo/ciano + zoom suave (1.4) + fundo vertical
- *   D (3): cliques amarelo/branco + zoom desligado
+ *   A (0): default
+ *   B (1): green/orange clicks + strong zoom (2.0)
+ *   C (2): purple/cyan clicks + soft zoom (1.4) + vertical background
+ *   D (3): yellow/white clicks + zoom off
  */
 Config make_profile_seed(int index);
 
 /**
- * Rotulo do slot (0..3): "Perfil A" .. "Perfil D".
+ * Slot label (0..3): "Profile A" .. "Profile D".
  *
- * Fica no core (e nao no locale) de proposito: o rotulo precisa ser sempre
- * distinto, mesmo se o arquivo de idioma estiver ausente/desatualizado.
+ * It lives in the core (and not in the locale) on purpose: the label must always
+ * be distinct, even if the language file is missing/outdated.
  */
 const char *profile_label(int index);
 
-/** Indice normalizado (0..3) de um slot qualquer. */
+/** Normalized index (0..3) of any slot. */
 int profile_index(int index);
 
 } // namespace topscreen::core

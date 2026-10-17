@@ -7,7 +7,7 @@
 
 namespace topscreen::core {
 
-/** Amostras de um WAV decodificado (float intercalado, -1..1). */
+/** Samples of a decoded WAV (interleaved float, -1..1). */
 struct WavData {
 	int sample_rate = 0;
 	int channels = 0;
@@ -19,10 +19,10 @@ struct WavData {
 };
 
 /**
- * Decodifica um WAV (RIFF/WAVE) em memoria.
+ * Decodes a WAV (RIFF/WAVE) in memory.
  *
- * Suporta PCM 8/16/24/32 bits e float 32 bits, mono ou multicanal.
- * Retorna false e preenche `error` em caso de formato invalido/nao suportado.
+ * Supports PCM 8/16/24/32 bits and 32-bit float, mono or multichannel.
+ * Returns false and fills `error` on an invalid/unsupported format.
  */
 bool wav_parse(const uint8_t *data, size_t size, WavData *out, std::string *error);
 

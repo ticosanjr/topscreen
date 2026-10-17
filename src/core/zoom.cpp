@@ -38,8 +38,8 @@ void ZoomModel::focus_on(double x, double y, double now_ms)
 	if (!started_)
 		reset(now_ms);
 
-	/* Guarda o ponto focado; o alvo do foco e recalculado no update
-	 * (depende do zoom, que anima). */
+	/* Saves the focused point; the focus target is recalculated in update
+	 * (it depends on the zoom, which animates). */
 	focus_point_x_ = clamp_range(x, 0.0, 1.0);
 	focus_point_y_ = clamp_range(y, 0.0, 1.0);
 	last_focus_ms_ = now_ms;
@@ -81,9 +81,9 @@ void ZoomModel::update(double now_ms)
 	zoom_.set_target(target_zoom);
 
 	/*
-	 * Foco = mistura entre "seguir o cursor" (pan) e "manter o cursor no
-	 * centro" (center_amount). Centralizar faz a vista ANTECIPAR as bordas:
-	 * o canto aparece antes de o mouse chegar nele.
+	 * Focus = blend between "follow the cursor" (pan) and "keep the cursor at
+	 * the center" (center_amount). Centering makes the view ANTICIPATE the edges:
+	 * the corner appears before the mouse reaches it.
 	 */
 	const double pan = clamp_range(cfg_.pan_amount, 0.0, 1.0);
 	const double camt = clamp_range(cfg_.center_amount, 0.0, 1.0);

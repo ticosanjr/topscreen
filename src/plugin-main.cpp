@@ -11,7 +11,7 @@ OBS_MODULE_USE_DEFAULT_LOCALE("topscreen", "en-US")
 
 MODULE_EXPORT const char *obs_module_description(void)
 {
-	return "TopScreen - efeitos de captura de tela ao vivo para OBS";
+	return "TopScreen - live screen capture effects for OBS";
 }
 
 bool obs_module_load(void)
@@ -22,7 +22,7 @@ bool obs_module_load(void)
 	topscreen::ts_dock_register();
 #endif
 
-	blog(LOG_INFO, "[TopScreen] carregado v" TOPSCREEN_VERSION);
+	blog(LOG_INFO, "[TopScreen] loaded v" TOPSCREEN_VERSION);
 	return true;
 }
 

@@ -3,7 +3,7 @@
 
 using namespace topscreen::core;
 
-TEST(easing_extremos)
+TEST(easing_extremes)
 {
 	for (int e = 0; e < EASE_COUNT; ++e) {
 		CHECK_NEAR(ease_apply(e, 0.0), 0.0, 1e-9);
@@ -11,13 +11,13 @@ TEST(easing_extremos)
 	}
 }
 
-TEST(easing_recorte_de_dominio)
+TEST(easing_domain_clamp)
 {
 	CHECK_NEAR(ease_apply(EASE_IN_OUT_CUBIC, -5.0), 0.0, 1e-9);
 	CHECK_NEAR(ease_apply(EASE_IN_OUT_CUBIC, 5.0), 1.0, 1e-9);
 }
 
-TEST(easing_monotonico)
+TEST(easing_monotonic)
 {
 	for (int e = 0; e < EASE_COUNT; ++e) {
 		double prev = -1.0;
@@ -30,9 +30,9 @@ TEST(easing_monotonico)
 	}
 }
 
-TEST(easing_in_out_simetrico)
+TEST(easing_in_out_symmetric)
 {
-	/* ease_in_out deve ter valor 0.5 no meio. */
+	/* ease_in_out must be 0.5 in the middle. */
 	CHECK_NEAR(ease_in_out_cubic(0.5), 0.5, 1e-9);
 	CHECK_NEAR(ease_apply(EASE_IN_OUT_CUBIC, 0.5), 0.5, 1e-9);
 }

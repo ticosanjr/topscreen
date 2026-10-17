@@ -4,7 +4,7 @@
 
 namespace topscreen::core {
 
-/** smoothstep em C++ (espelha o do shader). */
+/** smoothstep in C++ (mirrors the shader's). */
 inline double smoothstep(double edge0, double edge1, double x)
 {
 	if (edge0 == edge1)
@@ -18,38 +18,38 @@ inline double smoothstep(double edge0, double edge1, double x)
 }
 
 /**
- * Distancia assinada a um retangulo arredondado centrado na origem.
- * Negativo dentro, positivo fora. Espelha sd_round_box() do shader.
+ * Signed distance to a rounded rectangle centered at the origin.
+ * Negative inside, positive outside. Mirrors the shader's sd_round_box().
  */
 double sd_round_box(double px, double py, double hx, double hy, double radius);
 
 /**
- * Mascara de cobertura de um retangulo arredondado (0 fora, 1 dentro),
- * com anti-aliasing numa banda de largura `aa` em torno da borda.
- * Espelha o calculo do shader para permitir testes.
+ * Coverage mask of a rounded rectangle (0 outside, 1 inside),
+ * with anti-aliasing in a band of width `aa` around the edge.
+ * Mirrors the shader's calculation to allow testing.
  */
 double rounded_rect_mask(double px, double py, double hx, double hy, double radius, double aa);
 
 /**
- * Transformacao de UV do zoom/pan.
- * content_uv em 0..1 -> UV de amostragem da tela (0..1).
+ * UV transformation of the zoom/pan.
+ * content_uv in 0..1 -> sampling UV of the screen (0..1).
  */
 Vec2f zoom_uv(double content_u, double content_v, double focus_x, double focus_y, double zoom);
 
 /**
- * Converte um pixel de saida em coordenada de conteudo (0..1), considerando
- * o padding interno. Fora do conteudo gera valores fora de 0..1.
+ * Converts an output pixel into a content coordinate (0..1), taking the
+ * internal padding into account. Outside the content it produces values outside 0..1.
  */
 Vec2f pixel_to_content(double px, double py, double target_w, double target_h, double pad);
 
 /**
- * Limita o foco do zoom para nao amostrar fora da tela (0..1).
+ * Clamps the zoom focus so it does not sample outside the screen (0..1).
  *
- * Com foco em [0,1] a janela visivel (largura 1/zoom) sempre cabe na fonte.
+ * With focus in [0,1] the visible window (width 1/zoom) always fits in the source.
  */
 double clamp_focus(double focus, double zoom);
 
-/** Faixa de foco que mantem um ponto `source_pos` visivel (0..1). */
+/** Focus range that keeps a `source_pos` point visible (0..1). */
 struct FocusLimits {
 	double lo = 0.0;
 	double hi = 1.0;
@@ -57,17 +57,17 @@ struct FocusLimits {
 
 FocusLimits focus_limits(double source_pos, double zoom);
 
-/** Limita o foco mantendo o ponto `source_pos` dentro da tela. */
+/** Clamps the focus keeping the `source_pos` point inside the screen. */
 double clamp_focus_keep(double source_pos, double focus, double zoom);
 
 /**
- * Foco que coloca o ponto da fonte `source_pos` no CENTRO da tela.
+ * Focus that places the source point `source_pos` at the CENTER of the screen.
  *
- * Resolve `0.5 = f + (s - f) * z` para `f`, com resultado em [0,1]:
+ * Solves `0.5 = f + (s - f) * z` for `f`, with the result in [0,1]:
  *   f = (s*z - 0.5) / (z - 1)
  *
- * Com isso a vista antecipa as bordas (o canto aparece antes de o mouse
- * chegar nele) e o cursor fica visivel o tempo todo.
+ * With this the view anticipates the edges (the corner appears before the mouse
+ * reaches it) and the cursor stays visible all the time.
  */
 double center_focus_for(double source_pos, double zoom);
 

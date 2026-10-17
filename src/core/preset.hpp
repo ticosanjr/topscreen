@@ -8,20 +8,20 @@
 namespace topscreen::core {
 
 /**
- * Preset: envelope JSON com metadados e um bloco `settings` contendo as chaves
- * de configuracao (mesmas chaves do obs_data - ver core/keys.hpp).
+ * Preset: JSON envelope with metadata and a `settings` block containing the
+ * configuration keys (the same keys as obs_data - see core/keys.hpp).
  */
 struct Preset {
 	std::string name;
 	std::string description;
 
-	/** Aplica os valores do preset sobre a config (valores ausentes sao mantidos). */
+	/** Applies the preset values onto the config (missing values are kept). */
 	bool apply(Config *cfg, std::string *error) const;
 
-	/** Faz o parse do texto JSON de um preset. */
+	/** Parses the JSON text of a preset. */
 	static bool from_json(const std::string &text, Preset *out, std::string *error);
 
-	/** Objeto `settings` do preset (para inspecao/testes). */
+	/** `settings` object of the preset (for inspection/tests). */
 	const json::Value &settings() const { return settings_; }
 
 private:

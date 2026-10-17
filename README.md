@@ -1,104 +1,104 @@
 # TopScreen
 
-**Efeitos de captura de tela ao vivo para OBS Studio.**
+**Live screen-capture effects for OBS Studio.**
 
-O TopScreen é um *plugin de filtro* do OBS que aplica efeitos ao vivo sobre
-qualquer captura de tela — cursor estilizado, efeitos de clique, zoom/pan
-automáticos, fundo com cantos arredondados, overlay de teclas, spotlight e
-marca-texto — **sem gravar nada e sem edição posterior**. Tudo é automático ou
-disparado por atalhos, e o resultado é consumido diretamente pelo OBS.
+TopScreen is an OBS *filter plugin* that applies live effects over any screen
+capture — a styled cursor, click effects, automatic zoom/pan, a background with
+rounded corners, a key overlay, spotlight and highlighter — **without recording
+anything and without post-editing**. Everything is automatic or triggered by
+hotkeys, and the result is consumed directly by OBS.
 
-> Não é um gravador. Não gera arquivo. Não tem timeline. Existe para ser usado
-> **junto com o OBS**, como um filtro de uma fonte do próprio OBS.
-
----
-
-## Como funciona (visão rápida)
-
-1. No OBS, adicione uma **Captura de Tela** e escolha a tela.
-2. Na fonte, em **Filtros**, adicione **TopScreen FX**.
-3. Ajuste nas **Propriedades** do filtro e/ou no **dock TopScreen**.
-4. Configure atalhos em **Configurações → Atalhos → TopScreen**.
-
-O filtro roda inteiramente na GPU, no processo do OBS — sem IPC, sem encode,
-sem cópia de frames.
-
-📖 **Manual do usuário completo: [`docs/MANUAL.md`](docs/MANUAL.md).**
+> It is not a recorder. It produces no file. It has no timeline. It exists to be
+> used **together with OBS**, as a filter on an OBS source itself.
 
 ---
 
-## Estado do projeto
+## How it works (quick view)
 
-Validado em uso real: carrega e roda no **OBS 30.0.2** (Linux, X11) — efeitos,
-presets, som de clique, overlay de teclas e dock.
+1. In OBS, add a **Display Capture** and pick the screen.
+2. On the source, under **Filters**, add **TopScreen FX**.
+3. Adjust it in the filter's **Properties** and/or the **TopScreen dock**.
+4. Configure hotkeys in **Settings → Hotkeys → TopScreen**.
 
-| Fase | Escopo | Status |
+The filter runs entirely on the GPU, inside the OBS process — no IPC, no encode,
+no frame copy.
+
+📖 **Full user manual: [`docs/MANUAL.md`](docs/MANUAL.md).**
+
+---
+
+## Project status
+
+Validated in real use: it loads and runs on **OBS 30.0.2** (Linux, X11) — effects,
+presets, click sound, key overlay and dock.
+
+| Phase | Scope | Status |
 |------|--------|--------|
-| F0 | Skeleton do plugin + filtro passthrough | ✅ |
-| F1 | Fundo, cantos, padding, sombra, presets + dock | ✅ |
-| F2 | Cursor (tamanho/suavização/sway/idle/loop) | ✅ |
-| F3 | Cliques L/R + som + atalhos + presets | ✅ |
-| F4 | Zoom/Pan (mola) auto + manual + pan + motion blur | ✅ |
-| F5 | Overlay de teclas + spotlight + marca-texto | 🟡 (webcam ⬜) |
-| F6 | Fonte de captura própria + áudio próprio | ⬜ |
-| F7 | Paridade Wayland (portal + evdev) + CI | 🟡 (evdev ✅; portal ⬜) |
+| F0 | Plugin skeleton + passthrough filter | ✅ |
+| F1 | Background, corners, padding, shadow, presets + dock | ✅ |
+| F2 | Cursor (size/smoothing/sway/idle/loop) | ✅ |
+| F3 | L/R clicks + sound + hotkeys + presets | ✅ |
+| F4 | Auto + manual Zoom/Pan (spring) + pan + motion blur | ✅ |
+| F5 | Key overlay + spotlight + highlighter | 🟡 (webcam ⬜) |
+| F6 | Own capture source + own audio | ⬜ |
+| F7 | Wayland parity (portal + evdev) + CI | 🟡 (evdev ✅; portal ⬜) |
 
-O núcleo tem **testes automatizados** e a camada OBS é checada contra os headers
-reais do OBS. Veja [`docs/TESTES.md`](docs/TESTES.md).
+The core has **automated tests** and the OBS layer is checked against the real
+OBS headers. See [`docs/TESTS.md`](docs/TESTS.md).
 
-### Testes rápidos
+### Quick tests
 
 ```bash
-./tests/run.sh            # Linux: 117 testes do núcleo
-pwsh -File tests\run.ps1  # Windows (ou PowerShell em qualquer SO)
+./tests/run.sh            # Linux: 117 core tests
+pwsh -File tests\run.ps1  # Windows (or PowerShell on any OS)
 ```
 
 ---
 
-## Requisitos
+## Requirements
 
-- **OBS Studio** 30.0+ (validado em 30.0.2)
-- **Windows 10+** ou **Linux** (X11 e Wayland)
-- CMake 3.20+, compilador C++20
-- Qt6 (opcional, para o dock)
+- **OBS Studio** 30.0+ (validated on 30.0.2)
+- **Windows 10+** or **Linux** (X11 and Wayland)
+- CMake 3.20+, C++20 compiler
+- Qt6 (optional, for the dock)
 
-## Instalação (simples)
+## Installation (simple)
 
 **Linux**
 ```bash
-./scripts/install-linux.sh            # plugin de usuário (sem sudo)
-./scripts/install-linux.sh --system   # OBS do sistema (usa sudo)
+./scripts/install-linux.sh            # per-user plugin (no sudo)
+./scripts/install-linux.sh --system   # system OBS (uses sudo)
 ```
 
 **Windows**
 ```powershell
-pwsh -File scripts\install-windows.ps1                    # plugin de usuário
-pwsh -File scripts\install-windows.ps1 -ObsDir D:\OBS     # OBS portable
+pwsh -File scripts\install-windows.ps1                    # per-user plugin
+pwsh -File scripts\install-windows.ps1 -ObsDir D:\OBS     # portable OBS
 pwsh -File scripts\install-windows.ps1 -Dll .\topscreen.dll
 ```
 
-Passo a passo completo em [`docs/BUILD.md`](docs/BUILD.md).
+Full step by step in [`docs/BUILD.md`](docs/BUILD.md).
 
 ---
 
-## Documentação
+## Documentation
 
-Índice completo: [`docs/README.md`](docs/README.md).
+Full index: [`docs/README.md`](docs/README.md).
 
-| Documento | Conteúdo |
+| Document | Contents |
 |-----------|----------|
-| [`docs/MANUAL.md`](docs/MANUAL.md) | **Manual do usuário** (instalar, usar, atalhos, receitas, FAQ) |
-| [`docs/CONFIGURACAO.md`](docs/CONFIGURACAO.md) | Referência de todas as opções, presets e atalhos |
-| [`docs/EFEITOS.md`](docs/EFEITOS.md) | Catálogo de efeitos (com status) |
-| [`docs/INPUT-E-PLATAFORMAS.md`](docs/INPUT-E-PLATAFORMAS.md) | Input por SO e paridade X11/Wayland |
-| [`docs/BUILD.md`](docs/BUILD.md) | Compilar e instalar (Windows/Linux) |
-| [`docs/VERIFICACAO.md`](docs/VERIFICACAO.md) | Roteiro de validação num OBS real |
-| [`docs/TESTES.md`](docs/TESTES.md) | Testes automatizados: como rodar e o que cobrem |
-| [`docs/PLANO.md`](docs/PLANO.md) · [`docs/ARQUITETURA.md`](docs/ARQUITETURA.md) · [`docs/ROADMAP.md`](docs/ROADMAP.md) · [`docs/TAREFAS.md`](docs/TAREFAS.md) | Plano, arquitetura, roadmap e tarefas |
+| [`docs/MANUAL.md`](docs/MANUAL.md) | **User manual** (install, use, hotkeys, recipes, FAQ) |
+| [`docs/CONFIGURATION.md`](docs/CONFIGURATION.md) | Reference for every option, preset and hotkey |
+| [`docs/EFFECTS.md`](docs/EFFECTS.md) | Effect catalog (with status) |
+| [`docs/INPUT-AND-PLATFORMS.md`](docs/INPUT-AND-PLATFORMS.md) | Input per OS and X11/Wayland parity |
+| [`docs/BUILD.md`](docs/BUILD.md) | Build and install (Windows/Linux) |
+| [`docs/VERIFICATION.md`](docs/VERIFICATION.md) | Validation script on a real OBS |
+| [`docs/TESTS.md`](docs/TESTS.md) | Automated tests: how to run and what they cover |
+| [`docs/PLAN.md`](docs/PLAN.md) · [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) · [`docs/ROADMAP.md`](docs/ROADMAP.md) · [`docs/TASKS.md`](docs/TASKS.md) | Plan, architecture, roadmap and tasks |
 
 ---
 
-## Licença
+## License
 
-GPL-2.0-or-later. Veja [`COPYING`](COPYING) (texto completo) e [`LICENSE`](LICENSE).
-Plugins que linkam `libobs` precisam ser compatíveis com a GPLv2 (ver `docs/PLANO.md` §2).
+GPL-2.0-or-later. See [`COPYING`](COPYING) (full text) and [`LICENSE`](LICENSE).
+Plugins that link `libobs` must be GPLv2-compatible (see `docs/PLAN.md` §2).

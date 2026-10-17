@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
 """
-Gera o atlas de cursores do TopScreen.
+Generates the TopScreen cursor atlas.
 
-- Extrai cursores reais de temas XCursor instalados (Bibata, Breeze, Adwaita,
-  GoogleDot) lendo o formato XCursor.
-- Desenha "macOS (classico)" e "Windows (classico)" proceduralmente.
-- Empacota tudo em data/cursors/atlas.rgba (TSAT) + atlas.json (hotspots).
+- Extracts real cursors from installed XCursor themes (Bibata, Breeze, Adwaita,
+  GoogleDot) reading the XCursor format.
+- Draws "macOS (classic)" and "Windows (classic)" procedurally.
+- Packs everything into data/cursors/atlas.rgba (TSAT) + atlas.json (hotspots).
 
-Formato TSAT (little-endian):
+TSAT format (little-endian):
   0  : magic 'TSAT'
   4  : u32 version = 1
-  8  : u32 cell (lado do icone, px)
+  8  : u32 cell (icon side, px)
   12 : u32 count
-  16 : pixels RGBA8 (cell x cell*count, topo->baixo)
+  16 : pixels RGBA8 (cell x cell*count, top->bottom)
 
-Uso: python3 tools/make-cursor-atlas.py
+Usage: python3 tools/make-cursor-atlas.py
 """
 import json
 import math
@@ -28,7 +28,7 @@ OUT_DIR = os.path.join(ROOT, "data", "cursors")
 
 ICONS = "/usr/share/icons"
 
-# nome, fonte (caminho xcursor)  -- ordem = id do CursorStyle no codigo
+# name, source (xcursor path)  -- order = CursorStyle id in the code
 SOURCES = [
     ("macos", "__procedural_mac__"),
     ("windows", "__procedural_win__"),
@@ -52,7 +52,7 @@ def parse_xcursor(path):
     data = open(path, "rb").read()
     magic, hsize, version, ntoc = struct.unpack_from("<4sIII", data, 0)
     if magic != b"Xcur":
-        raise ValueError(f"nao e XCursor: {path}")
+        raise ValueError(f"not an XCursor: {path}")
     images = []
     for i in range(ntoc):
         ctype, subtype, pos = struct.unpack_from("<III", data, hsize + i * 12)
@@ -62,12 +62,12 @@ def parse_xcursor(path):
         pix = struct.unpack_from("<%dI" % (w * h), data, pos + hsize2)
         images.append({"w": w, "h": h, "xhot": xh, "yhot": yh, "pix": pix})
     if not images:
-        raise ValueError(f"sem imagens: {path}")
+        raise ValueError(f"no images: {path}")
     return images
 
 
 def best_image(images):
-    """Maior imagem com lado <= 128 (nitida e leve)."""
+    """Largest image with side <= 128 (sharp and light)."""
     cand = [im for im in images if max(im["w"], im["h"]) <= 128] or images
     return max(cand, key=lambda im: max(im["w"], im["h"]))
 
@@ -84,7 +84,7 @@ def argb_to_rgba(pix, w, h):
 
 
 # ---------------------------------------------------------------------------
-# Rasterizacao procedural (poligonos com anti-aliasing)
+# Procedural rasterization (polygons with anti-aliasing)
 # ---------------------------------------------------------------------------
 def point_in_poly(x, y, poly):
     inside = False
@@ -116,7 +116,7 @@ def sd_poly(x, y, poly):
 
 
 def rasterize(poly, fill, outline, outline_w, grid=24):
-    """Rasteriza um poligono (coordenadas em `grid`) para CELL x CELL RGBA."""
+    """Rasterizes a polygon (coordinates in `grid`) to CELL x CELL RGBA."""
     scale = CELL / grid
     src = [(px * scale, py * scale) for (px, py) in poly]
     ow = outline_w * scale
@@ -161,18 +161,18 @@ WIN_POLY = [(0.8, 0.6), (0.8, 17.5), (4.8, 13.7), (7.9, 19.9), (10.3, 18.9),
 
 def procedural(kind):
     if kind == "mac":
-        # macOS: preenchimento preto, contorno branco fino
+        # macOS: black fill, thin white outline
         return rasterize(MAC_POLY, (0, 0, 0, 255), (255, 255, 255, 235), 0.9)
     else:
-        # Windows: preenchimento branco, contorno preto
+        # Windows: white fill, black outline
         return rasterize(WIN_POLY, (255, 255, 255, 255), (0, 0, 0, 255), 1.0)
 
 
 # ---------------------------------------------------------------------------
-# Composicao do atlas
+# Atlas composition
 # ---------------------------------------------------------------------------
 def resample_to_cell(rgba, w, h):
-    """Redimensiona (bilinear) para CELL x CELL, centralizado."""
+    """Resizes (bilinear) to CELL x CELL, centered."""
     out = bytearray(CELL * CELL * 4)
     sc = min(CELL / w, CELL / h)
     dw, dh = max(1, int(w * sc)), max(1, int(h * sc))
@@ -205,7 +205,7 @@ def main():
             continue
 
         if not os.path.exists(src):
-            raise SystemExit(f"cursor nao encontrado: {src}")
+            raise SystemExit(f"cursor not found: {src}")
 
         im = best_image(parse_xcursor(src))
         rgba = bytearray()
@@ -217,7 +217,7 @@ def main():
         hy = (oy + im["yhot"] * sc) / CELL
         cells.append(cell)
         meta.append({"name": name, "hotspot": [round(hx, 4), round(hy, 4)]})
-        print(f"[atlas] {name}: {im['w']}x{im['h']} hotspot=({hx:.3f},{hy:.3f}) de {src}")
+        print(f"[atlas] {name}: {im['w']}x{im['h']} hotspot=({hx:.3f},{hy:.3f}) from {src}")
 
     count = len(cells)
     with open(os.path.join(OUT_DIR, "atlas.rgba"), "wb") as f:
@@ -230,7 +230,7 @@ def main():
         json.dump({"cell": CELL, "count": count, "cursors": meta}, f, indent=2)
         f.write("\n")
 
-    print(f"[atlas] OK: {count} cursores, cell={CELL} -> data/cursors/")
+    print(f"[atlas] OK: {count} cursors, cell={CELL} -> data/cursors/")
 
 
 if __name__ == "__main__":

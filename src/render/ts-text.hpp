@@ -12,10 +12,10 @@
 namespace topscreen {
 
 /**
- * Renderer do overlay de teclas.
+ * Key overlay renderer.
  *
- * Gera o atlas a partir de um TTF (selecionavel), cria as texturas e desenha
- * faixa de fundo + sombra + texto, tudo configuravel.
+ * Builds the atlas from a TTF (selectable), creates the textures and draws
+ * the background band + shadow + text, all configurable.
  */
 class TextRenderer {
 public:

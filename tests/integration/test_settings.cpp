@@ -17,8 +17,8 @@ using namespace topscreen;
 #define TOPSCREEN_TEST_DATA_DIR "data"
 #endif
 
-/* Defaults do codigo == Config padrao, e defaults nao viram valor de usuario. */
-TEST(settings_defaults_coincidem_com_config)
+/* Code defaults == default Config, and defaults do not become user values. */
+TEST(settings_defaults_match_config)
 {
 	obs_data_t *s = obs_data_create();
 	config_defaults(s);
@@ -42,8 +42,8 @@ TEST(settings_defaults_coincidem_com_config)
 	obs_data_release(s);
 }
 
-/* Fonte antiga (sem nenhuma chave): cai nos defaults do codigo. */
-TEST(settings_fonte_antiga_usa_defaults)
+/* Old source (no keys at all): falls back to the code defaults. */
+TEST(settings_old_source_uses_defaults)
 {
 	obs_data_t *s = obs_data_create();
 
@@ -58,7 +58,7 @@ TEST(settings_fonte_antiga_usa_defaults)
 	obs_data_release(s);
 }
 
-/* Store -> load preserva os campos (roundtrip). */
+/* Store -> load preserves the fields (roundtrip). */
 TEST(settings_store_load_roundtrip)
 {
 	core::Config a;
@@ -93,8 +93,8 @@ TEST(settings_store_load_roundtrip)
 	obs_data_release(s);
 }
 
-/* Migracao da chave antiga bg_padding. */
-TEST(settings_migra_bg_padding_antigo)
+/* Migration of the old bg_padding key. */
+TEST(settings_migrates_old_bg_padding)
 {
 	obs_data_t *s = obs_data_create();
 	config_defaults(s);
@@ -108,8 +108,8 @@ TEST(settings_migra_bg_padding_antigo)
 	obs_data_release(s);
 }
 
-/* Migracao dos defaults antigos de suavizacao do cursor. */
-TEST(settings_migra_cursor_suave_antigo)
+/* Migration of the old cursor smoothing defaults. */
+TEST(settings_migrates_old_cursor_smooth)
 {
 	obs_data_t *s = obs_data_create();
 	config_defaults(s);
@@ -124,8 +124,8 @@ TEST(settings_migra_cursor_suave_antigo)
 	obs_data_release(s);
 }
 
-/* Propriedades: grupo de perfis no topo + chaves principais presentes. */
-TEST(properties_cria_grupos_esperados)
+/* Properties: profile group at the top + main keys present. */
+TEST(properties_creates_expected_groups)
 {
 	obs_properties_t *p = properties_create(nullptr);
 	CHECK(p != nullptr);
@@ -139,8 +139,8 @@ TEST(properties_cria_grupos_esperados)
 	obs_properties_destroy(p);
 }
 
-/* Input sem backend: disponivel=false, tier 0, sem bordas fantasmas. */
-TEST(input_sem_backend_e_seguro)
+/* Input without backend: available=false, tier 0, no phantom edges. */
+TEST(input_without_backend_is_safe)
 {
 	Input in;
 	in.poll();
@@ -150,21 +150,21 @@ TEST(input_sem_backend_e_seguro)
 	CHECK(!in.available());
 }
 
-/* Som: arquivo inexistente falha sem crash; play sem load e seguro. */
-TEST(clicksound_falha_graciosa)
+/* Sound: nonexistent file fails without crashing; play without load is safe. */
+TEST(clicksound_fails_gracefully)
 {
 	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
 
 	ClickSound snd;
 	CHECK(!snd.loaded());
-	CHECK(!snd.load("sounds/arquivo-que-nao-existe.wav"));
+	CHECK(!snd.load("sounds/does-not-exist.wav"));
 	snd.play();
 	CHECK(!snd.loaded());
 
 	CHECK(snd.load("sounds/click-soft.wav"));
 	CHECK(snd.loaded());
 	CHECK(snd.wav().sample_rate > 0);
-	/* Nao toca de verdade no teste (evita fork/exec na suite). */
+	/* Does not actually play in the test (avoids fork/exec in the suite). */
 	snd.release();
 	CHECK(!snd.loaded());
 }

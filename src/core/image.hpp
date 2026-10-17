@@ -7,7 +7,7 @@
 
 namespace topscreen::core {
 
-/** Imagem decodificada (RGBA8, topo->baixo). */
+/** Decoded image (RGBA8, top->bottom). */
 struct Image {
 	int width = 0;
 	int height = 0;
@@ -16,7 +16,7 @@ struct Image {
 	bool empty() const { return width <= 0 || height <= 0 || pixels.empty(); }
 };
 
-/** Decodifica PNG/JPG/BMP/etc. (stb_image) de um buffer em memoria. */
+/** Decodes PNG/JPG/BMP/etc. (stb_image) from an in-memory buffer. */
 bool image_decode(const uint8_t *data, size_t size, Image *out, std::string *error);
 
 } // namespace topscreen::core

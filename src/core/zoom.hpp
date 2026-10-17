@@ -8,11 +8,11 @@ namespace topscreen::core {
 
 struct ZoomConfig {
 	int mode = static_cast<int>(ZoomMode::Auto);
-	double amount = 1.6;         // zoom alvo no modo auto
-	double duration_ms = 450.0;  // velocidade da animacao
-	double idle_timeout_ms = 1500.0; // sem foco -> volta ao normal
-	double pan_amount = 1.0;     // quanto o foco "segue" o cursor (0..1)
-	double center_amount = 1.0;  // quanto o cursor fica no CENTRO (0..1)
+	double amount = 1.6;         // target zoom in auto mode
+	double duration_ms = 450.0;  // animation speed
+	double idle_timeout_ms = 1500.0; // no focus -> returns to normal
+	double pan_amount = 1.0;     // how much the focus "follows" the cursor (0..1)
+	double center_amount = 1.0;  // how much the cursor stays at the CENTER (0..1)
 	int easing = EASE_IN_OUT_CUBIC;
 };
 
@@ -23,24 +23,24 @@ struct ZoomRender {
 };
 
 /**
- * Modelo de zoom/pan.
+ * Zoom/pan model.
  *
- * Combina zoom manual (passo a passo por atalho) com zoom automatico
- * (foco por clique/seguir cursor). Usa molas para tudo, evitando saltos.
- * Todo foco e limitado por clamp_focus() para nunca amostrar fora da tela.
+ * Combines manual zoom (step by step via hotkey) with automatic zoom
+ * (focus by click/follow cursor). Uses springs for everything, avoiding jumps.
+ * All focus is bounded by clamp_focus() so it never samples outside the screen.
  */
 class ZoomModel {
 public:
 	void configure(const ZoomConfig &cfg);
 	void reset(double now_ms);
 
-	/** Foco por clique (auto-zoom). */
+	/** Focus by click (auto-zoom). */
 	void focus_on(double x, double y, double now_ms);
 
-	/** Foco seguindo o cursor. */
+	/** Focus following the cursor. */
 	void set_cursor(double x, double y, double now_ms);
 
-	/** Passo manual: factor > 1 aproxima, factor < 1 afasta. */
+	/** Manual step: factor > 1 zooms in, factor < 1 zooms out. */
 	void manual_step(double factor);
 	void set_manual(double value);
 	double manual() const { return manual_; }
@@ -49,7 +49,7 @@ public:
 
 	ZoomRender render() const;
 
-	/** Velocidade atual do zoom (para motion blur). */
+	/** Current zoom velocity (for motion blur). */
 	double zoom_velocity() const { return zoom_.velocity(); }
 
 private:
@@ -60,7 +60,7 @@ private:
 	Spring fx_;
 	Spring fy_;
 	double manual_ = 1.0;
-	double focus_point_x_ = 0.5; // ultimo ponto (fonte) focado
+	double focus_point_x_ = 0.5; // last (source) point focused
 	double focus_point_y_ = 0.5;
 	double last_focus_ms_ = 0.0;
 	double last_update_ms_ = 0.0;

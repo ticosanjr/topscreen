@@ -17,18 +17,18 @@ struct BackgroundConfig {
 	int mode = static_cast<int>(BgMode::Diagonal);
 	uint32_t color_a = 0xFF20242E; // 0xAABBGGRR
 	uint32_t color_b = 0xFF3A2E5C; // 0xAABBGGRR
-	std::string image;             // caminho/relativo do wallpaper ("" = nenhum)
-	std::string image_file;        // imagem do PC (tem prioridade sobre `image`)
-	double image_blur = 0.0;       // desfoque do wallpaper (px)
-	int image_blur_type = 2;       // 0 nenhum, 1 suave, 2 gaussiano, 3 cremoso
+	std::string image;             // wallpaper path/relative ("" = none)
+	std::string image_file;        // PC image (takes priority over `image`)
+	double image_blur = 0.0;       // wallpaper blur (px)
+	int image_blur_type = 2;       // 0 none, 1 soft, 2 gaussian, 3 creamy
 	double padding_x = 64.0;
 	double padding_y = 64.0;
 	double corner_radius = 18.0;
 	bool shadow = true;
 	double shadow_alpha = 0.35;
 	double shadow_blur = 48.0;
-	double shadow_offset = 12.0; // deslocamento vertical (px)
-	bool keep_aspect = true;     // mantem a proporcao da tela (sem distorcao)
+	double shadow_offset = 12.0; // vertical offset (px)
+	bool keep_aspect = true;     // keeps the screen aspect ratio (without distortion)
 };
 
 struct ClickSoundConfig {
@@ -39,20 +39,20 @@ struct ClickSoundConfig {
 	bool right = false;
 };
 
-/** Motion blur (radial, ligado ao movimento do zoom/cursor). */
+/** Motion blur (radial, tied to the zoom/cursor movement). */
 struct MotionBlurConfig {
 	bool enabled = true;
 	double amount = 0.35; // 0..1
 };
 
-/** Spotlight: escurece fora de um circulo que segue o cursor. */
+/** Spotlight: darkens outside a circle that follows the cursor. */
 struct SpotlightConfig {
 	bool enabled = false;
-	double radius = 0.30; // fracao do menor lado
-	double dim = 0.60;    // 0..1 (quanto escurece fora)
+	double radius = 0.30; // fraction of the shorter side
+	double dim = 0.60;    // 0..1 (how much it darkens outside)
 };
 
-/** Configuracao completa do TopScreen (independente do OBS). */
+/** Complete TopScreen configuration (independent of OBS). */
 struct Config {	bool effects_enabled = true;
 	BackgroundConfig bg;
 	CursorConfig cursor;
@@ -67,10 +67,10 @@ struct Config {	bool effects_enabled = true;
 };
 
 /**
- * Escolhe o caminho efetivo do wallpaper.
+ * Chooses the effective wallpaper path.
  *
- * Regra: a "Imagem do PC" vence se preenchida; senao o wallpaper embutido.
- * (A interface mantem os dois mutuamente exclusivos.)
+ * Rule: the "PC Image" wins if filled in; otherwise the built-in wallpaper.
+ * (The interface keeps the two mutually exclusive.)
  */
 inline const char *resolve_bg_path(const char *wallpaper, const char *image_file)
 {

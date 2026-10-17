@@ -13,19 +13,19 @@ namespace topscreen {
 
 namespace {
 
-/* Fontes embutidas (data/fonts). */
+/* Built-in fonts (data/fonts). */
 const char *const kFonts[][2] = {
 	{"DejaVu Sans Bold", "fonts/DejaVuSans-Bold.ttf"},
 	{"DejaVu Sans", "fonts/DejaVuSans.ttf"},
 	{"DejaVu Sans Mono Bold", "fonts/DejaVuSansMono-Bold.ttf"},
 };
 
-/* Filtro do seletor de imagem (hardcoded, como no OBS: evita risco de escaping). */
+/* Image selector filter (hardcoded, as in OBS: avoids escaping risk). */
 const char *const kImageFilter =
 	"Images (*.png *.jpg *.jpeg *.bmp *.tga *.gif *.webp *.PNG *.JPG *.JPEG *.BMP *.TGA *.GIF *.WEBP)"
 	";;All files (*.*)";
 
-/* Wallpaper e Imagem do PC sao mutuamente exclusivos. */
+/* Wallpaper and PC Image are mutually exclusive. */
 bool wallpaper_modified(obs_properties_t *props, obs_property_t *p, obs_data_t *settings)
 {
 	(void)props;
@@ -85,12 +85,12 @@ obs_properties_t *properties_create(void *data)
 
 	obs_properties_t *props = obs_properties_create();
 
-	/* ---------------- Perfis (no topo) ---------------- */
+	/* ---------------- Profiles (at the top) ---------------- */
 	obs_properties_t *prof = obs_properties_create();
 	obs_property_t *plist = obs_properties_add_list(prof, kProfileCurrent, obs_module_text("Profile.Current"),
 							OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
-	/* Rotulos vindos do core: sempre "Perfil A".."Perfil D" (nunca repetidos,
-	 * mesmo que o arquivo de idioma esteja ausente/desatualizado). */
+	/* Labels coming from the core: always "Profile A".."Profile D" (never repeated,
+	 * even if the language file is missing/outdated). */
 	for (int i = 0; i < kProfileCount; ++i)
 		obs_property_list_add_int(plist, profile_label(i), i);
 	obs_properties_add_text(prof, "profile_hint", obs_module_text("Profile.Hint"), OBS_TEXT_INFO);
@@ -98,7 +98,7 @@ obs_properties_t *properties_create(void *data)
 
 	obs_properties_add_bool(props, kEffectsEnabled, obs_module_text("Enabled"));
 
-	/* ---------------- Fundo ---------------- */
+	/* ---------------- Background ---------------- */
 	obs_properties_t *bg = obs_properties_create();
 	obs_properties_add_bool(bg, kBgEnabled, obs_module_text("Background.Enabled"));
 
@@ -110,7 +110,7 @@ obs_properties_t *properties_create(void *data)
 	obs_property_list_add_int(mode, obs_module_text("Background.Mode.Diagonal"),
 				  static_cast<int>(BgMode::Diagonal));
 
-	/* Lista NAO-editavel: mostra o rotulo, salva o caminho. */
+	/* NON-editable list: shows the label, saves the path. */
 	obs_property_t *wp = obs_properties_add_list(bg, kBgImage, obs_module_text("Background.Image"),
 						     OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
 	obs_property_set_modified_callback(wp, wallpaper_modified);
@@ -137,7 +137,7 @@ obs_properties_t *properties_create(void *data)
 	obs_properties_add_float_slider(bg, kBgCornerRadius, obs_module_text("Background.CornerRadius"), 0.0, 200.0,
 					1.0);
 
-	/* Sombra da janela (sub-grupo com nomes claros) */
+	/* Window shadow (sub-group with clear names) */
 	obs_properties_t *sh = obs_properties_create();
 	obs_properties_add_bool(sh, kBgShadow, obs_module_text("Shadow.Enabled"));
 	obs_properties_add_float_slider(sh, kBgShadowAlpha, obs_module_text("Shadow.Opacity"), 0.0, 1.0, 0.01);
@@ -189,13 +189,13 @@ obs_properties_t *properties_create(void *data)
 					100.0);
 	obs_properties_add_group(props, "grp_cursor", obs_module_text("Group.Cursor"), OBS_GROUP_NORMAL, cur);
 
-	/* ---------------- Cliques ---------------- */
+	/* ---------------- Clicks ---------------- */
 	add_click_group(props, "grp_click_left", obs_module_text("Group.ClickLeft"), kClickLeftEffect,
 			kClickLeftSize, kClickLeftColor, kClickLeftDurationMs, kClickLeftEasing);
 	add_click_group(props, "grp_click_right", obs_module_text("Group.ClickRight"), kClickRightEffect,
 			kClickRightSize, kClickRightColor, kClickRightDurationMs, kClickRightEasing);
 
-	/* ---------------- Som de clique ---------------- */
+	/* ---------------- Click sound ---------------- */
 	obs_properties_t *snd = obs_properties_create();
 	obs_properties_add_bool(snd, kClickSoundEnabled, obs_module_text("ClickSound.Enabled"));
 	obs_properties_add_float_slider(snd, kClickSoundVolume, obs_module_text("ClickSound.Volume"), 0.0, 1.0,
@@ -238,7 +238,7 @@ obs_properties_t *properties_create(void *data)
 	obs_properties_add_group(props, "grp_spotlight", obs_module_text("Group.Spotlight"), OBS_GROUP_NORMAL,
 				 spot);
 
-	/* ---------------- Teclas ---------------- */
+	/* ---------------- Keys ---------------- */
 	obs_properties_t *keys = obs_properties_create();
 	obs_properties_add_bool(keys, kKeysEnabled, obs_module_text("Keys.Enabled"));
 	obs_properties_add_bool(keys, kKeysModifiersOnly, obs_module_text("Keys.ModifiersOnly"));
@@ -259,7 +259,7 @@ obs_properties_t *properties_create(void *data)
 	obs_properties_add_color(keys, kKeysBandColor, obs_module_text("Keys.BandColor"));
 	obs_properties_add_group(props, "grp_keys", obs_module_text("Group.Keys"), OBS_GROUP_NORMAL, keys);
 
-	/* ---------------- Marca-texto ---------------- */
+	/* ---------------- Highlighter ---------------- */
 	obs_properties_t *hl = obs_properties_create();
 	obs_properties_add_bool(hl, kHighlightEnabled, obs_module_text("Highlight.Enabled"));
 	obs_properties_add_color(hl, kHighlightColor, obs_module_text("Highlight.Color"));
@@ -270,7 +270,7 @@ obs_properties_t *properties_create(void *data)
 	obs_properties_add_group(props, "grp_highlight", obs_module_text("Group.Highlight"), OBS_GROUP_NORMAL,
 				 hl);
 
-	/* ---------------- Perfis ---------------- */
+	/* ---------------- Profiles ---------------- */
 	return props;
 }
 

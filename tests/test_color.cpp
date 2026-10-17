@@ -3,9 +3,9 @@
 
 using namespace topscreen::core;
 
-TEST(color_unpack_conhecido)
+TEST(color_unpack_known)
 {
-	/* 0xAABBGGRR => byte baixo = R. */
+	/* 0xAABBGGRR => low byte = R. */
 	const Rgba c = unpack_abgr(0xFF3A2E5C);
 	CHECK_NEAR(c.r, static_cast<double>(0x5C) / 255.0, 1e-6);
 	CHECK_NEAR(c.g, static_cast<double>(0x2E) / 255.0, 1e-6);
@@ -19,7 +19,7 @@ TEST(color_pack_roundtrip)
 	for (uint32_t v : values) {
 		++tst::checks();
 		if (pack_abgr(unpack_abgr(v)) != v)
-			tst::fail(__FILE__, __LINE__, "roundtrip de cor falhou");
+			tst::fail(__FILE__, __LINE__, "color roundtrip failed");
 	}
 }
 
@@ -28,26 +28,26 @@ TEST(color_lerp){
 	const Rgba b{1.0f, 1.0f, 1.0f, 1.0f};
 
 	CHECK_NEAR(lerp_color(a, b, 0.5f).r, 0.5, 1e-6);
-	CHECK_NEAR(lerp_color(a, b, -1.0f).r, 0.0, 1e-6); /* recorta */
-	CHECK_NEAR(lerp_color(a, b, 2.0f).r, 1.0, 1e-6);  /* recorta */
+	CHECK_NEAR(lerp_color(a, b, -1.0f).r, 0.0, 1e-6); /* clamps */
+	CHECK_NEAR(lerp_color(a, b, 2.0f).r, 1.0, 1e-6);  /* clamps */
 	CHECK_NEAR(lerp_color(a, b, 0.25f).g, 0.25, 1e-6);
 }
 
 /*
- * OBS guarda cores em 0xAABBGGRR (obs_data/propriedades) mas
- * gs_effect_set_color espera 0xAARRGGBB. Sem a troca, vermelho vira azul.
+ * OBS stores colors as 0xAABBGGRR (obs_data/properties) but
+ * gs_effect_set_color expects 0xAARRGGBB. Without the swap, red becomes blue.
  */
-TEST(color_abgr_para_argb)
+TEST(color_abgr_to_argb)
 {
-	/* vermelho: ABGR 0xFF0000FF -> ARGB 0xFFFF0000 */
+	/* red: ABGR 0xFF0000FF -> ARGB 0xFFFF0000 */
 	CHECK_EQ(abgr_to_argb(0xFF0000FFu), 0xFFFF0000u);
-	/* azul: ABGR 0xFFFF0000 -> ARGB 0xFF0000FF */
+	/* blue: ABGR 0xFFFF0000 -> ARGB 0xFF0000FF */
 	CHECK_EQ(abgr_to_argb(0xFFFF0000u), 0xFF0000FFu);
-	/* verde passa igual (canal do meio) */
+	/* green passes through unchanged (middle channel) */
 	CHECK_EQ(abgr_to_argb(0xFF00FF00u), 0xFF00FF00u);
-	/* branco/preto sao invariantes (nao pegariam o bug) */
+	/* white/black are invariant (would not catch the bug) */
 	CHECK_EQ(abgr_to_argb(0xFFFFFFFFu), 0xFFFFFFFFu);
 	CHECK_EQ(abgr_to_argb(0xFF000000u), 0xFF000000u);
-	/* dupla conversao volta ao original */
+	/* double conversion returns to the original */
 	CHECK_EQ(abgr_to_argb(abgr_to_argb(0xFF3A2E5Cu)), 0xFF3A2E5Cu);
 }

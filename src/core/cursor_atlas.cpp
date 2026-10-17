@@ -23,20 +23,20 @@ bool cursor_atlas_parse(const uint8_t *data, size_t size, CursorAtlas *out, std:
 	};
 
 	if (!data || size < 16)
-		return fail("arquivo muito curto");
+		return fail("file too short");
 	if (std::memcmp(data, kCursorAtlasMagic, 4) != 0)
-		return fail("magic invalido");
+		return fail("invalid magic");
 	if (rd_u32(data + 4) != kCursorAtlasVersion)
-		return fail("versao nao suportada");
+		return fail("unsupported version");
 
 	const uint32_t cell = rd_u32(data + 8);
 	const uint32_t count = rd_u32(data + 12);
 	if (cell == 0 || cell > 1024 || count == 0 || count > 256)
-		return fail("dimensoes invalidas");
+		return fail("invalid dimensions");
 
 	const size_t expected = 16 + static_cast<size_t>(cell) * cell * 4 * count;
 	if (size < expected)
-		return fail("dados incompletos");
+		return fail("incomplete data");
 
 	out->cell = cell;
 	out->count = count;
@@ -53,7 +53,7 @@ bool cursor_hotspots_parse(const std::string &json_text, std::vector<Vec2f> *out
 	const json::Value *cursors = root.find("cursors");
 	if (!cursors || !cursors->is_array()) {
 		if (error)
-			*error = "cursor atlas: 'cursors' ausente";
+			*error = "cursor atlas: 'cursors' missing";
 		return false;
 	}
 
@@ -65,7 +65,7 @@ bool cursor_hotspots_parse(const std::string &json_text, std::vector<Vec2f> *out
 			v.x = (*hs->array)[0].as_number();
 			v.y = (*hs->array)[1].as_number();
 		}
-		/* mantem em 0..1 */
+		/* keeps in 0..1 */
 		if (v.x < 0.0)
 			v.x = 0.0;
 		if (v.x > 1.0)

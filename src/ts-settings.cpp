@@ -91,18 +91,18 @@ void config_defaults(obs_data_t *s)
 	obs_data_set_default_double(s, kHighlightFadeMs, def.highlight.fade_ms);
 	obs_data_set_default_int(s, kHighlightColor, static_cast<long long>(def.highlight.color));
 
-	/* Perfil ativo (indice do slot). Default nao vira "valor do usuario", entao
-	 * uma fonte nova continua sendo tratada como "sem perfil escolhido". */
+	/* Active profile (slot index). Default does not become a "user value", so
+	 * a new source keeps being treated as "no profile chosen". */
 	obs_data_set_default_int(s, kProfileCurrent, 0);
 }
 
 namespace {
 
 /*
- * Leitura com fallback para os defaults do codigo.
+ * Read with fallback to the code defaults.
  *
- * Fontes criadas por versoes antigas nao tem as chaves novas; sem isso elas
- * virariam 0/false (padding 0, texto invisivel, etc.).
+ * Sources created by old versions do not have the new keys; without this they
+ * would become 0/false (padding 0, invisible text, etc.).
  */
 bool has_key(obs_data_t *s, const char *k)
 {
@@ -146,9 +146,9 @@ void config_load(obs_data_t *s, Config *c)
 	c->bg.image_blur_type = static_cast<int>(read_int(s, kBgImageBlurType, d.bg.image_blur_type));
 	c->bg.padding_x = read_double(s, kBgPaddingX, d.bg.padding_x);
 	c->bg.padding_y = read_double(s, kBgPaddingY, d.bg.padding_y);
-	/* migracao da chave antiga 'bg_padding': so vale se o usuario nunca
-	 * gravou as chaves novas (os defaults sempre existem, entao has_key
-	 * sozinho nunca permitiria migrar). */
+	/* migration of the old 'bg_padding' key: only applies if the user never
+	 * wrote the new keys (the defaults always exist, so has_key
+	 * alone would never allow migrating). */
 	if (!obs_data_has_user_value(s, kBgPaddingX) && !obs_data_has_user_value(s, kBgPaddingY) &&
 	    obs_data_has_user_value(s, "bg_padding")) {
 		c->bg.padding_x = obs_data_get_double(s, "bg_padding");
@@ -222,7 +222,7 @@ void config_load(obs_data_t *s, Config *c)
 	c->highlight.fade_ms = read_double(s, kHighlightFadeMs, d.highlight.fade_ms);
 	c->highlight.color = static_cast<uint32_t>(read_int(s, kHighlightColor, d.highlight.color));
 
-	/* Migracao: 0.7/0.3 eram os defaults antigos do cursor (com "deslize"). */
+	/* Migration: 0.7/0.3 were the old cursor defaults (with "slide"). */
 	if (c->cursor.smooth == 0.7 && c->cursor.sway == 0.3) {
 		c->cursor.smooth = 0.0;
 		c->cursor.sway = 0.0;

@@ -1,7 +1,7 @@
 name: Check OBS headers
 
-# Compila o plugin contra os headers REAIS do OBS (sem libobs instalado),
-# pegando erros de API que os testes do nucleo nao pegam.
+# Compiles the plugin against the REAL OBS headers (without libobs installed),
+# catching API errors that the core tests do not catch.
 
 on:
   push:

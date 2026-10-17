@@ -18,8 +18,8 @@ void Input::stop()
 
 void Input::poll()
 {
-	/* So as bordas de subida usam o estado anterior; as listas de teclas
-	 * sao transientes por tick e nao precisam ser copiadas. */
+	/* Only rising edges use the previous state; the key lists
+	 * are transient per tick and do not need to be copied. */
 	const bool was_left = prev_left_;
 	const bool was_right = prev_right_;
 	prev_left_ = cur_.left;

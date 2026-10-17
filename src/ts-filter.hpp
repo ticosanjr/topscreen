@@ -3,9 +3,9 @@
 #include <obs-module.h>
 
 /**
- * TopScreen - fonte de filtro (OBS_SOURCE_TYPE_FILTER).
+ * TopScreen - filter source (OBS_SOURCE_TYPE_FILTER).
  *
- * O filtro processa o frame da fonte-pai (captura de tela) aplicando os efeitos
- * ao vivo e devolvendo o resultado para a cena. Nenhum dado sai do processo do OBS.
+ * The filter processes the parent source's frame (screen capture) applying the effects
+ * live and returns the result to the scene. No data leaves the OBS process.
  */
 extern struct obs_source_info ts_filter_source_info;

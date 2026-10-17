@@ -4,16 +4,16 @@
 using namespace topscreen::core;
 
 /*
- * Garante que preset.apply() cobre TODAS as chaves de configuracao.
+ * Ensures that preset.apply() covers ALL configuration keys.
  *
- * Se alguem adicionar um campo ao Config e esquecer de mapear aqui, este teste
- * falha. Os valores abaixo sao todos diferentes dos defaults, entao cada campo
- * "tem que ter mudado".
+ * If someone adds a field to Config and forgets to map it here, this test
+ * fails. The values below are all different from the defaults, so every field
+ * "must have changed".
  */
-TEST(preset_cobre_todas_as_chaves)
+TEST(preset_covers_all_keys)
 {
 	const std::string text = R"({
-        "name": "Todas",
+        "name": "All",
         "settings": {
             "effects_enabled": false,
             "bg_enabled": false,
@@ -21,7 +21,7 @@ TEST(preset_cobre_todas_as_chaves)
             "bg_color_a": 111,
             "bg_color_b": 222,
             "bg_image": "wallpapers/ocean.jpg",
-            "bg_image_file": "/tmp/minha.jpg",
+            "bg_image_file": "/tmp/my-image.jpg",
             "bg_image_blur": 9,
             "bg_image_blur_type": 3,
             "bg_padding_x": 11,
@@ -101,7 +101,7 @@ TEST(preset_cobre_todas_as_chaves)
 	CHECK_EQ(c.bg.color_a, 111u);
 	CHECK_EQ(c.bg.color_b, 222u);
 	CHECK_EQ(c.bg.image, std::string("wallpapers/ocean.jpg"));
-	CHECK_EQ(c.bg.image_file, std::string("/tmp/minha.jpg"));
+	CHECK_EQ(c.bg.image_file, std::string("/tmp/my-image.jpg"));
 	CHECK_NEAR(c.bg.image_blur, 9.0, 1e-9);
 	CHECK_EQ(c.bg.image_blur_type, 3);
 	CHECK_NEAR(c.bg.padding_x, 11.0, 1e-9);

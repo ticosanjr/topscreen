@@ -2,7 +2,7 @@
 
 #include "QObject"
 
-/* Stub minimo de QWidget (apenas para checagem de compilacao do dock). */
+/* Minimal stub for QWidget (only for the dock compile check). */
 class QWidget : public QObject {
 public:
 	explicit QWidget(QWidget *parent = nullptr) { (void)parent; }

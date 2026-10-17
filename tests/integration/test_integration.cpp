@@ -28,7 +28,7 @@ using namespace topscreen;
 
 namespace {
 
-/* Fonte-pai fake que expoe a propriedade "capture_cursor" (como uma Captura de Tela). */
+/* Fake parent source that exposes the "capture_cursor" property (like a Screen Capture). */
 obs_properties_t *parent_props(void *)
 {
 	obs_properties_t *p = obs_properties_create();
@@ -52,12 +52,12 @@ obs_source_t *make_parent(uint32_t w, uint32_t h)
 
 void *create_filter(obs_source_t *filter)
 {
-	/* No OBS real, o obs_data passado ao create E o da propria fonte. */
+	/* In real OBS, the obs_data passed to create IS the source's own. */
 	ts_filter_source_info.get_defaults(filter->settings);
 	return ts_filter_source_info.create(filter->settings, filter);
 }
 
-/* Simula a lista de perfis nas Propriedades: grava profile_current e chama update. */
+/* Simulates the profile list in Properties: writes profile_current and calls update. */
 void set_profile_from_properties(obs_source_t *filter, void *ctx, int index)
 {
 	obs_data_set_int(filter->settings, core::keys::kProfileCurrent, index);
@@ -66,7 +66,7 @@ void set_profile_from_properties(obs_source_t *filter, void *ctx, int index)
 
 } // namespace
 
-TEST(integration_ciclo_de_vida_do_filtro)
+TEST(integration_filter_lifecycle)
 {
 	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
 
@@ -80,8 +80,8 @@ TEST(integration_ciclo_de_vida_do_filtro)
 	REQUIRE(ctrl != nullptr);
 	CHECK_EQ(ctrl->preset_count(), 3);
 
-	/* Render define as dimensoes alvo e, se o efeito carregou, desativa o
-	 * cursor nativo do pai (T2.1). */
+	/* Render sets the target dimensions and, if the effect loaded, disables
+	 * the parent's native cursor (T2.1). */
 	ts_filter_source_info.video_render(ctx, nullptr);
 	CHECK(!obs_data_get_bool(parent->settings, "capture_cursor"));
 
@@ -90,31 +90,31 @@ TEST(integration_ciclo_de_vida_do_filtro)
 
 	REQUIRE(fakeobs::hotkey_count() >= 12);
 
-	/* Toggle de efeitos via hotkey. */
+	/* Toggle effects via hotkey. */
 	const int toggle = fakeobs::find_hotkey("TopScreen.ToggleEffects");
 	REQUIRE(toggle >= 0);
 	fakeobs::invoke_hotkey(toggle, true);
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
 	CHECK(!ctrl->effects_enabled());
 
-	/* Zoom via hotkey nao deve derrubar nada. */
+	/* Zoom via hotkey must not crash anything. */
 	const int zin = fakeobs::find_hotkey("TopScreen.ZoomIn");
 	REQUIRE(zin >= 0);
 	fakeobs::invoke_hotkey(zin, true);
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
 
-	/* Preset via FilterControl (thread da UI -> aplicado no tick). */
+	/* Preset via FilterControl (UI thread -> applied on tick). */
 	ctrl->apply_preset(1);
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
 	CHECK_EQ(ctrl->current_preset(), 1);
-	/* tutorial.json usa fundo solido (bg_mode = 0). */
+	/* tutorial.json uses a solid background (bg_mode = 0). */
 	CHECK_EQ(static_cast<int>(obs_data_get_int(filter->settings, core::keys::kBgMode)), 0);
 
 	ts_filter_source_info.destroy(ctx);
 	CHECK(registry_first() == nullptr);
 }
 
-TEST(integration_todos_os_presets_e_toggle_background)
+TEST(integration_all_presets_and_toggle_background)
 {
 	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
 
@@ -146,7 +146,7 @@ TEST(integration_todos_os_presets_e_toggle_background)
 	ts_filter_source_info.destroy(ctx);
 }
 
-TEST(integration_hotkeys_todas_as_acoes)
+TEST(integration_hotkeys_all_actions)
 {
 	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
 
@@ -170,7 +170,7 @@ TEST(integration_hotkeys_todas_as_acoes)
 	for (const char *n : names)
 		REQUIRE(fakeobs::find_hotkey(n) >= 0);
 
-	/* pressed=false nao faz nada (early-return do callback). */
+	/* pressed=false does nothing (callback early-return). */
 	const bool fx0 = ctrl->effects_enabled();
 	ctrl->select_profile(0);
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
@@ -180,7 +180,7 @@ TEST(integration_hotkeys_todas_as_acoes)
 	CHECK(ctrl->effects_enabled() == fx0);
 	CHECK_EQ(ctrl->current_profile(), 0);
 
-	/* pressed=true: cada acao chega ao filtro. */
+	/* pressed=true: each action reaches the filter. */
 	fakeobs::invoke_hotkey(fakeobs::find_hotkey("TopScreen.ToggleEffects"), true);
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
 	CHECK(ctrl->effects_enabled() == !fx0);
@@ -218,11 +218,11 @@ TEST(integration_hotkeys_todas_as_acoes)
 	ts_filter_source_info.destroy(ctx);
 }
 
-TEST(integration_overlay_de_teclas)
+TEST(integration_key_overlay)
 {
 	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
 
-	/* Injeta teclas pelo gancho de depuracao (sem back-end de input). */
+	/* Injects keys through the debug hook (without an input back-end). */
 	TS_SETENV("TOPSCREEN_DEBUG_KEY", "Ctrl");
 
 	obs_source_t *parent = make_parent(1920, 1080);
@@ -233,7 +233,7 @@ TEST(integration_overlay_de_teclas)
 
 	ts_filter_source_info.video_render(ctx, nullptr);
 
-	/* Roda frames suficientes para o gancho disparar e o overlay ser desenhado. */
+	/* Runs enough frames for the hook to fire and the overlay to be drawn. */
 	for (int i = 0; i < 130; ++i) {
 		ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
 		ts_filter_source_info.video_render(ctx, nullptr);
@@ -245,7 +245,7 @@ TEST(integration_overlay_de_teclas)
 	CHECK(registry_first() == nullptr);
 }
 
-TEST(integration_perfis_salvar_e_trocar)
+TEST(integration_profiles_save_and_switch)
 {
 	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
 
@@ -259,7 +259,7 @@ TEST(integration_perfis_salvar_e_trocar)
 	REQUIRE(ctrl != nullptr);
 	CHECK_EQ(ctrl->profile_count(), 4);
 
-	/* Perfil A: estado atual (efeitos ligados) -> salva. */
+	/* Profile A: current state (effects on) -> save. */
 	ctrl->select_profile(0);
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
 	CHECK_EQ(ctrl->current_profile(), 0);
@@ -267,7 +267,7 @@ TEST(integration_perfis_salvar_e_trocar)
 	ctrl->save_profile();
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
 
-	/* Perfil B: efeitos desligados -> salva. */
+	/* Profile B: effects off -> save. */
 	ctrl->select_profile(1);
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
 	ctrl->set_effects_enabled(false);
@@ -276,19 +276,19 @@ TEST(integration_perfis_salvar_e_trocar)
 	ctrl->save_profile();
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
 
-	/* Volta para A: efeitos ligados de novo. */
+	/* Back to A: effects on again. */
 	ctrl->select_profile(0);
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
 	CHECK_EQ(ctrl->current_profile(), 0);
 	CHECK(ctrl->effects_enabled());
 
-	/* E para B: desligados. */
+	/* And to B: off. */
 	ctrl->select_profile(1);
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
 	CHECK_EQ(ctrl->current_profile(), 1);
 	CHECK(!ctrl->effects_enabled());
 
-	/* Perfil valido fora da faixa nao deve quebrar. */
+	/* Valid out-of-range profile must not break. */
 	ctrl->select_profile(9);
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
 	CHECK(ctrl->current_profile() >= 0 && ctrl->current_profile() < 4);
@@ -297,7 +297,7 @@ TEST(integration_perfis_salvar_e_trocar)
 	CHECK(registry_first() == nullptr);
 }
 
-TEST(integration_perfis_semeados_restauram)
+TEST(integration_seeded_profiles_restore)
 {
 	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
 
@@ -310,19 +310,19 @@ TEST(integration_perfis_semeados_restauram)
 	FilterControl *ctrl = registry_first();
 	REQUIRE(ctrl != nullptr);
 
-	/* Perfil A (padrao): zoom 1.6 e clique esquerdo branco. */
+	/* Profile A (default): zoom 1.6 and white left click. */
 	ctrl->select_profile(0);
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
 	CHECK_NEAR(obs_data_get_double(filter->settings, core::keys::kZoomAmount), 1.6, 1e-6);
 
-	/* Perfil B: zoom 2.0 e clique esquerdo VERDE (semeado). */
+	/* Profile B: zoom 2.0 and GREEN left click (seeded). */
 	ctrl->select_profile(1);
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
 	CHECK_NEAR(obs_data_get_double(filter->settings, core::keys::kZoomAmount), 2.0, 1e-6);
 	CHECK_EQ(obs_data_get_int(filter->settings, core::keys::kClickLeftColor),
 		 static_cast<long long>(0xFF00FF00));
 
-	/* Voltar para A tem que restaurar TUDO. */
+	/* Going back to A must restore EVERYTHING. */
 	ctrl->select_profile(0);
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
 	CHECK_NEAR(obs_data_get_double(filter->settings, core::keys::kZoomAmount), 1.6, 1e-6);
@@ -332,7 +332,7 @@ TEST(integration_perfis_semeados_restauram)
 	ts_filter_source_info.destroy(ctx);
 }
 
-TEST(integration_perfil_da_lista_restaura_tudo)
+TEST(integration_profile_from_list_restores_everything)
 {
 	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
 
@@ -342,17 +342,17 @@ TEST(integration_perfil_da_lista_restaura_tudo)
 	REQUIRE(ctx != nullptr);
 	ts_filter_source_info.video_render(ctx, nullptr);
 
-	/* Perfil B (semeado): zoom 2.0 + clique esquerdo verde. */
+	/* Profile B (seeded): zoom 2.0 + green left click. */
 	set_profile_from_properties(filter, ctx, 1);
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
 	CHECK_NEAR(obs_data_get_double(filter->settings, core::keys::kZoomAmount), 2.0, 1e-6);
 	CHECK_EQ(obs_data_get_int(filter->settings, core::keys::kClickLeftColor),
 		 static_cast<long long>(0xFF00FF00));
 
-	/* As chaves principais tem que ir junto, senao o proximo reload desfaz o perfil. */
+	/* The main keys must come along, otherwise the next reload undoes the profile. */
 	CHECK(obs_data_has_user_value(filter->settings, core::keys::kZoomAmount));
 
-	/* Mexer em OUTRA propriedade nao pode desfazer o perfil ativo. */
+	/* Changing ANOTHER property must not undo the active profile. */
 	obs_data_set_bool(filter->settings, core::keys::kHighlightEnabled, false);
 	ts_filter_source_info.update(ctx, filter->settings);
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
@@ -360,7 +360,7 @@ TEST(integration_perfil_da_lista_restaura_tudo)
 	CHECK_EQ(obs_data_get_int(filter->settings, core::keys::kClickLeftColor),
 		 static_cast<long long>(0xFF00FF00));
 
-	/* Perfil C (semeado): roxo/ciano + zoom 1.4. */
+	/* Profile C (seeded): purple/cyan + zoom 1.4. */
 	set_profile_from_properties(filter, ctx, 2);
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
 	CHECK_NEAR(obs_data_get_double(filter->settings, core::keys::kZoomAmount), 1.4, 1e-6);
@@ -371,7 +371,7 @@ TEST(integration_perfil_da_lista_restaura_tudo)
 	CHECK(registry_first() == nullptr);
 }
 
-TEST(integration_perfil_guarda_edicao_do_usuario)
+TEST(integration_profile_keeps_user_edit)
 {
 	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
 
@@ -381,19 +381,19 @@ TEST(integration_perfil_guarda_edicao_do_usuario)
 	REQUIRE(ctx != nullptr);
 	ts_filter_source_info.video_render(ctx, nullptr);
 
-	/* Vai para o perfil D (zoom desligado). */
+	/* Goes to profile D (zoom off). */
 	set_profile_from_properties(filter, ctx, 3);
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
 	CHECK_EQ(obs_data_get_int(filter->settings, core::keys::kZoomMode),
 		 static_cast<long long>(core::ZoomMode::Off));
 
-	/* Usuario muda a cor do clique esquerdo (valor que nao existe em nenhum seed). */
+	/* User changes the left click color (a value that exists in no seed). */
 	obs_data_set_int(filter->settings, core::keys::kClickLeftColor,
 			 static_cast<long long>(0xFF112233));
 	ts_filter_source_info.update(ctx, filter->settings);
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
 
-	/* Troca para A e volta para D: a edicao tem que ter ficado no perfil D. */
+	/* Switches to A and back to D: the edit must have stayed in profile D. */
 	set_profile_from_properties(filter, ctx, 0);
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
 	CHECK_EQ(obs_data_get_int(filter->settings, core::keys::kClickLeftColor),
@@ -407,7 +407,7 @@ TEST(integration_perfil_guarda_edicao_do_usuario)
 	ts_filter_source_info.destroy(ctx);
 }
 
-TEST(integration_perfil_escolhido_sobrevive_ao_reinicio)
+TEST(integration_chosen_profile_survives_restart)
 {
 	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
 
@@ -417,12 +417,12 @@ TEST(integration_perfil_escolhido_sobrevive_ao_reinicio)
 	REQUIRE(ctx != nullptr);
 	ts_filter_source_info.video_render(ctx, nullptr);
 
-	/* Escolhe o perfil B e "fecha o OBS". */
+	/* Chooses profile B and "closes OBS". */
 	set_profile_from_properties(filter, ctx, 1);
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
 	ts_filter_source_info.destroy(ctx);
 
-	/* "Reabre o OBS": a colecao salva tem profile_current + os slots. */
+	/* "Reopens OBS": the saved collection has profile_current + the slots. */
 	obs_data_t saved = *filter->settings;
 	obs_source_t *f2 = fakeobs::make_source(&ts_filter_source_info, parent, 0, 0);
 	*f2->settings = saved;
@@ -430,7 +430,7 @@ TEST(integration_perfil_escolhido_sobrevive_ao_reinicio)
 	REQUIRE(ctx2 != nullptr);
 	ts_filter_source_info.video_tick(ctx2, 1.0f / 60.0f);
 
-	/* O estado tem que ser o do perfil B (nao o padrao). */
+	/* The state must be that of profile B (not the default). */
 	CHECK_NEAR(obs_data_get_double(f2->settings, core::keys::kZoomAmount), 2.0, 1e-6);
 	CHECK_EQ(obs_data_get_int(f2->settings, core::keys::kClickLeftColor),
 		 static_cast<long long>(0xFF00FF00));
@@ -438,7 +438,7 @@ TEST(integration_perfil_escolhido_sobrevive_ao_reinicio)
 	ts_filter_source_info.destroy(ctx2);
 }
 
-TEST(integration_render_nao_crasha_sem_efeito)
+TEST(integration_render_does_not_crash_without_effect)
 {
 	fakeobs::set_data_dir("/diretorio/inexistente");
 
@@ -448,19 +448,19 @@ TEST(integration_render_nao_crasha_sem_efeito)
 	void *ctx = create_filter(filter);
 	REQUIRE(ctx != nullptr);
 
-	/* Sem efeito (data dir invalido) => passthrough, sem crash. */
+	/* Without effect (invalid data dir) => passthrough, no crash. */
 	for (int i = 0; i < 5; ++i) {
 		ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
 		ts_filter_source_info.video_render(ctx, nullptr);
 	}
 
-	/* Nao tentou mexer no cursor do pai (render saiu cedo). */
+	/* Did not try to touch the parent's cursor (render exited early). */
 	CHECK(obs_data_get_bool(parent->settings, "capture_cursor"));
 
 	ts_filter_source_info.destroy(ctx);
 }
 
-/* Fonte-pai fake que usa "show_cursor" (como o xshm_input do Linux). */
+/* Fake parent source that uses "show_cursor" (like Linux's xshm_input). */
 namespace {
 obs_properties_t *parent_props_show_cursor(void *)
 {
@@ -476,7 +476,7 @@ const obs_source_info parent_info2 = {
 };
 } // namespace
 
-TEST(integration_desativa_show_cursor_do_pai)
+TEST(integration_disables_parent_show_cursor)
 {
 	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
 	obs_source_t *parent = fakeobs::make_source(&parent_info2, nullptr, 1920, 1080);

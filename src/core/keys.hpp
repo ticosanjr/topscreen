@@ -85,9 +85,11 @@ inline constexpr const char *kKeysShadow = "keys_shadow";
 inline constexpr const char *kKeysBand = "keys_band";
 inline constexpr const char *kKeysBandColor = "keys_band_color";
 
-inline constexpr const char *kHighlightEnabled = "highlight_enabled";inline constexpr const char *kHighlightHoldMs = "highlight_hold_ms";
+inline constexpr const char *kHighlightEnabled = "highlight_enabled";
+inline constexpr const char *kHighlightHoldMs = "highlight_hold_ms";
 inline constexpr const char *kHighlightFadeMs = "highlight_fade_ms";
 inline constexpr const char *kHighlightColor = "highlight_color";
+inline constexpr const char *kHighlightOpacity = "highlight_opacity";
 
 /* Profiles (4 fixed slots). Each slot stores the entire Config in a nested obs_data. */
 inline constexpr int kProfileCount = 4;

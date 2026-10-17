@@ -298,6 +298,8 @@ obs_properties_t *properties_create(void *data)
 	obs_properties_t *hl = obs_properties_create();
 	obs_properties_add_bool(hl, kHighlightEnabled, obs_module_text("Highlight.Enabled"));
 	obs_properties_add_color(hl, kHighlightColor, obs_module_text("Highlight.Color"));
+	obs_properties_add_float_slider(hl, kHighlightOpacity, obs_module_text("Highlight.Opacity"), 0.0, 1.0,
+					0.01);
 	obs_properties_add_float_slider(hl, kHighlightHoldMs, obs_module_text("Highlight.HoldMs"), 0.0, 5000.0,
 					50.0);
 	obs_properties_add_float_slider(hl, kHighlightFadeMs, obs_module_text("Highlight.FadeMs"), 0.0, 2000.0,

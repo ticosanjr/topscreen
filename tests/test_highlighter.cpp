@@ -19,7 +19,7 @@ TEST(highlight_drag_active)
 	CHECK_NEAR(r.y0, 0.3, 1e-9);
 	CHECK_NEAR(r.x1, 0.6, 1e-9);
 	CHECK_NEAR(r.y1, 0.7, 1e-9);
-	CHECK_NEAR(r.alpha, 1.0, 1e-9);
+	CHECK_NEAR(r.alpha, 0.35, 1e-9); // default opacity ceiling
 }
 
 TEST(highlight_normalized_rectangle)
@@ -54,7 +54,7 @@ TEST(highlight_hold_and_fade)
 
 	m.update(400.0); /* within the hold */
 	CHECK(m.render().active);
-	CHECK_NEAR(m.render().alpha, 1.0, 1e-9);
+	CHECK_NEAR(m.render().alpha, 0.35, 1e-9);
 
 	m.update(700.0); /* end of the hold */
 	CHECK(m.render().active);
@@ -92,4 +92,65 @@ TEST(highlight_disabled)
 	m.move(0.5, 0.5, 10.0);
 	m.update(10.0);
 	CHECK(!m.render().active);
+}
+
+TEST(highlight_opacity_scales_alpha)
+{
+	HighlighterModel m;
+	HighlighterConfig cfg;
+	cfg.opacity = 0.5;
+	m.configure(cfg);
+
+	m.begin(0.1, 0.1, 0.0);
+	m.move(0.5, 0.5, 100.0);
+	m.update(100.0);
+
+	const HighlightRender r = m.render();
+	CHECK(r.active);
+	CHECK_NEAR(r.alpha, 0.5, 1e-9);
+}
+
+TEST(highlight_opacity_zero_hides)
+{
+	HighlighterModel m;
+	HighlighterConfig cfg;
+	cfg.opacity = 0.0;
+	m.configure(cfg);
+
+	m.begin(0.1, 0.1, 0.0);
+	m.move(0.5, 0.5, 100.0);
+	m.update(100.0);
+
+	CHECK(m.render().active);
+	CHECK_NEAR(m.render().alpha, 0.0, 1e-9);
+}
+
+TEST(highlight_opacity_one_keeps_full_strength)
+{
+	HighlighterModel m;
+	HighlighterConfig cfg;
+	cfg.opacity = 1.0;
+	m.configure(cfg);
+
+	m.begin(0.1, 0.1, 0.0);
+	m.move(0.5, 0.5, 100.0);
+	m.update(100.0);
+
+	const HighlightRender r = m.render();
+	CHECK(r.active);
+	CHECK_NEAR(r.alpha, 1.0, 1e-9);
+}
+
+TEST(highlight_opacity_clamps_above_one)
+{
+	HighlighterModel m;
+	HighlighterConfig cfg;
+	cfg.opacity = 2.0;
+	m.configure(cfg);
+
+	m.begin(0.1, 0.1, 0.0);
+	m.move(0.5, 0.5, 100.0);
+	m.update(100.0);
+
+	CHECK_NEAR(m.render().alpha, 1.0, 1e-9);
 }

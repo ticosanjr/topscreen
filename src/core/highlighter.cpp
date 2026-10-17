@@ -2,6 +2,8 @@
 
 #include <cmath>
 
+#include "math.hpp"
+
 namespace topscreen::core {
 
 void HighlighterModel::configure(const HighlighterConfig &cfg)
@@ -80,7 +82,8 @@ HighlightRender HighlighterModel::render() const
 	out.y0 = sy_ < ey_ ? sy_ : ey_;
 	out.x1 = sx_ < ex_ ? ex_ : sx_;
 	out.y1 = sy_ < ey_ ? ey_ : sy_;
-	out.alpha = alpha_;
+	/* User ceiling: 0 hides the mark, 1 keeps the legacy full strength. */
+	out.alpha = alpha_ * clamp01(cfg_.opacity);
 	out.color = cfg_.color;
 	return out;
 }

@@ -81,6 +81,7 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Band color | `keys_band_color` | color | — | `0x99000000` |
 | Highlighter | Enable highlighter | `highlight_enabled` | bool | — | `true` |
 | | Color | `highlight_color` | color | — | `0x6600E0FF` |
+| | Opacity | `highlight_opacity` | double | 0–1 | `0.35` |
 | | On-screen time (ms) | `highlight_hold_ms` | double | 0–5000 | `900` |
 | | Fade (ms) | `highlight_fade_ms` | double | 0–2000 | `300` |
 | Profiles | Current profile | `profile_current` | int | 0–3 | `0` |

@@ -89,7 +89,7 @@ That is where all the math and the state logic live — what actually must be ri
 ## Current numbers
 
 ```
-120 tests | 2258 checks | 0 failures   (core)
+124 tests | 2269 checks | 0 failures   (core)
 19 tests | 137 checks   | 0 failures   (integration with fake libobs)
 ```
 

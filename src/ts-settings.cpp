@@ -91,6 +91,7 @@ void config_defaults(obs_data_t *s)
 	obs_data_set_default_double(s, kHighlightHoldMs, def.highlight.hold_ms);
 	obs_data_set_default_double(s, kHighlightFadeMs, def.highlight.fade_ms);
 	obs_data_set_default_int(s, kHighlightColor, static_cast<long long>(def.highlight.color));
+	obs_data_set_default_double(s, kHighlightOpacity, def.highlight.opacity);
 
 	/* Active profile (slot index). Default does not become a "user value", so
 	 * a new source keeps being treated as "no profile chosen". */
@@ -233,6 +234,7 @@ void config_load(obs_data_t *s, Config *c)
 	c->highlight.hold_ms = read_double(s, kHighlightHoldMs, d.highlight.hold_ms);
 	c->highlight.fade_ms = read_double(s, kHighlightFadeMs, d.highlight.fade_ms);
 	c->highlight.color = static_cast<uint32_t>(read_int(s, kHighlightColor, d.highlight.color));
+	c->highlight.opacity = read_double(s, kHighlightOpacity, d.highlight.opacity);
 
 	/* Migration: 0.7/0.3 were the old cursor defaults (with "slide"). */
 	if (c->cursor.smooth == 0.7 && c->cursor.sway == 0.3) {
@@ -323,6 +325,7 @@ void config_store(obs_data_t *s, const Config &c)
 	obs_data_set_double(s, kHighlightHoldMs, c.highlight.hold_ms);
 	obs_data_set_double(s, kHighlightFadeMs, c.highlight.fade_ms);
 	obs_data_set_int(s, kHighlightColor, static_cast<long long>(c.highlight.color));
+	obs_data_set_double(s, kHighlightOpacity, c.highlight.opacity);
 }
 
 } // namespace topscreen

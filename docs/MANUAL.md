@@ -199,6 +199,7 @@ modifiers (`Esc` stays as text).
 |-------|-----------|
 | **Enable highlighter** | Highlights the region you drag with the left button |
 | **Color** | Highlight color (use alpha < 255 for translucent) |
+| **Opacity** | Strength ceiling (0 = invisible, 1 = solid); keeps content readable |
 | **On-screen time (ms)** | How long it stays after you release |
 | **Fade (ms)** | Fade duration |
 

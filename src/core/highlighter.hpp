@@ -9,6 +9,7 @@ struct HighlighterConfig {
 	double hold_ms = 900.0; // time visible after releasing
 	double fade_ms = 300.0; // fade duration
 	uint32_t color = 0x6600E0FF; // 0xAABBGGRR (translucent yellow)
+	double opacity = 0.35; // ceiling for the highlight alpha (0..1)
 	double min_span = 0.02;      // minimum drag (avoids marking clicks)
 };
 

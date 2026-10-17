@@ -38,14 +38,8 @@ void KeyOverlayModel::press(const std::string &label, bool is_modifier, double n
 	if (cfg_.modifiers_only && !is_modifier)
 		return;
 
-	/* If the key is already visible, just resets the timer. */
-	for (auto &e : entries_) {
-		if (e.label == label) {
-			e.born_ms = now_ms;
-			return;
-		}
-	}
-
+	/* Every keystroke is appended as its own entry (repeats included), so
+	 * what you typed is what you see. Each letter expires on its own TTL. */
 	entries_.push_back({label, now_ms, is_modifier});
 
 	/* Respects the limit, discarding the oldest ones. */

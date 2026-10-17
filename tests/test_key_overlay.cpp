@@ -44,19 +44,37 @@ TEST(key_expires_by_ttl)
 	CHECK_EQ(m.active_count(), 0);
 }
 
-TEST(key_repeat_restarts_time)
+TEST(key_repeat_appends_each_keystroke)
 {
 	KeyOverlayModel m;
 	KeyOverlayConfig cfg;
 	cfg.ttl_ms = 1000.0;
 	m.configure(cfg);
 
-	m.press("A", false, 0.0);
-	m.press("A", false, 900.0);
+	/* Typing "aa" shows two letters (repeats included). */
+	m.press("a", false, 0.0);
+	m.press("a", false, 900.0);
+	CHECK_EQ(m.active_count(), 2);
+
+	/* Each letter expires on its own TTL. */
 	m.tick(1500.0);
 	CHECK_EQ(m.active_count(), 1); /* 1500 - 900 = 600 < ttl */
 	m.tick(2000.0);
 	CHECK_EQ(m.active_count(), 0); /* 2000 - 900 = 1100 >= ttl */
+}
+
+TEST(key_case_is_preserved)
+{
+	KeyOverlayModel m;
+	KeyOverlayConfig cfg;
+	m.configure(cfg);
+
+	m.press("a", false, 0.0);
+
+	KeyRender out[8];
+	const int n = m.collect(0.0, out, 8);
+	REQUIRE(n == 1);
+	CHECK_EQ(out[0].label, std::string("a"));
 }
 
 TEST(key_modifiers_only_filters)

@@ -293,6 +293,9 @@ void ts_filter_ctx::reload_from_settings()
 	 */
 	current_profile_ = want;
 	reconfigure_models();
+	/* Reloads the click sounds when the selection changed (slots keep the
+	 * unchanged side, so this is cheap). */
+	click_sound.load(cfg.click_sound.file_left.c_str(), cfg.click_sound.file_right.c_str());
 	store_profile_slot(current_profile_);
 }
 

@@ -72,9 +72,9 @@ bool font_atlas_build(const uint8_t *ttf, size_t ttf_size, const FontAtlasOption
 	int row_h = 0;
 
 	std::vector<Placed> placed;
-	placed.reserve(95);
+	placed.reserve(110);
 
-	for (int c = 32; c < 127; ++c) {
+	auto place = [&](int c) {
 		int adv = 0, lsb = 0;
 		stbtt_GetCodepointHMetrics(&info, c, &adv, &lsb);
 
@@ -107,6 +107,20 @@ bool font_atlas_build(const uint8_t *ttf, size_t ttf_size, const FontAtlasOption
 		pen_x += gw + options.padding;
 		if (gh > row_h)
 			row_h = gh;
+	};
+
+	for (int c = 32; c < 127; ++c)
+		place(c);
+
+	/* Extra symbols for special keys (shown as icons). Glyphs missing
+	 * from the font are skipped; the renderer falls back to text. */
+	static const int kSymbols[] = {0x2423, 0x232B, 0x23CE, 0x21E5, 0x2190, 0x2191,
+				       0x2192, 0x2193, 0x21E7, 0x2303, 0x2325, 0x229E, 0x2326,
+				       0x21EA};
+	for (int c : kSymbols) {
+		if (stbtt_FindGlyphIndex(&info, c) == 0)
+			continue;
+		place(c);
 	}
 
 	const int needed_h = pen_y + row_h + options.padding;
@@ -153,6 +167,10 @@ bool font_atlas_build(const uint8_t *ttf, size_t ttf_size, const FontAtlasOption
 		g.advance = p.adv;
 		out->glyphs.push_back(g);
 	}
+
+	/* glyph() uses binary search: keep the vector sorted by code. */
+	std::sort(out->glyphs.begin(), out->glyphs.end(),
+		  [](const Glyph &a, const Glyph &b) { return a.code < b.code; });
 
 	return true;
 }

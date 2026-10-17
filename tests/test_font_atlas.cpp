@@ -44,8 +44,30 @@ TEST(font_atlas_builds_from_ttf)
 	CHECK_EQ(atlas.height & (atlas.height - 1), 0); // power of 2
 	CHECK(atlas.line_height > 0);
 	CHECK(atlas.ascent > 0);
-	CHECK_EQ(static_cast<int>(atlas.glyphs.size()), 95); // ASCII 32..126
+	CHECK_EQ(static_cast<int>(atlas.glyphs.size()), 95 + 14); // ASCII 32..126 + key icons
 	CHECK_EQ(static_cast<int>(atlas.pixels.size()), atlas.width * atlas.height * 4);
+}
+
+TEST(font_atlas_has_key_icons)
+{
+	std::vector<uint8_t> ttf;
+	REQUIRE(load_font(&ttf));
+	FontAtlas atlas;
+	std::string err;
+	FontAtlasOptions opt;
+	opt.pixel_height = 32;
+	REQUIRE(font_atlas_build(ttf.data(), ttf.size(), opt, &atlas, &err));
+
+	/* Special keys shown as icons: backspace, enter, arrows, modifiers. */
+	static const int kIcons[] = {0x2423, 0x232B, 0x23CE, 0x21E5, 0x2190, 0x2191,
+				     0x2192, 0x2193, 0x21E7, 0x2303, 0x2325, 0x229E, 0x2326,
+				     0x21EA};
+	for (int cp : kIcons) {
+		++tst::checks();
+		const Glyph *g = atlas.glyph(cp);
+		if (!g)
+			tst::fail(__FILE__, __LINE__, "font lacks key icon");
+	}
 }
 
 TEST(font_atlas_per_glyph_metrics)

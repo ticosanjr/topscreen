@@ -147,6 +147,8 @@ Each button has its own independent effect.
 | **Volume** | Sound volume |
 | **On left / right click** | Which buttons trigger it |
 
+> Switching sounds applies immediately (no restart needed).
+
 > The sound plays through the **system audio** (it enters OBS through your Desktop
 > Audio capture). It does not yet come out through the source's own audio channel.
 
@@ -180,6 +182,11 @@ Each button has its own independent effect.
 | **Modifiers only** | Shows only Ctrl/Shift/Alt/Win |
 | **On-screen time (ms)** | How long each key stays |
 | **Max keys** | How many simultaneous keys to show |
+
+Every keystroke appears as its own letter (repeats included) exactly as typed,
+then fades out after the on-screen time. Special keys are shown as icons:
+`␣` Space, `⌫` Backspace, `⏎` Enter, `⇥` Tab, arrows, `⇧`/`⌃`/`⌥`/`⊞` for the
+modifiers (`Esc` stays as text).
 | **Position X / Y** | Where the band sits (0 = left/top, 1 = right/bottom) |
 | **Text size** | Text scale |
 | **Font** | DejaVu Sans Bold / Sans / ExtraLight / Mono Bold / Mono / Serif Bold, or a path to a `.ttf` |

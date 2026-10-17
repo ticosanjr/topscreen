@@ -24,6 +24,8 @@ public:
 	void play(bool right);
 	bool loaded() const { return left_.loaded || right_.loaded; }
 	const core::WavData &wav() const { return left_.wav; }
+	/** Resolved path of the loaded slot ("" when not loaded). */
+	const std::string &loaded_path(bool right) const { return right ? right_.path : left_.path; }
 
 private:
 	struct Slot {

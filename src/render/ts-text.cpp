@@ -24,12 +24,47 @@ bool read_module_bytes(const char *module_file, std::vector<uint8_t> *out)
 	return ok;
 }
 
-std::string upper_copy(const std::string &s)
+/* Special keys are shown as icons (one symbol each, UTF-8). */
+const char *icon_for_label(const std::string &label)
 {
-	std::string out = s;
-	for (char &c : out)
-		c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
-	return out;
+	static const char *const kLabels[] = {
+		"Space", "Backspace", "Enter", "Tab", "Left", "Up",   "Right",
+		"Down",  "Shift",     "Ctrl",  "Alt", "Win",  "Del",  "Delete",
+	};
+	/* U+2423, U+232B, U+23CE, U+21E5, U+2190, U+2191, U+2192,
+	 * U+2193, U+21E7, U+2303, U+2325, U+229E, U+2326, U+2326.
+	 * ("Esc" stays as text: the bundled font has no escape symbol.) */
+	static const char *const kIcons[] = {
+		"\xE2\x90\xA3", "\xE2\x8C\xAB", "\xE2\x8E\x8E", "\xE2\x87\xA5",
+		"\xE2\x86\x90", "\xE2\x86\x91", "\xE2\x86\x92", "\xE2\x86\x93", "\xE2\x87\xA7",
+		"\xE2\x8C\x83", "\xE2\x8C\xA5", "\xE2\x8A\x9E", "\xE2\x8C\xA6", "\xE2\x8C\xA6",
+	};
+	for (size_t i = 0; i < sizeof(kLabels) / sizeof(kLabels[0]); ++i) {
+		if (label == kLabels[i])
+			return kIcons[i];
+	}
+	return nullptr;
+}
+
+/* Decodes one UTF-8 codepoint; always consumes at least one byte. */
+size_t utf8_next(const char *s, size_t n, int *code)
+{
+	const auto b = static_cast<unsigned char>(s[0]);
+	if (b < 0x80) {
+		*code = b;
+		return 1;
+	}
+	if ((b & 0xE0) == 0xC0 && n >= 2) {
+		*code = ((b & 0x1F) << 6) | (static_cast<unsigned char>(s[1]) & 0x3F);
+		return 2;
+	}
+	if ((b & 0xF0) == 0xE0 && n >= 3) {
+		*code = ((b & 0x0F) << 12) | ((static_cast<unsigned char>(s[1]) & 0x3F) << 6) |
+			(static_cast<unsigned char>(s[2]) & 0x3F);
+		return 3;
+	}
+	*code = '?';
+	return 1;
 }
 
 } // namespace
@@ -149,8 +184,10 @@ void TextRenderer::release()
 float TextRenderer::measure(const std::string &text, float scale) const
 {
 	float w = 0.0f;
-	for (char c : text) {
-		const core::Glyph *g = atlas_.glyph(static_cast<unsigned char>(c));
+	for (size_t i = 0; i < text.size();) {
+		int cp = 0;
+		i += utf8_next(text.data() + i, text.size() - i, &cp);
+		const core::Glyph *g = atlas_.glyph(cp);
 		if (!g)
 			g = atlas_.glyph('?');
 		if (g)
@@ -162,8 +199,10 @@ float TextRenderer::measure(const std::string &text, float scale) const
 void TextRenderer::draw_string(const std::string &text, float x, float baseline, float scale)
 {
 	float pen = x;
-	for (char c : text) {
-		const core::Glyph *g = atlas_.glyph(static_cast<unsigned char>(c));
+	for (size_t i = 0; i < text.size();) {
+		int cp = 0;
+		i += utf8_next(text.data() + i, text.size() - i, &cp);
+		const core::Glyph *g = atlas_.glyph(cp);
 		if (!g)
 			g = atlas_.glyph('?');
 		if (!g)
@@ -235,8 +274,18 @@ void TextRenderer::draw(const core::KeyRender *items, int count, const core::Key
 	labels.reserve(static_cast<size_t>(count));
 	std::vector<float> widths;
 	widths.reserve(static_cast<size_t>(count));
-	for (int i = 0; i < count; ++i)
-		labels.push_back(upper_copy(items[i].label));
+	for (int i = 0; i < count; ++i) {
+		/* Shows what was typed (no forced case); special keys become icons.
+		 * Falls back to the text label when the font lacks the symbol. */
+		std::string s = items[i].label;
+		if (const char *icon = icon_for_label(items[i].label)) {
+			int cp = 0;
+			utf8_next(icon, 3, &cp);
+			if (atlas_.glyph(cp))
+				s = icon;
+		}
+		labels.push_back(s);
+	}
 
 	const float base = static_cast<float>(target_h) * 0.030f;
 	const float scale = std::max(1.0f, base * static_cast<float>(cfg.size) / 32.0f);

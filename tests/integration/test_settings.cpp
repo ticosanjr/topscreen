@@ -165,6 +165,13 @@ TEST(clicksound_fails_gracefully)
 	CHECK(snd.load("sounds/click-soft.wav", "sounds/click-pop.wav"));
 	CHECK(snd.loaded());
 	CHECK(snd.wav().sample_rate > 0);
+	CHECK(snd.loaded_path(false).find("click-soft.wav") != std::string::npos);
+	CHECK(snd.loaded_path(true).find("click-pop.wav") != std::string::npos);
+
+	/* Changing only the left file reloads just that side. */
+	CHECK(snd.load("sounds/click-glass.wav", "sounds/click-pop.wav"));
+	CHECK(snd.loaded_path(false).find("click-glass.wav") != std::string::npos);
+	CHECK(snd.loaded_path(true).find("click-pop.wav") != std::string::npos);
 	/* Does not actually play in the test (avoids fork/exec in the suite). */
 	snd.release();
 	CHECK(!snd.loaded());

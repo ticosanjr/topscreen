@@ -21,7 +21,8 @@ public:
 	/** Loads the left/right files (module-relative). Unchanged slots are kept. */
 	bool load(const char *left_module_file, const char *right_module_file);
 	void release();
-	void play(bool right);
+	/** Plays a side at the given volume (0..1; only paplay honors it). */
+	void play(bool right, double volume);
 	bool loaded() const { return left_.loaded || right_.loaded; }
 	const core::WavData &wav() const { return left_.wav; }
 	/** Resolved path of the loaded slot ("" when not loaded). */

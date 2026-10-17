@@ -144,7 +144,7 @@ Each button has its own independent effect.
 |-------|-----------|
 | **Enable sound** | Plays a short click |
 | **Left / Right click sound** | 8 bundled sounds: Soft, Hard, Pop, Tick, Wood, Glass, Bubble, Thock |
-| **Volume** | Sound volume |
+| **Volume** | Sound volume (applied on paplay; other system players play as-is) |
 | **On left / right click** | Which buttons trigger it |
 
 > Switching sounds applies immediately (no restart needed).

@@ -158,8 +158,8 @@ TEST(clicksound_fails_gracefully)
 	ClickSound snd;
 	CHECK(!snd.loaded());
 	CHECK(!snd.load("sounds/does-not-exist.wav", "sounds/does-not-exist.wav"));
-	snd.play(false);
-	snd.play(true);
+	snd.play(false, 0.6);
+	snd.play(true, 0.0);
 	CHECK(!snd.loaded());
 
 	CHECK(snd.load("sounds/click-soft.wav", "sounds/click-pop.wav"));

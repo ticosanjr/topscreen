@@ -32,7 +32,8 @@ void Input::poll()
 	s.left_pressed = s.left && !was_left;
 	s.right_pressed = s.right && !was_right;
 
-	cur_ = s;
+	/* s is a local: move (not copy) the transient key labels. */
+	cur_ = std::move(s);
 }
 
 } // namespace topscreen

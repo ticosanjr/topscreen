@@ -2,6 +2,7 @@
 
 #include <obs-module.h>
 
+#include <cstdio>
 #include <cstdlib>
 #include <string>
 #include <vector>
@@ -119,11 +120,17 @@ void ClickSound::release()
 	player_.clear();
 }
 
-void ClickSound::play(bool right)
+void ClickSound::play(bool right, double volume)
 {
 	const Slot &slot = right ? right_ : left_;
 	if (!slot.loaded || slot.path.empty())
 		return;
+
+	if (volume < 0.0)
+		volume = 0.0;
+	if (volume > 1.0)
+		volume = 1.0;
+	(void)volume; // only the paplay branch (Linux) honors it
 
 #if defined(_WIN32)
 	PlaySoundA(slot.path.c_str(), nullptr, SND_ASYNC | SND_FILENAME | SND_NODEFAULT);
@@ -138,7 +145,16 @@ void ClickSound::play(bool right)
 		return;
 
 	::setsid();
-	::execl(player_.c_str(), player_.c_str(), slot.path.c_str(), static_cast<char *>(nullptr));
+	/* Only paplay honors a volume flag; the other players play as-is. */
+	if (player_.size() >= 6 && player_.compare(player_.size() - 6, 6, "paplay") == 0) {
+		char vol[16];
+		std::snprintf(vol, sizeof(vol), "%d", static_cast<int>(volume * 65536.0));
+		::execl(player_.c_str(), player_.c_str(), "--volume", vol, slot.path.c_str(),
+			static_cast<char *>(nullptr));
+	} else {
+		::execl(player_.c_str(), player_.c_str(), slot.path.c_str(),
+			static_cast<char *>(nullptr));
+	}
 	::_exit(127);
 #endif
 }

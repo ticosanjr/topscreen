@@ -106,7 +106,18 @@ void ts_input_platform_poll(void *state, InputState *out)
 	out->left = (GetAsyncKeyState(VK_LBUTTON) & 0x8000) != 0;
 	out->right = (GetAsyncKeyState(VK_RBUTTON) & 0x8000) != 0;
 
-	for (int vk = 0; vk < 256; ++vk) {
+	/* Only the keys win_key_label() understands (buttons handled above). */
+	static const int kWatched[] = {
+		'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
+		'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+		'0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+		VK_SPACE, VK_RETURN, VK_TAB, VK_ESCAPE, VK_BACK, VK_DELETE,
+		VK_LEFT, VK_UP, VK_RIGHT, VK_DOWN,
+		VK_SHIFT, VK_LSHIFT, VK_RSHIFT, VK_CONTROL, VK_LCONTROL, VK_RCONTROL,
+		VK_MENU, VK_LMENU, VK_RMENU, VK_LWIN, VK_RWIN,
+	};
+	for (size_t i = 0; i < sizeof(kWatched) / sizeof(kWatched[0]); ++i) {
+		const int vk = kWatched[i];
 		const bool down = (GetAsyncKeyState(vk) & 0x8000) != 0;
 		if (down && !s->prev[vk]) {
 			bool is_mod = false;

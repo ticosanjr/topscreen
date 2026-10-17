@@ -59,7 +59,7 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Left click sound | `click_sound_file_left` | string | bundled `sounds/*.wav` | `sounds/click-soft.wav` |
 | | Right click sound | `click_sound_file_right` | string | bundled `sounds/*.wav` | `sounds/click-pop.wav` |
 | | Legacy single file | `click_sound_file` | string | migrates to both sides | — |
-| | Volume | `click_sound_volume` | double | 0–1 | `0.6` |
+| | Volume | `click_sound_volume` | double | 0–1 (honored by paplay) | `0.6` |
 | | On left click | `click_sound_left` | bool | — | `true` |
 | | On right click | `click_sound_right` | bool | — | `false` |
 | Movement | Motion blur | `motion_blur_enabled` | bool | — | `true` |

@@ -484,12 +484,12 @@ void ts_filter_tick(void *data, float seconds)
 		if (st.left_pressed) {
 			ctx->clicks.spawn(cx, cy, ctx->time_ms, false);
 			if (ctx->cfg.click_sound.enabled && ctx->cfg.click_sound.left)
-				ctx->click_sound.play(false);
+				ctx->click_sound.play(false, ctx->cfg.click_sound.volume);
 		}
 		if (st.right_pressed) {
 			ctx->clicks.spawn(cx, cy, ctx->time_ms, true);
 			if (ctx->cfg.click_sound.enabled && ctx->cfg.click_sound.right)
-				ctx->click_sound.play(true);
+				ctx->click_sound.play(true, ctx->cfg.click_sound.volume);
 		}
 	}
 

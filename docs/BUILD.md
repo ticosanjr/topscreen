@@ -15,6 +15,24 @@
 ./scripts/uninstall-linux.sh --system   # system only (fixes "Duplicate library")
 ```
 
+```powershell
+pwsh -File scripts\uninstall-windows.ps1               # user plugin
+pwsh -File scripts\uninstall-windows.ps1 -ObsDir D:\OBS # portable OBS
+```
+
+## Install without compiling (release packages)
+
+`scripts/package.sh` packs whatever was built into `dist/`:
+
+| File | Install |
+|------|---------|
+| `topscreen-<v>-linux.tar.gz` | `tar -xzf topscreen-<v>-linux.tar.gz -C ~/.config/obs-studio/plugins/` |
+| `topscreen-<v>-windows.zip` | extract `topscreen\` into `%ProgramData%\obs-studio\plugins\` (portable: `bin\64bit\topscreen.dll` → `obs-plugins\64bit`, `data\*` → `data\obs-plugins\topscreen`) |
+
+CI (`Build plugin` workflow, manual trigger) builds on Linux + Windows and
+uploads these archives as artifacts. Every installer fully syncs `data/`, so
+stale files from older versions never linger.
+
 ## Quick install
 
 ### Linux

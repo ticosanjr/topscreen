@@ -55,6 +55,11 @@ if (-not $Dll -and -not $SkipBuild) {
     if (-not (Get-Command cmake -ErrorAction SilentlyContinue)) {
         Fail "cmake not found. Install: winget install Kitware.CMake`nOr pass -Dll path\to\topscreen.dll to install only."
     }
+    $cl = Get-Command cl -ErrorAction SilentlyContinue
+    $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+    if (-not $cl -and -not (Test-Path $vswhere)) {
+        Fail "No C++ compiler found. Install: winget install Microsoft.VisualStudio.2022.BuildTools --override '--wait --add Microsoft.VisualStudio.Workload.VCTools'`nThen run from a 'Developer PowerShell' (so cl.exe is on PATH), or pass -Dll path\to\topscreen.dll to install only."
+    }
 
     Info '== Configuring the build =='
     $cmakeArgs = @('-S', $Root, '-B', $Build, '-DTOPSCREEN_BUILD_PLUGIN=ON', '-DCMAKE_BUILD_TYPE=Release')
@@ -99,11 +104,23 @@ else {
     Info "== Installing as a user plugin: $base =="
 }
 
-New-Item -ItemType Directory -Force -Path $binDir, $dataDir | Out-Null
+New-Item -ItemType Directory -Force -Path $binDir | Out-Null
+# Full sync: drop stale files from previous versions (e.g. old locales).
+if (Test-Path $dataDir) { Remove-Item -Recurse -Force $dataDir }
+New-Item -ItemType Directory -Force -Path $dataDir | Out-Null
 Copy-Item -Force $Dll (Join-Path $binDir 'topscreen.dll')
 Copy-Item -Recurse -Force (Join-Path $Data '*') $dataDir
 
-Ok 'Installed!'
+# Verify: binary + data layout.
+$missing = @((Join-Path $binDir 'topscreen.dll'))
+foreach ($f in @('locale\en-US.ini', 'presets\presentation.json', 'effects\topscreen.effect',
+                 'cursors\atlas.rgba', 'cursors\atlas.json')) {
+    $missing += (Join-Path $dataDir $f)
+}
+$absent = @($missing | Where-Object { -not (Test-Path $_) })
+if ($absent.Count -gt 0) { Fail ("Verify FAILED, missing: " + ($absent -join ', ')) }
+
+Ok 'Installed and verified! Restart OBS.'
 Write-Host ''
 Write-Host 'To see the TopScreen log:'
 Write-Host '  & "$env:ProgramFiles\obs-studio\bin\64bit\obs64.exe" --verbose'

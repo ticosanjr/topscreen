@@ -173,6 +173,26 @@ SO="$BUILD/topscreen.so"
 ok "OK: $SO"
 
 # ---------------------------------------------------------------------------
+# Verifies an installed copy: binary + data layout + version.
+verify_install() {
+	# $1 = plugin binary, $2 = data dir
+	local bin="$1" data="$2" fail=0
+	[ -f "$bin" ] || { err "missing binary: $bin"; fail=1; }
+	for f in locale/en-US.ini presets/presentation.json presets/demo.json presets/tutorial.json \
+		effects/topscreen.effect effects/text.effect cursors/atlas.rgba cursors/atlas.json; do
+		[ -f "$data/$f" ] || { err "missing data file: $data/$f"; fail=1; }
+	done
+	for d in sounds fonts wallpapers; do
+		[ -d "$data/$d" ] || { err "missing data dir: $data/$d"; fail=1; }
+	done
+	[ "$fail" -ne 0 ] && return 1
+	local ver
+	ver=$(strings "$bin" 2>/dev/null | grep -oE "carregado v[0-9]+\.[0-9]+\.[0-9]+" | head -1)
+	log "Verified: $bin${ver:+ ($ver)} + $(ls "$data/wallpapers" | wc -l) wallpapers"
+	return 0
+}
+
+# ---------------------------------------------------------------------------
 case "$MODE" in
 build)
 	log "Build complete. To install:"
@@ -212,6 +232,7 @@ system)
 
 	ok "Installed. Restart OBS."
 	FINAL="installed in $PLUGDIR"
+	verify_install "$PLUGDIR/topscreen.so" "$DATADIR" || FINAL="installed in $PLUGDIR (verify FAILED)"
 	;;
 user)
 	P="$HOME/.config/obs-studio/plugins/topscreen"
@@ -223,6 +244,7 @@ user)
 	cp -rf "$ROOT/data/." "$P/data/"
 	ok "Installed. Restart OBS."
 	FINAL="installed in $P"
+	verify_install "$P/bin/64bit/topscreen.so" "$P/data" || FINAL="installed in $P (verify FAILED)"
 	;;
 prefix)
 	log "Installing into prefix $TARGET_PREFIX ..."
@@ -253,6 +275,9 @@ dir)
 	fi
 	ok "Installed. Restart OBS."
 	FINAL="installed in $TARGET_DIR"
+	if [ -n "$DATA_DIR" ]; then
+		verify_install "$TARGET_DIR/topscreen.so" "$DATA_DIR" || FINAL="installed (verify FAILED)"
+	fi
 	;;
 esac
 

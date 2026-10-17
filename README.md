@@ -79,6 +79,15 @@ pwsh -File scripts\install-windows.ps1 -Dll .\topscreen.dll
 
 Full step by step in [`docs/BUILD.md`](docs/BUILD.md).
 
+## Removal
+
+```bash
+./scripts/uninstall-linux.sh            # Linux (system + user)
+```
+```powershell
+pwsh -File scripts\uninstall-windows.ps1   # Windows (user plugin)
+```
+
 ---
 
 ## Documentation

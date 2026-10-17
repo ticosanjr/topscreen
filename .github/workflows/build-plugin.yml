@@ -1,11 +1,12 @@
 name: Build plugin
 
-# Manual workflow (best-effort) to build the plugin against libobs.
+# Builds the plugin against libobs and packs release archives.
 # Run it in Actions > Build plugin > Run workflow.
 #
-# The plugin build depends on the environment's libobs/obs-frontend-api/Qt6. Adjust
-# CMAKE_PREFIX_PATH according to the installation (see docs/BUILD.md). The core
-# tests job (tests.yml) runs automatically on push/PR.
+# Requirements per runner:
+#   linux:   a libobs dev environment (see docs/BUILD.md) or it fails loudly.
+#   windows: Visual Studio 2022 + an OBS dev build (CMAKE_PREFIX_PATH).
+# Artifacts: dist/topscreen-*-linux.tar.gz and/or dist/topscreen-*-windows.zip.
 
 on:
   workflow_dispatch:
@@ -19,22 +20,24 @@ jobs:
       - name: Install toolchain
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake build-essential qt6-base-dev libx11-dev pkg-config
+          sudo apt-get install -y cmake build-essential qt6-base-dev libx11-dev pkg-config zip
 
-      - name: Configure (find libobs)
+      - name: Configure and build
         run: |
-          if pkg-config --exists libobs; then
-            cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-          else
-            echo "::warning::libobs not found. Set CMAKE_PREFIX_PATH to an OBS installation."
-            cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DTOPSCREEN_BUILD_TESTS=ON || true
-          fi
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build -j
 
-      - name: Build
-        run: cmake --build build -j || true
+      - name: Run core tests
+        run: ctest --test-dir build --output-on-failure
 
-      - name: Tests (if it built)
-        run: ctest --test-dir build --output-on-failure || true
+      - name: Pack release archive
+        run: scripts/package.sh
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: topscreen-linux
+          path: dist/topscreen-*-linux.tar.gz
 
   windows:
     runs-on: windows-latest
@@ -47,3 +50,19 @@ jobs:
 
       - name: Build
         run: cmake --build build --config Release
+
+      - name: Pack release archive
+        shell: pwsh
+        run: |
+          # package.sh needs bash; the zip layout is fixed, so pack here
+          $ver = (Select-String -Path CMakeLists.txt -Pattern 'project\(TopScreen VERSION ([0-9.]+)').Matches[0].Groups[1].Value
+          New-Item -ItemType Directory -Force -Path dist, pkg\topscreen\bin\64bit | Out-Null
+          Copy-Item build\Release\topscreen.dll pkg\topscreen\bin\64bit\
+          Copy-Item -Recurse data\* pkg\topscreen\data\
+          Compress-Archive -Path pkg\topscreen -DestinationPath "dist\topscreen-$ver-windows.zip" -Force
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: topscreen-windows
+          path: dist/topscreen-*-windows.zip

@@ -126,7 +126,8 @@ jobs:
           $ErrorActionPreference = 'Stop'
           # The Qt dock needs obs-frontend-api + a matching Qt6, so the release
           # package ships the filter (Properties + hotkeys + presets + profiles).
-          cmake -S . -B build -G "Visual Studio 17 2022" -A x64 `
+          # No -G: use whatever Visual Studio the runner has installed.
+          cmake -S . -B build -A x64 `
             -DCMAKE_BUILD_TYPE=Release `
             -DLIBOBS_INCLUDE_DIR="$env:OBS_SRC/libobs" `
             -DLIBOBS_LIBRARY="$PWD/.importlib/obs.lib" `

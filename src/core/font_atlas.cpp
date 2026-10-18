@@ -56,6 +56,27 @@ bool font_atlas_build(const uint8_t *ttf, size_t ttf_size, const FontAtlasOption
 	if (!ttf || ttf_size == 0)
 		return fail("no font data");
 
+	/*
+	 * Validates the sfnt header BEFORE touching stb_truetype: with garbage,
+	 * numTables can be huge and stb would scan far past the buffer (this
+	 * segfaults on Windows while silently surviving on Linux).
+	 */
+	if (ttf_size >= 4 && ttf[0] == 't' && ttf[1] == 't' && ttf[2] == 'c' && ttf[3] == 'f') {
+		if (ttf_size < 12)
+			return fail("invalid TTF");
+		const size_t num_fonts = (static_cast<size_t>(ttf[8]) << 24) |
+					 (static_cast<size_t>(ttf[9]) << 16) |
+					 (static_cast<size_t>(ttf[10]) << 8) | ttf[11];
+		if (num_fonts == 0 || num_fonts > 64 || 12 + num_fonts * 4 > ttf_size)
+			return fail("invalid TTF");
+	} else {
+		if (ttf_size < 12)
+			return fail("invalid TTF");
+		const size_t num_tables = (static_cast<size_t>(ttf[4]) << 8) | ttf[5];
+		if (12 + num_tables * 16 > ttf_size)
+			return fail("invalid TTF");
+	}
+
 	stbtt_fontinfo info;
 	if (!stbtt_InitFont(&info, ttf, 0))
 		return fail("invalid TTF");

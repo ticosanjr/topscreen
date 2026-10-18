@@ -127,7 +127,15 @@ TEST(font_atlas_rejects_invalid_data)
 	FontAtlasOptions opt;
 	CHECK(!font_atlas_build(nullptr, 0, opt, &atlas, &err));
 
-	const std::vector<uint8_t> lixo = {1, 2, 3, 4, 5, 6, 7, 8};
-	CHECK(!font_atlas_build(lixo.data(), lixo.size(), opt, &atlas, &err));
+	const std::vector<uint8_t> junk = {1, 2, 3, 4, 5, 6, 7, 8};
+	CHECK(!font_atlas_build(junk.data(), junk.size(), opt, &atlas, &err));
 	CHECK(!err.empty());
+
+	/* Large zeroed buffer: table count is zero, stb must bail out cleanly. */
+	const std::vector<uint8_t> zeros(1024 * 1024, 0);
+	CHECK(!font_atlas_build(zeros.data(), zeros.size(), opt, &atlas, &err));
+
+	/* Truncated TTC collection claiming many fonts. */
+	const std::vector<uint8_t> ttc = {'t', 't', 'c', 'f', 0, 0, 0, 0, 0xFF, 0xFF, 0xFF, 0xFF};
+	CHECK(!font_atlas_build(ttc.data(), ttc.size(), opt, &atlas, &err));
 }

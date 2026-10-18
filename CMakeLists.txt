@@ -67,10 +67,18 @@ if(TOPSCREEN_BUILD_PLUGIN)
             find_path(TOPSCREEN_LIBOBS_INCLUDE_DIR obs-module.h
                 HINTS "${LIBOBS_INCLUDE_DIR}"
                 PATHS /usr/include/obs /usr/local/include/obs)
-            find_library(TOPSCREEN_LIBOBS_LIBRARY
-                NAMES obs libobs
-                HINTS "${LIBOBS_LIBRARY}"
-                PATHS /usr/lib/x86_64-linux-gnu /usr/lib /usr/local/lib)
+
+            # LIBOBS_LIBRARY may be the library FILE itself (docs and the
+            # installers pass it that way): HINTS only ever takes directories,
+            # so use it directly when it exists.
+            if(LIBOBS_LIBRARY AND EXISTS "${LIBOBS_LIBRARY}")
+                set(TOPSCREEN_LIBOBS_LIBRARY "${LIBOBS_LIBRARY}")
+            else()
+                find_library(TOPSCREEN_LIBOBS_LIBRARY
+                    NAMES obs libobs
+                    HINTS "${LIBOBS_LIBRARY}"
+                    PATHS /usr/lib/x86_64-linux-gnu /usr/lib /usr/local/lib)
+            endif()
 
             if(TOPSCREEN_LIBOBS_INCLUDE_DIR AND TOPSCREEN_LIBOBS_LIBRARY)
                 message(STATUS "TopScreen: libobs via auto-detection (${TOPSCREEN_LIBOBS_LIBRARY})")

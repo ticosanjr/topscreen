@@ -49,7 +49,7 @@ OBS headers. See [`docs/TESTS.md`](docs/TESTS.md).
 ### Quick tests
 
 ```bash
-./tests/run.sh            # Linux: 125 core tests
+./tests/run.sh            # Linux: 126 core tests
 pwsh -File tests\run.ps1  # Windows (or PowerShell on any OS)
 ```
 
@@ -73,12 +73,15 @@ pwsh -File tests\run.ps1  # Windows (or PowerShell on any OS)
 **Windows**
 ```powershell
 # 1) Download topscreen-<version>-windows.zip (GitHub release / CI artifact)
-# 2) Extract it anywhere, then double-click:
+# 2) Extract the WHOLE zip, then double-click:
 install.bat                  # per-user plugin (no admin, no compiler)
 # Uninstall the same way:
 uninstall.bat
 ```
-Portable OBS: **drag the portable folder onto `install.bat`** (or `uninstall.bat`).
+Portable OBS: **drag the portable folder onto `install.bat`** (same for `uninstall.bat`).
+Drag a `topscreen.dll` onto it to install a specific build. Running
+`scripts\install-windows.bat` from a source clone works too — it searches for a
+compiled DLL and explains how to build if there is none.
 <details>
 <summary>Compiling from source instead (developers)</summary>
 

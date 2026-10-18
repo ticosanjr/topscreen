@@ -67,3 +67,40 @@ TEST(package_windows_launchers_present)
 	CHECK(workflow.find("install-windows.bat") != std::string::npos);
 	CHECK(workflow.find("uninstall-windows.bat") != std::string::npos);
 }
+
+/* The installer must work from the release zip AND from the source repo,
+ * and must always tell the user what to do when it cannot find a binary. */
+TEST(package_windows_installer_has_fallbacks)
+{
+	const std::string install = read_bytes(std::string(TOPSCREEN_SOURCE_DIR) +
+					       "/scripts/install-windows.bat");
+	CHECK(!install.empty());
+
+	/* data/ search: next to the script and one/two levels up (repo layout) */
+	CHECK(install.find("%HERE%data") != std::string::npos);
+	CHECK(install.find("%HERE%..\\data") != std::string::npos);
+	CHECK(install.find("topscreen.effect") != std::string::npos);
+
+	/* dll search: bin/, build output, x64/, out/ and the subtree */
+	CHECK(install.find("bin\\64bit\\topscreen.dll") != std::string::npos);
+	CHECK(install.find("build\\Release\\topscreen.dll") != std::string::npos);
+	CHECK(install.find("build\\Debug\\topscreen.dll") != std::string::npos);
+	CHECK(install.find("x64\\Release\\topscreen.dll") != std::string::npos);
+	CHECK(install.find("out\\Release\\topscreen.dll") != std::string::npos);
+	CHECK(install.find("dir /S /B") != std::string::npos);
+
+	/* clear recovery guidance instead of a bare error */
+	CHECK(install.find("Run as administrator") != std::string::npos);
+	CHECK(install.find("was not found") != std::string::npos);
+	CHECK(install.find("READY BUILD") != std::string::npos);
+	CHECK(install.find("install-windows.ps1") != std::string::npos);
+	CHECK(install.find("BUILD.md") != std::string::npos);
+
+	/* drag and drop of a dll / portable folder */
+	CHECK(install.find("obs-plugins") != std::string::npos);
+
+	/* the uninstaller also explains when there was nothing to remove */
+	const std::string uninstall =
+		read_bytes(std::string(TOPSCREEN_SOURCE_DIR) + "/scripts/uninstall-windows.bat");
+	CHECK(uninstall.find("Nothing was removed") != std::string::npos);
+}

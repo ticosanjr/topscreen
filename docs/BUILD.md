@@ -49,24 +49,27 @@ sudo apt update && sudo apt install -y cmake build-essential libobs-dev
 ### Windows
 
 No compiler, no admin — download `topscreen-<version>-windows.zip`
-(from a GitHub release or the `Build plugin` CI artifacts), extract it,
-and double-click **`install.bat`** (= `scripts/install-windows.bat`):
+(from a GitHub release or the `Build plugin` CI artifacts), **extract the
+whole zip**, and double-click **`install.bat`**:
 
 | What you do | Where it installs |
 |---|---|
 | Double-click `install.bat` | per-user plugin (`%ProgramData%\obs-studio\plugins\topscreen`) |
 | Drag your OBS **portable** folder onto `install.bat` | inside the portable (`obs-plugins\64bit` + `data\obs-plugins\topscreen`) |
+| Drag a **`topscreen.dll`** onto `install.bat` | per-user plugin, using that file |
 
 To remove: double-click **`uninstall.bat`** (same drag-and-drop rule for portable).
 
-The installer warns if OBS is open (the DLL is locked while running), syncs
-`data/` fully (no stale files) and verifies the install. Details for
-developers (compiling with VS Build Tools, `-ObsDevDir`, `-Dll`) are in
-[`BUILD.md`](BUILD.md).
+**If you cloned the source instead of the zip**, running
+`scripts\install-windows.bat` works too: it searches `bin\`, `build\`,
+`x64\`, `out\` and the folder tree for a compiled `topscreen.dll`. If it
+finds none, it prints the three ways forward (download the zip, build with
+the toolchain, or drop a DLL onto it) instead of failing silently.
 
-> **Windows:** compiling requires the **libobs dev** (headers + .lib). If you only
-> have OBS installed, use `-Dll` with an already-built binary, or build against an
-> OBS development folder with `-ObsDevDir`.
+The installer warns if OBS is open (the DLL is locked while running), syncs
+`data/` fully (no stale files), verifies 6 key files and prints the exact
+paths it used. Developers compiling with VS Build Tools: see
+[Windows (from source)](#windows-from-source--developers).
 
 ### Tests (on both platforms)
 

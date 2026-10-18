@@ -68,7 +68,13 @@ bool Compositor::load()
 	}
 
 	cache_params();
-	validate_params();
+
+	/* Missing uniforms would leave the shader reading zeros (a fully
+	 * transparent frame). Prefer a passthrough over an invisible source. */
+	ready_ = validate_params();
+	if (!ready_)
+		blog(LOG_ERROR, "[TopScreen] shader is incomplete: the filter will pass "
+				"the source through until this is fixed");
 
 	/* Key overlay (best effort: if the font/effect is missing, proceeds without it). */
 	text_.load("fonts/DejaVuSans-Bold.ttf", "effects/text.effect");
@@ -76,7 +82,7 @@ bool Compositor::load()
 	/* Cursor atlas (best effort: without it, uses the procedural cursor). */
 	load_cursor_atlas();
 
-	return true;
+	return ready_;
 }
 
 void Compositor::load_cursor_atlas()
@@ -199,28 +205,39 @@ void Compositor::cache_params()
 	}
 }
 
-void Compositor::validate_params() const
+bool Compositor::validate_params() const
 {
 	if (!effect_)
-		return;
+		return false;
 
 	struct Named {
 		const char *name;
 		gs_eparam_t *param;
 	};
 	const Named checks[] = {
-		{"target_size", p_target_size_},   {"content_pad", p_pad_},
-		{"corner_radius", p_radius_},      {"zoom", p_zoom_},
-		{"zoom_focus", p_focus_},          {"bg_a", p_bg_a_},
-		{"bg_b", p_bg_b_},                 {"bg_mode", p_bg_mode_},
-		{"cursor_enabled", p_cursor_enabled_}, {"cursor_pos", p_cursor_pos_},
-		{"cursor_scale", p_cursor_scale_}, {"click_count", p_click_count_},
+		{"ViewProj", gs_effect_get_param_by_name(effect_, "ViewProj")},
+		{"image", gs_effect_get_param_by_name(effect_, "image")},
+		{"target_size", p_target_size_},
+		{"content_pad", p_pad_},
+		{"corner_radius", p_radius_},
+		{"zoom", p_zoom_},
+		{"zoom_focus", p_focus_},
+		{"bg_a", p_bg_a_},
+		{"bg_b", p_bg_b_},
+		{"bg_mode", p_bg_mode_},
+		{"cursor_enabled", p_cursor_enabled_},
+		{"cursor_pos", p_cursor_pos_},
+		{"click_count", p_click_count_},
 	};
 
+	int missing = 0;
 	for (const Named &n : checks) {
-		if (!n.param)
-			blog(LOG_WARNING, "[TopScreen] missing uniform in shader: %s", n.name);
+		if (!n.param) {
+			blog(LOG_ERROR, "[TopScreen] shader uniform missing: %s", n.name);
+			++missing;
+		}
 	}
+	return missing == 0;
 }
 
 void Compositor::release()
@@ -268,13 +285,18 @@ void Compositor::render(obs_source_t *filter, const core::Config &cfg, const Fra
 		return;
 	}
 
-	if (!effect_) {
+	if (!ready_) {
 		obs_source_skip_video_filter(filter);
 		return;
 	}
 
 	if (!obs_source_process_filter_begin(filter, GS_RGBA, OBS_NO_DIRECT_RENDERING))
 		return;
+
+	if (!logged_first_frame_) {
+		logged_first_frame_ = true;
+		blog(LOG_INFO, "[TopScreen] first frame: target=%ux%u effect=ok", w, h);
+	}
 
 	const bool active = cfg.effects_enabled;
 	const bool bg = active && cfg.bg.enabled;

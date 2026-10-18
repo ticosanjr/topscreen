@@ -34,17 +34,21 @@ public:
 
 	void render(obs_source_t *filter, const core::Config &cfg, const FrameState &st);
 
-	bool loaded() const { return effect_ != nullptr; }
+	bool loaded() const { return ready_; }
 
 private:
 	void cache_params();
-	void validate_params() const;
+	bool validate_params() const;
 	void load_cursor_atlas();
 	void release_cursor_atlas();
 	void load_bg_image(const std::string &path);
 	void release_bg_image();
 
 	gs_effect_t *effect_ = nullptr;
+	/* True only when the effect compiled AND every critical uniform resolved;
+	 * otherwise the filter stays a passthrough instead of drawing nothing. */
+	bool ready_ = false;
+	bool logged_first_frame_ = false;
 
 	gs_eparam_t *p_target_size_ = nullptr;
 	gs_eparam_t *p_pad_ = nullptr;

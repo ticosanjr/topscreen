@@ -404,6 +404,9 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 		}
 	}
 
+	// Force an opaque frame: this filter replaces the source's output, so alpha
+	// here must never make the source vanish.
+	col.a = 1.0;
 	return col;
 }
 

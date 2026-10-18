@@ -41,10 +41,9 @@ Add a **Display Capture** and the **TopScreen FX** filter. Then:
 
 ## 3. Hotkeys
 
-**Settings → Hotkeys → TopScreen** must list the 12 actions
+**Settings → Hotkeys → TopScreen** must list the 18 actions
 (`ToggleEffects`, `ToggleBackground`, `ZoomIn`, `ZoomOut`, `ResetZoom`,
-`NextPreset`, `PrevPreset`, `ProfileA`, `ProfileB`, `ProfileC`, `ProfileD`,
-`ProfileSave`).
+`NextPreset`, `PrevPreset`, `ProfileA` … `ProfileJ`, `ProfileSave`).
 
 ## 4. Input per platform
 

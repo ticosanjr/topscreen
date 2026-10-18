@@ -91,10 +91,13 @@ inline constexpr const char *kHighlightFadeMs = "highlight_fade_ms";
 inline constexpr const char *kHighlightColor = "highlight_color";
 inline constexpr const char *kHighlightOpacity = "highlight_opacity";
 
-/* Profiles (4 fixed slots). Each slot stores the entire Config in a nested obs_data. */
-inline constexpr int kProfileCount = 4;
+/* Profiles (fixed slots). Each slot stores the entire Config in a nested
+ * obs_data. Labels run A..J (see core::profile_label). */
+inline constexpr int kProfileCount = 10;
 inline constexpr const char *kProfileCurrent = "profile_current";
-inline constexpr const char *kProfileSlots[kProfileCount] = {"profile_slot_0", "profile_slot_1", "profile_slot_2",
-							     "profile_slot_3"};
+inline constexpr const char *kProfileSlots[kProfileCount] = {
+	"profile_slot_0", "profile_slot_1", "profile_slot_2", "profile_slot_3", "profile_slot_4",
+	"profile_slot_5", "profile_slot_6", "profile_slot_7", "profile_slot_8", "profile_slot_9",
+};
 
 } // namespace topscreen::core::keys

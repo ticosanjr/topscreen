@@ -166,7 +166,10 @@ TEST(integration_hotkeys_all_actions)
 			       "TopScreen.ResetZoom",	      "TopScreen.NextPreset",
 			       "TopScreen.PrevPreset",	      "TopScreen.ProfileA",
 			       "TopScreen.ProfileB",	      "TopScreen.ProfileC",
-			       "TopScreen.ProfileD",	      "TopScreen.ProfileSave"};
+			       "TopScreen.ProfileD",	      "TopScreen.ProfileE",
+			       "TopScreen.ProfileF",	      "TopScreen.ProfileG",
+			       "TopScreen.ProfileH",	      "TopScreen.ProfileI",
+			       "TopScreen.ProfileJ",	      "TopScreen.ProfileSave"};
 	for (const char *n : names)
 		REQUIRE(fakeobs::find_hotkey(n) >= 0);
 
@@ -203,8 +206,10 @@ TEST(integration_hotkeys_all_actions)
 	CHECK(ctrl->current_preset() >= 0 && ctrl->current_preset() < ctrl->preset_count());
 
 	const char *profiles[] = {"TopScreen.ProfileA", "TopScreen.ProfileB", "TopScreen.ProfileC",
-				   "TopScreen.ProfileD"};
-	for (int i = 0; i < 4; ++i) {
+				   "TopScreen.ProfileD", "TopScreen.ProfileE", "TopScreen.ProfileF",
+				   "TopScreen.ProfileG", "TopScreen.ProfileH", "TopScreen.ProfileI",
+				   "TopScreen.ProfileJ"};
+	for (int i = 0; i < 10; ++i) {
 		fakeobs::invoke_hotkey(fakeobs::find_hotkey(profiles[i]), true);
 		ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
 		CHECK_EQ(ctrl->current_profile(), i);
@@ -257,7 +262,7 @@ TEST(integration_profiles_save_and_switch)
 
 	FilterControl *ctrl = registry_first();
 	REQUIRE(ctrl != nullptr);
-	CHECK_EQ(ctrl->profile_count(), 4);
+	CHECK_EQ(ctrl->profile_count(), 10);
 
 	/* Profile A: current state (effects on) -> save. */
 	ctrl->select_profile(0);
@@ -288,10 +293,10 @@ TEST(integration_profiles_save_and_switch)
 	CHECK_EQ(ctrl->current_profile(), 1);
 	CHECK(!ctrl->effects_enabled());
 
-	/* Valid out-of-range profile must not break. */
-	ctrl->select_profile(9);
+	/* Out-of-range profile must not break and must stay in range. */
+	ctrl->select_profile(ctrl->profile_count() + 5);
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
-	CHECK(ctrl->current_profile() >= 0 && ctrl->current_profile() < 4);
+	CHECK(ctrl->current_profile() >= 0 && ctrl->current_profile() < ctrl->profile_count());
 
 	ts_filter_source_info.destroy(ctx);
 	CHECK(registry_first() == nullptr);

@@ -56,7 +56,7 @@ covered by tests) and the **OBS layer** (thin, it only wires the core to libobs)
 | Input | `src/input/ts-input.*` + `ts-input-platform.cpp` | Cursor/button/key state |
 | Hotkeys | `src/hotkeys/ts-hotkeys.{hpp,cpp}` | Hotkey registration + callbacks |
 | Text | `src/render/ts-text.{hpp,cpp}` + `src/core/font_atlas.*` | Key overlay (font atlas + band) |
-| Profiles | `src/core/profiles.{hpp,cpp}` | A/B/C/D slots + initial seeds |
+| Profiles | `src/core/profiles.{hpp,cpp}` | A–J profile slots + initial seeds |
 | Audio | `src/audio/ts-click-sound.{hpp,cpp}` | Click sound (F3/F6) |
 | UI | `src/ui/ts-dock.{hpp,cpp}` | Qt dock (optional) |
 

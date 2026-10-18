@@ -74,7 +74,9 @@ TEST(docs_reference_lists_hotkeys)
 	const char *actions[] = {"ToggleEffects", "ToggleBackground", "ZoomIn",
 				 "ZoomOut",       "ResetZoom",        "NextPreset",
 				 "PrevPreset",    "ProfileA",         "ProfileB",
-				 "ProfileC",      "ProfileD",         "ProfileSave"};
+				 "ProfileC",      "ProfileD",         "ProfileE",
+				 "ProfileF",      "ProfileG",         "ProfileH",
+				 "ProfileI",      "ProfileJ",         "ProfileSave"};
 	for (const char *a : actions) {
 		++tst::checks();
 		if (!contains(hotkeys, a))

@@ -215,7 +215,7 @@ In **Settings → Hotkeys → TopScreen**:
 | **Enable/disable background** | Turns only the background/corners on/off |
 | **Zoom in / Zoom out / Reset zoom** | Manual zoom |
 | **Next preset / Previous preset** | Switch preset |
-| **Activate profile A / B / C / D** | Applies the profile (all of its settings) |
+| **Activate profile A … J** | Applies the profile (all of its settings) |
 | **Save to current profile** | Writes the adjustments to the active profile |
 
 **Linux/Wayland:** global OBS hotkeys may not work outside X11;
@@ -238,9 +238,9 @@ own, copy a file and adjust it — the format is in [`CONFIGURATION.md`](CONFIGU
 
 ---
 
-## 8. Profiles (A/B/C/D)
+## 8. Profiles (A–J)
 
-The **4 profiles** store the entire configuration and switch everything at once.
+The **10 profiles** store the entire configuration and switch everything at once.
 The selector is at the **top** of Properties (group **Profiles → Current profile**)
 and in the dock as well.
 
@@ -248,7 +248,7 @@ and in the dock as well.
 - **Your changes are saved into the active profile automatically** — no need to
   remember to save (the *Save to profile* button and hotkey exist to force it).
 - The selected profile is re-applied **when OBS opens**, so the look comes back the same.
-- Hotkeys: **Activate profile A/B/C/D** and **Save to current profile**.
+- Hotkeys: **Activate profile A … J** and **Save to current profile**.
 
 They already ship with examples, so you can just switch and see the difference:
 
@@ -258,6 +258,12 @@ They already ship with examples, so you can just switch and see the difference:
 | **B** | **green/orange** clicks + **zoom 2.0** |
 | **C** | **purple/cyan** clicks + zoom 1.4 and vertical background |
 | **D** | **yellow/white** clicks and **zoom off** |
+| **E** | **blue/orange** clicks + zoom 1.8, solid background |
+| **F** | **magenta/lime** clicks + zoom 2.5, vertical background |
+| **G** | white/pink clicks + gentle zoom 1.25, green highlighter |
+| **H** | teal/red clicks + zoom 3.0, click sound off |
+| **I** | violet/gold clicks, **neon cursor**, manual zoom |
+| **J** | green/black clicks, **wallpaper background**, crosshair cursor |
 
 ---
 

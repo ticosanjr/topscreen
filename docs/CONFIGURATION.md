@@ -84,8 +84,8 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Opacity | `highlight_opacity` | double | 0–1 | `0.35` |
 | | On-screen time (ms) | `highlight_hold_ms` | double | 0–5000 | `900` |
 | | Fade (ms) | `highlight_fade_ms` | double | 0–2000 | `300` |
-| Profiles | Current profile | `profile_current` | int | 0–3 | `0` |
-| | Profile slots | `profile_slot_0` … `profile_slot_3` | object | Full config (nested obs_data) | — |
+| Profiles | Current profile | `profile_current` | int | 0–9 (A–J) | `0` |
+| | Profile slots | `profile_slot_0`, `profile_slot_1`, … `profile_slot_5` … `profile_slot_9` (profiles A–J) | object | Full config (nested obs_data) | — |
 
 > Profiles: switching profile applies the whole slot; subsequent edits are written
 > to the active slot (auto-save) and the chosen profile is re-applied when the
@@ -108,6 +108,12 @@ Registered IDs (shown in **Settings → Hotkeys → TopScreen**):
 | `TopScreen.ProfileB` | Activate profile B |
 | `TopScreen.ProfileC` | Activate profile C |
 | `TopScreen.ProfileD` | Activate profile D |
+| `TopScreen.ProfileE` | Activate profile E |
+| `TopScreen.ProfileF` | Activate profile F |
+| `TopScreen.ProfileG` | Activate profile G |
+| `TopScreen.ProfileH` | Activate profile H |
+| `TopScreen.ProfileI` | Activate profile I |
+| `TopScreen.ProfileJ` | Activate profile J |
 | `TopScreen.ProfileSave` | Save adjustments to the current profile |
 
 ## Preset format

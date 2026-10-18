@@ -73,7 +73,7 @@ That is where all the math and the state logic live — what actually must be ri
 | `test_shader_params.cpp` | `data/effects/topscreen.effect` | presence of the uniforms the compositor looks up by name + `Draw` technique (catches silent divergence) |
 | `test_preset_all_keys.cpp` | `core/preset.*` | all config keys are mapped (guarantees a complete preset) |
 | `test_locale_keys.cpp` | `data/locale/*.ini` | every key used in `obs_module_text()` exists in `en-US.ini`; no orphan keys |
-| `test_profiles.cpp` | `core/profiles.*` | distinct A/B/C/D seeds (colors + zoom), labels, index wrap |
+| `test_profiles.cpp` | `core/profiles.*` | distinct A–J seeds (colors + zoom), labels, index wrap |
 | `test_wallpapers.cpp` | `src/ts-wallpapers.*` | label/path/stem resolution, case-insensitivity, all 24 built-ins, invalid input |
 
 | `test_key_overlay.cpp` | `core/key_overlay.*` | key queue, TTL, repeat, modifier filter, limit, combo formatting |
@@ -89,8 +89,8 @@ That is where all the math and the state logic live — what actually must be ri
 ## Current numbers
 
 ```
-126 tests | 2304 checks | 0 failures   (core)
-21 tests | 256 checks   | 0 failures   (integration with fake libobs)
+126 tests | 2422 checks | 0 failures   (core)
+21 tests | 268 checks   | 0 failures   (integration with fake libobs)
 ```
 
 ## What the integration layer covers
@@ -101,7 +101,7 @@ fake libobs:
 
 | File | Coverage |
 |------|----------|
-| `test_integration.cpp` | filter lifecycle (create/tick/render/destroy), preset apply, background toggle, all 12 hotkeys, native-cursor shutdown on the parent, profiles (save/switch/seeds/list/auto-save/restart) |
+| `test_integration.cpp` | filter lifecycle (create/tick/render/destroy), preset apply, background toggle, all 18 hotkeys, native-cursor shutdown on the parent, profiles (save/switch/seeds/list/auto-save/restart) |
 | `test_uniforms.cpp` | every uniform declared by `topscreen.effect` is uploaded on a plain frame (D3D11 aborts the draw otherwise) |
 | `test_settings.cpp` | defaults match `Config`, legacy source falls back, store/load roundtrip, migrations, properties tree, input without a backend, click sound error handling |
 

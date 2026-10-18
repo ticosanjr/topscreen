@@ -1,3 +1,4 @@
+#include "core/keys.hpp"
 #include "core/profiles.hpp"
 #include "test_framework.hpp"
 
@@ -37,8 +38,9 @@ TEST(profiles_seed_c_and_d)
 TEST(profiles_seed_differ_from_each_other)
 {
 	/* No pair of slots may be identical (otherwise switching would be invisible). */
-	for (int i = 0; i < 4; ++i) {
-		for (int j = i + 1; j < 4; ++j) {
+	const int count = keys::kProfileCount;
+	for (int i = 0; i < count; ++i) {
+		for (int j = i + 1; j < count; ++j) {
 			const Config a = make_profile_seed(i);
 			const Config b = make_profile_seed(j);
 			const bool same = a.click_left.color == b.click_left.color &&
@@ -52,23 +54,24 @@ TEST(profiles_seed_differ_from_each_other)
 TEST(profiles_seed_out_of_range_index)
 {
 	/* Must not break and must cycle. */
-	const Config e = make_profile_seed(4);
 	const Config a = make_profile_seed(0);
-	CHECK_EQ(e.click_left.color, a.click_left.color);
+	const Config wrap = make_profile_seed(keys::kProfileCount);
+	CHECK_EQ(wrap.click_left.color, a.click_left.color);
+	CHECK_EQ(profile_index(keys::kProfileCount), 0);
+	CHECK_EQ(profile_index(-1), keys::kProfileCount - 1);
 }
 
 TEST(profiles_distinct_labels)
 {
-	CHECK_EQ(std::string(profile_label(0)), std::string("Profile A"));
-	CHECK_EQ(std::string(profile_label(1)), std::string("Profile B"));
-	CHECK_EQ(std::string(profile_label(2)), std::string("Profile C"));
-	CHECK_EQ(std::string(profile_label(3)), std::string("Profile D"));
-
-	/* Never repeated (this was the original complaint: "all still profile"). */
-	for (int i = 0; i < 4; ++i)
-		for (int j = i + 1; j < 4; ++j)
+	const char *expected[keys::kProfileCount] = {"Profile A", "Profile B", "Profile C", "Profile D",
+						    "Profile E", "Profile F", "Profile G", "Profile H",
+						    "Profile I", "Profile J"};
+	for (int i = 0; i < keys::kProfileCount; ++i) {
+		CHECK_EQ(std::string(profile_label(i)), std::string(expected[i]));
+		/* Non-empty and never repeated (the original complaint was that all
+		 * profiles looked the same). */
+		CHECK(!std::string(profile_label(i)).empty());
+		for (int j = i + 1; j < keys::kProfileCount; ++j)
 			CHECK(std::string(profile_label(i)) != std::string(profile_label(j)));
-
-	CHECK_EQ(std::string(profile_label(5)), std::string("Profile B"));
-	CHECK_EQ(profile_index(-1), 3);
+	}
 }

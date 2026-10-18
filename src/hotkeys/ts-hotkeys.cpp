@@ -8,7 +8,9 @@ const char *const kHotkeyNames[HK_Count] = {
 	"TopScreen.ToggleEffects",  "TopScreen.ToggleBackground", "TopScreen.ZoomIn",
 	"TopScreen.ZoomOut",        "TopScreen.ResetZoom",        "TopScreen.NextPreset",
 	"TopScreen.PrevPreset",     "TopScreen.ProfileA",         "TopScreen.ProfileB",
-	"TopScreen.ProfileC",       "TopScreen.ProfileD",         "TopScreen.ProfileSave",
+	"TopScreen.ProfileC",       "TopScreen.ProfileD",         "TopScreen.ProfileE",
+	"TopScreen.ProfileF",       "TopScreen.ProfileG",         "TopScreen.ProfileH",
+	"TopScreen.ProfileI",       "TopScreen.ProfileJ",         "TopScreen.ProfileSave",
 };
 
 /* Localized description of each hotkey (literals for the translation test). */
@@ -37,6 +39,18 @@ const char *hotkey_description(int action)
 		return obs_module_text("Hotkey.ProfileC");
 	case HK_ProfileD:
 		return obs_module_text("Hotkey.ProfileD");
+	case HK_ProfileE:
+		return obs_module_text("Hotkey.ProfileE");
+	case HK_ProfileF:
+		return obs_module_text("Hotkey.ProfileF");
+	case HK_ProfileG:
+		return obs_module_text("Hotkey.ProfileG");
+	case HK_ProfileH:
+		return obs_module_text("Hotkey.ProfileH");
+	case HK_ProfileI:
+		return obs_module_text("Hotkey.ProfileI");
+	case HK_ProfileJ:
+		return obs_module_text("Hotkey.ProfileJ");
 	case HK_ProfileSave:
 		return obs_module_text("Hotkey.ProfileSave");
 	default:
@@ -110,6 +124,24 @@ void ts_hotkey_callback(void *data, obs_hotkey_id id, obs_hotkey_t *key, bool pr
 		break;
 	case HK_ProfileD:
 		binding->ctx->select_profile(3);
+		break;
+	case HK_ProfileE:
+		binding->ctx->select_profile(4);
+		break;
+	case HK_ProfileF:
+		binding->ctx->select_profile(5);
+		break;
+	case HK_ProfileG:
+		binding->ctx->select_profile(6);
+		break;
+	case HK_ProfileH:
+		binding->ctx->select_profile(7);
+		break;
+	case HK_ProfileI:
+		binding->ctx->select_profile(8);
+		break;
+	case HK_ProfileJ:
+		binding->ctx->select_profile(9);
 		break;
 	case HK_ProfileSave:
 		binding->ctx->save_profile();

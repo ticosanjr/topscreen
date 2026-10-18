@@ -17,6 +17,12 @@ enum HotkeyAction {
 	HK_ProfileB,
 	HK_ProfileC,
 	HK_ProfileD,
+	HK_ProfileE,
+	HK_ProfileF,
+	HK_ProfileG,
+	HK_ProfileH,
+	HK_ProfileI,
+	HK_ProfileJ,
 	HK_ProfileSave,
 	HK_Count,
 };

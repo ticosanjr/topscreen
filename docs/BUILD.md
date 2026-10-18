@@ -29,9 +29,26 @@ pwsh -File scripts\uninstall-windows.ps1 -ObsDir D:\OBS # portable OBS
 | `topscreen-<v>-linux.tar.gz` | `tar -xzf topscreen-<v>-linux.tar.gz -C ~/.config/obs-studio/plugins/` |
 | `topscreen-<v>-windows.zip` | extract `topscreen\` into `%ProgramData%\obs-studio\plugins\` (portable: `bin\64bit\topscreen.dll` → `obs-plugins\64bit`, `data\*` → `data\obs-plugins\topscreen`) |
 
-CI (`Build plugin` workflow, manual trigger) builds on Linux + Windows and
-uploads these archives as artifacts. Every installer fully syncs `data/`, so
+CI (`Release` workflow, manual trigger or a `v*` tag) builds on Linux + Windows
+and publishes these archives. Every installer fully syncs `data/`, so
 stale files from older versions never linger.
+
+## Cutting a release
+
+```bash
+git tag v0.2.1 && git push origin v0.2.1
+```
+
+The `Release` workflow then builds both packages, runs the core tests on Linux
+and publishes a GitHub Release with the two archives.
+
+| Platform | Build environment |
+|----------|-------------------|
+| Linux | `ubuntu-24.04` + distro `libobs-dev` 30.0.2, `obs-frontend-api` and Qt6 (dock included) |
+| Windows | official OBS **sources** of the same version as the runtime (headers) + the libobs import library generated from `obs.dll`; the Qt dock is **not** in the Windows package |
+
+You can also run it by hand (**Actions → Release → Run workflow**) to get the
+archives as artifacts without publishing a release.
 
 ## Quick install
 

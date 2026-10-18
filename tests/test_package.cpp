@@ -62,7 +62,7 @@ TEST(package_windows_launchers_present)
 	CHECK(packager.find("install.bat") != std::string::npos);
 	CHECK(packager.find("uninstall.bat") != std::string::npos);
 
-	const std::string workflow = read_bytes(root + ".github/workflows/build-plugin.yml");
+	const std::string workflow = read_bytes(root + ".github/workflows/release.yml");
 	CHECK(!workflow.empty());
 	CHECK(workflow.find("install-windows.bat") != std::string::npos);
 	CHECK(workflow.find("uninstall-windows.bat") != std::string::npos);

@@ -7,9 +7,9 @@ name: Release
 #   topscreen-<version>-linux.tar.gz   -> extract into ~/.config/obs-studio/plugins/
 #   topscreen-<version>-windows.zip    -> extract, then double-click install.bat
 #
-# Windows notes: there is no prebuilt libobs dev package, so the job uses the
-# official OBS sources (headers) + obs-deps (third-party libs) + Qt6, and
-# generates the libobs import library from the shipped libobs.dll.
+# There is no prebuilt libobs dev package for Windows, so that job uses the
+# official OBS sources (headers, same version as the runtime) and generates the
+# libobs import library from the shipped libobs.dll (dumpbin + lib).
 
 on:
   push:
@@ -25,22 +25,19 @@ permissions:
   contents: write
 
 env:
+  # Keep headers and runtime on the SAME version (see buildspec.json).
   OBS_VERSION: '31.1.1'
-  DEPS_VERSION: '2025-07-11'
-  OBS_TAG: '32.2.2'
 
 jobs:
   linux:
     name: Linux package
-    runs-on: ubuntu-22.04
+    # ubuntu-24.04 ships libobs-dev 30.0.2 + obs-frontend-api (dock) + Qt6.
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install dependencies (OBS dev from the official PPA)
+      - name: Install dependencies (OBS dev from the distro)
         run: |
-          sudo apt-get update
-          sudo apt-get install -y software-properties-common
-          sudo add-apt-repository -y ppa:obsproject/obs-studio
           sudo apt-get update
           sudo apt-get install -y cmake build-essential libobs-dev qt6-base-dev libx11-dev pkg-config zip
 
@@ -67,65 +64,73 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download OBS sources, obs-deps and Qt6
+      - name: Download the OBS sources and runtime
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          $deps = $env:DEPS_VERSION
-          $obs  = $env:OBS_VERSION
-          New-Item -ItemType Directory -Force .deps | Out-Null
+          $v = $env:OBS_VERSION
           New-Item -ItemType Directory -Force .obs | Out-Null
-          curl.exe -sSL -o deps.zip  "https://github.com/obsproject/obs-deps/releases/download/$deps/windows-deps-$deps-x64.zip"
-          curl.exe -sSL -o qt6.zip   "https://github.com/obsproject/obs-deps/releases/download/$deps/windows-deps-qt6-$deps-x64.zip"
-          curl.exe -sSL -o obs.zip   "https://github.com/obsproject/obs-studio/archive/refs/tags/$obs.zip"
-          tar -xf deps.zip -C .deps
-          tar -xf qt6.zip  -C .deps
-          tar -xf obs.zip  -C .obs
-          Get-ChildItem .obs | Select-Object -First 5 Name
+          curl.exe -sSL -o obs-src.zip "https://github.com/obsproject/obs-studio/archive/refs/tags/$v.zip"
+          tar -xf obs-src.zip -C .obs
+          curl.exe -sSL -o obs-runtime.zip "https://github.com/obsproject/obs-studio/releases/download/$v/OBS-Studio-$v-Windows-x64.zip"
+          Expand-Archive -Path obs-runtime.zip -DestinationPath obs-runtime -Force
+          $src = (Get-ChildItem .obs -Directory | Select-Object -First 1).FullName
+          $dll = (Get-ChildItem obs-runtime -Recurse -Filter libobs.dll | Select-Object -First 1).FullName
+          if (-not $dll) { throw 'libobs.dll not found in the OBS runtime zip' }
+          "OBS_SRC=$src"        | Add-Content $env:GITHUB_ENV
+          "LIBOBS_DLL=$dll"     | Add-Content $env:GITHUB_ENV
+          Write-Host "sources: $src"
+          Write-Host "libobs : $dll"
 
-      - name: Install the OBS runtime (for libobs.dll)
+      - name: Generate obsconfig.h (normally created by the OBS build)
         shell: pwsh
         run: |
-          $ErrorActionPreference = 'Stop'
-          $tag = $env:OBS_TAG
-          curl.exe -sSL -o obs-runtime.zip "https://github.com/obsproject/obs-studio/releases/download/$tag/OBS-Studio-$tag-Windows-x64.zip"
-          Expand-Archive -Path obs-runtime.zip -DestinationPath obs-runtime -Force
-          Get-ChildItem obs-runtime -Recurse -Filter libobs.dll | Select-Object -First 3 FullName
+          $cfg = @(
+            '#pragma once',
+            '#define OBS_DATA_PATH "data"',
+            '#define OBS_PLUGIN_PATH "obs-plugins/64bit"',
+            '#define OBS_PLUGIN_DESTINATION "obs-plugins/64bit"',
+            '#define OBS_RELEASE_CANDIDATE 0',
+            '#define OBS_BETA 0'
+          ) -join "`r`n"
+          Set-Content -Path "$env:OBS_SRC\libobs\obsconfig.h" -Value $cfg -Encoding ASCII
+          Get-Content "$env:OBS_SRC\libobs\obsconfig.h"
 
       - name: Generate the libobs import library
         shell: pwsh
         run: |
-          # No prebuilt libobs.lib exists: build one from the shipped DLL.
-          $dll = (Get-ChildItem obs-runtime -Recurse -Filter libobs.dll | Select-Object -First 1).FullName
-          if (-not $dll) { throw 'libobs.dll not found in the OBS runtime zip' }
+          $ErrorActionPreference = 'Stop'
           $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath
-          $dumpbin = Get-ChildItem "$vs\VC\Tools\MSVC" -Recurse -Filter dumpbin.exe |
-                     Where-Object { $_.FullName -match 'Hostx64\\x64' } | Select-Object -First 1 -ExpandProperty FullName
-          $lib = Get-ChildItem "$vs\VC\Tools\MSVC" -Recurse -Filter lib.exe |
-                 Where-Object { $_.FullName -match 'Hostx64\\x64' } | Select-Object -First 1 -ExpandProperty FullName
+          $tools = Get-ChildItem "$vs\VC\Tools\MSVC" -Directory | Sort-Object Name -Descending | Select-Object -First 1
+          $dumpbin = Get-ChildItem "$tools\bin\Hostx64\x64" -Filter dumpbin.exe | Select-Object -First 1
+          $libexe = Get-ChildItem "$tools\bin\Hostx64\x64" -Filter lib.exe | Select-Object -First 1
+          if (-not $dumpbin -or -not $libexe) { throw 'MSVC tools (dumpbin/lib) not found' }
           New-Item -ItemType Directory -Force .importlib | Out-Null
-          $def = '.importlib\libobs.def'
-          "LIBRARY libobs`nEXPORTS" | Set-Content -Path $def -Encoding ASCII
-          $names = & $dumpbin /nologo /exports $dll |
+          $names = & $dumpbin.FullName /nologo /exports $env:LIBOBS_DLL |
                    Select-String -Pattern '^\s+\d+\s+[0-9A-Fa-f]+\s+[0-9A-Fa-f]+\s+(\S+)' |
                    ForEach-Object { $_.Matches[0].Groups[1].Value } |
                    Sort-Object -Unique
           Write-Host "exported symbols: $($names.Count)"
-          Add-Content -Path $def -Value ($names -join "`n")
-          & $lib /nologo /def:$def /out:.importlib\obs.lib /machine:x64
+          if ($names.Count -lt 100) { throw 'unexpected libobs export list' }
+          $def = ".importlib\libobs.def"
+          Set-Content -Path $def -Value "LIBRARY libobs" -Encoding ASCII
+          Add-Content -Path $def -Value "EXPORTS" -Encoding ASCII
+          Add-Content -Path $def -Value $names -Encoding ASCII
+          & $libexe.FullName /nologo /def:$def /out:.importlib\obs.lib /machine:x64
           if (-not (Test-Path .importlib\obs.lib)) { throw 'failed to build obs.lib' }
+          Write-Host 'import library: .importlib\obs.lib'
 
       - name: Configure and build the plugin
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          $obsSrc = (Get-ChildItem .obs -Directory | Select-Object -First 1).FullName
+          # The Qt dock needs obs-frontend-api + a matching Qt6, so the release
+          # package ships the filter (Properties + hotkeys + presets + profiles).
           cmake -S . -B build -G "Visual Studio 17 2022" -A x64 `
             -DCMAKE_BUILD_TYPE=Release `
-            -DCMAKE_PREFIX_PATH="$PWD/.deps" `
-            -DLIBOBS_INCLUDE_DIR="$obsSrc/libobs" `
+            -DLIBOBS_INCLUDE_DIR="$env:OBS_SRC/libobs" `
             -DLIBOBS_LIBRARY="$PWD/.importlib/obs.lib" `
-            -DTOPSCREEN_BUILD_TESTS=OFF
+            -DENABLE_QT=OFF -DENABLE_FRONTEND_API=OFF -DTOPSCREEN_BUILD_TESTS=OFF
           if ($LASTEXITCODE -ne 0) { throw 'cmake configure failed' }
           cmake --build build --config Release
           if ($LASTEXITCODE -ne 0) { throw 'build failed' }
@@ -133,6 +138,7 @@ jobs:
       - name: Pack
         shell: pwsh
         run: |
+          $ErrorActionPreference = 'Stop'
           $ver = (Select-String -Path CMakeLists.txt -Pattern 'project\(TopScreen VERSION ([0-9.]+)').Matches[0].Groups[1].Value
           New-Item -ItemType Directory -Force dist, pkg\topscreen\bin\64bit | Out-Null
           Copy-Item build\Release\topscreen.dll pkg\topscreen\bin\64bit\
@@ -140,6 +146,7 @@ jobs:
           Copy-Item scripts\install-windows.bat pkg\install.bat
           Copy-Item scripts\uninstall-windows.bat pkg\uninstall.bat
           Compress-Archive -Path pkg\install.bat,pkg\uninstall.bat,pkg\topscreen -DestinationPath "dist\topscreen-$ver-windows.zip" -Force
+          Get-ChildItem dist
 
       - uses: actions/upload-artifact@v4
         with:
@@ -179,11 +186,15 @@ jobs:
             3. Restart OBS, add a **Display Capture**, then
                **Filters → + → "TopScreen FX"**.
 
+            The Windows build ships the filter itself (Properties, hotkeys,
+            presets and profiles). The Qt dock is Linux-only in this release.
+
             ### Linux (no sudo)
             ```bash
             tar -xzf topscreen-*-linux.tar.gz -C ~/.config/obs-studio/plugins/
             # optional, for the keystroke overlay:
-            sudo cp data/udev/99-topscreen.rules /etc/udev/rules.d/ && sudo udevadm control --reload-rules
+            sudo cp data/udev/99-topscreen.rules /etc/udev/rules.d/ &&
+              sudo udevadm control --reload-rules && sudo udevadm trigger
             ```
 
             Full manual: [`docs/MANUAL.md`](docs/MANUAL.md) · installation details:

@@ -5,6 +5,8 @@
 
 #include <algorithm>
 #include <cstdio>
+#include <cstdlib>
+#include <string>
 #include <vector>
 
 #include "core/color.hpp"
@@ -68,6 +70,12 @@ bool Compositor::load()
 	}
 
 	cache_params();
+
+	/* Diagnostic switch (also handy for support): draw only the source. */
+	if (const char *tech = std::getenv("TOPSCREEN_TECH"))
+		use_passthrough_ = std::string(tech) == "passthrough";
+	if (use_passthrough_)
+		blog(LOG_WARNING, "[TopScreen] diagnostic mode: pass-through technique");
 
 	/* Missing uniforms would leave the shader reading zeros (a fully
 	 * transparent frame). Prefer a passthrough over an invisible source. */
@@ -237,6 +245,24 @@ bool Compositor::validate_params() const
 			++missing;
 		}
 	}
+
+	/* The effect must expose the technique OBS draws with, and at least one
+	 * pass; otherwise the draw is a no-op and the frame stays empty. */
+	gs_technique_t *tech = gs_effect_get_technique(effect_, "Draw");
+	if (!tech) {
+		blog(LOG_ERROR, "[TopScreen] shader has no 'Draw' technique");
+		++missing;
+	} else {
+		obs_enter_graphics();
+		const size_t passes = gs_technique_begin(tech);
+		gs_technique_end(tech);
+		obs_leave_graphics();
+		if (passes == 0) {
+			blog(LOG_ERROR, "[TopScreen] shader 'Draw' technique has no passes");
+			++missing;
+		}
+	}
+
 	return missing == 0;
 }
 
@@ -290,12 +316,24 @@ void Compositor::render(obs_source_t *filter, const core::Config &cfg, const Fra
 		return;
 	}
 
-	if (!obs_source_process_filter_begin(filter, GS_RGBA, OBS_NO_DIRECT_RENDERING))
+	if (!obs_source_process_filter_begin(filter, GS_RGBA, OBS_NO_DIRECT_RENDERING)) {
+		/* Nothing was drawn: without this the filter's output would be an
+		 * empty frame (the source looks invisible). Pass it through and
+		 * leave a trail in the log (warnings always show in the OBS log). */
+		if (!logged_begin_failure_) {
+			logged_begin_failure_ = true;
+			blog(LOG_WARNING, "[TopScreen] process_filter_begin failed (%.0fx%.0f): "
+					  "passing the source through without effects",
+			     static_cast<double>(w), static_cast<double>(h));
+		}
+		obs_source_skip_video_filter(filter);
 		return;
+	}
 
 	if (!logged_first_frame_) {
 		logged_first_frame_ = true;
-		blog(LOG_INFO, "[TopScreen] first frame: target=%ux%u effect=ok", w, h);
+		blog(LOG_WARNING, "[TopScreen] first frame: target=%ux%u ready=%s technique=%s", w, h,
+		     ready_ ? "yes" : "no", use_passthrough_ ? "PassThrough" : "Draw");
 	}
 
 	const bool active = cfg.effects_enabled;
@@ -401,7 +439,10 @@ void Compositor::render(obs_source_t *filter, const core::Config &cfg, const Fra
 		set_f(click_[i].type, static_cast<float>(c.effect));
 	}
 
-	obs_source_process_filter_end(filter, effect_, w, h);
+	if (use_passthrough_)
+		obs_source_process_filter_tech_end(filter, effect_, w, h, "PassThrough");
+	else
+		obs_source_process_filter_end(filter, effect_, w, h);
 
 	/* Key overlay on top of the result. */
 	if (active && cfg.keys.enabled && st.key_count > 0)

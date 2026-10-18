@@ -312,6 +312,8 @@ bool obs_source_process_filter_begin(obs_source_t *, enum gs_color_format, enum 
 
 void obs_source_process_filter_end(obs_source_t *, gs_effect_t *, uint32_t, uint32_t) {}
 
+void obs_source_process_filter_tech_end(obs_source_t *, gs_effect_t *, uint32_t, uint32_t, const char *) {}
+
 obs_source_t *obs_filter_get_parent(const obs_source_t *filter)
 {
 	return filter ? filter->parent : nullptr;

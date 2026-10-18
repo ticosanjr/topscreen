@@ -49,6 +49,9 @@ private:
 	 * otherwise the filter stays a passthrough instead of drawing nothing. */
 	bool ready_ = false;
 	bool logged_first_frame_ = false;
+	bool logged_begin_failure_ = false;
+	/* Diagnostic: TOPSCREEN_TECH=passthrough draws only the source. */
+	bool use_passthrough_ = false;
 
 	gs_eparam_t *p_target_size_ = nullptr;
 	gs_eparam_t *p_pad_ = nullptr;

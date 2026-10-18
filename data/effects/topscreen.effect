@@ -418,3 +418,19 @@ technique Draw
 		pixel_shader  = PSCompose(vert_in);
 	}
 }
+
+// Diagnostic technique (TOPSCREEN_TECH=passthrough): draws only the source,
+// no background/cursor/clicks. Useful to isolate shader vs. pipeline issues.
+float4 PSPassThrough(VertInOut vert_in) : TARGET
+{
+	return image.Sample(def_sampler, vert_in.uv);
+}
+
+technique PassThrough
+{
+	pass
+	{
+		vertex_shader = VSDefault(vert_in);
+		pixel_shader  = PSPassThrough(vert_in);
+	}
+}

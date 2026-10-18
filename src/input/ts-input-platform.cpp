@@ -341,6 +341,7 @@ void ts_input_platform_poll(void *state, InputState *out)
 
 	/* Keys: evdev has priority (it also works on Wayland). */
 	bool keys_done = false;
+	(void)keys_done;
 #if defined(TOPSCREEN_HAVE_EVDEV)
 	if (evdev) {
 		for (;;) {

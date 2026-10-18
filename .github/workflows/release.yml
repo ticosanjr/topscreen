@@ -75,8 +75,9 @@ jobs:
           curl.exe -sSL -o obs-runtime.zip "https://github.com/obsproject/obs-studio/releases/download/$v/OBS-Studio-$v-Windows-x64.zip"
           Expand-Archive -Path obs-runtime.zip -DestinationPath obs-runtime -Force
           $src = (Get-ChildItem .obs -Directory | Select-Object -First 1).FullName
-          $dll = (Get-ChildItem obs-runtime -Recurse -Filter libobs.dll | Select-Object -First 1).FullName
-          if (-not $dll) { throw 'libobs.dll not found in the OBS runtime zip' }
+          # On Windows, libobs is shipped as bin\64bit\obs.dll.
+          $dll = (Get-ChildItem obs-runtime -Recurse -File -Filter obs.dll | Select-Object -First 1).FullName
+          if (-not $dll) { throw 'obs.dll (libobs) not found in the OBS runtime zip' }
           "OBS_SRC=$src"        | Add-Content $env:GITHUB_ENV
           "LIBOBS_DLL=$dll"     | Add-Content $env:GITHUB_ENV
           Write-Host "sources: $src"
@@ -112,14 +113,13 @@ jobs:
                    Sort-Object -Unique
           Write-Host "exported symbols: $($names.Count)"
           if ($names.Count -lt 100) { throw 'unexpected libobs export list' }
-          $def = ".importlib\libobs.def"
-          Set-Content -Path $def -Value "LIBRARY libobs" -Encoding ASCII
+          $def = ".importlib\obs.def"
+          Set-Content -Path $def -Value "LIBRARY obs" -Encoding ASCII
           Add-Content -Path $def -Value "EXPORTS" -Encoding ASCII
           Add-Content -Path $def -Value $names -Encoding ASCII
           & $libexe.FullName /nologo /def:$def /out:.importlib\obs.lib /machine:x64
           if (-not (Test-Path .importlib\obs.lib)) { throw 'failed to build obs.lib' }
           Write-Host 'import library: .importlib\obs.lib'
-
       - name: Configure and build the plugin
         shell: pwsh
         run: |

@@ -8,7 +8,8 @@
 #
 # Output:
 #   dist/topscreen-<version>-linux.tar.gz     (topscreen/{bin/64bit/*.so,data/...})
-#   dist/topscreen-<version>-windows.zip      (topscreen/{bin/64bit/*.dll,data/...})
+#   dist/topscreen-<version>-windows.zip      (install.bat, uninstall.bat,
+#                                              topscreen/{bin/64bit/*.dll,data/...})
 #
 # Install from a package (no build):
 #   Linux:  tar -xzf topscreen-<v>-linux.tar.gz -C ~/.config/obs-studio/plugins/
@@ -63,7 +64,10 @@ for dll in "$BUILD/Release/topscreen.dll" "$BUILD/topscreen.dll"; do
 		mkdir -p "$STAGE/$T/topscreen/bin/64bit"
 		cp -f "$dll" "$STAGE/$T/topscreen/bin/64bit/"
 		pack_common "$STAGE/$T/topscreen"
-		(cd "$STAGE/$T" && zip -qr "$OUT/$T.zip" topscreen)
+		# One-click launchers at the zip root.
+		cp -f "$ROOT/scripts/install-windows.bat" "$STAGE/$T/install.bat"
+		cp -f "$ROOT/scripts/uninstall-windows.bat" "$STAGE/$T/uninstall.bat"
+		(cd "$STAGE/$T" && zip -qr "$OUT/$T.zip" install.bat uninstall.bat topscreen)
 		echo "OK: $OUT/$T.zip"
 		made=1
 		break

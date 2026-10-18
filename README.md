@@ -49,7 +49,7 @@ OBS headers. See [`docs/TESTS.md`](docs/TESTS.md).
 ### Quick tests
 
 ```bash
-./tests/run.sh            # Linux: 124 core tests
+./tests/run.sh            # Linux: 125 core tests
 pwsh -File tests\run.ps1  # Windows (or PowerShell on any OS)
 ```
 
@@ -72,10 +72,24 @@ pwsh -File tests\run.ps1  # Windows (or PowerShell on any OS)
 
 **Windows**
 ```powershell
-pwsh -File scripts\install-windows.ps1                    # per-user plugin
-pwsh -File scripts\install-windows.ps1 -ObsDir D:\OBS     # portable OBS
+# 1) Download topscreen-<version>-windows.zip (GitHub release / CI artifact)
+# 2) Extract it anywhere, then double-click:
+install.bat                  # per-user plugin (no admin, no compiler)
+# Uninstall the same way:
+uninstall.bat
+```
+Portable OBS: **drag the portable folder onto `install.bat`** (or `uninstall.bat`).
+<details>
+<summary>Compiling from source instead (developers)</summary>
+
+```powershell
+winget install Kitware.CMake
+winget install Microsoft.VisualStudio.2022.BuildTools   # then use a Developer PowerShell
+pwsh -File scripts\install-windows.ps1 -ObsDevDir C:\obs-dev
+pwsh -File scripts\install-windows.ps1 -ObsDir D:\OBS  # portable
 pwsh -File scripts\install-windows.ps1 -Dll .\topscreen.dll
 ```
+</details>
 
 Full step by step in [`docs/BUILD.md`](docs/BUILD.md).
 

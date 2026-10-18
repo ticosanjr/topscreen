@@ -26,11 +26,9 @@ image straight to OBS, as a filter, for you to use in a scene.
 ./scripts/install-linux.sh            # per-user plugin (no sudo)
 ```
 
-**Windows**
-```powershell
-pwsh -File scripts\install-windows.ps1                    # per-user plugin
-pwsh -File scripts\install-windows.ps1 -ObsDir D:\OBS     # portable OBS
-```
+**Windows** (no compiler, no admin)
+1. Download `topscreen-<version>-windows.zip` (release / CI artifact) and extract it.
+2. Double-click **`install.bat`** (drag your portable OBS folder onto it for portable installs).
 
 Details and advanced options in [`BUILD.md`](BUILD.md).
 

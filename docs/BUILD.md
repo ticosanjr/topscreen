@@ -48,20 +48,21 @@ sudo apt update && sudo apt install -y cmake build-essential libobs-dev
 
 ### Windows
 
-```powershell
-# dependencies (once): cmake + Visual Studio Build Tools
-winget install Kitware.CMake
-winget install Microsoft.VisualStudio.2022.BuildTools
+No compiler, no admin — download `topscreen-<version>-windows.zip`
+(from a GitHub release or the `Build plugin` CI artifacts), extract it,
+and double-click **`install.bat`** (= `scripts/install-windows.bat`):
 
-# without compiling here (use a ready topscreen.dll):
-pwsh -File scripts\install-windows.ps1 -Dll .\topscreen.dll
+| What you do | Where it installs |
+|---|---|
+| Double-click `install.bat` | per-user plugin (`%ProgramData%\obs-studio\plugins\topscreen`) |
+| Drag your OBS **portable** folder onto `install.bat` | inside the portable (`obs-plugins\64bit` + `data\obs-plugins\topscreen`) |
 
-# compile + install as a per-user plugin:
-pwsh -File scripts\install-windows.ps1 -ObsDevDir C:\obs-dev
+To remove: double-click **`uninstall.bat`** (same drag-and-drop rule for portable).
 
-# or install into a portable OBS:
-pwsh -File scripts\install-windows.ps1 -ObsDir D:\OBS
-```
+The installer warns if OBS is open (the DLL is locked while running), syncs
+`data/` fully (no stale files) and verifies the install. Details for
+developers (compiling with VS Build Tools, `-ObsDevDir`, `-Dll`) are in
+[`BUILD.md`](BUILD.md).
 
 > **Windows:** compiling requires the **libobs dev** (headers + .lib). If you only
 > have OBS installed, use `-Dll` with an already-built binary, or build against an
@@ -160,9 +161,14 @@ obs --verbose 2>&1 | grep -i topscreen
 
 ---
 
-## Windows
+## Windows (from source — developers)
 
-1. Install **Visual Studio 2022** (Desktop C++) and **CMake**.
+Prefer the one-click path above. To compile yourself:
+
+1. Install **Visual Studio 2022** (Desktop C++) and **CMake**:
+   `winget install Kitware.CMake` +
+   `winget install Microsoft.VisualStudio.2022.BuildTools`
+   (then use a Developer PowerShell).
 2. Get the **libobs + obs-frontend-api** (OBS development build or
    compile OBS with `cmake --preset windows-x64`).
 3. Configure pointing at OBS/Qt:
@@ -173,12 +179,16 @@ cmake -S . -B build -G "Visual Studio 17 2022" -A x64 `
 cmake --build build --config Release
 ```
 
-4. Copy the result to OBS (portable or installed):
+4. Install without manual copying:
 
+```powershell
+pwsh -File scripts\install-windows.ps1 -ObsDevDir C:\obs-dev   # per-user
+pwsh -File scripts\install-windows.ps1 -ObsDir D:\OBS          # portable
+pwsh -File scripts\install-windows.ps1 -Dll .\topscreen.dll   # prebuilt DLL
 ```
-build\Release\topscreen.dll   ->  <obs>\obs-plugins\64bit\
-data\                         ->  <obs>\obs-plugins\64bit\topscreen\
-```
+
+The `.ps1` installer does the same full-sync + verify as `install.bat`.
+Uninstall: `pwsh -File scripts\uninstall-windows.ps1` (add `-ObsDir` for portable).
 
 ---
 

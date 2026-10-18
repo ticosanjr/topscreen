@@ -59,7 +59,9 @@ jobs:
           New-Item -ItemType Directory -Force -Path dist, pkg\topscreen\bin\64bit | Out-Null
           Copy-Item build\Release\topscreen.dll pkg\topscreen\bin\64bit\
           Copy-Item -Recurse data\* pkg\topscreen\data\
-          Compress-Archive -Path pkg\topscreen -DestinationPath "dist\topscreen-$ver-windows.zip" -Force
+          Copy-Item scripts\install-windows.bat pkg\install.bat
+          Copy-Item scripts\uninstall-windows.bat pkg\uninstall.bat
+          Compress-Archive -Path pkg\install.bat,pkg\uninstall.bat,pkg\topscreen -DestinationPath "dist\topscreen-$ver-windows.zip" -Force
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

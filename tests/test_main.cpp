@@ -10,6 +10,7 @@ int main()
 	for (const auto &c : reg) {
 		const int before = tst::failures();
 		std::printf("[ RUN  ] %s\n", c.name.c_str());
+		std::fflush(stdout); // flushed: a crash still shows which test died
 		try {
 			c.fn();
 		} catch (const std::exception &e) {
@@ -23,6 +24,7 @@ int main()
 		} else {
 			std::printf("[  OK  ] %s\n", c.name.c_str());
 		}
+		std::fflush(stdout);
 	}
 
 	std::printf("\nTotal: %zu tests | %d checks | %d failures\n", reg.size(), tst::checks(),

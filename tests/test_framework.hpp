@@ -37,6 +37,7 @@ inline void fail(const char *file, int line, const std::string &msg)
 {
 	++failures();
 	std::fprintf(stderr, "    %s:%d: %s\n", file, line, msg.c_str());
+	std::fflush(stderr);
 }
 
 struct Registrar {

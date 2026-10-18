@@ -12,12 +12,18 @@
     },
     "dependencies": {
         "obs-studio": {
-            "version": "30.0.0",
-            "repository": "https://github.com/obsproject/obs-studio"
+            "version": "31.1.1",
+            "repository": "https://github.com/obsproject/obs-studio",
+            "baseUrl": "https://github.com/obsproject/obs-studio/archive/refs/tags"
         },
         "prebuilt": {
-            "version": "2025-01-01",
-            "repository": "https://github.com/obsproject/obs-deps"
+            "version": "2025-07-11",
+            "repository": "https://github.com/obsproject/obs-deps",
+            "baseUrl": "https://github.com/obsproject/obs-deps/releases/download"
+        },
+        "qt6": {
+            "version": "2025-07-11",
+            "baseUrl": "https://github.com/obsproject/obs-deps/releases/download"
         }
     }
 }

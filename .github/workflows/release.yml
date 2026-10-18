@@ -1,0 +1,190 @@
+name: Release
+
+# Publishes a GitHub Release with ready-to-use packages when a version tag
+# (v*) is pushed. Also runnable by hand (Actions > Release > Run workflow),
+# which builds the packages without creating the release.
+#
+#   topscreen-<version>-linux.tar.gz   -> extract into ~/.config/obs-studio/plugins/
+#   topscreen-<version>-windows.zip    -> extract, then double-click install.bat
+#
+# Windows notes: there is no prebuilt libobs dev package, so the job uses the
+# official OBS sources (headers) + obs-deps (third-party libs) + Qt6, and
+# generates the libobs import library from the shipped libobs.dll.
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      create_release:
+        description: 'Create the GitHub release (leave off for a test build)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+env:
+  OBS_VERSION: '31.1.1'
+  DEPS_VERSION: '2025-07-11'
+  OBS_TAG: '32.2.2'
+
+jobs:
+  linux:
+    name: Linux package
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies (OBS dev from the official PPA)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y software-properties-common
+          sudo add-apt-repository -y ppa:obsproject/obs-studio
+          sudo apt-get update
+          sudo apt-get install -y cmake build-essential libobs-dev qt6-base-dev libx11-dev pkg-config zip
+
+      - name: Build
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build -j
+
+      - name: Core tests
+        run: ctest --test-dir build --output-on-failure
+
+      - name: Pack
+        run: scripts/package.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pkg-linux
+          path: dist/topscreen-*-linux.tar.gz
+          if-no-files-found: error
+
+  windows:
+    name: Windows package
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download OBS sources, obs-deps and Qt6
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $deps = $env:DEPS_VERSION
+          $obs  = $env:OBS_VERSION
+          New-Item -ItemType Directory -Force .deps | Out-Null
+          New-Item -ItemType Directory -Force .obs | Out-Null
+          curl.exe -sSL -o deps.zip  "https://github.com/obsproject/obs-deps/releases/download/$deps/windows-deps-$deps-x64.zip"
+          curl.exe -sSL -o qt6.zip   "https://github.com/obsproject/obs-deps/releases/download/$deps/windows-deps-qt6-$deps-x64.zip"
+          curl.exe -sSL -o obs.zip   "https://github.com/obsproject/obs-studio/archive/refs/tags/$obs.zip"
+          tar -xf deps.zip -C .deps
+          tar -xf qt6.zip  -C .deps
+          tar -xf obs.zip  -C .obs
+          Get-ChildItem .obs | Select-Object -First 5 Name
+
+      - name: Install the OBS runtime (for libobs.dll)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $tag = $env:OBS_TAG
+          curl.exe -sSL -o obs-runtime.zip "https://github.com/obsproject/obs-studio/releases/download/$tag/OBS-Studio-$tag-Windows-x64.zip"
+          Expand-Archive -Path obs-runtime.zip -DestinationPath obs-runtime -Force
+          Get-ChildItem obs-runtime -Recurse -Filter libobs.dll | Select-Object -First 3 FullName
+
+      - name: Generate the libobs import library
+        shell: pwsh
+        run: |
+          # No prebuilt libobs.lib exists: build one from the shipped DLL.
+          $dll = (Get-ChildItem obs-runtime -Recurse -Filter libobs.dll | Select-Object -First 1).FullName
+          if (-not $dll) { throw 'libobs.dll not found in the OBS runtime zip' }
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath
+          $dumpbin = Get-ChildItem "$vs\VC\Tools\MSVC" -Recurse -Filter dumpbin.exe |
+                     Where-Object { $_.FullName -match 'Hostx64\\x64' } | Select-Object -First 1 -ExpandProperty FullName
+          $lib = Get-ChildItem "$vs\VC\Tools\MSVC" -Recurse -Filter lib.exe |
+                 Where-Object { $_.FullName -match 'Hostx64\\x64' } | Select-Object -First 1 -ExpandProperty FullName
+          New-Item -ItemType Directory -Force .importlib | Out-Null
+          $def = '.importlib\libobs.def'
+          "LIBRARY libobs`nEXPORTS" | Set-Content -Path $def -Encoding ASCII
+          $names = & $dumpbin /nologo /exports $dll |
+                   Select-String -Pattern '^\s+\d+\s+[0-9A-Fa-f]+\s+[0-9A-Fa-f]+\s+(\S+)' |
+                   ForEach-Object { $_.Matches[0].Groups[1].Value } |
+                   Sort-Object -Unique
+          Write-Host "exported symbols: $($names.Count)"
+          Add-Content -Path $def -Value ($names -join "`n")
+          & $lib /nologo /def:$def /out:.importlib\obs.lib /machine:x64
+          if (-not (Test-Path .importlib\obs.lib)) { throw 'failed to build obs.lib' }
+
+      - name: Configure and build the plugin
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $obsSrc = (Get-ChildItem .obs -Directory | Select-Object -First 1).FullName
+          cmake -S . -B build -G "Visual Studio 17 2022" -A x64 `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DCMAKE_PREFIX_PATH="$PWD/.deps" `
+            -DLIBOBS_INCLUDE_DIR="$obsSrc/libobs" `
+            -DLIBOBS_LIBRARY="$PWD/.importlib/obs.lib" `
+            -DTOPSCREEN_BUILD_TESTS=OFF
+          if ($LASTEXITCODE -ne 0) { throw 'cmake configure failed' }
+          cmake --build build --config Release
+          if ($LASTEXITCODE -ne 0) { throw 'build failed' }
+
+      - name: Pack
+        shell: pwsh
+        run: |
+          $ver = (Select-String -Path CMakeLists.txt -Pattern 'project\(TopScreen VERSION ([0-9.]+)').Matches[0].Groups[1].Value
+          New-Item -ItemType Directory -Force dist, pkg\topscreen\bin\64bit | Out-Null
+          Copy-Item build\Release\topscreen.dll pkg\topscreen\bin\64bit\
+          Copy-Item -Recurse data\* pkg\topscreen\data\
+          Copy-Item scripts\install-windows.bat pkg\install.bat
+          Copy-Item scripts\uninstall-windows.bat pkg\uninstall.bat
+          Compress-Archive -Path pkg\install.bat,pkg\uninstall.bat,pkg\topscreen -DestinationPath "dist\topscreen-$ver-windows.zip" -Force
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pkg-windows
+          path: dist/topscreen-*-windows.zip
+          if-no-files-found: error
+
+  release:
+    name: Publish release
+    needs: [linux, windows]
+    if: startsWith(github.ref, 'refs/tags/v') || inputs.create_release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: packages
+          merge-multiple: true
+
+      - name: List packages
+        run: ls -la packages
+
+      - name: Publish
+        uses: softprops/action-gh-release@v2
+        with:
+          files: packages/*
+          generate_release_notes: true
+          body: |
+            ## TopScreen
+
+            ### Windows (no compiler, no admin)
+            1. Download `topscreen-${{ github.ref_name }}-windows.zip`.
+            2. **Extract the whole zip**, then double-click **`install.bat`**.
+               - Drag your **OBS portable** folder onto it to install there instead.
+               - Remove later with `uninstall.bat`.
+            3. Restart OBS, add a **Display Capture**, then
+               **Filters → + → "TopScreen FX"**.
+
+            ### Linux (no sudo)
+            ```bash
+            tar -xzf topscreen-*-linux.tar.gz -C ~/.config/obs-studio/plugins/
+            # optional, for the keystroke overlay:
+            sudo cp data/udev/99-topscreen.rules /etc/udev/rules.d/ && sudo udevadm control --reload-rules
+            ```
+
+            Full manual: [`docs/MANUAL.md`](docs/MANUAL.md) · installation details:
+            [`docs/BUILD.md`](docs/BUILD.md)

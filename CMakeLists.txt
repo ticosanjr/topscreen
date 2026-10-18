@@ -189,7 +189,11 @@ if(TOPSCREEN_BUILD_PLUGIN)
         install(DIRECTORY data/ DESTINATION "${CMAKE_INSTALL_DATADIR}/obs/obs-plugins/topscreen")
     endif()
     if(WIN32)
-        install(TARGETS topscreen RUNTIME DESTINATION "obs-plugins/64bit")
+        # A MODULE target needs LIBRARY DESTINATION even on Windows (the DLL
+        # lands in RUNTIME); both are set so plain `cmake --install` works.
+        install(TARGETS topscreen
+            RUNTIME DESTINATION "obs-plugins/64bit"
+            LIBRARY DESTINATION "obs-plugins/64bit")
         install(DIRECTORY data/ DESTINATION "obs-plugins/64bit/topscreen")
     endif()
 

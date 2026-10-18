@@ -90,7 +90,7 @@ That is where all the math and the state logic live — what actually must be ri
 
 ```
 126 tests | 2304 checks | 0 failures   (core)
-19 tests | 137 checks   | 0 failures   (integration with fake libobs)
+21 tests | 256 checks   | 0 failures   (integration with fake libobs)
 ```
 
 ## What the integration layer covers
@@ -102,6 +102,7 @@ fake libobs:
 | File | Coverage |
 |------|----------|
 | `test_integration.cpp` | filter lifecycle (create/tick/render/destroy), preset apply, background toggle, all 12 hotkeys, native-cursor shutdown on the parent, profiles (save/switch/seeds/list/auto-save/restart) |
+| `test_uniforms.cpp` | every uniform declared by `topscreen.effect` is uploaded on a plain frame (D3D11 aborts the draw otherwise) |
 | `test_settings.cpp` | defaults match `Config`, legacy source falls back, store/load roundtrip, migrations, properties tree, input without a backend, click sound error handling |
 
 ## What is NOT covered (and why)

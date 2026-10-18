@@ -110,6 +110,9 @@ private:
 
 	/* Cursor atlas (style bitmaps). */
 	gs_texture_t *cursor_tex_ = nullptr;
+	/* 1x1 transparent texture: bound to unused texture uniforms so that every
+	 * shader parameter is set (the D3D11 device refuses to draw otherwise). */
+	gs_texture_t *dummy_tex_ = nullptr;
 	core::CursorAtlas cursor_atlas_;
 	std::vector<core::Vec2f> cursor_hotspots_;
 

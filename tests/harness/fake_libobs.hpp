@@ -63,4 +63,10 @@ void invoke_hotkey(int index, bool pressed);
 
 int hotkey_count();
 
+/** Records a uniform upload (used to catch D3D11's "parameter not set"). */
+void note_uniform_set(const std::string &name);
+/** Names of every uniform uploaded since the last clear_uniforms(). */
+const std::vector<std::string> &uploaded_uniforms();
+void clear_uniforms();
+
 } // namespace fakeobs

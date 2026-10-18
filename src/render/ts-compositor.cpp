@@ -90,6 +90,15 @@ bool Compositor::load()
 	/* Cursor atlas (best effort: without it, uses the procedural cursor). */
 	load_cursor_atlas();
 
+	/* 1x1 transparent texture for unused texture uniforms. */
+	if (!dummy_tex_) {
+		const uint8_t px[4] = {0, 0, 0, 0};
+		const uint8_t *data[1] = {px};
+		obs_enter_graphics();
+		dummy_tex_ = gs_texture_create(1, 1, GS_RGBA, 1, data, 0);
+		obs_leave_graphics();
+	}
+
 	return ready_;
 }
 
@@ -218,31 +227,67 @@ bool Compositor::validate_params() const
 	if (!effect_)
 		return false;
 
-	struct Named {
-		const char *name;
-		gs_eparam_t *param;
-	};
-	const Named checks[] = {
-		{"ViewProj", gs_effect_get_param_by_name(effect_, "ViewProj")},
-		{"image", gs_effect_get_param_by_name(effect_, "image")},
-		{"target_size", p_target_size_},
-		{"content_pad", p_pad_},
-		{"corner_radius", p_radius_},
-		{"zoom", p_zoom_},
-		{"zoom_focus", p_focus_},
-		{"bg_a", p_bg_a_},
-		{"bg_b", p_bg_b_},
-		{"bg_mode", p_bg_mode_},
-		{"cursor_enabled", p_cursor_enabled_},
-		{"cursor_pos", p_cursor_pos_},
-		{"click_count", p_click_count_},
+	/* Every uniform the shader declares must resolve: on D3D11 a parameter
+	 * that is looked up (or uploaded) by the wrong name aborts the draw and
+	 * the filter's output stays empty. Keep this list in sync with
+	 * data/effects/topscreen.effect (the harness test also checks it). */
+	const char *const kNames[] = {
+		"ViewProj",
+		"image",
+		"target_size",
+		"content_pad",
+		"corner_radius",
+		"zoom",
+		"zoom_focus",
+		"bg_a",
+		"bg_b",
+		"bg_mode",
+		"bg_tex",
+		"bg_tex_enabled",
+		"bg_tex_aspect",
+		"bg_keep_aspect",
+		"bg_blur",
+		"bg_blur_type",
+		"shadow_alpha",
+		"shadow_blur",
+		"shadow_offset",
+		"cursor_enabled",
+		"cursor_pos",
+		"cursor_scale",
+		"cursor_opacity",
+		"cursor_rotation",
+		"cursor_shadow",
+		"cursor_tex",
+		"cursor_tex_enabled",
+		"cursor_cell_off",
+		"cursor_cell_scale",
+		"cursor_hotspot",
+		"zoom_blur",
+		"spotlight_enabled",
+		"spotlight_radius",
+		"spotlight_dim",
+		"highlight_active",
+		"highlight_rect",
+		"highlight_color",
+		"highlight_alpha",
+		"click_count",
 	};
 
 	int missing = 0;
-	for (const Named &n : checks) {
-		if (!n.param) {
-			blog(LOG_ERROR, "[TopScreen] shader uniform missing: %s", n.name);
+	for (const char *name : kNames) {
+		if (!gs_effect_get_param_by_name(effect_, name)) {
+			blog(LOG_ERROR, "[TopScreen] shader uniform missing: %s", name);
 			++missing;
+		}
+	}
+	for (int i = 0; i < 4; ++i) {
+		for (const char *suffix : {"_pos", "_prog", "_size", "_color", "_type"}) {
+			char name[32];
+			std::snprintf(name, sizeof(name), "click%d%s", i, suffix);
+			if (!gs_effect_get_param_by_name(effect_, name)) {
+				blog(LOG_ERROR, "[TopScreen] shader uniform missing: %s", name);
+				++missing;
+			}
 		}
 	}
 
@@ -271,6 +316,13 @@ void Compositor::release()
 	text_.release();
 	release_cursor_atlas();
 	release_bg_image();
+
+	if (dummy_tex_) {
+		obs_enter_graphics();
+		gs_texture_destroy(dummy_tex_);
+		obs_leave_graphics();
+		dummy_tex_ = nullptr;
+	}
 
 	if (!effect_)
 		return;
@@ -354,14 +406,16 @@ void Compositor::render(obs_source_t *filter, const core::Config &cfg, const Fra
 		core::resolve_bg_path(cfg.bg.image.c_str(), cfg.bg.image_file.c_str());
 	load_bg_image(active ? bg_path : std::string());
 	const bool bgimg = bg && bg_tex_ != nullptr;
+	/* D3D11 aborts the draw ("Not all shader parameters were set") when any
+	 * scalar uniform was never uploaded, leaving the frame empty, so every
+	 * uniform below is uploaded on EVERY frame, even with the feature off.
+	 * Textures always get a real binding (a 1x1 dummy when unused). */
 	set_f(p_bg_tex_enabled_, bgimg ? 1.0f : 0.0f);
 	set_f(p_bg_blur_, static_cast<float>(cfg.bg.image_blur));
 	set_f(p_bg_blur_type_, static_cast<float>(cfg.bg.image_blur_type));
-	if (bgimg) {
-		set_f(p_bg_tex_aspect_, bg_aspect_);
-		if (p_bg_tex_)
-			gs_effect_set_texture(p_bg_tex_, bg_tex_);
-	}
+	set_f(p_bg_tex_aspect_, bg_aspect_);
+	if (p_bg_tex_)
+		gs_effect_set_texture(p_bg_tex_, bgimg && bg_tex_ ? bg_tex_ : dummy_tex_);
 
 	const float shadow_alpha = (bg && cfg.bg.shadow) ? static_cast<float>(cfg.bg.shadow_alpha) : 0.0f;
 	set_f(p_shadow_alpha_, shadow_alpha);
@@ -383,23 +437,26 @@ void Compositor::render(obs_source_t *filter, const core::Config &cfg, const Fra
 	set_f(p_cursor_rotation_, static_cast<float>(st.cursor.rotation));
 	set_f(p_cursor_shadow_, cfg.cursor.shadow ? 1.0f : 0.0f);
 
-	/* Cursor por bitmap (atlas). */
+	/* Cursor bitmap (atlas). Always uploaded (see the D3D11 note above);
+	 * a 1x1 dummy texture is bound when there is no atlas. */
 	const bool has_atlas = (cursor_tex_ != nullptr && cursor_atlas_.count > 0);
 	set_f(p_cursor_tex_enabled_, has_atlas ? 1.0f : 0.0f);
-	if (has_atlas) {
+	{
 		const uint32_t idx =
-			std::min<uint32_t>(static_cast<uint32_t>(cfg.cursor.style), cursor_atlas_.count - 1);
-		const float n = static_cast<float>(cursor_atlas_.count);
+			has_atlas ? std::min<uint32_t>(static_cast<uint32_t>(cfg.cursor.style),
+						       cursor_atlas_.count - 1)
+				  : 0u;
+		const float n = has_atlas ? static_cast<float>(cursor_atlas_.count) : 1.0f;
 		set_v2(p_cursor_cell_off_, 0.0f, static_cast<float>(idx) / n);
 		set_v2(p_cursor_cell_scale_, 1.0f, 1.0f / n);
 
 		core::Vec2f hs{0.05, 0.05};
-		if (idx < cursor_hotspots_.size())
+		if (has_atlas && idx < cursor_hotspots_.size())
 			hs = cursor_hotspots_[idx];
 		set_v2(p_cursor_hotspot_, static_cast<float>(hs.x), static_cast<float>(hs.y));
 
 		if (p_cursor_tex_)
-			gs_effect_set_texture(p_cursor_tex_, cursor_tex_);
+			gs_effect_set_texture(p_cursor_tex_, has_atlas ? cursor_tex_ : dummy_tex_);
 	}
 
 	/* Zoom motion blur */
@@ -424,19 +481,29 @@ void Compositor::render(obs_source_t *filter, const core::Config &cfg, const Fra
 	set_c(p_highlight_color_, st.highlight.color);
 	set_f(p_highlight_alpha_, static_cast<float>(st.highlight.alpha));
 
-	/* Clicks (up to kShaderClickSlots, explicit slots) */
+	/* Clicks (up to kShaderClickSlots, explicit slots). Every slot is
+	 * uploaded on every frame, zeroed when unused: the D3D11 draw aborts if
+	 * a slot uniform was never set. */
 	int used = st.click_count;
 	if (used > kShaderClickSlots)
 		used = kShaderClickSlots;
 	set_f(p_click_count_, static_cast<float>(used));
 
-	for (int i = 0; i < used; ++i) {
-		const core::ClickRender &c = st.clicks[i];
-		set_v2(click_[i].pos, static_cast<float>(c.x), static_cast<float>(c.y));
-		set_f(click_[i].prog, static_cast<float>(c.progress));
-		set_f(click_[i].size, static_cast<float>(c.size));
-		set_c(click_[i].color, c.color);
-		set_f(click_[i].type, static_cast<float>(c.effect));
+	for (int i = 0; i < kShaderClickSlots; ++i) {
+		if (i < used) {
+			const core::ClickRender &c = st.clicks[i];
+			set_v2(click_[i].pos, static_cast<float>(c.x), static_cast<float>(c.y));
+			set_f(click_[i].prog, static_cast<float>(c.progress));
+			set_f(click_[i].size, static_cast<float>(c.size));
+			set_c(click_[i].color, c.color);
+			set_f(click_[i].type, static_cast<float>(c.effect));
+		} else {
+			set_v2(click_[i].pos, 0.0f, 0.0f);
+			set_f(click_[i].prog, 0.0f);
+			set_f(click_[i].size, 0.0f);
+			set_c(click_[i].color, 0);
+			set_f(click_[i].type, 0.0f);
+		}
 	}
 
 	if (use_passthrough_)

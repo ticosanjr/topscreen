@@ -82,6 +82,25 @@ int hotkey_count()
 	return static_cast<int>(g_hotkeys.size());
 }
 
+namespace {
+std::vector<std::string> g_uniforms;
+}
+
+void note_uniform_set(const std::string &name)
+{
+	g_uniforms.push_back(name);
+}
+
+const std::vector<std::string> &uploaded_uniforms()
+{
+	return g_uniforms;
+}
+
+void clear_uniforms()
+{
+	g_uniforms.clear();
+}
+
 } // namespace fakeobs
 
 // ---------------------------------------------------------------------------
@@ -440,17 +459,48 @@ gs_effect_t *gs_effect_create_from_file(const char *file, char **error)
 
 void gs_effect_destroy(gs_effect_t *) {}
 
-gs_eparam_t *gs_effect_get_param_by_name(const gs_effect_t *, const char *)
+struct obs_param {
+	std::string name;
+};
+
+gs_eparam_t *gs_effect_get_param_by_name(const gs_effect_t *, const char *name)
 {
-	return reinterpret_cast<gs_eparam_t *>(&g_param_dummy);
+	/* Stable per-name pointers so the harness can tell which uniforms the
+	 * render path actually uploads (D3D11 aborts the draw otherwise). */
+	static std::vector<obs_param *> params;
+	for (obs_param *p : params)
+		if (p->name == (name ? name : ""))
+			return reinterpret_cast<gs_eparam_t *>(p);
+	auto *p = new obs_param{name ? name : ""};
+	params.push_back(p);
+	return reinterpret_cast<gs_eparam_t *>(p);
 }
 
-void gs_effect_set_float(gs_eparam_t *, float) {}
-void gs_effect_set_color(gs_eparam_t *, uint32_t) {}
-void gs_effect_set_vec2(gs_eparam_t *, const struct vec2 *) {}
-void gs_effect_set_val(gs_eparam_t *, const void *, size_t) {}
-void gs_effect_set_texture(gs_eparam_t *, gs_texture_t *) {}
-void gs_effect_set_vec4(gs_eparam_t *, const struct vec4 *) {}
+namespace {
+void note_param_set(gs_eparam_t *param)
+{
+	if (param)
+		fakeobs::note_uniform_set(reinterpret_cast<obs_param *>(param)->name);
+}
+
+const char *param_name(gs_eparam_t *param)
+{
+	return param ? reinterpret_cast<obs_param *>(param)->name.c_str() : "";
+}
+} // namespace
+
+void gs_effect_set_float(gs_eparam_t *p, float) { note_param_set(p); }
+void gs_effect_set_color(gs_eparam_t *p, uint32_t) { note_param_set(p); }
+void gs_effect_set_vec2(gs_eparam_t *p, const struct vec2 *) { note_param_set(p); }
+void gs_effect_set_val(gs_eparam_t *p, const void *, size_t) { note_param_set(p); }
+void gs_effect_set_texture(gs_eparam_t *p, gs_texture_t *) { note_param_set(p); }
+void gs_effect_set_vec4(gs_eparam_t *p, const struct vec4 *) { note_param_set(p); }
+void gs_effect_set_matrix4(gs_eparam_t *p, const struct matrix4 *) { note_param_set(p); }
+
+const char *fakeobs_uniform_name(gs_eparam_t *param)
+{
+	return param_name(param);
+}
 
 gs_technique_t *gs_effect_get_technique(const gs_effect_t *, const char *)
 {

@@ -324,6 +324,14 @@ TOPSCREEN_DEBUG_KEY=Ctrl obs
   `failed to create the effect` appears, the file `data/effects/topscreen.effect`
   was not found — reinstall.
 
+**Windows: the source disappears when the filter is enabled**
+- Fixed in **0.2.4**. The D3D11 device refuses to draw when *any* scalar
+  shader parameter was never uploaded (`device_draw (D3D11): Not all shader
+  parameters were set`), which left the filter's output empty (the source
+  looked transparent while clicks still played). Every uniform is now
+  uploaded on every frame and unused textures get a 1x1 dummy binding.
+  If you see it on an older build, install the latest release.
+
 **The plugin does not show up / "Duplicate library"**
 - You have the plugin installed in two places. Keep only **one**
   (per-user **or** system). See [`BUILD.md`](BUILD.md).

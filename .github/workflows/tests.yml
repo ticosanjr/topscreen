@@ -1,9 +1,16 @@
 name: Tests
 
+# Core tests on Linux and Windows.
+#
+# Both jobs call the repository's own entry points (tests/run.sh and
+# tests/run.ps1) instead of duplicating the compile line, so the CI can
+# never drift from what a developer runs locally.
+
 on:
   push:
     branches: [main, master]
   pull_request:
+  workflow_dispatch:
 
 jobs:
   core-tests:
@@ -16,29 +23,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build & run core tests (Linux)
+      - name: Core tests (Linux)
         if: runner.os == 'Linux'
-        run: |
-          g++ -std=c++20 -O1 -g -Wall -Wextra \
-            -I src \
-            -DTOPSCREEN_TEST_DATA_DIR="$PWD/data" \
-            -DTOPSCREEN_SOURCE_DIR="$PWD" \
-            tests/*.cpp src/core/*.cpp src/ts-wallpapers.cpp \
-            -o topscreen_tests
-          ./topscreen_tests
+        run: ./tests/run.sh
 
-      - name: Build & run core tests (Windows)
+      - name: Core tests (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
-        run: |
-          $files = @(Get-ChildItem tests/*.cpp | ForEach-Object { $_.FullName })
-          $core  = @(Get-ChildItem src/core/*.cpp | ForEach-Object { $_.FullName })
-          $extra = @("$PWD/src/ts-wallpapers.cpp")
-          g++ -std=c++20 -O1 -g -Wall -Wextra `
-            -I src `
-            -DTOPSCREEN_TEST_DATA_DIR="$PWD/data" `
-            -DTOPSCREEN_SOURCE_DIR="$PWD" `
-            @files @core @extra `
-            -o topscreen_tests.exe
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          .\topscreen_tests.exe
+        run: ./tests/run.ps1

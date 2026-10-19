@@ -56,7 +56,21 @@ enum class CursorStyle : int {
 	YaruGrab = 23,
 	YaruIBeam = 24,
 	BreezeIBeam = 25,
-	Count = 26,
+	/* Hover / link hands: the very same themes' real `pointer` cursor, so the
+	 * "clicking a link" look matches the arrow you picked. Appended (never
+	 * inserted) to keep saved profiles pointing at the same style. */
+	BreezeHover = 26,
+	BibataHover = 27,
+	AdwaitaHover = 28,
+	DmzHover = 29,
+	YaruHover = 30,
+	XCursorProHover = 31,
+	BibataIceHover = 32,
+	BibataOriginalHover = 33,
+	DmzBlackHover = 34,
+	BreezeSnowHover = 35,
+	BibataIceOriginalHover = 36,
+	Count = 37,
 };
 
 /** Click effect types. */

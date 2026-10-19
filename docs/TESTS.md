@@ -77,13 +77,13 @@ That is where all the math and the state logic live — what actually must be ri
 | `test_wallpapers.cpp` | `src/ts-wallpapers.*` | label/path/stem resolution, case-insensitivity, all 24 built-ins, invalid input |
 
 | `test_key_overlay.cpp` | `core/key_overlay.*` | key queue, TTL, repeat, modifier filter, limit, combo formatting |
-| `test_wav.cpp` | `core/wav.*` | PCM 8/16/24/32 and float, stereo, errors, and **real files** `data/sounds/*.wav` |
+| `test_wav.cpp` | `core/wav.*` | PCM 8/16/24/32 and float, stereo, errors, and **real files** `data/sounds/*.wav`; the three real mouse recordings must be short (<150 ms) with the transient in the first 25 ms |
 | `test_font_atlas.cpp` | `core/font_atlas.*` | atlas generated from the **real TTF**, per-glyph metrics, alpha, invalid cases |
 | `test_evdev.cpp` | `core/evdev.*` | `input_event` decoding, labels, modifiers, partial records |
 | `test_highlighter.cpp` | `core/highlighter.*` | drag, normalized rectangle, hold/fade, small drag, disabled |
 | `test_highlight_modes.cpp` | `core/highlighter.*`, `core/zoom.*` | trail dedupe/cap, line decimation into the shader slots (first/last kept, monotonic), a pinned predicate matrix for all 5 drag modes (box/line/zoom/box+zoom/line+zoom), zoom request timing, hold-to-release glide, stroke bounding box as the zoom selection for the line modes, box+zoom and line+zoom draw *and* zoom |
 | `test_docs.cpp` | `docs/` × code | every key in `keys.hpp` is documented; hotkeys from the code are in the reference |
-| `test_cursor_atlas.cpp` | `core/cursor_atlas.*` + `data/cursors/` | TSAT format, hotspots and **real atlas** (16 styles = `CursorStyle::Count`) |
+| `test_cursor_atlas.cpp` | `core/cursor_atlas.*` + `data/cursors/` | TSAT format, hotspots and **real atlas** (37 styles = `CursorStyle::Count`); every **(link)** hand must be populated with its hotspot at the fingertip |
 | `test_image.cpp` | `core/image.*` + `data/wallpapers/` | image decode (reads a **real wallpaper** 1920x1080) and invalid cases |
 | `test_monitor.cpp` (integration: manual origin wins over the env) | `core/monitor.*` + `core/coord.*` | monitor pick (hint/size/ambiguity) and global→content mapping with the capture **below/right/left/above**, including the old broken case |
 | `test_mapping.cpp` | `core/mapping.*` | content area (padding/aspect), forward zoom and **consistency with the shader** (proves the cursor lands on the right pixel at any zoom) |
@@ -91,7 +91,7 @@ That is where all the math and the state logic live — what actually must be ri
 ## Current numbers
 
 ```
-165 tests | 2856 checks | 0 failures   (core)
+166 tests | 2961 checks | 0 failures   (core)
 26 tests | 364 checks   | 0 failures   (integration with fake libobs)
 ```
 

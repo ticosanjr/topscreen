@@ -1,6 +1,7 @@
 #include "core/wav.hpp"
 #include "test_framework.hpp"
 
+#include <cmath>
 #include <cstdint>
 #include <cstring>
 #include <fstream>
@@ -155,7 +156,9 @@ TEST(wav_errors)
 TEST(wav_real_files)
 {
 #ifdef TOPSCREEN_TEST_DATA_DIR
-	const char *files[] = {"click-soft.wav", "click-hard.wav"};
+	const char *files[] = {"click-soft.wav",     "click-hard.wav",
+			       "click-mouse-tight.wav", "click-mouse-single.wav",
+			       "click-mouse-right.wav"};
 	for (const char *name : files) {
 		const std::string path = std::string(TOPSCREEN_TEST_DATA_DIR) + "/sounds/" + name;
 		std::ifstream in(path, std::ios::binary);
@@ -173,6 +176,38 @@ TEST(wav_real_files)
 		CHECK_EQ(w.sample_rate, 44100);
 		CHECK_EQ(w.channels, 1);
 		CHECK(w.frame_count() > 1000);
+	}
+
+	/* The real mouse recordings must be REAL clicks: short (a click, not a
+	 * loop) with the energy at the very start (the switch transient), never a
+	 * long tail or a silent file. */
+	const char *mouse[] = {"click-mouse-tight.wav", "click-mouse-single.wav",
+			       "click-mouse-right.wav"};
+	for (const char *name : mouse) {
+		std::ifstream in(std::string(TOPSCREEN_TEST_DATA_DIR) + "/sounds/" + name,
+				 std::ios::binary);
+		REQUIRE(in.good());
+		const std::vector<uint8_t> bytes((std::istreambuf_iterator<char>(in)),
+						 std::istreambuf_iterator<char>());
+		WavData w;
+		std::string err;
+		REQUIRE(wav_parse(bytes.data(), bytes.size(), &w, &err));
+
+		/* < 150 ms: a single click. */
+		CHECK(w.frame_count() < static_cast<size_t>(w.sample_rate) * 150 / 1000);
+
+		float peak = 0.0f;
+		for (float s : w.samples)
+			peak = std::abs(s) > peak ? std::abs(s) : peak;
+		CHECK(peak > 0.25f); /* normalised, audible */
+
+		/* The transient (>= 50% of the peak) is in the first 25 ms. */
+		const size_t window =
+			static_cast<size_t>(w.sample_rate) * 25 / 1000 * static_cast<size_t>(w.channels);
+		float head = 0.0f;
+		for (size_t i = 0; i < window && i < w.samples.size(); ++i)
+			head = std::abs(w.samples[i]) > head ? std::abs(w.samples[i]) : head;
+		CHECK(head >= peak * 0.5f);
 	}
 #endif
 }

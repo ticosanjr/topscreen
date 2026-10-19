@@ -30,7 +30,7 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Shadow blur (px) | `bg_shadow_blur` | double | 0–200 | `48` |
 | | Shadow vertical offset (px) | `bg_shadow_offset` | double | -100–100 | `12` |
 | Cursor | Show cursor | `cursor_enabled` | bool | — | `true` |
-| | Style | `cursor_style` | int | 0 macOS · 1 Windows · 2 Breeze · 3 Bibata · 4 Adwaita · 5 GoogleDot · 6 Pointer · 7 DMZ · 8 Yaru · 9 XCursorPro · 10 BibataIce · 11 BibataOriginal | `0` |
+| | Style | `cursor_style` | int | arrows 0 macOS · 1 Windows · 2 Breeze · 3 Bibata · 4 Adwaita · 5 GoogleDot · 7 DMZ · 8 Yaru · 9 XCursorPro · 10 BibataIce · 11 BibataOriginal · 12 Neon · 13 Dot · 14 Cross · 15 Onyx · 19 DMZ Black · 20 Google Dot (black) · 21 Breeze Snow · 22 Bibata Ice Original; hands/text 6 Hand (pointer) · 16 Hand (open grab) · 17 Hand (closed) · 18 Text I-beam · 23 Yaru hand · 24 Yaru I-beam · 25 Breeze I-beam; link hands 26 Breeze · 27 Bibata · 28 Adwaita · 29 DMZ · 30 Yaru · 31 XCursorPro · 32 BibataIce · 33 BibataOriginal · 34 DMZ Black · 35 Breeze Snow · 36 Bibata Ice Original | `0` |
 | | Size | `cursor_size` | double | 0.5–4 | `1.4` |
 | | Cursor shadow | `cursor_shadow` | bool | — | `true` |
 | | Smoothing | `cursor_smooth` | double | 0–1 | `0.7` |
@@ -56,7 +56,7 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Duration (ms) | `click_right_duration_ms` | double | 100–2000 | `700` |
 | | Curve | `click_right_easing` | int | same | `2` |
 | Click sound | Enable sound | `click_sound_enabled` | bool | — | `true` |
-| | Left click sound | `click_sound_file_left` | string | bundled `sounds/*.wav` | `sounds/click-soft.wav` |
+| | Left click sound | `click_sound_file_left` | string | bundled `sounds/*.wav` (17; the three `click-mouse-*.wav` are real mouse recordings) | `sounds/click-soft.wav` |
 | | Right click sound | `click_sound_file_right` | string | bundled `sounds/*.wav` | `sounds/click-pop.wav` |
 | | Legacy single file | `click_sound_file` | string | migrates to both sides | — |
 | | Volume | `click_sound_volume` | double | 0–1 (honored by paplay) | `0.6` |

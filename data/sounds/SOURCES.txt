@@ -1,0 +1,30 @@
+TopScreen click sounds - origins and licences
+=============================================
+
+The three "Mouse (...)" clicks are REAL mouse recordings, not synthesised
+clicks. They are CC0 (public domain), so they can be shipped and redistributed
+freely. Attribution below is a courtesy, not a requirement.
+
+click-mouse-tight.wav
+  Source : Computer Mouse Click.wav
+  Author : FlowgerWikiCommons
+  Licence: CC0 1.0 (public domain dedication)
+  Page   : https://commons.wikimedia.org/wiki/File:Computer_Mouse_Click.wav
+  Edit   : trimmed to the click transient (70 ms), peak normalised, faded out.
+
+click-mouse-single.wav
+  Source : Computer mouse single click.ogg
+  Author : Darklanlan
+  Licence: CC0 1.0 (public domain dedication)
+  Page   : https://commons.wikimedia.org/wiki/File:Computer_mouse_single_click.ogg
+  Edit   : single transient extracted, trimmed to 80 ms, peak normalised.
+
+click-mouse-right.wav
+  Source : Computer mouse right click.ogg
+  Author : Darklanlan
+  Licence: CC0 1.0 (public domain dedication)
+  Page   : https://commons.wikimedia.org/wiki/File:Computer_mouse_right_click.ogg
+  Edit   : single transient extracted, trimmed to 80 ms, peak normalised.
+
+All are mono 16-bit PCM at 44100 Hz, the same format as the other bundled
+clicks.

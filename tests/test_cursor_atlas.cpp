@@ -99,3 +99,46 @@ TEST(cursor_atlas_rejects_invalid_data)
 	CHECK(!cursor_atlas_parse(truncado.data(), truncado.size(), &atlas, &err));
 	CHECK(!err.empty());
 }
+
+/* The hover (link) hands are the same themes' real `pointer` cursors: each one
+ * must be a populated bitmap whose hotspot sits at the fingertip (near the
+ * top), which is what makes the hand line up with what it points at. A theme
+ * whose package has no hand (GoogleDot) simply has no entry here. */
+TEST(cursor_atlas_hover_hands_are_real_and_populated)
+{
+	const auto bytes = read_bytes(cursors_dir() + "/atlas.rgba");
+	REQUIRE(!bytes.empty());
+	CursorAtlas atlas;
+	std::string err;
+	REQUIRE(cursor_atlas_parse(bytes.data(), bytes.size(), &atlas, &err));
+
+	const std::string json_text = read_text(cursors_dir() + "/atlas.json");
+	std::vector<Vec2f> hotspots;
+	REQUIRE(cursor_hotspots_parse(json_text, &hotspots, &err));
+
+	const int first = static_cast<int>(CursorStyle::BreezeHover);
+	REQUIRE(first > 0);
+	CHECK_EQ(static_cast<int>(atlas.count), static_cast<int>(CursorStyle::Count));
+	CHECK_EQ(static_cast<int>(hotspots.size()), static_cast<int>(CursorStyle::Count));
+
+	const int area = static_cast<int>(atlas.cell) * static_cast<int>(atlas.cell);
+	for (int style = first; style < static_cast<int>(CursorStyle::Count); ++style) {
+		const uint8_t *cell = atlas.pixels.data() + static_cast<size_t>(style) * area * 4;
+		int opaque = 0;
+		for (int i = 0; i < area; ++i)
+			if (cell[i * 4 + 3] > 16)
+				++opaque;
+		/* A hand covers a solid part of the cell (never an empty cell). */
+		++tst::checks();
+		if (opaque < area / 20)
+			tst::fail(__FILE__, __LINE__,
+				  "hover cursor cell looks empty: style " + std::to_string(style));
+		/* Fingertip hotspot: upper part of the cell (not centred like a
+		 * dot/touch cursor). */
+		++tst::checks();
+		if (!(hotspots[style].y <= 0.35))
+			tst::fail(__FILE__, __LINE__,
+				  "hover cursor hotspot is not at the fingertip: style " +
+					  std::to_string(style));
+	}
+}

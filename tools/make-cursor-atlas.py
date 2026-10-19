@@ -3,7 +3,8 @@
 Generates the TopScreen cursor atlas.
 
 - Extracts real cursors from installed XCursor themes (Bibata, Breeze, Adwaita,
-  GoogleDot) reading the XCursor format.
+  GoogleDot) reading the XCursor format. Each themed arrow also ships the
+  theme's own `pointer` (hover/link) hand.
 - Draws "macOS (classic)" and "Windows (classic)" procedurally.
 - Packs everything into data/cursors/atlas.rgba (TSAT) + atlas.json (hotspots).
 
@@ -57,6 +58,21 @@ SOURCES = [
     ("yarugrab", f"{ICONS}/Yaru/cursors/grab"),
     ("yaruibeam", f"{ICONS}/Yaru/cursors/xterm"),
     ("breezeibeam", f"{ICONS}/breeze_cursors/cursors/xterm"),
+    # Hover / link hands: the REAL `pointer` cursor of the very same themes
+    # (nothing is drawn here, the theme files are used as shipped).
+    # GoogleDot-White/Black are excluded: that theme ships no hand at all
+    # (its "pointer" is a dot, like every other cursor in it).
+    ("breezehover", f"{ICONS}/breeze_cursors/cursors/pointer"),
+    ("bibatahover", f"{ICONS}/Bibata-Modern-Classic/cursors/pointer"),
+    ("adwaitahover", f"{ICONS}/Adwaita/cursors/pointer"),
+    ("dmzhover", f"{ICONS}/DMZ-White/cursors/hand2"),
+    ("yaruhover", f"{ICONS}/Yaru/cursors/pointer"),
+    ("xcursorprohover", f"{ICONS}/XCursor-Pro-Light/cursors/pointer"),
+    ("bibataicehover", f"{ICONS}/Bibata-Modern-Ice/cursors/pointer"),
+    ("bibataoriginalhover", f"{ICONS}/Bibata-Original-Classic/cursors/pointer"),
+    ("dmzblackhover", f"{ICONS}/DMZ-Black/cursors/hand2"),
+    ("breezesnowhover", f"{ICONS}/Breeze_Snow/cursors/pointer"),
+    ("bibataiceorighover", f"{ICONS}/Bibata-Original-Ice/cursors/pointer"),
 ]
 
 

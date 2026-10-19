@@ -27,6 +27,9 @@ const char *const kFonts[][2] = {
  * FX palette for a more produced look. */
 const char *const kSounds[][2] = {
 	/* real mouse/switch clicks */
+	{"Mouse (tight click)", "sounds/click-mouse-tight.wav"},
+	{"Mouse (single click)", "sounds/click-mouse-single.wav"},
+	{"Mouse (right click)", "sounds/click-mouse-right.wav"},
 	{"Crisp (switch)", "sounds/click-crisp.wav"},
 	{"Deep (thock)", "sounds/click-deep.wav"},
 	{"Pad (trackpad)", "sounds/click-pad.wav"},
@@ -261,6 +264,29 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 				  static_cast<int>(CursorStyle::YaruIBeam));
 	obs_property_list_add_int(style, obs_module_text("Cursor.Style.BreezeIBeam"),
 				  static_cast<int>(CursorStyle::BreezeIBeam));
+	/* Hover (link) hands: the same themes' own pointer cursor. */
+	obs_property_list_add_int(style, obs_module_text("Cursor.Style.BreezeHover"),
+				  static_cast<int>(CursorStyle::BreezeHover));
+	obs_property_list_add_int(style, obs_module_text("Cursor.Style.BibataHover"),
+				  static_cast<int>(CursorStyle::BibataHover));
+	obs_property_list_add_int(style, obs_module_text("Cursor.Style.AdwaitaHover"),
+				  static_cast<int>(CursorStyle::AdwaitaHover));
+	obs_property_list_add_int(style, obs_module_text("Cursor.Style.DmzHover"),
+				  static_cast<int>(CursorStyle::DmzHover));
+	obs_property_list_add_int(style, obs_module_text("Cursor.Style.YaruHover"),
+				  static_cast<int>(CursorStyle::YaruHover));
+	obs_property_list_add_int(style, obs_module_text("Cursor.Style.XCursorProHover"),
+				  static_cast<int>(CursorStyle::XCursorProHover));
+	obs_property_list_add_int(style, obs_module_text("Cursor.Style.BibataIceHover"),
+				  static_cast<int>(CursorStyle::BibataIceHover));
+	obs_property_list_add_int(style, obs_module_text("Cursor.Style.BibataOriginalHover"),
+				  static_cast<int>(CursorStyle::BibataOriginalHover));
+	obs_property_list_add_int(style, obs_module_text("Cursor.Style.DmzBlackHover"),
+				  static_cast<int>(CursorStyle::DmzBlackHover));
+	obs_property_list_add_int(style, obs_module_text("Cursor.Style.BreezeSnowHover"),
+				  static_cast<int>(CursorStyle::BreezeSnowHover));
+	obs_property_list_add_int(style, obs_module_text("Cursor.Style.BibataIceOriginalHover"),
+				  static_cast<int>(CursorStyle::BibataIceOriginalHover));
 
 	obs_properties_add_float_slider(cur, kCursorSize, obs_module_text("Cursor.Size"), 0.5, 4.0, 0.05);
 	obs_properties_add_float_slider(cur, kCursorSmooth, obs_module_text("Cursor.Smooth"), 0.0, 1.0, 0.01);

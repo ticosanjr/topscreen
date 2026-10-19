@@ -165,9 +165,10 @@ jobs:
           # No -G: use whatever Visual Studio the runner has installed.
           cmake -S . -B build -A x64 `
             -DCMAKE_BUILD_TYPE=Release `
+            -DCMAKE_PREFIX_PATH="$PWD/.deps" `
             -DLIBOBS_INCLUDE_DIR="$env:OBS_SRC/libobs" `
             -DLIBOBS_LIBRARY="$PWD/.importlib/obs.lib" `
-            -DENABLE_QT=OFF -DENABLE_FRONTEND_API=OFF -DTOPSCREEN_BUILD_TESTS=OFF
+            -DENABLE_QT=ON -DENABLE_FRONTEND_API=ON -DTOPSCREEN_BUILD_TESTS=OFF
           if ($LASTEXITCODE -ne 0) { throw 'cmake configure failed' }
           cmake --build build --config Release
           if ($LASTEXITCODE -ne 0) { throw 'build failed' }

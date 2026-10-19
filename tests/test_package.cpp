@@ -54,18 +54,21 @@ TEST(package_windows_launchers_present)
 	CHECK(install.rfind("@echo off", 0) == 0);
 	CHECK(uninstall.rfind("@echo off", 0) == 0);
 
-	/* The launchers must reach the release zip root as install/uninstall.bat. */
+	/* The launchers must ship INSIDE the plugin folder (next to bin/ and
+	 * data/), so nothing has to be moved after extracting the zip. */
 	const std::string packager = read_bytes(root + "scripts/package.sh");
 	CHECK(!packager.empty());
 	CHECK(packager.find("install-windows.bat") != std::string::npos);
 	CHECK(packager.find("uninstall-windows.bat") != std::string::npos);
-	CHECK(packager.find("install.bat") != std::string::npos);
-	CHECK(packager.find("uninstall.bat") != std::string::npos);
+	CHECK(packager.find("topscreen/install.bat") != std::string::npos);
+	CHECK(packager.find("topscreen/uninstall.bat") != std::string::npos);
 
 	const std::string workflow = read_bytes(root + ".github/workflows/release.yml");
 	CHECK(!workflow.empty());
 	CHECK(workflow.find("install-windows.bat") != std::string::npos);
 	CHECK(workflow.find("uninstall-windows.bat") != std::string::npos);
+	CHECK(workflow.find("pkg\\topscreen\\install.bat") != std::string::npos);
+	CHECK(workflow.find("pkg\\topscreen\\uninstall.bat") != std::string::npos);
 }
 
 /* The installer must work from the release zip AND from the source repo,

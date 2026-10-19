@@ -192,9 +192,10 @@ jobs:
           New-Item -ItemType Directory -Force dist, pkg\topscreen\bin\64bit, pkg\topscreen\data | Out-Null
           Copy-Item build\Release\topscreen.dll pkg\topscreen\bin\64bit\
           Copy-Item -Recurse data\* pkg\topscreen\data\
-          Copy-Item scripts\install-windows.bat pkg\install.bat
-          Copy-Item scripts\uninstall-windows.bat pkg\uninstall.bat
-          Compress-Archive -Path pkg\install.bat,pkg\uninstall.bat,pkg\topscreen -DestinationPath "dist\topscreen-$ver-windows.zip" -Force
+          # Launchers INSIDE the plugin folder, so nothing has to be moved.
+          Copy-Item scripts\install-windows.bat pkg\topscreen\install.bat
+          Copy-Item scripts\uninstall-windows.bat pkg\topscreen\uninstall.bat
+          Compress-Archive -Path pkg\topscreen -DestinationPath "dist\topscreen-$ver-windows.zip" -Force
           Get-ChildItem dist
 
       - uses: actions/upload-artifact@v4
@@ -229,10 +230,11 @@ jobs:
 
             ### Windows (no compiler, no admin)
             1. Download `topscreen-${{ github.ref_name }}-windows.zip`.
-            2. **Extract the whole zip**, then double-click **`install.bat`**.
+            2. **Extract the whole zip** and open the `topscreen` folder.
+            3. Double-click **`install.bat`** (it sits next to `bin` and `data`).
                - Drag your **OBS portable** folder onto it to install there instead.
-               - Remove later with `uninstall.bat`.
-            3. Restart OBS, add a **Display Capture**, then
+               - Remove later with `uninstall.bat` (same folder).
+            4. Restart OBS, add a **Display Capture**, then
                **Filters → + → "TopScreen FX"**.
 
             The Windows build ships the filter itself (Properties, hotkeys,

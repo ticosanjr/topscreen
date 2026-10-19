@@ -66,12 +66,15 @@ sudo apt update && sudo apt install -y cmake build-essential libobs-dev
 ### Windows
 
 No compiler, no admin — download `topscreen-<version>-windows.zip`
-(from a GitHub release or the `Build plugin` CI artifacts), **extract the
-whole zip**, and double-click **`install.bat`**:
+(from a GitHub release or the `Release` CI artifacts), **extract the whole
+zip**, open the `topscreen` folder and double-click **`install.bat`**:
+
+The zip extracts to a single **`topscreen/`** folder containing
+`install.bat`, `uninstall.bat`, `bin/` and `data/` — nothing has to be moved.
 
 | What you do | Where it installs |
 |---|---|
-| Double-click `install.bat` | per-user plugin (`%ProgramData%\obs-studio\plugins\topscreen`) |
+| Double-click `topscreen\install.bat` | per-user plugin (`%ProgramData%\obs-studio\plugins\topscreen`) |
 | Drag your OBS **portable** folder onto `install.bat` | inside the portable (`obs-plugins\64bit` + `data\obs-plugins\topscreen`) |
 | Drag a **`topscreen.dll`** onto `install.bat` | per-user plugin, using that file |
 

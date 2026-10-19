@@ -28,7 +28,9 @@ image straight to OBS, as a filter, for you to use in a scene.
 
 **Windows** (no compiler, no admin)
 1. Download `topscreen-<version>-windows.zip` (release / CI artifact) and extract the **whole zip**.
-2. Double-click **`install.bat`** (drag your portable OBS folder onto it for portable installs; drag a `topscreen.dll` to install a specific build).
+2. Open the **`topscreen`** folder and double-click **`install.bat`** (it sits next to `bin` and `data`).
+   Drag your portable OBS folder onto it for portable installs, or drag a `topscreen.dll`
+   to install a specific build. Remove later with `uninstall.bat` in the same folder.
 
 Cloned the source instead? Running `scripts\install-windows.bat` also works — it
 looks for a compiled `topscreen.dll` and, if there is none, tells you exactly how

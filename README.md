@@ -73,9 +73,10 @@ pwsh -File tests\run.ps1  # Windows (or PowerShell on any OS)
 **Windows**
 ```powershell
 # 1) Download topscreen-<version>-windows.zip (GitHub release / CI artifact)
-# 2) Extract the WHOLE zip, then double-click:
+# 2) Extract the WHOLE zip and open the "topscreen" folder
+# 3) Double-click install.bat  (it sits next to bin/ and data/)
 install.bat                  # per-user plugin (no admin, no compiler)
-# Uninstall the same way:
+# Uninstall the same way (same folder):
 uninstall.bat
 ```
 Portable OBS: **drag the portable folder onto `install.bat`** (same for `uninstall.bat`).

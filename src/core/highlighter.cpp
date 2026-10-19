@@ -70,14 +70,17 @@ void HighlighterModel::end(double now)
 	/* Zoom gesture. The hold path (update) fires while the button is still
 	 * down; this path only handles a release that happened before the
 	 * trigger, with a real drag behind it. */
-	if (!zoom_fired_ && cfg_.mode == static_cast<int>(HighlightMode::Zoom) && cfg_.enabled &&
-	    big_enough) {
+	if (!zoom_fired_ &&
+	    (cfg_.mode == static_cast<int>(HighlightMode::Zoom) ||
+	     cfg_.mode == static_cast<int>(HighlightMode::BoxZoom)) &&
+	    cfg_.enabled && big_enough) {
 		zx0_ = sx_ < ex_ ? sx_ : ex_;
 		zy0_ = sy_ < ey_ ? sy_ : ey_;
 		zx1_ = sx_ < ex_ ? ex_ : sx_;
 		zy1_ = sy_ < ey_ ? ey_ : sy_;
 		zoom_request_ = true;
-		has_ = false;
+		if (cfg_.mode == static_cast<int>(HighlightMode::Zoom))
+			has_ = false; /* pure zoom draws nothing; BoxZoom keeps its box */
 	}
 }
 
@@ -102,8 +105,9 @@ static constexpr double kPunchDeadZone2 = 0.003 * 0.003;
 
 void HighlighterModel::update(double now)
 {
-	if (cfg_.mode == static_cast<int>(HighlightMode::Zoom) && cfg_.enabled && dragging_ &&
-	    !zoom_fired_) {
+	if ((cfg_.mode == static_cast<int>(HighlightMode::Zoom) ||
+	     cfg_.mode == static_cast<int>(HighlightMode::BoxZoom)) &&
+	    cfg_.enabled && dragging_ && !zoom_fired_) {
 		const bool punch = cfg_.zoom_dir >= 2;
 		const double dx = ex_ - sx_;
 		const double dy = ey_ - sy_;
@@ -175,7 +179,8 @@ HighlightRender HighlighterModel::render() const
 		}
 	}
 
-	/* Zoom mode never paints; the filter animates the zoom instead. */
+	/* Pure zoom never paints; the filter animates the zoom instead. BoxZoom
+	 * falls through and draws the box below. */
 	if (cfg_.mode == static_cast<int>(HighlightMode::Zoom)) {
 		out.active = false;
 		return out;

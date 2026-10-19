@@ -10,7 +10,8 @@ namespace topscreen::core {
 enum class HighlightMode : int {
 	Box = 0,  // filled rounded box (original behaviour)
 	Line = 1, // freehand line that fades out
-	Zoom = 2, // no drawing: quick zoom into the selection, slow zoom back
+	Zoom = 2, // no drawing: hold to zoom, release to glide back
+	BoxZoom = 3, // draws the box AND zooms while held
 };
 
 struct HighlighterConfig {
@@ -52,10 +53,15 @@ struct HighlightRender {
 	int point_count = 0;
 };
 
+/* Only the box modes paint the rectangle: the line has its own overlay and
+ * the pure zoom gesture draws nothing. Regression for "Line still shows the
+ * filled box". */
 inline bool paints_box(const HighlightRender &r)
 {
-	return r.active && r.mode == 0;
+	return r.active && (r.mode == static_cast<int>(HighlightMode::Box) ||
+			    r.mode == static_cast<int>(HighlightMode::BoxZoom));
 }
+
 
 /**
  * Drag highlighter.

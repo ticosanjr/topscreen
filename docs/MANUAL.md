@@ -211,7 +211,7 @@ modifiers (`Esc` stays as text).
 | Group | Option | What it does |
 |-------|--------|--------------|
 | — | **Enable drag actions** | Master switch for what a left-drag does |
-| — | **What a drag does** | **Filled box** (classic mark) · **Line** (draw freehand, fades out) · **Zoom to the selection** (no drawing) |
+| — | **What a drag does** | **Filled box** (classic mark) · **Line** (draw freehand, fades out) · **Zoom to the selection** (no drawing) · **Box + zoom** (marks *and* zooms) |
 | Look | **Color** | Highlight color (use alpha < 255 for translucent) |
 | Look | **Opacity** | Strength ceiling (0 = invisible, 1 = solid); keeps content readable |
 | Look | **Line thickness** | Stroke width as a fraction of the screen height |
@@ -237,8 +237,11 @@ modifiers (`Esc` stays as text).
 - **Filled box**: marks a region (classic).
 - **Line**: draw small shapes/underlines with the mouse; the stroke fades out.
   Great for circling something on screen.
-- **Zoom to the selection**: drag over an area; TopScreen zooms **fast** into it,
-  **holds** briefly and zooms back **slowly** — no mark is drawn.
+- **Zoom to the selection**: drag over an area — or just press and hold — and
+  TopScreen zooms into it, **holds while you keep the button down**, and glides
+  back on release.
+- **Box + zoom**: draws the box *and* zooms, for when you want to mark the area
+  you are inspecting.
   - **Zoom direction** picks the motion: *Zoom in* / *Zoom out*, or *Punch in* /
     *Punch out* (no hold: it snaps and returns immediately).
   - The **centre of the dragged area** always ends up in the **centre of the

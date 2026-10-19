@@ -84,6 +84,7 @@ void HighlightRenderer::upload(int width, int height, const std::vector<uint8_t>
 	}
 
 	obs_enter_graphics();
+	bool ok = true;
 	if (!texture_ || width != texture_w_ || height != texture_h_) {
 		if (texture_) {
 			gs_texture_destroy(texture_);
@@ -92,6 +93,7 @@ void HighlightRenderer::upload(int width, int height, const std::vector<uint8_t>
 		const uint8_t *data[1] = {rgba_.data()};
 		texture_ = gs_texture_create(static_cast<uint32_t>(width), static_cast<uint32_t>(height),
 					     GS_RGBA, 1, data, 0);
+		ok = texture_ != nullptr;
 		texture_w_ = width;
 		texture_h_ = height;
 	} else {
@@ -99,7 +101,15 @@ void HighlightRenderer::upload(int width, int height, const std::vector<uint8_t>
 	}
 	obs_leave_graphics();
 
-	texture_revision_ = revision;
+	/* Only advance on success: a failed upload must be retried next frame
+	 * instead of freezing the stroke forever. */
+	if (ok) {
+		texture_revision_ = revision;
+	} else if (!warned_upload_) {
+		warned_upload_ = true;
+		blog(LOG_WARNING, "[TopScreen] line highlight: texture upload failed (%dx%d)",
+		     width, height);
+	}
 }
 
 void HighlightRenderer::draw(float x, float y, float w, float h, uint32_t color, float alpha)

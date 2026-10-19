@@ -43,6 +43,7 @@ private:
 	std::vector<uint8_t> rgba_;
 	gs_texture_t *texture_ = nullptr;
 	uint32_t texture_revision_ = 0;
+	bool warned_upload_ = false;
 	int texture_w_ = 0;
 	int texture_h_ = 0;
 };

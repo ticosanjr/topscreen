@@ -250,33 +250,70 @@ TEST(zoom_spot_punch_has_no_hold)
 /* Only the box mode may paint the rectangle: the line has its own overlay and
  * the zoom gesture must draw nothing at all. Regression for "Line still shows
  * the filled box". */
-TEST(highlight_only_box_mode_paints_the_rectangle)
+TEST(highlight_only_box_modes_paint_the_rectangle)
+{
+	for (int mode : {static_cast<int>(HighlightMode::Box),
+			 static_cast<int>(HighlightMode::BoxZoom)}) {
+		HighlighterModel m;
+		HighlighterConfig cfg;
+		cfg.mode = mode;
+		m.configure(cfg);
+		m.begin(0.1, 0.1, 0.0);
+		m.move(0.5, 0.5, 10.0);
+		m.end(20.0);
+		m.update(30.0);
+		CHECK(paints_box(m.render()));
+	}
+	for (int mode : {static_cast<int>(HighlightMode::Line),
+			 static_cast<int>(HighlightMode::Zoom)}) {
+		HighlighterModel m;
+		HighlighterConfig cfg;
+		cfg.mode = mode;
+		m.configure(cfg);
+		m.begin(0.1, 0.1, 0.0);
+		if (mode == static_cast<int>(HighlightMode::Line)) {
+			m.move(0.3, 0.3, 10.0);
+			m.move(0.5, 0.5, 20.0);
+		} else {
+			m.move(0.5, 0.5, 10.0);
+		}
+		m.end(20.0);
+		m.update(30.0);
+		if (mode == static_cast<int>(HighlightMode::Line))
+			CHECK(m.render().active);
+		CHECK(!paints_box(m.render()));
+	}
+}
+
+/* BoxZoom draws its box AND asks for a zoom (hold-to-zoom semantics). */
+TEST(highlight_boxzoom_draws_and_zooms)
 {
 	HighlighterModel m;
 	HighlighterConfig cfg;
-	cfg.mode = static_cast<int>(HighlightMode::Box);
+	cfg.mode = static_cast<int>(HighlightMode::BoxZoom);
+	cfg.zoom_delay_ms = 100.0;
 	m.configure(cfg);
-	m.begin(0.1, 0.1, 0.0);
-	m.move(0.5, 0.5, 10.0);
-	m.end(20.0);
-	m.update(30.0);
-	CHECK(paints_box(m.render()));
 
-	cfg.mode = static_cast<int>(HighlightMode::Line);
-	m.configure(cfg);
+	/* Hold past the delay: the zoom request fires with the drawn box. */
 	m.begin(0.1, 0.1, 0.0);
-	m.move(0.5, 0.5, 10.0);
-	m.end(20.0);
-	m.update(30.0);
-	CHECK(!paints_box(m.render()));
+	m.update(50.0);
+	double x0, y0, x1, y1;
+	CHECK(!m.take_zoom_request(&x0, &y0, &x1, &y1));
+	m.move(0.4, 0.5, 60.0);
+	m.update(200.0);
+	REQUIRE(m.take_zoom_request(&x0, &y0, &x1, &y1));
+	CHECK_NEAR(x0, 0.1, 1e-9);
+	CHECK_NEAR(y1, 0.5, 1e-9);
 
-	cfg.mode = static_cast<int>(HighlightMode::Zoom);
-	m.configure(cfg);
-	m.begin(0.1, 0.1, 0.0);
-	m.move(0.5, 0.5, 10.0);
-	m.end(20.0);
-	m.update(30.0);
-	CHECK(!paints_box(m.render()));
+	/* ...while the box stays painted (fades after release). */
+	const HighlightRender r = m.render();
+	CHECK(r.active);
+	CHECK(paints_box(r));
+	CHECK_NEAR(r.x1, 0.4, 1e-9);
+
+	m.end(300.0);
+	m.update(400.0);
+	CHECK(m.render().active); /* still fading, like the plain box */
 }
 
 /* The centre of the selection must end up in the centre of the screen. */

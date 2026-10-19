@@ -173,6 +173,17 @@ TEST(properties_highlight_groups_follow_the_mode)
 		obs_data_release(s);
 	}
 
+	/* Box+zoom shows everything: it draws the box AND zooms. */
+	{
+		auto [s, p] = make_props(static_cast<int>(core::HighlightMode::BoxZoom));
+		CHECK(p != nullptr);
+		CHECK(fakeobs::property_visible(obs_properties_get(p, "grp_hl_look")));
+		CHECK(fakeobs::property_visible(obs_properties_get(p, "grp_hl_timing")));
+		CHECK(fakeobs::property_visible(obs_properties_get(p, "grp_hl_zoom")));
+		obs_properties_destroy(p);
+		obs_data_release(s);
+	}
+
 	/* Line mode behaves like box (look + timing, no zoom group). */
 	{
 		auto [s, p] = make_props(static_cast<int>(core::HighlightMode::Line));

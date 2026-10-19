@@ -520,8 +520,16 @@ void Compositor::render(obs_source_t *filter, const core::Config &cfg, const Fra
 	 * The canvas maps 1:1 to the frame (point u,v -> pixel u*w, v*h), which is
 	 * the same space the model records, so no padding/aspect math can shift or
 	 * hide the stroke. */
-	if (active && st.highlight.active && st.highlight.mode == 1 && st.highlight.point_count > 1 &&
-	    highlight_.ready()) {
+	const bool line_wanted = active && st.highlight.active && st.highlight.mode == 1 &&
+			      st.highlight.point_count > 1;
+	if (line_wanted && !logged_line_attempt_) {
+		logged_line_attempt_ = true;
+		blog(LOG_INFO,
+		     "[TopScreen] line highlight: attempt with %d points, alpha %.2f, effect %s",
+		     st.highlight.point_count, st.highlight.alpha,
+		     highlight_.ready() ? "ready" : "NOT READY (highlight.effect missing?)");
+	}
+	if (line_wanted && highlight_.ready()) {
 		const int count = st.highlight.point_count;
 		if (count < pen_points_) {
 			pen_.reset(1.0, 512, st.highlight.thickness);
@@ -542,7 +550,7 @@ void Compositor::render(obs_source_t *filter, const core::Config &cfg, const Fra
 
 		if (!logged_line_draw_) {
 			logged_line_draw_ = true;
-			blog(LOG_INFO, "[TopScreen] line highlight: %d points, canvas %dx%d", count,
+			blog(LOG_INFO, "[TopScreen] line highlight: drew %d points, canvas %dx%d", count,
 			     pen_.width(), pen_.height());
 		}
 	} else {

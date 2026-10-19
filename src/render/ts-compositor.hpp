@@ -52,6 +52,7 @@ private:
 	bool ready_ = false;
 	bool logged_first_frame_ = false;
 	bool logged_line_draw_ = false;
+	bool logged_line_attempt_ = false;
 	bool logged_begin_failure_ = false;
 	/* Diagnostic: TOPSCREEN_TECH=passthrough draws only the source. */
 	bool use_passthrough_ = false;

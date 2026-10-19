@@ -80,7 +80,7 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Background band | `keys_band` | bool | — | `true` |
 | | Band color | `keys_band_color` | color | — | `0x99000000` |
 | Highlighter | Enable drag actions | `highlight_enabled` | bool | — | `true` |
-| Look | Drag action: box / line / zoom | `highlight_mode` | int | 0 box, 1 line, 2 zoom | `0` |
+| Look | Drag action: box / line / zoom / box+zoom | `highlight_mode` | int | 0 box, 1 line, 2 zoom, 3 box+zoom | `0` |
 | Look | Color | `highlight_color` | color | — | `0x6600E0FF` |
 | Look | Opacity (0 = invisible) | `highlight_opacity` | double | 0–1 | `0.35` |
 | Look | Line thickness (fraction of screen) | `highlight_thickness` | double | 0.001–0.05 | `0.004` |

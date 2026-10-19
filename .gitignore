@@ -35,3 +35,7 @@ Thumbs.db
 *.log
 .cache/
 compile_commands.json
+
+# Python tooling
+__pycache__/
+*.pyc

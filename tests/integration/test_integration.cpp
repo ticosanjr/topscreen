@@ -414,6 +414,33 @@ TEST(integration_registers_all_hotkeys)
 	CHECK(!fakeobs::hotkeys_active_from(before));
 }
 
+/* Frontend hotkeys are process-wide: a second filter must NOT register a
+ * second set of 18, and destroying one filter must keep them alive. */
+TEST(integration_hotkeys_shared_between_filters)
+{
+	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
+
+	obs_source_t *parent = make_parent(1280, 720);
+	obs_source_t *f1 = fakeobs::make_source(&ts_filter_source_info, parent, 0, 0);
+	obs_source_t *f2 = fakeobs::make_source(&ts_filter_source_info, parent, 0, 0);
+	const int before = fakeobs::hotkey_count();
+
+	void *ctx1 = create_filter(f1);
+	void *ctx2 = create_filter(f2);
+	REQUIRE(ctx1 != nullptr);
+	REQUIRE(ctx2 != nullptr);
+
+	CHECK_EQ(fakeobs::hotkey_count() - before, 18);
+	CHECK(fakeobs::hotkeys_active_from(before));
+
+	/* Destroying one filter keeps the shared hotkeys working. */
+	ts_filter_source_info.destroy(ctx1);
+	CHECK(fakeobs::hotkeys_active_from(before));
+
+	ts_filter_source_info.destroy(ctx2);
+	CHECK(!fakeobs::hotkeys_active_from(before));
+}
+
 TEST(integration_seeded_profiles_restore)
 {
 	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);

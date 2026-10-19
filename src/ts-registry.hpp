@@ -2,6 +2,8 @@
 
 #include <string>
 
+#include "hotkeys/ts-hotkeys.hpp"
+
 namespace topscreen {
 
 /**
@@ -39,5 +41,16 @@ void registry_remove(FilterControl *control);
 
 /** First active filter (or nullptr). Used by the dock. */
 FilterControl *registry_first();
+
+/**
+ * Hotkey targets. OBS marks every filter source as private, so
+ * obs_hotkey_register_source() always fails for filters (returns
+ * OBS_INVALID_HOTKEY_ID on every platform). Hotkeys are therefore registered
+ * once, process-wide, as *frontend* hotkeys and dispatched to the first
+ * registered target (same rule as the dock).
+ */
+void hotkey_target_add(HotkeyContext *target);
+void hotkey_target_remove(HotkeyContext *target);
+HotkeyContext *hotkey_target_first();
 
 } // namespace topscreen

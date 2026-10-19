@@ -1,5 +1,7 @@
 #include "ts-hotkeys.hpp"
 
+#include "ts-registry.hpp"
+
 namespace topscreen {
 
 namespace {
@@ -60,29 +62,42 @@ const char *hotkey_description(int action)
 
 } // namespace
 
-void Hotkeys::register_all(obs_source_t *source, HotkeyContext *ctx)
+std::atomic<int> Hotkeys::refs_{0};
+HotkeyBinding Hotkeys::bindings_[HK_Count];
+obs_hotkey_id Hotkeys::ids_[HK_Count] = {0};
+
+void Hotkeys::register_all(HotkeyContext *ctx)
 {
+	hotkey_target_add(ctx);
+	if (refs_.fetch_add(1) != 0)
+		return; /* already registered process-wide */
+
 	int registered = 0;
 	for (int i = 0; i < HK_Count; ++i) {
-		bindings_[i].ctx = ctx;
 		bindings_[i].action = i;
-		ids_[i] = obs_hotkey_register_source(source, kHotkeyNames[i], hotkey_description(i),
-						     ts_hotkey_callback, &bindings_[i]);
-		if (ids_[i])
+		ids_[i] = obs_hotkey_register_frontend(kHotkeyNames[i], hotkey_description(i),
+						       ts_hotkey_callback, &bindings_[i]);
+		if (ids_[i] && ids_[i] != OBS_INVALID_HOTKEY_ID)
 			++registered;
+		else
+			ids_[i] = 0;
 	}
 
-	/* Logged so a missing "TopScreen" section in Settings > Hotkeys can be
-	 * told apart from a registration failure: the OBS UI groups these under
-	 * the filter instance name. */
-	blog(LOG_INFO, "[TopScreen] hotkeys registered: %d/%d", registered, HK_Count);
+	/* Frontend hotkeys show up flat in Settings > Hotkeys (not grouped under
+	 * the filter instance: per-source registration is impossible for
+	 * filters, which OBS always marks private). */
+	blog(LOG_INFO, "[TopScreen] hotkeys registered: %d/%d (global, act on the active filter)",
+	     registered, HK_Count);
 	for (int i = 0; i < HK_Count; ++i)
 		blog(LOG_INFO, "[TopScreen]   hotkey id=%d %s (%s)", static_cast<int>(ids_[i]),
 		     kHotkeyNames[i], hotkey_description(i));
 }
 
-void Hotkeys::unregister_all()
+void Hotkeys::unregister_all(HotkeyContext *ctx)
 {
+	hotkey_target_remove(ctx);
+	if (refs_.fetch_sub(1) != 1)
+		return; /* other filters still use them */
 	for (int i = 0; i < HK_Count; ++i) {
 		if (ids_[i])
 			obs_hotkey_unregister(ids_[i]);
@@ -99,7 +114,12 @@ void ts_hotkey_callback(void *data, obs_hotkey_id id, obs_hotkey_t *key, bool pr
 		return;
 
 	auto *binding = static_cast<HotkeyBinding *>(data);
-	if (!binding || !binding->ctx)
+	if (!binding)
+		return;
+
+	/* Route to the first active filter (same rule as the dock). */
+	HotkeyContext *target = hotkey_target_first();
+	if (!target)
 		return;
 
 	blog(LOG_INFO, "[TopScreen] hotkey fired: %s",
@@ -107,58 +127,58 @@ void ts_hotkey_callback(void *data, obs_hotkey_id id, obs_hotkey_t *key, bool pr
 
 	switch (binding->action) {
 	case HK_ToggleEffects:
-		binding->ctx->toggle_effects();
+		target->toggle_effects();
 		break;
 	case HK_ToggleBackground:
-		binding->ctx->toggle_background();
+		target->toggle_background();
 		break;
 	case HK_ZoomIn:
-		binding->ctx->zoom_in();
+		target->zoom_in();
 		break;
 	case HK_ZoomOut:
-		binding->ctx->zoom_out();
+		target->zoom_out();
 		break;
 	case HK_ResetZoom:
-		binding->ctx->reset_zoom();
+		target->reset_zoom();
 		break;
 	case HK_NextPreset:
-		binding->ctx->next_preset();
+		target->next_preset();
 		break;
 	case HK_PrevPreset:
-		binding->ctx->prev_preset();
+		target->prev_preset();
 		break;
 	case HK_ProfileA:
-		binding->ctx->select_profile(0);
+		target->select_profile(0);
 		break;
 	case HK_ProfileB:
-		binding->ctx->select_profile(1);
+		target->select_profile(1);
 		break;
 	case HK_ProfileC:
-		binding->ctx->select_profile(2);
+		target->select_profile(2);
 		break;
 	case HK_ProfileD:
-		binding->ctx->select_profile(3);
+		target->select_profile(3);
 		break;
 	case HK_ProfileE:
-		binding->ctx->select_profile(4);
+		target->select_profile(4);
 		break;
 	case HK_ProfileF:
-		binding->ctx->select_profile(5);
+		target->select_profile(5);
 		break;
 	case HK_ProfileG:
-		binding->ctx->select_profile(6);
+		target->select_profile(6);
 		break;
 	case HK_ProfileH:
-		binding->ctx->select_profile(7);
+		target->select_profile(7);
 		break;
 	case HK_ProfileI:
-		binding->ctx->select_profile(8);
+		target->select_profile(8);
 		break;
 	case HK_ProfileJ:
-		binding->ctx->select_profile(9);
+		target->select_profile(9);
 		break;
 	case HK_ProfileSave:
-		binding->ctx->save_profile();
+		target->save_profile();
 		break;
 	default:
 		break;

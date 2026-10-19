@@ -5,6 +5,7 @@ Each version keeps its files; newer versions are added alongside.
 
 | Version | Linux | Windows | Highlights |
 |---------|-------|---------|------------|
+| **0.2.13** | [`topscreen-0.2.13-linux.tar.gz`](topscreen-0.2.13-linux.tar.gz) | [`topscreen-0.2.13-windows.zip`](topscreen-0.2.13-windows.zip) \* | working global hotkeys (frontend registration), Box+zoom drag mode, conditional highlighter UI, hold-to-zoom release glide |
 | **0.2.12** | [`topscreen-0.2.12-linux.tar.gz`](topscreen-0.2.12-linux.tar.gz) | [`topscreen-0.2.12-windows.zip`](topscreen-0.2.12-windows.zip) \* | box never paints in line mode (dedicated overlay verified end-to-end); hold-to-zoom waits for the delay, stays while held, glides back on release from the current zoom; **Box + zoom** mode (marks *and* zooms); conditional highlighter UI |
 | 0.2.11 | [`topscreen-0.2.11-linux.tar.gz`](topscreen-0.2.11-linux.tar.gz) | [`topscreen-0.2.11-windows.zip`](topscreen-0.2.11-windows.zip) \* | line mode never paints the box, hold-to-zoom that starts on hold and glides back on release, zoom in/out/punch directions, settings reordered with conditional groups |
 | 0.2.10 | [`topscreen-0.2.10-linux.tar.gz`](topscreen-0.2.10-linux.tar.gz) | [`topscreen-0.2.10-windows.zip`](topscreen-0.2.10-windows.zip) \* | line mode no longer paints the box, first-frame line overlay guard, zoom centre = selection centre |

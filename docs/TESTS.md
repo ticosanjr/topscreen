@@ -81,6 +81,7 @@ That is where all the math and the state logic live — what actually must be ri
 | `test_font_atlas.cpp` | `core/font_atlas.*` | atlas generated from the **real TTF**, per-glyph metrics, alpha, invalid cases |
 | `test_evdev.cpp` | `core/evdev.*` | `input_event` decoding, labels, modifiers, partial records |
 | `test_highlighter.cpp` | `core/highlighter.*` | drag, normalized rectangle, hold/fade, small drag, disabled |
+| `test_highlight_modes.cpp` | `core/highlighter.*`, `core/pen.*`, `core/zoom.*` | trail dedupe/cap, zoom request timing, hold-to-release glide, BoxZoom draws + still zooms |
 | `test_docs.cpp` | `docs/` × code | every key in `keys.hpp` is documented; hotkeys from the code are in the reference |
 | `test_cursor_atlas.cpp` | `core/cursor_atlas.*` + `data/cursors/` | TSAT format, hotspots and **real atlas** (16 styles = `CursorStyle::Count`) |
 | `test_image.cpp` | `core/image.*` + `data/wallpapers/` | image decode (reads a **real wallpaper** 1920x1080) and invalid cases |
@@ -91,7 +92,7 @@ That is where all the math and the state logic live — what actually must be ri
 
 ```
 155 tests | 2702 checks | 0 failures   (core)
-25 tests | 318 checks   | 0 failures   (integration with fake libobs)
+26 tests | 324 checks   | 0 failures   (integration with fake libobs)
 ```
 
 ## What the integration layer covers
@@ -103,7 +104,7 @@ fake libobs:
 | File | Coverage |
 |------|----------|
 | `test_integration.cpp` | filter lifecycle (create/tick/render/destroy), preset apply, background toggle, all 18 hotkeys, native-cursor shutdown on the parent, profiles (save/switch/seeds/list/auto-save/restart) |
-| `test_integration.cpp` new: `integration_registers_all_hotkeys` covers every hotkey id/name/callback |
+| `test_integration.cpp` new: `integration_registers_all_hotkeys` covers every hotkey id/name/callback; `integration_hotkeys_shared_between_filters` proves one process-wide set shared across filters |
 | `test_uniforms.cpp` | every uniform declared by `topscreen.effect` is uploaded on a plain frame (D3D11 aborts the draw otherwise) |
 | `test_settings.cpp` | defaults match `Config`, legacy source falls back, store/load roundtrip, migrations, properties tree, input without a backend, click sound error handling |
 

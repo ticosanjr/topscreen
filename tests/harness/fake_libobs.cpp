@@ -456,8 +456,7 @@ size_t obs_property_list_add_string(obs_property_t *, const char *, const char *
 void obs_property_set_modified_callback(obs_property_t *, obs_property_modified_t) {}
 
 // ---- obs_hotkey ----
-obs_hotkey_id obs_hotkey_register_source(obs_source_t *, const char *name, const char *,
-					 obs_hotkey_func func, void *data)
+obs_hotkey_id register_hotkey(const char *name, obs_hotkey_func func, void *data)
 {
 	RegisteredHotkey h;
 	h.name = name ? name : "";
@@ -465,6 +464,18 @@ obs_hotkey_id obs_hotkey_register_source(obs_source_t *, const char *name, const
 	h.data = data;
 	g_hotkeys.push_back(h);
 	return static_cast<obs_hotkey_id>(g_hotkeys.size());
+}
+
+obs_hotkey_id obs_hotkey_register_source(obs_source_t *, const char *name, const char *,
+					 obs_hotkey_func func, void *data)
+{
+	return register_hotkey(name, func, data);
+}
+
+obs_hotkey_id obs_hotkey_register_frontend(const char *name, const char *, obs_hotkey_func func,
+					    void *data)
+{
+	return register_hotkey(name, func, data);
 }
 
 void obs_hotkey_unregister(obs_hotkey_id id)

@@ -520,7 +520,8 @@ void Compositor::render(obs_source_t *filter, const core::Config &cfg, const Fra
 	 * The canvas maps 1:1 to the frame (point u,v -> pixel u*w, v*h), which is
 	 * the same space the model records, so no padding/aspect math can shift or
 	 * hide the stroke. */
-	const bool line_wanted = active && st.highlight.active && st.highlight.mode == 1 &&
+	const bool line_wanted = active && st.highlight.active &&
+			      st.highlight.mode == static_cast<int>(core::HighlightMode::Line) &&
 			      st.highlight.point_count > 1;
 	if (line_wanted && !logged_line_attempt_) {
 		logged_line_attempt_ = true;
@@ -531,10 +532,8 @@ void Compositor::render(obs_source_t *filter, const core::Config &cfg, const Fra
 	}
 	if (line_wanted && highlight_.ready()) {
 		const int count = st.highlight.point_count;
-		if (count < pen_points_) {
-			pen_.reset(1.0, 512, st.highlight.thickness);
+		if (count < pen_points_)
 			pen_points_ = 0;
-		}
 		if (pen_points_ == 0) {
 			const double aspect =
 				static_cast<double>(w) / static_cast<double>(h > 0 ? h : 1);

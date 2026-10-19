@@ -43,7 +43,7 @@ to proceed. Details in [`BUILD.md`](BUILD.md).
 1. In OBS, add a **Display Capture** source and pick the screen.
 2. Right-click the source → **Filters** → **+** → **TopScreen FX**.
 3. Adjust in **Properties** (the tabs/groups are described in §5).
-4. Create hotkeys in **Settings → Hotkeys → TopScreen** (§6).
+4. Create hotkeys in **Settings → Hotkeys** (search for `TopScreen`, §6).
 5. (Optional) Choose a ready **preset** with the *Next preset* hotkey.
 
 > **Tip:** open the **TopScreen** dock (menu **View → Docks → TopScreen**) to
@@ -255,7 +255,8 @@ modifiers (`Esc` stays as text).
 
 ## 6. Hotkeys
 
-In **Settings → Hotkeys → TopScreen**:
+In **Settings → Hotkeys**, search for `TopScreen` (the 18 actions are global
+hotkeys, so they act on the **first active filter** if you have more than one):
 
 | Action | Effect |
 |------|--------|
@@ -430,12 +431,14 @@ TOPSCREEN_DEBUG_KEY=Ctrl obs
 - On Windows the dock lists under **View → Docks → TopScreen**.
 
 **Hotkeys: I cannot find the TopScreen actions**
-- The hotkeys only exist while a source has the filter: add **TopScreen FX** to a
-  Display Capture first.
-- In **Settings → Hotkeys** the source/filter hotkeys are listed in the main list
-  under a header with the **filter instance name** (e.g. `TopScreen`); use the
-  search box and type `profile` or the name you gave the filter.
-- The log confirms it: `[TopScreen] hotkeys registered: 18/18`.
+- The hotkeys only exist while at least one source has the filter: add
+  **TopScreen FX** to a Display Capture first.
+- They are **global frontend hotkeys** (filters cannot register per-source
+  hotkeys in OBS), so they appear as flat entries in the main list — search
+  for `TopScreen` or `Activate profile`.
+- With several filters, a hotkey acts on the **first active one** (same rule
+  as the dock).
+- The log confirms registration: `[TopScreen] hotkeys registered: 18/18`.
 
 **Zoom "jumps" or shakes**
 - Increase **Speed (ms)** and reduce **Intensity**.

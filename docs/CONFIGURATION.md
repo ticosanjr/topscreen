@@ -104,7 +104,8 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 
 ## Hotkeys
 
-Registered IDs (shown in **Settings → Hotkeys → TopScreen**):
+Registered IDs (global frontend hotkeys, shown in **Settings → Hotkeys**;
+they act on the first active filter):
 
 | ID | Action |
 |----|------|

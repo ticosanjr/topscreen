@@ -1,5 +1,7 @@
 #pragma once
 
+#include <atomic>
+
 #include <obs-module.h>
 
 namespace topscreen {
@@ -43,21 +45,29 @@ struct HotkeyContext {
 };
 
 struct HotkeyBinding {
-	HotkeyContext *ctx = nullptr;
 	int action = 0;
 };
 
 void ts_hotkey_callback(void *data, obs_hotkey_id id, obs_hotkey_t *key, bool pressed);
 
-/** Registers/unregisters the TopScreen hotkeys on the source. */
+/**
+ * Process-wide hotkeys.
+ *
+ * OBS marks every filter source as private, so obs_hotkey_register_source()
+ * always fails for filters (OBS_INVALID_HOTKEY_ID on every platform). The 18
+ * actions are therefore registered ONCE as frontend hotkeys and dispatched to
+ * the first active filter (same rule as the dock). Refcounted across filter
+ * instances so creating/destroying filters never leaks or duplicates entries.
+ */
 class Hotkeys {
 public:
-	void register_all(obs_source_t *source, HotkeyContext *ctx);
-	void unregister_all();
+	void register_all(HotkeyContext *ctx);
+	void unregister_all(HotkeyContext *ctx);
 
 private:
-	obs_hotkey_id ids_[HK_Count] = {};
-	HotkeyBinding bindings_[HK_Count] = {};
+	static std::atomic<int> refs_;
+	static HotkeyBinding bindings_[HK_Count];
+	static obs_hotkey_id ids_[HK_Count];
 };
 
 } // namespace topscreen

@@ -534,7 +534,7 @@ void *ts_filter_create(obs_data_t *settings, obs_source_t *source)
 
 	ctx->effects_cache_.store(ctx->cfg.effects_enabled);
 
-	ctx->hotkeys.register_all(source, ctx);
+	ctx->hotkeys.register_all(ctx);
 	ctx->input.start(source);
 
 	registry_add(ctx);
@@ -550,7 +550,7 @@ void ts_filter_destroy(void *data)
 
 	registry_remove(ctx);
 	ctx->input.stop();
-	ctx->hotkeys.unregister_all();
+	ctx->hotkeys.unregister_all(ctx);
 	ctx->click_sound.release();
 	ctx->compositor.release();
 

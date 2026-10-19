@@ -5,7 +5,7 @@ Each version keeps its files; newer versions are added alongside.
 
 | Version | Linux | Windows | Highlights |
 |---------|-------|---------|------------|
-| **0.2.7** | [`topscreen-0.2.7-linux.tar.gz`](topscreen-0.2.7-linux.tar.gz) | pending CI build | multi-monitor input fix (cursor/clicks/zoom on stacked or side-by-side screens) |
+| **0.2.7** | [`topscreen-0.2.7-linux.tar.gz`](topscreen-0.2.7-linux.tar.gz) | [`topscreen-0.2.7-windows.zip`](topscreen-0.2.7-windows.zip) \* | multi-monitor input fix (cursor/clicks/zoom on stacked or side-by-side screens) + manual monitor origin |
 | 0.2.6 | [`topscreen-0.2.6-linux.tar.gz`](topscreen-0.2.6-linux.tar.gz) | [`topscreen-0.2.6-windows.zip`](topscreen-0.2.6-windows.zip) | first build with the Windows Qt dock; 10 profiles |
 
 ## Install (Windows, no compiler, no admin)
@@ -19,6 +19,13 @@ Each version keeps its files; newer versions are added alongside.
 4. Restart OBS → add a **Display Capture** → **Filters → + → "TopScreen FX"**.
 
 The Windows package includes the Qt dock: **View → Docks → TopScreen**.
+
+> \* **0.2.7 Windows**: built by cross-compiling from Linux
+> (`scripts/build-windows-cross.sh`) because the GitHub Actions minutes were
+> blocked. It is the full filter (Properties, hotkeys, presets, profiles,
+> multi-screen fix) but **without the Qt dock** — the next CI build will
+> replace it with the complete package. If the dock matters to you, stay on
+> 0.2.6 for now and update once the CI package is published.
 
 ## Install (Linux, no sudo)
 

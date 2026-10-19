@@ -58,6 +58,12 @@ commits them into `releases/` on `main`. GitHub Releases are not created.
 You can also run it by hand (**Actions → Release → Run workflow**) to get the
 archives as artifacts without publishing a release.
 
+If the GitHub Actions minutes are unavailable, the Windows DLL can be
+cross-built from Linux with `scripts/build-windows-cross.sh` (portable
+LLVM-MinGW + the official OBS headers and runtime). It produces the full filter
+**without the Qt dock**, which then goes into `releases/` via
+`scripts/package.sh`.
+
 ## Quick install
 
 ### Linux

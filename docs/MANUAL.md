@@ -211,7 +211,7 @@ modifiers (`Esc` stays as text).
 | Group | Option | What it does |
 |-------|--------|--------------|
 | — | **Enable drag actions** | Master switch for what a left-drag does |
-| — | **What a drag does** | **Filled box** (classic mark) · **Line** (draw freehand, fades out) · **Zoom to the selection** (no drawing) · **Box + zoom** (marks *and* zooms) |
+| — | **What a drag does** | **Filled box** (classic mark) · **Line** (draw freehand, fades out) · **Zoom to the selection** (no drawing) · **Box + zoom** (marks *and* zooms) · **Line + zoom** (draws freehand *and* zooms) |
 | Look | **Color** | Highlight color (use alpha < 255 for translucent) |
 | Look | **Opacity** | Strength ceiling (0 = invisible, 1 = solid); keeps content readable |
 | Look | **Line thickness** | Stroke width as a fraction of the screen height |
@@ -242,12 +242,18 @@ modifiers (`Esc` stays as text).
   back on release.
 - **Box + zoom**: draws the box *and* zooms, for when you want to mark the area
   you are inspecting.
+- **Line + zoom**: same gesture as *Box + zoom*, but the mark is the freehand
+  stroke instead of the box — draw the shape and the view zooms into the
+  **area you covered**. Circling something works even though the stroke ends
+  where it started, because the selection is the stroke's bounding box.
   - **Zoom direction** picks the motion: *Zoom in* / *Zoom out*, or *Punch in* /
     *Punch out* (no hold: it snaps and returns immediately).
   - The **centre of the dragged area** always ends up in the **centre of the
     screen** (the focus follows the same centering law as the auto-zoom).
   - The gesture always starts from **what is on screen at that moment** and
     returns to it, so selecting while already zoomed works as expected.
+  - Press and hold **without** drawing: it zooms where the pointer is and
+    nothing is drawn (there is no stroke to show).
   - Max zoom and the three timings (in / hold / out) are configurable; in and
     out are independent.
 

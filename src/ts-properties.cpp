@@ -126,12 +126,13 @@ bool highlight_mode_changed(obs_properties_t *props, obs_property_t *property, o
 	(void)property;
 	const long long mode = settings ? obs_data_get_int(settings, kHighlightMode)
 					: static_cast<long long>(HighlightMode::Box);
-	/* BoxZoom draws AND zooms, so it needs every group. */
-	const bool pure_zoom = mode == static_cast<int>(HighlightMode::Zoom);
-	const bool any_zoom = pure_zoom || mode == static_cast<int>(HighlightMode::BoxZoom);
-	highlight_group_visible(props, "grp_hl_look", !pure_zoom);
-	highlight_group_visible(props, "grp_hl_timing", !pure_zoom);
-	highlight_group_visible(props, "grp_hl_zoom", any_zoom);
+	/* The pure zoom mode draws no mark at all, so its look/timing controls do
+	 * not apply. Every zoom mode (zoom, box+zoom, line+zoom) needs the zoom
+	 * group. */
+	const bool draws_mark = mode_draws_mark(static_cast<int>(mode));
+	highlight_group_visible(props, "grp_hl_look", draws_mark);
+	highlight_group_visible(props, "grp_hl_timing", draws_mark);
+	highlight_group_visible(props, "grp_hl_zoom", mode_wants_zoom(static_cast<int>(mode)));
 	return true;
 }
 
@@ -369,6 +370,8 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 				  static_cast<int>(HighlightMode::Zoom));
 	obs_property_list_add_int(hmode, obs_module_text("Highlight.Mode.BoxZoom"),
 				  static_cast<int>(HighlightMode::BoxZoom));
+	obs_property_list_add_int(hmode, obs_module_text("Highlight.Mode.LineZoom"),
+				  static_cast<int>(HighlightMode::LineZoom));
 	obs_property_set_modified_callback(hmode, highlight_mode_changed);
 
 	/* Look (box + line). */

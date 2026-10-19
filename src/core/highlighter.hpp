@@ -12,6 +12,7 @@ enum class HighlightMode : int {
 	Line = 1, // freehand line that fades out
 	Zoom = 2, // no drawing: hold to zoom, release to glide back
 	BoxZoom = 3, // draws the box AND zooms while held
+	LineZoom = 4, // draws the freehand line AND zooms while held
 };
 
 struct HighlighterConfig {
@@ -36,10 +37,36 @@ struct HighlighterConfig {
 
 /**
  * Only the box modes paint the rectangle; the line is drawn as shader
- * segments and the zoom gesture draws nothing. Keeping the rule here (instead
- * of in the compositor) makes it testable without a GPU.
+ * segments and the pure zoom gesture draws nothing. Keeping the rules here
+ * (instead of in the compositor) makes them testable without a GPU.
  */
 inline bool paints_box(const struct HighlightRender &r);
+inline bool draws_line(const struct HighlightRender &r);
+
+/** Modes that record and draw a freehand stroke. */
+inline bool mode_draws_line(int mode)
+{
+	return mode == static_cast<int>(HighlightMode::Line) ||
+	       mode == static_cast<int>(HighlightMode::LineZoom);
+}
+
+/** Modes that run the hold-to-zoom gesture (the filter animates the zoom). */
+inline bool mode_wants_zoom(int mode)
+{
+	return mode == static_cast<int>(HighlightMode::Zoom) ||
+	       mode == static_cast<int>(HighlightMode::BoxZoom) ||
+	       mode == static_cast<int>(HighlightMode::LineZoom);
+}
+
+/** Modes that leave a visible mark (a box or a line). The pure zoom mode
+ * draws nothing at all: it only moves the view. */
+inline bool mode_draws_mark(int mode)
+{
+	return mode == static_cast<int>(HighlightMode::Box) ||
+	       mode == static_cast<int>(HighlightMode::Line) ||
+	       mode == static_cast<int>(HighlightMode::BoxZoom) ||
+	       mode == static_cast<int>(HighlightMode::LineZoom);
+}
 
 struct HighlightRender {
 	bool active = false;
@@ -48,7 +75,7 @@ struct HighlightRender {
 	double alpha = 0.0;
 	uint32_t color = 0;
 	double thickness = 0.0;
-	/* Line mode: freehand points (content 0..1), valid until the next call. */
+	/* Line modes: freehand points (content 0..1), valid until the next call. */
 	const struct Vec2f *points = nullptr;
 	int point_count = 0;
 };
@@ -60,6 +87,12 @@ inline bool paints_box(const HighlightRender &r)
 {
 	return r.active && (r.mode == static_cast<int>(HighlightMode::Box) ||
 			    r.mode == static_cast<int>(HighlightMode::BoxZoom));
+}
+
+/* True when the rendered mark includes the freehand line. */
+inline bool draws_line(const HighlightRender &r)
+{
+	return r.active && mode_draws_line(r.mode);
 }
 
 /**
@@ -91,6 +124,10 @@ public:
 	HighlightRender render() const;
 
 private:
+	/* Selection the zoom gesture uses (stroke bounding box for line modes,
+	 * the dragged rectangle otherwise). */
+	void selection_rect(double *x0, double *y0, double *x1, double *y1) const;
+
 	HighlighterConfig cfg_;
 	bool dragging_ = false;
 	bool has_ = false;

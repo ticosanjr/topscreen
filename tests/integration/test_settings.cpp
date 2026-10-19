@@ -194,6 +194,17 @@ TEST(properties_highlight_groups_follow_the_mode)
 		obs_properties_destroy(p);
 		obs_data_release(s);
 	}
+
+	/* Line+zoom shows everything: it draws the stroke AND zooms. */
+	{
+		auto [s, p] = make_props(static_cast<int>(core::HighlightMode::LineZoom));
+		CHECK(p != nullptr);
+		CHECK(fakeobs::property_visible(obs_properties_get(p, "grp_hl_look")));
+		CHECK(fakeobs::property_visible(obs_properties_get(p, "grp_hl_timing")));
+		CHECK(fakeobs::property_visible(obs_properties_get(p, "grp_hl_zoom")));
+		obs_properties_destroy(p);
+		obs_data_release(s);
+	}
 }
 
 /* Input without backend: available=false, tier 0, no phantom edges. */

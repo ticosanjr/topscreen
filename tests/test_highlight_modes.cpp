@@ -287,9 +287,9 @@ TEST(zoom_spot_punch_has_no_hold)
 	CHECK(!z.spot_active());
 }
 
-/* Only the box mode may paint the rectangle: the line has its own overlay and
- * the zoom gesture must draw nothing at all. Regression for "Line still shows
- * the filled box". */
+/* Only the box modes may paint the rectangle: the line is drawn by the main
+ * shader and the zoom gesture must draw nothing at all. Regression for "Line
+ * still shows the filled box". */
 TEST(highlight_only_box_modes_paint_the_rectangle)
 {
 	for (int mode : {static_cast<int>(HighlightMode::Box),
@@ -305,13 +305,14 @@ TEST(highlight_only_box_modes_paint_the_rectangle)
 		CHECK(paints_box(m.render()));
 	}
 	for (int mode : {static_cast<int>(HighlightMode::Line),
+			 static_cast<int>(HighlightMode::LineZoom),
 			 static_cast<int>(HighlightMode::Zoom)}) {
 		HighlighterModel m;
 		HighlighterConfig cfg;
 		cfg.mode = mode;
 		m.configure(cfg);
 		m.begin(0.1, 0.1, 0.0);
-		if (mode == static_cast<int>(HighlightMode::Line)) {
+		if (mode_draws_line(mode)) {
 			m.move(0.3, 0.3, 10.0);
 			m.move(0.5, 0.5, 20.0);
 		} else {
@@ -319,10 +320,202 @@ TEST(highlight_only_box_modes_paint_the_rectangle)
 		}
 		m.end(20.0);
 		m.update(30.0);
-		if (mode == static_cast<int>(HighlightMode::Line))
+		if (mode_draws_line(mode))
 			CHECK(m.render().active);
 		CHECK(!paints_box(m.render()));
 	}
+}
+
+/* The two predicates are what the compositor and the properties UI rely on:
+ * pin them for every mode so a future mode cannot silently draw the wrong
+ * thing (that class of bug already cost us "line shows a box" and "line
+ * draws nothing"). */
+TEST(highlight_mode_predicates_are_pinned)
+{
+	struct Row {
+		HighlightMode mode;
+		bool box;
+		bool line;
+		bool zoom;
+	};
+	const Row rows[] = {
+		{HighlightMode::Box, true, false, false},
+		{HighlightMode::Line, false, true, false},
+		{HighlightMode::Zoom, false, false, true},
+		{HighlightMode::BoxZoom, true, false, true},
+		{HighlightMode::LineZoom, false, true, true},
+	};
+
+	for (const Row &row : rows) {
+		const int mode = static_cast<int>(row.mode);
+		HighlighterModel m;
+		HighlighterConfig cfg;
+		cfg.mode = mode;
+		cfg.enabled = true;
+		m.configure(cfg);
+
+		m.begin(0.1, 0.2, 0.0);
+		m.move(0.3, 0.4, 10.0);
+		m.move(0.6, 0.7, 20.0);
+		m.end(30.0);
+		for (double t = 31.0; t < 400.0; t += 37.0)
+			m.update(t);
+
+		const HighlightRender r = m.render();
+		/* The model must agree with the predicates used by the renderer. */
+		CHECK_EQ(paints_box(r), row.box);
+		CHECK_EQ(draws_line(r), row.line);
+		CHECK_EQ(mode_wants_zoom(mode), row.zoom);
+		CHECK_EQ(mode_draws_line(mode), row.line);
+		CHECK_EQ(mode_draws_mark(mode), row.box || row.line);
+		if (row.box) {
+			CHECK(r.active);
+		} else if (row.line) {
+			/* The line mark is live and carries its trail. */
+			CHECK(r.active);
+			CHECK(r.points != nullptr);
+			CHECK(r.point_count >= 3);
+		} else {
+			CHECK(!r.active);
+		}
+	}
+}
+
+/* LineZoom draws the freehand line AND asks for a zoom (same hold-to-zoom
+ * semantics as BoxZoom, but the mark is the stroke instead of the box). */
+TEST(highlight_linezoom_draws_the_line_and_zooms)
+{
+	HighlighterModel m;
+	HighlighterConfig cfg;
+	cfg.mode = static_cast<int>(HighlightMode::LineZoom);
+	cfg.zoom_delay_ms = 100.0;
+	m.configure(cfg);
+
+	/* Hold past the delay while drawing: the request fires with the line. */
+	m.begin(0.1, 0.1, 0.0);
+	m.update(50.0);
+	double x0, y0, x1, y1;
+	CHECK(!m.take_zoom_request(&x0, &y0, &x1, &y1));
+
+	m.move(0.25, 0.2, 60.0);
+	m.move(0.4, 0.5, 80.0);
+	m.update(200.0);
+	REQUIRE(m.take_zoom_request(&x0, &y0, &x1, &y1));
+	/* The selection is the stroke's bounding box (stored as floats). */
+	CHECK_NEAR(x0, 0.1, 1e-6);
+	CHECK_NEAR(y0, 0.1, 1e-6);
+	CHECK_NEAR(x1, 0.4, 1e-6);
+	CHECK_NEAR(y1, 0.5, 1e-6);
+
+	/* ...and it is only requested once. */
+	CHECK(!m.take_zoom_request(&x0, &y0, &x1, &y1));
+
+	const HighlightRender r = m.render();
+	CHECK(r.active);
+	CHECK(draws_line(r));
+	CHECK(!paints_box(r));
+	REQUIRE(r.points != nullptr);
+	CHECK(r.point_count >= 3);
+	CHECK_NEAR(r.points[0].x, 0.1, 1e-6);
+
+	/* The line stays on screen (and fades) after the release, exactly like
+	 * BoxZoom keeps its box - unlike the pure zoom mode. */
+	m.end(300.0);
+	m.update(400.0);
+	CHECK(m.render().active);
+	CHECK(draws_line(m.render()));
+}
+
+/* Released before the delay: the zoom still runs (with the drawn line). */
+TEST(highlight_linezoom_quick_drag_fires_on_release)
+{
+	HighlighterModel m;
+	HighlighterConfig cfg;
+	cfg.mode = static_cast<int>(HighlightMode::LineZoom);
+	cfg.zoom_delay_ms = 1200.0;
+	m.configure(cfg);
+
+	m.begin(0.1, 0.1, 0.0);
+	m.move(0.2, 0.4, 40.0);
+	m.move(0.5, 0.6, 80.0);
+	m.end(300.0); /* 300 ms < 1200 ms delay */
+
+	double x0, y0, x1, y1;
+	REQUIRE(m.take_zoom_request(&x0, &y0, &x1, &y1));
+	CHECK_NEAR(x0, 0.1, 1e-6);
+	CHECK_NEAR(x1, 0.5, 1e-6);
+	CHECK(draws_line(m.render()));
+}
+
+/* Holding without drawing: the zoom still fires (point zoom) but there is no
+ * stroke to show, so nothing is drawn. */
+TEST(highlight_linezoom_hold_without_drawing_zooms_without_a_line)
+{
+	HighlighterModel m;
+	HighlighterConfig cfg;
+	cfg.mode = static_cast<int>(HighlightMode::LineZoom);
+	cfg.zoom_delay_ms = 100.0;
+	m.configure(cfg);
+
+	m.begin(0.5, 0.5, 0.0);
+	m.update(300.0);
+
+	double x0, y0, x1, y1;
+	REQUIRE(m.take_zoom_request(&x0, &y0, &x1, &y1));
+	CHECK_NEAR(x0, 0.5, 1e-9);
+	CHECK_NEAR(x1, 0.5, 1e-9);
+	CHECK(!m.render().active); /* fewer than two trail points: nothing to draw */
+}
+
+/* A freehand circle ends where it started, so the start/end rectangle is
+ * degenerate. The zoom must use the stroke's bounding box instead: circling a
+ * region has to zoom into that region (and not into a single point). */
+TEST(highlight_linezoom_circle_zooms_into_the_drawn_area)
+{
+	HighlighterModel m;
+	HighlighterConfig cfg;
+	cfg.mode = static_cast<int>(HighlightMode::LineZoom);
+	cfg.zoom_delay_ms = 50.0;
+	m.configure(cfg);
+
+	m.begin(0.40, 0.40, 0.0);
+	m.move(0.60, 0.40, 10.0);
+	m.move(0.60, 0.60, 20.0);
+	m.move(0.40, 0.60, 30.0);
+	m.move(0.40, 0.40, 40.0); /* back at the start: closed shape */
+	m.update(200.0);
+
+	double x0, y0, x1, y1;
+	REQUIRE(m.take_zoom_request(&x0, &y0, &x1, &y1));
+	CHECK_NEAR(x0, 0.40, 1e-6);
+	CHECK_NEAR(y0, 0.40, 1e-6);
+	CHECK_NEAR(x1, 0.60, 1e-6);
+	CHECK_NEAR(y1, 0.60, 1e-6);
+	CHECK(draws_line(m.render())); /* the circle is still shown while zoomed */
+}
+
+/* The box modes zoom into exactly the rectangle that is on screen, so the
+ * selection follows the start/end drag (not the widest extent ever reached). */
+TEST(highlight_boxzoom_selection_matches_the_box_on_screen)
+{
+	HighlighterModel m;
+	HighlighterConfig cfg;
+	cfg.mode = static_cast<int>(HighlightMode::BoxZoom);
+	cfg.zoom_delay_ms = 50.0;
+	m.configure(cfg);
+
+	m.begin(0.2, 0.3, 0.0);
+	m.move(0.9, 0.8, 10.0);
+	m.move(0.5, 0.5, 20.0); /* the drag ends here: this is the box on screen */
+	m.update(200.0);
+
+	double x0, y0, x1, y1;
+	REQUIRE(m.take_zoom_request(&x0, &y0, &x1, &y1));
+	CHECK_NEAR(x0, 0.2, 1e-9);
+	CHECK_NEAR(y0, 0.3, 1e-9);
+	CHECK_NEAR(x1, 0.5, 1e-9);
+	CHECK_NEAR(y1, 0.5, 1e-9);
+	CHECK_NEAR(m.render().x1, 0.5, 1e-9);
 }
 
 /* BoxZoom draws its box AND asks for a zoom (hold-to-zoom semantics). */

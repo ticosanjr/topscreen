@@ -530,14 +530,13 @@ void Compositor::render(obs_source_t *filter, const core::Config &cfg, const Fra
 		}
 	}
 
-	/* Freehand line: the trail is decimated into at most 16 points and drawn
-	 * by the SAME pass as everything else (segments in the shader), so no
-	 * separate effect/texture/draw call can fail on its own. Every slot is
-	 * uploaded on every frame, zeroed when unused (see the D3D11 note
-	 * above); the active stroke keeps the model's fade alpha. */
-	const bool line_on = active && st.highlight.active &&
-			     st.highlight.mode == static_cast<int>(core::HighlightMode::Line) &&
-			     st.highlight.point_count > 1;
+	/* Freehand line (Line / Line + zoom): the trail is decimated into at most
+	 * 16 points and drawn by the SAME pass as everything else (segments in
+	 * the shader), so no separate effect/texture/draw call can fail on its
+	 * own. Every slot is uploaded on every frame, zeroed when unused (see
+	 * the D3D11 note above); the active stroke keeps the model's fade
+	 * alpha. */
+	const bool line_on = active && core::draws_line(st.highlight) && st.highlight.point_count > 1;
 	const int src_pts = st.highlight.point_count;
 	core::Vec2f line_pts[kShaderLineSlots];
 	const int line_count =

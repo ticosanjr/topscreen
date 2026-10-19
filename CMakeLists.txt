@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 
-project(TopScreen VERSION 0.2.14 LANGUAGES C CXX)
+project(TopScreen VERSION 0.2.15 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

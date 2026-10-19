@@ -203,4 +203,25 @@ HighlightRender HighlighterModel::render() const
 	return out;
 }
 
+int subsample_line(const Vec2f *points, int count, Vec2f *out, int max_out)
+{
+	if (!points || !out || count <= 0 || max_out <= 0)
+		return 0;
+	if (count <= max_out) {
+		for (int i = 0; i < count; ++i)
+			out[i] = points[i];
+		return count;
+	}
+	if (max_out == 1) {
+		out[0] = points[0];
+		return 1;
+	}
+	/* Even spread; i == max_out-1 lands exactly on count-1 (last point). */
+	for (int i = 0; i < max_out; ++i) {
+		const int idx = (i * (count - 1)) / (max_out - 1);
+		out[i] = points[idx];
+	}
+	return max_out;
+}
+
 } // namespace topscreen::core

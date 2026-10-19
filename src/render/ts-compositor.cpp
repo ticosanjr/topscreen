@@ -84,9 +84,6 @@ bool Compositor::load()
 		blog(LOG_ERROR, "[TopScreen] shader is incomplete: the filter will pass "
 				"the source through until this is fixed");
 
-	/* Freehand highlight overlay (best effort). */
-	highlight_.load();
-
 	/* Key overlay (best effort: if the font/effect is missing, proceeds without it). */
 	text_.load("fonts/DejaVuSans-Bold.ttf", "effects/text.effect");
 
@@ -223,6 +220,14 @@ void Compositor::cache_params()
 		std::snprintf(name, sizeof(name), "click%d_type", i);
 		click_[i].type = P(name);
 	}
+
+	/* Freehand line: 16 explicit points (line_p0..line_p15), no arrays. */
+	for (int i = 0; i < 16; ++i) {
+		std::snprintf(name, sizeof(name), "line_p%d", i);
+		p_line_pts_[i] = P(name);
+	}
+	p_line_count_ = P("line_count");
+	p_line_width_ = P("line_width");
 }
 
 bool Compositor::validate_params() const
@@ -274,6 +279,8 @@ bool Compositor::validate_params() const
 		"highlight_color",
 		"highlight_alpha",
 		"click_count",
+		"line_count",
+		"line_width",
 	};
 
 	int missing = 0;
@@ -291,6 +298,15 @@ bool Compositor::validate_params() const
 				blog(LOG_ERROR, "[TopScreen] shader uniform missing: %s", name);
 				++missing;
 			}
+		}
+	}
+
+	for (int i = 0; i < 16; ++i) {
+		char name[32];
+		std::snprintf(name, sizeof(name), "line_p%d", i);
+		if (!gs_effect_get_param_by_name(effect_, name)) {
+			blog(LOG_ERROR, "[TopScreen] shader uniform missing: %s", name);
+			++missing;
 		}
 	}
 
@@ -317,7 +333,6 @@ bool Compositor::validate_params() const
 void Compositor::release()
 {
 	text_.release();
-	highlight_.release();
 	release_cursor_atlas();
 	release_bg_image();
 
@@ -350,6 +365,10 @@ void Compositor::release()
 	p_click_count_ = nullptr;
 	for (auto &c : click_)
 		c = ClickParams{};
+
+	p_line_count_ = p_line_width_ = nullptr;
+	for (auto *&pt : p_line_pts_)
+		pt = nullptr;
 }
 
 void Compositor::render(obs_source_t *filter, const core::Config &cfg, const FrameState &st)
@@ -511,50 +530,43 @@ void Compositor::render(obs_source_t *filter, const core::Config &cfg, const Fra
 		}
 	}
 
+	/* Freehand line: the trail is decimated into at most 16 points and drawn
+	 * by the SAME pass as everything else (segments in the shader), so no
+	 * separate effect/texture/draw call can fail on its own. Every slot is
+	 * uploaded on every frame, zeroed when unused (see the D3D11 note
+	 * above); the active stroke keeps the model's fade alpha. */
+	const bool line_on = active && st.highlight.active &&
+			     st.highlight.mode == static_cast<int>(core::HighlightMode::Line) &&
+			     st.highlight.point_count > 1;
+	const int src_pts = st.highlight.point_count;
+	core::Vec2f line_pts[kShaderLineSlots];
+	const int line_count =
+		line_on ? core::subsample_line(st.highlight.points, src_pts, line_pts,
+					       kShaderLineSlots)
+			: 0;
+	for (int i = 0; i < kShaderLineSlots; ++i) {
+		if (i < line_count)
+			set_v2(p_line_pts_[i], line_pts[i].x, line_pts[i].y);
+		else
+			set_v2(p_line_pts_[i], 0.0f, 0.0f);
+	}
+	set_f(p_line_count_, static_cast<float>(line_count));
+	float line_w = static_cast<float>(st.highlight.thickness) * static_cast<float>(w);
+	if (line_w < 2.0f)
+		line_w = 2.0f;
+	set_f(p_line_width_, line_w);
+
+	if (line_count > 1 && !logged_line_stroke_) {
+		logged_line_stroke_ = true;
+		blog(LOG_INFO,
+		     "[TopScreen] line highlight: %d of %d points drawn as %d shader segments (width %.1fpx)",
+		     line_count, src_pts, line_count - 1, static_cast<double>(line_w));
+	}
+
 	if (use_passthrough_)
 		obs_source_process_filter_tech_end(filter, effect_, w, h, "PassThrough");
 	else
 		obs_source_process_filter_end(filter, effect_, w, h);
-
-	/* Freehand highlight (line mode) on top of the result.
-	 * The canvas maps 1:1 to the frame (point u,v -> pixel u*w, v*h), which is
-	 * the same space the model records, so no padding/aspect math can shift or
-	 * hide the stroke. */
-	const bool line_wanted = active && st.highlight.active &&
-			      st.highlight.mode == static_cast<int>(core::HighlightMode::Line) &&
-			      st.highlight.point_count > 1;
-	if (line_wanted && !logged_line_attempt_) {
-		logged_line_attempt_ = true;
-		blog(LOG_INFO,
-		     "[TopScreen] line highlight: attempt with %d points, alpha %.2f, effect %s",
-		     st.highlight.point_count, st.highlight.alpha,
-		     highlight_.ready() ? "ready" : "NOT READY (highlight.effect missing?)");
-	}
-	if (line_wanted && highlight_.ready()) {
-		const int count = st.highlight.point_count;
-		if (count < pen_points_)
-			pen_points_ = 0;
-		if (pen_points_ == 0) {
-			const double aspect =
-				static_cast<double>(w) / static_cast<double>(h > 0 ? h : 1);
-			pen_.reset(aspect, 512, st.highlight.thickness);
-		}
-		for (int i = pen_points_; i < count; ++i)
-			pen_.add_point(st.highlight.points[i]);
-		pen_points_ = count;
-
-		highlight_.upload(pen_.width(), pen_.height(), pen_.alpha(), pen_.revision());
-		highlight_.draw(0.0f, 0.0f, static_cast<float>(w), static_cast<float>(h),
-				st.highlight.color, static_cast<float>(st.highlight.alpha));
-
-		if (!logged_line_draw_) {
-			logged_line_draw_ = true;
-			blog(LOG_INFO, "[TopScreen] line highlight: drew %d points, canvas %dx%d", count,
-			     pen_.width(), pen_.height());
-		}
-	} else {
-		pen_points_ = 0;
-	}
 
 	/* Key overlay on top of the result. */
 	if (active && cfg.keys.enabled && st.key_count > 0)

@@ -8,8 +8,6 @@
 #include "core/config.hpp"
 #include "core/cursor_atlas.hpp"
 #include "render/ts-frame.hpp"
-#include "core/pen.hpp"
-#include "render/ts-highlight.hpp"
 #include "render/ts-text.hpp"
 
 #include <string>
@@ -51,8 +49,7 @@ private:
 	 * otherwise the filter stays a passthrough instead of drawing nothing. */
 	bool ready_ = false;
 	bool logged_first_frame_ = false;
-	bool logged_line_draw_ = false;
-	bool logged_line_attempt_ = false;
+	bool logged_line_stroke_ = false;
 	bool logged_begin_failure_ = false;
 	/* Diagnostic: TOPSCREEN_TECH=passthrough draws only the source. */
 	bool use_passthrough_ = false;
@@ -110,10 +107,13 @@ private:
 	gs_eparam_t *p_click_count_ = nullptr;
 	ClickParams click_[4];
 
+	/* Freehand line: up to 16 polyline points (line_p0..line_p15) and a point
+	 * count. Zero-filled every frame so D3D11 never sees an unset uniform. */
+	gs_eparam_t *p_line_pts_[16] = {nullptr};
+	gs_eparam_t *p_line_count_ = nullptr;
+	gs_eparam_t *p_line_width_ = nullptr;
+
 	TextRenderer text_;
-	HighlightRenderer highlight_;
-	core::PenCanvas pen_;
-	int pen_points_ = 0;
 
 	/* Cursor atlas (style bitmaps). */
 	gs_texture_t *cursor_tex_ = nullptr;

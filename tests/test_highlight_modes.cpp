@@ -1,6 +1,5 @@
 #include "core/geometry.hpp"
 #include "core/highlighter.hpp"
-#include "core/pen.hpp"
 #include "core/types.hpp"
 #include "core/zoom.hpp"
 #include "test_framework.hpp"
@@ -75,6 +74,47 @@ TEST(highlight_line_trail_is_capped)
 	m.update(6100.0);
 
 	CHECK(m.render().point_count <= 512);
+}
+
+/* ---- line decimation (the shader declares a fixed number of slots) ------- */
+
+TEST(subsample_line_keeps_every_point_when_it_fits)
+{
+	Vec2f in[3] = {pt(0.1, 0.2), pt(0.3, 0.4), pt(0.5, 0.6)};
+	Vec2f out[16];
+	CHECK_EQ(subsample_line(in, 3, out, 16), 3);
+	CHECK_NEAR(out[0].x, 0.1, 1e-6);
+	CHECK_NEAR(out[2].y, 0.6, 1e-6);
+}
+
+TEST(subsample_line_keeps_first_and_last_and_caps_at_max)
+{
+	Vec2f in[100];
+	for (int i = 0; i < 100; ++i)
+		in[i] = pt(static_cast<double>(i) / 99.0, 0.25);
+
+	Vec2f out[16];
+	const int n = subsample_line(in, 100, out, 16);
+	CHECK_EQ(n, 16);
+	CHECK_NEAR(out[0].x, 0.0, 1e-6);
+	CHECK_NEAR(out[15].x, 1.0, 1e-6);
+	/* Monotonic and strictly spread: every sampled index moves forward. */
+	for (int i = 1; i < n; ++i)
+		CHECK(out[i].x > out[i - 1].x);
+	/* Sampling is even: index step stays inside one bin. */
+	CHECK(out[1].x <= 0.5);
+	CHECK(out[14].x >= 0.5);
+}
+
+TEST(subsample_line_handles_degenerate_input)
+{
+	Vec2f in[1] = {pt(0.7, 0.8)};
+	Vec2f out[16];
+	CHECK_EQ(subsample_line(nullptr, 4, out, 16), 0);
+	CHECK_EQ(subsample_line(in, 0, out, 16), 0);
+	CHECK_EQ(subsample_line(in, 1, out, 0), 0);
+	CHECK_EQ(subsample_line(in, 1, out, 1), 1);
+	CHECK_NEAR(out[0].x, 0.7, 1e-6);
 }
 
 /* ---- zoom gesture ------------------------------------------------------- */

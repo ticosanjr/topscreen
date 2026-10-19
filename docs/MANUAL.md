@@ -255,8 +255,9 @@ modifiers (`Esc` stays as text).
 
 ## 6. Hotkeys
 
-In **Settings → Hotkeys**, search for `TopScreen` (the 18 actions are global
-hotkeys, so they act on the **first active filter** if you have more than one):
+In **Settings → Hotkeys**, search for `TopScreen`: all 18 actions are labelled
+**`TopScreen: …`**, so they are easy to spot. They are global hotkeys, so they
+act on the **first active filter** if you have more than one:
 
 | Action | Effect |
 |------|--------|

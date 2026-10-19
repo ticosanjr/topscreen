@@ -24,4 +24,7 @@ struct FrameState {
 /** Maximum number of clicks sent to the shader (uniform limit). */
 inline constexpr int kShaderClickSlots = 4;
 
+/** Maximum number of freehand line points sent to the shader (uniform limit). */
+inline constexpr int kShaderLineSlots = 16;
+
 } // namespace topscreen

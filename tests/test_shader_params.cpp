@@ -99,6 +99,11 @@ TEST(shader_has_expected_uniforms)
 		"click1_color",   "click1_type",    "click2_pos",    "click2_prog",
 		"click2_size",    "click2_color",   "click2_type",   "click3_pos",
 		"click3_prog",    "click3_size",    "click3_color",  "click3_type",
+		"line_count",     "line_width",     "line_p0",       "line_p1",
+		"line_p2",        "line_p3",        "line_p4",       "line_p5",
+		"line_p6",        "line_p7",        "line_p8",       "line_p9",
+		"line_p10",       "line_p11",       "line_p12",      "line_p13",
+		"line_p14",       "line_p15",
 	};
 
 	for (const char *name : required) {
@@ -208,4 +213,53 @@ TEST(shader_avoids_risky_constructs)
 	++tst::checks();
 	if (text.find("length(") != std::string::npos)
 		tst::fail(__FILE__, __LINE__, "shader uses length() (avoid)");
+}
+
+/*
+ * The CPU decimates the freehand trail to 16 points (line_p0..line_p15, see
+ * kShaderLineSlots) and relies on the shader pairing every consecutive couple.
+ * A shader that lost a segment would silently drop part of the stroke - the
+ * exact "line mode does nothing" class of bug - so the pairing is pinned here.
+ */
+TEST(shader_line_segments_pair_consecutive_points)
+{
+	const std::string text = read_effect();
+	REQUIRE(!text.empty());
+
+	const int slots = 16;
+	for (int i = 1; i < slots; ++i) {
+		const std::string guard = "line_count > " + std::to_string(i) + ".5";
+		++tst::checks();
+		if (text.find(guard) == std::string::npos)
+			tst::fail(__FILE__, __LINE__, "missing line segment guard: " + guard);
+
+		const std::string a = "content_to_pixel(line_p" + std::to_string(i - 1) + ")";
+		const std::string b = "content_to_pixel(line_p" + std::to_string(i) + ")";
+		++tst::checks();
+		if (text.find(a) == std::string::npos || text.find(b) == std::string::npos)
+			tst::fail(__FILE__, __LINE__,
+				  "line segment " + std::to_string(i) + " does not pair line_p" +
+					  std::to_string(i - 1) + " with line_p" + std::to_string(i));
+	}
+
+	/* The CPU reads these three by name in the compositor. */
+	for (const char *name : {"line_count", "line_width", "line_p15"}) {
+		const std::string decl = std::string(name) + ";";
+		bool declared = false;
+		std::istringstream in(text);
+		std::string line;
+		while (std::getline(in, line)) {
+			if (line.rfind("uniform ", 0) == 0 && line.find(decl) != std::string::npos) {
+				declared = true;
+				break;
+			}
+		}
+		++tst::checks();
+		if (!declared)
+			tst::fail(__FILE__, __LINE__, std::string("line uniform missing: ") + name);
+	}
+
+	++tst::checks();
+	if (text.find("seg_dist(") == std::string::npos)
+		tst::fail(__FILE__, __LINE__, "line segments do not use the pixel-distance helper");
 }

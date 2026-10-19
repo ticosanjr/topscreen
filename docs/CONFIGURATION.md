@@ -109,24 +109,24 @@ they act on the first active filter):
 
 | ID | Action |
 |----|------|
-| `TopScreen.ToggleEffects` | Enable/disable effects |
-| `TopScreen.ToggleBackground` | Enable/disable background |
-| `TopScreen.ZoomIn` | Zoom in |
-| `TopScreen.ZoomOut` | Zoom out |
-| `TopScreen.ResetZoom` | Reset zoom |
-| `TopScreen.NextPreset` | Next preset |
-| `TopScreen.PrevPreset` | Previous preset |
-| `TopScreen.ProfileA` | Activate profile A |
-| `TopScreen.ProfileB` | Activate profile B |
-| `TopScreen.ProfileC` | Activate profile C |
-| `TopScreen.ProfileD` | Activate profile D |
-| `TopScreen.ProfileE` | Activate profile E |
-| `TopScreen.ProfileF` | Activate profile F |
-| `TopScreen.ProfileG` | Activate profile G |
-| `TopScreen.ProfileH` | Activate profile H |
-| `TopScreen.ProfileI` | Activate profile I |
-| `TopScreen.ProfileJ` | Activate profile J |
-| `TopScreen.ProfileSave` | Save adjustments to the current profile |
+| `TopScreen.ToggleEffects` | `TopScreen: Toggle effects` |
+| `TopScreen.ToggleBackground` | `TopScreen: Toggle background` |
+| `TopScreen.ZoomIn` | `TopScreen: Zoom in` |
+| `TopScreen.ZoomOut` | `TopScreen: Zoom out` |
+| `TopScreen.ResetZoom` | `TopScreen: Reset zoom` |
+| `TopScreen.NextPreset` | `TopScreen: Next preset` |
+| `TopScreen.PrevPreset` | `TopScreen: Previous preset` |
+| `TopScreen.ProfileA` | `TopScreen: Activate profile A` |
+| `TopScreen.ProfileB` | `TopScreen: Activate profile B` |
+| `TopScreen.ProfileC` | `TopScreen: Activate profile C` |
+| `TopScreen.ProfileD` | `TopScreen: Activate profile D` |
+| `TopScreen.ProfileE` | `TopScreen: Activate profile E` |
+| `TopScreen.ProfileF` | `TopScreen: Activate profile F` |
+| `TopScreen.ProfileG` | `TopScreen: Activate profile G` |
+| `TopScreen.ProfileH` | `TopScreen: Activate profile H` |
+| `TopScreen.ProfileI` | `TopScreen: Activate profile I` |
+| `TopScreen.ProfileJ` | `TopScreen: Activate profile J` |
+| `TopScreen.ProfileSave` | `TopScreen: Save to current profile` |
 
 ## Preset format
 

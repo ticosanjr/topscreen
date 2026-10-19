@@ -35,16 +35,16 @@ struct HighlighterConfig {
 };
 
 /**
- * Only the box mode paints the rectangle; the line is an overlay and the zoom
- * gesture draws nothing. Keeping the rule here (instead of in the compositor)
- * makes it testable without a GPU.
+ * Only the box modes paint the rectangle; the line is drawn as shader
+ * segments and the zoom gesture draws nothing. Keeping the rule here (instead
+ * of in the compositor) makes it testable without a GPU.
  */
 inline bool paints_box(const struct HighlightRender &r);
 
 struct HighlightRender {
 	bool active = false;
 	int mode = 0;
-	double x0 = 0.0, y0 = 0.0, x1 = 0.0, y1 = 0.0; // normalizado (x0<x1, y0<y1)
+	double x0 = 0.0, y0 = 0.0, x1 = 0.0, y1 = 0.0; // normalized (x0<x1, y0<y1)
 	double alpha = 0.0;
 	uint32_t color = 0;
 	double thickness = 0.0;
@@ -53,14 +53,21 @@ struct HighlightRender {
 	int point_count = 0;
 };
 
-/* Only the box modes paint the rectangle: the line has its own overlay and
- * the pure zoom gesture draws nothing. Regression for "Line still shows the
- * filled box". */
+/* Only the box modes paint the rectangle: the line is drawn by the main
+ * shader and the pure zoom gesture draws nothing. Regression for "Line still
+ * shows the filled box". */
 inline bool paints_box(const HighlightRender &r)
 {
 	return r.active && (r.mode == static_cast<int>(HighlightMode::Box) ||
 			    r.mode == static_cast<int>(HighlightMode::BoxZoom));
 }
+
+/**
+ * Decimates a freehand trail into at most `max_out` points, keeping the first
+ * and the last and spreading the rest evenly (the shader declares a fixed
+ * number of line slots). Returns how many points were written to `out`.
+ */
+int subsample_line(const struct Vec2f *points, int count, struct Vec2f *out, int max_out);
 
 
 /**

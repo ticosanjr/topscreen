@@ -70,7 +70,7 @@ That is where all the math and the state logic live — what actually must be ri
 | `test_zoom.cpp` | `core/zoom.*` | manual step and limits, auto with recent focus, return on idle, off mode, focus clamp |
 | `test_json.cpp` | `core/json.*` | object/array/nested, numbers, escapes (`\uXXXX`), errors |
 | `test_preset.cpp` | `core/preset.*` | parse + apply, missing fields kept, errors, **real files** `data/presets/*.json` |
-| `test_shader_params.cpp` | `data/effects/topscreen.effect` | presence of the uniforms the compositor looks up by name + `Draw` technique (catches silent divergence) |
+| `test_shader_params.cpp` | `data/effects/topscreen.effect` | presence of the uniforms the compositor looks up by name + `Draw` technique (catches silent divergence); **line slots**: every consecutive `line_p` pair has its own segment and `line_count`/`line_width` are declared (the CPU decimates to those 16 points) |
 | `test_preset_all_keys.cpp` | `core/preset.*` | all config keys are mapped (guarantees a complete preset) |
 | `test_locale_keys.cpp` | `data/locale/*.ini` | every key used in `obs_module_text()` exists in `en-US.ini`; no orphan keys |
 | `test_profiles.cpp` | `core/profiles.*` | distinct A–J seeds (colors + zoom), labels, index wrap |
@@ -81,7 +81,7 @@ That is where all the math and the state logic live — what actually must be ri
 | `test_font_atlas.cpp` | `core/font_atlas.*` | atlas generated from the **real TTF**, per-glyph metrics, alpha, invalid cases |
 | `test_evdev.cpp` | `core/evdev.*` | `input_event` decoding, labels, modifiers, partial records |
 | `test_highlighter.cpp` | `core/highlighter.*` | drag, normalized rectangle, hold/fade, small drag, disabled |
-| `test_highlight_modes.cpp` | `core/highlighter.*`, `core/pen.*`, `core/zoom.*` | trail dedupe/cap, zoom request timing, hold-to-release glide, BoxZoom draws + still zooms |
+| `test_highlight_modes.cpp` | `core/highlighter.*`, `core/zoom.*` | trail dedupe/cap, line decimation into the shader slots (first/last kept, monotonic), zoom request timing, hold-to-release glide, BoxZoom draws + still zooms |
 | `test_docs.cpp` | `docs/` × code | every key in `keys.hpp` is documented; hotkeys from the code are in the reference |
 | `test_cursor_atlas.cpp` | `core/cursor_atlas.*` + `data/cursors/` | TSAT format, hotspots and **real atlas** (16 styles = `CursorStyle::Count`) |
 | `test_image.cpp` | `core/image.*` + `data/wallpapers/` | image decode (reads a **real wallpaper** 1920x1080) and invalid cases |
@@ -91,8 +91,8 @@ That is where all the math and the state logic live — what actually must be ri
 ## Current numbers
 
 ```
-155 tests | 2702 checks | 0 failures   (core)
-26 tests | 324 checks   | 0 failures   (integration with fake libobs)
+159 tests | 2783 checks | 0 failures   (core)
+26 tests | 360 checks   | 0 failures   (integration with fake libobs)
 ```
 
 ## What the integration layer covers

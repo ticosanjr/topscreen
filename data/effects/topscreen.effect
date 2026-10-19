@@ -53,6 +53,27 @@ uniform float4 highlight_rect;   // x0,y0,x1,y1 (content 0..1)
 uniform float4 highlight_color;  // rgba
 uniform float  highlight_alpha;
 
+/* Freehand line: up to 16 polyline points (content 0..1), unrolled on
+ * purpose like the click slots (no arrays, no dynamic loops). */
+uniform float  line_count;
+uniform float  line_width;   // px
+uniform float2 line_p0;
+uniform float2 line_p1;
+uniform float2 line_p2;
+uniform float2 line_p3;
+uniform float2 line_p4;
+uniform float2 line_p5;
+uniform float2 line_p6;
+uniform float2 line_p7;
+uniform float2 line_p8;
+uniform float2 line_p9;
+uniform float2 line_p10;
+uniform float2 line_p11;
+uniform float2 line_p12;
+uniform float2 line_p13;
+uniform float2 line_p14;
+uniform float2 line_p15;
+
 uniform float  click_count;
 
 uniform float2 click0_pos;
@@ -116,6 +137,15 @@ float2 rotate2(float2 p, float a)
 	float s = sin(a);
 	float c = cos(a);
 	return float2(c * p.x - s * p.y, s * p.x + c * p.y);
+}
+
+// Distance from a pixel to a segment, in pixels.
+float seg_dist(float2 p, float2 a, float2 b)
+{
+	float2 pa = p - a;
+	float2 ba = b - a;
+	float t = clamp(dot(pa, ba) / max(dot(ba, ba), 1e-6), 0.0, 1.0);
+	return len2(pa - ba * t);
 }
 
 // Signed distance to a rounded rectangle centered at the origin.
@@ -340,6 +370,106 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 			float  hd  = sd_round_box(px - hc, hh, hr);
 			float  ha  = (1.0 - smoothstep(-1.0, 1.0, hd)) * highlight_alpha * mask * highlight_color.a;
 			col.rgb    = lerp(col.rgb, highlight_color.rgb, saturate(ha));
+		}
+
+		// Freehand line: polyline segments through the line points,
+		// converted to pixels so the width stays constant on screen.
+		if (line_count > 1.5) {
+			float  aa = max(target_size.y * 0.0015, 1.0);
+			float  line_hw = max(line_width * 0.5, aa * 0.5);
+			float  line_alpha = highlight_alpha * mask * highlight_color.a;
+			float  line_a = 0.0;
+			if (line_count > 1.5) {
+				float2 la = content_to_pixel(line_p0);
+				float2 lb = content_to_pixel(line_p1);
+				float  ld = seg_dist(px, la, lb);
+				line_a = max(line_a, (1.0 - smoothstep(line_hw - aa, line_hw + aa, ld)) * line_alpha);
+			}
+			if (line_count > 2.5) {
+				float2 la = content_to_pixel(line_p1);
+				float2 lb = content_to_pixel(line_p2);
+				float  ld = seg_dist(px, la, lb);
+				line_a = max(line_a, (1.0 - smoothstep(line_hw - aa, line_hw + aa, ld)) * line_alpha);
+			}
+			if (line_count > 3.5) {
+				float2 la = content_to_pixel(line_p2);
+				float2 lb = content_to_pixel(line_p3);
+				float  ld = seg_dist(px, la, lb);
+				line_a = max(line_a, (1.0 - smoothstep(line_hw - aa, line_hw + aa, ld)) * line_alpha);
+			}
+			if (line_count > 4.5) {
+				float2 la = content_to_pixel(line_p3);
+				float2 lb = content_to_pixel(line_p4);
+				float  ld = seg_dist(px, la, lb);
+				line_a = max(line_a, (1.0 - smoothstep(line_hw - aa, line_hw + aa, ld)) * line_alpha);
+			}
+			if (line_count > 5.5) {
+				float2 la = content_to_pixel(line_p4);
+				float2 lb = content_to_pixel(line_p5);
+				float  ld = seg_dist(px, la, lb);
+				line_a = max(line_a, (1.0 - smoothstep(line_hw - aa, line_hw + aa, ld)) * line_alpha);
+			}
+			if (line_count > 6.5) {
+				float2 la = content_to_pixel(line_p5);
+				float2 lb = content_to_pixel(line_p6);
+				float  ld = seg_dist(px, la, lb);
+				line_a = max(line_a, (1.0 - smoothstep(line_hw - aa, line_hw + aa, ld)) * line_alpha);
+			}
+			if (line_count > 7.5) {
+				float2 la = content_to_pixel(line_p6);
+				float2 lb = content_to_pixel(line_p7);
+				float  ld = seg_dist(px, la, lb);
+				line_a = max(line_a, (1.0 - smoothstep(line_hw - aa, line_hw + aa, ld)) * line_alpha);
+			}
+			if (line_count > 8.5) {
+				float2 la = content_to_pixel(line_p7);
+				float2 lb = content_to_pixel(line_p8);
+				float  ld = seg_dist(px, la, lb);
+				line_a = max(line_a, (1.0 - smoothstep(line_hw - aa, line_hw + aa, ld)) * line_alpha);
+			}
+			if (line_count > 9.5) {
+				float2 la = content_to_pixel(line_p8);
+				float2 lb = content_to_pixel(line_p9);
+				float  ld = seg_dist(px, la, lb);
+				line_a = max(line_a, (1.0 - smoothstep(line_hw - aa, line_hw + aa, ld)) * line_alpha);
+			}
+			if (line_count > 10.5) {
+				float2 la = content_to_pixel(line_p9);
+				float2 lb = content_to_pixel(line_p10);
+				float  ld = seg_dist(px, la, lb);
+				line_a = max(line_a, (1.0 - smoothstep(line_hw - aa, line_hw + aa, ld)) * line_alpha);
+			}
+			if (line_count > 11.5) {
+				float2 la = content_to_pixel(line_p10);
+				float2 lb = content_to_pixel(line_p11);
+				float  ld = seg_dist(px, la, lb);
+				line_a = max(line_a, (1.0 - smoothstep(line_hw - aa, line_hw + aa, ld)) * line_alpha);
+			}
+			if (line_count > 12.5) {
+				float2 la = content_to_pixel(line_p11);
+				float2 lb = content_to_pixel(line_p12);
+				float  ld = seg_dist(px, la, lb);
+				line_a = max(line_a, (1.0 - smoothstep(line_hw - aa, line_hw + aa, ld)) * line_alpha);
+			}
+			if (line_count > 13.5) {
+				float2 la = content_to_pixel(line_p12);
+				float2 lb = content_to_pixel(line_p13);
+				float  ld = seg_dist(px, la, lb);
+				line_a = max(line_a, (1.0 - smoothstep(line_hw - aa, line_hw + aa, ld)) * line_alpha);
+			}
+			if (line_count > 14.5) {
+				float2 la = content_to_pixel(line_p13);
+				float2 lb = content_to_pixel(line_p14);
+				float  ld = seg_dist(px, la, lb);
+				line_a = max(line_a, (1.0 - smoothstep(line_hw - aa, line_hw + aa, ld)) * line_alpha);
+			}
+			if (line_count > 15.5) {
+				float2 la = content_to_pixel(line_p14);
+				float2 lb = content_to_pixel(line_p15);
+				float  ld = seg_dist(px, la, lb);
+				line_a = max(line_a, (1.0 - smoothstep(line_hw - aa, line_hw + aa, ld)) * line_alpha);
+			}
+			col.rgb = lerp(col.rgb, highlight_color.rgb, saturate(line_a));
 		}
 
 		// Spotlight: darkens outside a circle that follows the cursor

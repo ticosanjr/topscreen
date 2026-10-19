@@ -32,6 +32,13 @@ struct HighlighterConfig {
 	double zoom_out_ms = 1200.0;
 };
 
+/**
+ * Only the box mode paints the rectangle; the line is an overlay and the zoom
+ * gesture draws nothing. Keeping the rule here (instead of in the compositor)
+ * makes it testable without a GPU.
+ */
+inline bool paints_box(const struct HighlightRender &r);
+
 struct HighlightRender {
 	bool active = false;
 	int mode = 0;
@@ -43,6 +50,11 @@ struct HighlightRender {
 	const struct Vec2f *points = nullptr;
 	int point_count = 0;
 };
+
+inline bool paints_box(const HighlightRender &r)
+{
+	return r.active && r.mode == 0;
+}
 
 /**
  * Drag highlighter.

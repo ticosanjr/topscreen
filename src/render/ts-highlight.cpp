@@ -104,7 +104,7 @@ void HighlightRenderer::upload(int width, int height, const std::vector<uint8_t>
 
 void HighlightRenderer::draw(float x, float y, float w, float h, uint32_t color, float alpha)
 {
-	if (!loaded() || !tech_)
+	if (!ready() || !texture_)
 		return;
 
 	/* The fade scales the color's alpha, not the mask. */

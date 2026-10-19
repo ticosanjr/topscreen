@@ -228,6 +228,8 @@ modifiers (`Esc` stays as text).
   **holds** briefly and zooms back **slowly** — no mark is drawn.
   - **Zoom direction** picks the motion: *Zoom in* / *Zoom out*, or *Punch in* /
     *Punch out* (no hold: it snaps and returns immediately).
+  - The **centre of the dragged area** always ends up in the **centre of the
+    screen** (the focus follows the same centering law as the auto-zoom).
   - The gesture always starts from **what is on screen at that moment** and
     returns to it, so selecting while already zoomed works as expected.
   - Max zoom and the three timings (in / hold / out) are configurable; in and

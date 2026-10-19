@@ -43,7 +43,7 @@ private:
 	bool validate_params() const;
 	void load_cursor_atlas();
 	void release_cursor_atlas();
-	void load_bg_image(const std::string &path);
+	void load_bg_image(const char *path);
 	void release_bg_image();
 
 	gs_effect_t *effect_ = nullptr;

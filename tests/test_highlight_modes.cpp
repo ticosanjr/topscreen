@@ -1,3 +1,4 @@
+#include "core/geometry.hpp"
 #include "core/highlighter.hpp"
 #include "core/pen.hpp"
 #include "core/types.hpp"
@@ -286,4 +287,49 @@ TEST(zoom_spot_punch_has_no_hold)
 
 	z.update(160.0); /* the 900 ms "hold" must be ignored for punch */
 	CHECK(z.render().zoom < at_in);
+}
+
+/* Only the box mode may paint the rectangle: the line has its own overlay and
+ * the zoom gesture must draw nothing at all. Regression for "Line still shows
+ * the filled box". */
+TEST(highlight_only_box_mode_paints_the_rectangle)
+{
+	HighlighterModel m;
+	HighlighterConfig cfg;
+	cfg.mode = static_cast<int>(HighlightMode::Box);
+	m.configure(cfg);
+	m.begin(0.1, 0.1, 0.0);
+	m.move(0.5, 0.5, 10.0);
+	m.end(20.0);
+	m.update(30.0);
+	CHECK(paints_box(m.render()));
+
+	cfg.mode = static_cast<int>(HighlightMode::Line);
+	m.configure(cfg);
+	m.begin(0.1, 0.1, 0.0);
+	m.move(0.5, 0.5, 10.0);
+	m.end(20.0);
+	m.update(30.0);
+	CHECK(!paints_box(m.render()));
+
+	cfg.mode = static_cast<int>(HighlightMode::Zoom);
+	m.configure(cfg);
+	m.begin(0.1, 0.1, 0.0);
+	m.move(0.5, 0.5, 10.0);
+	m.end(20.0);
+	m.update(30.0);
+	CHECK(!paints_box(m.render()));
+}
+
+/* The centre of the selection must end up in the centre of the screen. */
+TEST(zoom_spot_focus_centres_the_selection)
+{
+	for (double z : {1.5, 2.0, 3.0}) {
+		for (double sc : {0.35, 0.5, 0.62}) {
+			const double f = center_focus_for(sc, z);
+			/* Where the selection centre appears on screen (shader law). */
+			const double shown = f + (sc - f) * z;
+			CHECK_NEAR(shown, 0.5, 1e-9);
+		}
+	}
 }

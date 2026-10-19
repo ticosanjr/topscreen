@@ -4,6 +4,7 @@
 #include "core/coord.hpp"
 #include "core/keys.hpp"
 #include "core/math.hpp"
+#include "core/geometry.hpp"
 #include "core/profiles.hpp"
 #include "hotkeys/ts-hotkeys.hpp"
 #include "input/ts-input.hpp"
@@ -586,9 +587,15 @@ void ts_filter_tick(void *data, float seconds)
 				const double zmax = std::max(1.0, ctx->cfg.highlight.zoom_max);
 				z = std::min(z, zmax);
 				if (z > 1.0) {
-					ctx->zoom.spot_start(
-						(zx0 + zx1) * 0.5, (zy0 + zy1) * 0.5,
-						ctx->cfg.highlight.zoom_dir, z,
+					/* The selection's centre must land in the centre of the
+					 * screen: convert it with the same centering law the
+					 * auto-zoom uses, otherwise the focus (the point that
+					 * stays put) would just be the centre itself. */
+					const double scx = (zx0 + zx1) * 0.5;
+					const double scy = (zy0 + zy1) * 0.5;
+					ctx->zoom.spot_start(core::center_focus_for(scx, z),
+							     core::center_focus_for(scy, z),
+							     ctx->cfg.highlight.zoom_dir, z,
 						ctx->cfg.highlight.zoom_max,
 						ctx->cfg.highlight.zoom_in_ms,
 						ctx->cfg.highlight.zoom_hold_ms,

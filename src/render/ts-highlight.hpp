@@ -31,7 +31,9 @@ public:
 	/** Draws the mask over (x,y,w,h) with the given color (0xAABBGGRR). */
 	void draw(float x, float y, float w, float h, uint32_t color, float alpha);
 
-	bool loaded() const { return effect_ != nullptr && texture_ != nullptr; }
+	/** The effect is usable (a texture is created on the first upload). */
+	bool ready() const { return effect_ != nullptr && tech_ != nullptr; }
+	bool loaded() const { return ready() && texture_ != nullptr; }
 
 private:
 	gs_effect_t *effect_ = nullptr;

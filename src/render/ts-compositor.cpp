@@ -405,10 +405,10 @@ void Compositor::render(obs_source_t *filter, const core::Config &cfg, const Fra
 	set_c(p_bg_a_, cfg.bg.color_a);
 	set_c(p_bg_b_, cfg.bg.color_b);
 
-	/* Wallpaper: if there is an image (from the PC or built-in), it is used. */
-	const std::string bg_path =
-		core::resolve_bg_path(cfg.bg.image.c_str(), cfg.bg.image_file.c_str());
-	load_bg_image(active ? bg_path : std::string());
+	/* Wallpaper: if there is an image (from the PC or built-in), it is used.
+	 * The path is passed as a C string so the hot path does not allocate. */
+	load_bg_image(active ? core::resolve_bg_path(cfg.bg.image.c_str(), cfg.bg.image_file.c_str())
+			     : "");
 	const bool bgimg = bg && bg_tex_ != nullptr;
 	/* D3D11 aborts the draw ("Not all shader parameters were set") when any
 	 * scalar uniform was never uploaded, leaving the frame empty, so every
@@ -472,8 +472,9 @@ void Compositor::render(obs_source_t *filter, const core::Config &cfg, const Fra
 	set_f(p_spotlight_radius_, static_cast<float>(cfg.spotlight.radius));
 	set_f(p_spotlight_dim_, static_cast<float>(cfg.spotlight.dim));
 
-	/* Drag highlighter */
-	const bool hl = active && st.highlight.active;
+	/* Drag highlighter: only the box mode paints the rectangle. The line is
+	 * drawn by its own overlay and the zoom gesture draws nothing. */
+	const bool hl = active && core::paints_box(st.highlight);
 	set_f(p_highlight_active_, hl ? 1.0f : 0.0f);
 	{
 		struct vec4 rect;
@@ -520,7 +521,7 @@ void Compositor::render(obs_source_t *filter, const core::Config &cfg, const Fra
 	 * the same space the model records, so no padding/aspect math can shift or
 	 * hide the stroke. */
 	if (active && st.highlight.active && st.highlight.mode == 1 && st.highlight.point_count > 1 &&
-	    highlight_.loaded()) {
+	    highlight_.ready()) {
 		const int count = st.highlight.point_count;
 		if (count < pen_points_) {
 			pen_.reset(1.0, 512, st.highlight.thickness);
@@ -553,17 +554,18 @@ void Compositor::render(obs_source_t *filter, const core::Config &cfg, const Fra
 		text_.draw(st.keys, st.key_count, cfg.keys, w, h);
 }
 
-void Compositor::load_bg_image(const std::string &raw)
+void Compositor::load_bg_image(const char *raw)
 {
-	/* The requested path rarely changes; avoids re-resolving per frame. */
-	if (raw == bg_requested_)
+	const char *requested = raw ? raw : "";
+	/* The requested path rarely changes: compare without building strings. */
+	if (bg_requested_ == requested)
 		return;
-	bg_requested_ = raw;
+	bg_requested_ = requested;
 
-	/* Auto-correction: if the value is the name of a built-in wallpaper
-	 * (e.g.: "Aurora", from old versions/config), converts it to the path. */
-	std::string path = raw;
-	if (const char *w = wallpaper_path_for(path.c_str()))
+	/* Auto-correction: a built-in wallpaper name from older configs
+	 * (e.g. "Aurora") becomes its path. */
+	std::string path = requested;
+	if (const char *w = wallpaper_path_for(requested))
 		path = w;
 
 	if (path == bg_loaded_)

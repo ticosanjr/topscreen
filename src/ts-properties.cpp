@@ -330,15 +330,9 @@ obs_properties_t *properties_create(void *data)
 	/* ---------------- Highlighter ---------------- */
 	obs_properties_t *hl = obs_properties_create();
 	obs_properties_add_bool(hl, kHighlightEnabled, obs_module_text("Highlight.Enabled"));
-	obs_properties_add_color(hl, kHighlightColor, obs_module_text("Highlight.Color"));
-	obs_properties_add_float_slider(hl, kHighlightOpacity, obs_module_text("Highlight.Opacity"), 0.0, 1.0,
-					0.01);
-	obs_properties_add_float_slider(hl, kHighlightHoldMs, obs_module_text("Highlight.HoldMs"), 0.0, 5000.0,
-					50.0);
-	obs_properties_add_float_slider(hl, kHighlightFadeMs, obs_module_text("Highlight.FadeMs"), 0.0, 2000.0,
-					50.0);
 
-	obs_property_t *hmode = obs_properties_add_list(hl, kHighlightMode, obs_module_text("Highlight.Mode"),
+	obs_property_t *hmode = obs_properties_add_list(hl, kHighlightMode,
+							obs_module_text("Highlight.Mode"),
 							OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
 	obs_property_list_add_int(hmode, obs_module_text("Highlight.Mode.Box"),
 				  static_cast<int>(HighlightMode::Box));
@@ -347,16 +341,37 @@ obs_properties_t *properties_create(void *data)
 	obs_property_list_add_int(hmode, obs_module_text("Highlight.Mode.Zoom"),
 				  static_cast<int>(HighlightMode::Zoom));
 
+	/* Appearance (box + line). */
+	obs_properties_add_color(hl, kHighlightColor, obs_module_text("Highlight.Color"));
+	obs_properties_add_float_slider(hl, kHighlightOpacity, obs_module_text("Highlight.Opacity"), 0.0, 1.0,
+					0.01);
 	obs_properties_add_float_slider(hl, kHighlightThickness, obs_module_text("Highlight.Thickness"), 0.001,
 					0.05, 0.001);
+
+	/* Timing (box + line). */
+	obs_properties_add_float_slider(hl, kHighlightHoldMs, obs_module_text("Highlight.HoldMs"), 0.0, 5000.0,
+					50.0);
+	obs_properties_add_float_slider(hl, kHighlightFadeMs, obs_module_text("Highlight.FadeMs"), 0.0, 2000.0,
+					50.0);
+
+	/* Zoom gesture. */
+	obs_property_t *zdir = obs_properties_add_list(hl, kHighlightZoomDir,
+						       obs_module_text("Highlight.ZoomDir"),
+						       OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
+	obs_property_list_add_int(zdir, obs_module_text("Highlight.ZoomDir.In"), 0);
+	obs_property_list_add_int(zdir, obs_module_text("Highlight.ZoomDir.Out"), 1);
+	obs_property_list_add_int(zdir, obs_module_text("Highlight.ZoomDir.PunchIn"), 2);
+	obs_property_list_add_int(zdir, obs_module_text("Highlight.ZoomDir.PunchOut"), 3);
+
 	obs_properties_add_float_slider(hl, kHighlightZoomMax, obs_module_text("Highlight.ZoomMax"), 1.2, 8.0,
 					0.1);
-	obs_properties_add_float_slider(hl, kHighlightZoomInMs, obs_module_text("Highlight.ZoomInMs"), 50.0,
-					2000.0, 10.0);
-	obs_properties_add_float_slider(hl, kHighlightZoomHoldMs,
-					obs_module_text("Highlight.ZoomHoldMs"), 0.0, 5000.0, 50.0);
+	obs_properties_add_float_slider(hl, kHighlightZoomInMs,
+					obs_module_text("Highlight.ZoomInMs"), 50.0, 2000.0, 10.0);
 	obs_properties_add_float_slider(hl, kHighlightZoomOutMs, obs_module_text("Highlight.ZoomOutMs"), 100.0,
 					8000.0, 50.0);
+	obs_properties_add_float_slider(hl, kHighlightZoomHoldMs,
+					obs_module_text("Highlight.ZoomHoldMs"), 0.0, 5000.0, 50.0);
+
 	obs_properties_add_group(props, "grp_highlight", obs_module_text("Group.Highlight"), OBS_GROUP_NORMAL,
 				 hl);
 

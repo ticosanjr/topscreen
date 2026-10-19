@@ -122,7 +122,7 @@ TEST(zoom_spot_goes_in_hold_and_back)
 	cfg.mode = static_cast<int>(ZoomMode::Off); /* keep the normal zoom at 1x */
 	z.configure(cfg);
 	z.reset(0.0);
-	z.spot_start(0.25, 0.75, 3.0, 200.0, 500.0, 800.0, 0.0);
+	z.spot_start(0.25, 0.75, 0, 3.0, 8.0, 200.0, 500.0, 800.0, 0.0);
 
 	/* Half of the zoom-in: between 1x and 3x. */
 	z.update(100.0);
@@ -154,7 +154,7 @@ TEST(zoom_spot_stop_restores_normal_rendering)
 	ZoomConfig cfg;
 	z.configure(cfg);
 	z.reset(0.0);
-	z.spot_start(0.5, 0.5, 2.0, 100.0, 100.0, 100.0, 0.0);
+	z.spot_start(0.5, 0.5, 0, 2.0, 8.0, 100.0, 100.0, 100.0, 0.0);
 	z.update(50.0);
 	CHECK(z.spot_active());
 	z.spot_stop();
@@ -223,4 +223,67 @@ TEST(pen_mask_set_points_copies_a_trail)
 	const Vec2f pts[3] = {pt(0.2, 0.2), pt(0.5, 0.5), pt(0.8, 0.8)};
 	c.set_points(pts, 3);
 	CHECK(c.alpha()[static_cast<size_t>(64) * c.width() + 64] > 0);
+}
+
+/* The gesture must start from, and return to, the zoom that was on screen
+ * when the selection was made (a selection while already zoomed in). */
+TEST(zoom_spot_starts_and_returns_to_the_current_zoom)
+{
+	ZoomModel z;
+	ZoomConfig cfg;
+	cfg.mode = static_cast<int>(ZoomMode::Manual);
+	z.configure(cfg);
+	z.reset(0.0);
+	z.set_manual(2.0); /* already zoomed before the gesture */
+	z.update(500.0);
+	const double base = z.render().zoom;
+	CHECK(base > 1.0); /* whatever the spring reached, the gesture uses it */
+
+	/* "zoom in" with factor 1.5 from the CURRENT zoom... */
+	z.spot_start(0.5, 0.5, 0, 1.5, 8.0, 100.0, 200.0, 300.0, 520.0);
+	z.update(620.0); /* end of the in phase */
+	CHECK_NEAR(z.render().zoom, base * 1.5, 1e-6);
+
+	/* ...and fades back to exactly that value at the end of the return. */
+	z.update(520.0 + 100.0 + 200.0 + 300.0 - 1.0);
+	CHECK(z.spot_active());
+	CHECK_NEAR(z.render().zoom, base, 0.02);
+
+	z.update(5000.0); /* finished: the normal zoom takes over again */
+	CHECK(!z.spot_active());
+}
+
+/* Zoom out lowers the zoom but never below 1x. */
+TEST(zoom_spot_zoom_out_never_goes_below_one)
+{
+	ZoomModel z;
+	ZoomConfig cfg;
+	cfg.mode = static_cast<int>(ZoomMode::Off);
+	z.configure(cfg);
+	z.reset(0.0);
+	z.update(10.0);
+
+	z.spot_start(0.5, 0.5, 1, 4.0, 8.0, 100.0, 0.0, 100.0, 20.0);
+	z.update(130.0);
+	CHECK_NEAR(z.render().zoom, 1.0, 1e-6);
+	CHECK(z.render().zoom >= 1.0);
+}
+
+/* Punch modes have no hold: they reach the target and start returning at once. */
+TEST(zoom_spot_punch_has_no_hold)
+{
+	ZoomModel z;
+	ZoomConfig cfg;
+	cfg.mode = static_cast<int>(ZoomMode::Off);
+	z.configure(cfg);
+	z.reset(0.0);
+	z.update(10.0);
+
+	z.spot_start(0.4, 0.6, 2, 2.0, 8.0, 100.0, 900.0, 200.0, 20.0);
+	z.update(120.0); /* exactly the end of the in phase */
+	const double at_in = z.render().zoom;
+	CHECK_NEAR(at_in, 2.0, 1e-6);
+
+	z.update(160.0); /* the 900 ms "hold" must be ignored for punch */
+	CHECK(z.render().zoom < at_in);
 }

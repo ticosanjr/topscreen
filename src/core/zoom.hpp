@@ -44,8 +44,14 @@ public:
 	 * Zoom-spotlight gesture: quick zoom into a point, short hold, slow return.
 	 * Takes precedence over the auto/manual zoom while active.
 	 */
-	void spot_start(double cx, double cy, double target_zoom, double in_ms, double hold_ms,
-			double out_ms, double now_ms);
+	/**
+	 * @param direction 0 zoom in, 1 zoom out, 2 punch in, 3 punch out.
+	 * @param factor    how much to zoom relative to the CURRENT zoom (which is
+	 *                  captured here, so a selection made while already zoomed
+	 *                  starts and returns from that state).
+	 */
+	void spot_start(double cx, double cy, int direction, double factor, double max_zoom,
+			double in_ms, double hold_ms, double out_ms, double now_ms);
 	void spot_stop();
 	bool spot_active() const { return spot_active_; }
 
@@ -69,6 +75,10 @@ private:
 	double spot_cx_ = 0.5;
 	double spot_cy_ = 0.5;
 	double spot_target_ = 1.0;
+	double spot_base_ = 1.0;
+	double spot_base_fx_ = 0.5;
+	double spot_base_fy_ = 0.5;
+	int spot_dir_ = 0;
 	double spot_start_ms_ = 0.0;
 	double spot_in_ms_ = 250.0;
 	double spot_hold_ms_ = 600.0;

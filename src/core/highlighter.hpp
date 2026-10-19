@@ -23,6 +23,8 @@ struct HighlighterConfig {
 	double thickness = 0.004; // line mode: stroke width (content units 0..1)
 	double min_span = 0.02;      // minimum drag (avoids marking clicks)
 
+	/* Zoom mode: 0 in, 1 out, 2 punch in, 3 punch out. */
+	int zoom_dir = 0;
 	/* Zoom mode timings/limits. */
 	double zoom_max = 2.5;
 	double zoom_in_ms = 250.0;

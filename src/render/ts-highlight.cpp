@@ -72,20 +72,30 @@ void HighlightRenderer::upload(int width, int height, const std::vector<uint8_t>
 	if (revision == texture_revision_)
 		return;
 
+	/* RGBA8 with white RGB and the mask in the alpha channel: the most
+	 * portable texture format on both D3D11 and OpenGL. */
+	const size_t pixels = static_cast<size_t>(width) * static_cast<size_t>(height);
+	rgba_.resize(pixels * 4u);
+	for (size_t i = 0; i < pixels; ++i) {
+		rgba_[i * 4u + 0] = 255;
+		rgba_[i * 4u + 1] = 255;
+		rgba_[i * 4u + 2] = 255;
+		rgba_[i * 4u + 3] = alpha[i];
+	}
+
 	obs_enter_graphics();
 	if (!texture_ || width != texture_w_ || height != texture_h_) {
 		if (texture_) {
 			gs_texture_destroy(texture_);
 			texture_ = nullptr;
 		}
-		const uint8_t *data[1] = {alpha.data()};
+		const uint8_t *data[1] = {rgba_.data()};
 		texture_ = gs_texture_create(static_cast<uint32_t>(width), static_cast<uint32_t>(height),
-					     GS_R8, 1, data, 0);
+					     GS_RGBA, 1, data, 0);
 		texture_w_ = width;
 		texture_h_ = height;
 	} else {
-		const uint8_t *data[1] = {alpha.data()};
-		gs_texture_set_image(texture_, data[0], static_cast<uint32_t>(width), false);
+		gs_texture_set_image(texture_, rgba_.data(), static_cast<uint32_t>(width) * 4u, false);
 	}
 	obs_leave_graphics();
 

@@ -212,6 +212,7 @@ modifiers (`Esc` stays as text).
 | **Enable highlighter** | Enables the left-drag action chosen in **Drag action** |
 | **Drag action** | **Filled box**, **Line** (freehand drawing that fades) or **Zoom to the selection** (no drawing) |
 | **Line thickness** | Stroke width for the line mode |
+| **Zoom direction** | **Zoom in**, **Zoom out**, **Punch in** or **Punch out** |
 | **Zoom max** | Zoom to the selection: maximum zoom |
 | **Zoom in / hold / out (ms)** | Zoom to the selection: quick in, short hold, slow return |
 | **Color** | Highlight color (use alpha < 255 for translucent) |
@@ -224,8 +225,13 @@ modifiers (`Esc` stays as text).
 - **Line**: draw small shapes/underlines with the mouse; the stroke fades out.
   Great for circling something on screen.
 - **Zoom to the selection**: drag over an area; TopScreen zooms **fast** into it,
-  **holds** briefly and zooms back **slowly** — no mark is drawn. Everything
-  (max zoom, in/hold/out timings) is configurable.
+  **holds** briefly and zooms back **slowly** — no mark is drawn.
+  - **Zoom direction** picks the motion: *Zoom in* / *Zoom out*, or *Punch in* /
+    *Punch out* (no hold: it snaps and returns immediately).
+  - The gesture always starts from **what is on screen at that moment** and
+    returns to it, so selecting while already zoomed works as expected.
+  - Max zoom and the three timings (in / hold / out) are configurable; in and
+    out are independent.
 
 ---
 

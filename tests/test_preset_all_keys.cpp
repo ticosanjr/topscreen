@@ -88,6 +88,7 @@ TEST(preset_covers_all_keys)
             "highlight_color": 12345,
             "highlight_mode": 2,
             "highlight_thickness": 0.012,
+            "highlight_zoom_dir": 3,
             "highlight_zoom_max": 3.5,
             "highlight_zoom_in_ms": 120,
             "highlight_zoom_hold_ms": 400,
@@ -188,6 +189,7 @@ TEST(preset_covers_all_keys)
 
 	CHECK_EQ(c.highlight.mode, 2);
 	CHECK_NEAR(c.highlight.thickness, 0.012, 1e-9);
+	CHECK_EQ(c.highlight.zoom_dir, 3);
 	CHECK_NEAR(c.highlight.zoom_max, 3.5, 1e-9);
 	CHECK_NEAR(c.highlight.zoom_in_ms, 120.0, 1e-9);
 	CHECK_NEAR(c.highlight.zoom_hold_ms, 400.0, 1e-9);

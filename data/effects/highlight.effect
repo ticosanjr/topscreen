@@ -29,7 +29,7 @@ VertInOut VSDefault(VertInOut vert_in)
 
 float4 PSTint(VertInOut vert_in) : TARGET
 {
-	float a = image.Sample(def_sampler, vert_in.uv).r * color.a;
+	float a = image.Sample(def_sampler, vert_in.uv).a * color.a;
 	return float4(color.rgb, a);
 }
 

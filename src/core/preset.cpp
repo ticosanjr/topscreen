@@ -185,6 +185,7 @@ bool Preset::apply(Config *cfg, std::string *error) const
 	/* Monitor origin */
 	cfg->highlight.mode = read_int(o, kHighlightMode, cfg->highlight.mode);
 	cfg->highlight.thickness = read_number(o, kHighlightThickness, cfg->highlight.thickness);
+	cfg->highlight.zoom_dir = read_int(o, kHighlightZoomDir, cfg->highlight.zoom_dir);
 	cfg->highlight.zoom_max = read_number(o, kHighlightZoomMax, cfg->highlight.zoom_max);
 	cfg->highlight.zoom_in_ms = read_number(o, kHighlightZoomInMs, cfg->highlight.zoom_in_ms);
 	cfg->highlight.zoom_hold_ms = read_number(o, kHighlightZoomHoldMs, cfg->highlight.zoom_hold_ms);

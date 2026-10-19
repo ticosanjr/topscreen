@@ -586,11 +586,15 @@ void ts_filter_tick(void *data, float seconds)
 				const double zmax = std::max(1.0, ctx->cfg.highlight.zoom_max);
 				z = std::min(z, zmax);
 				if (z > 1.0) {
-					ctx->zoom.spot_start((zx0 + zx1) * 0.5, (zy0 + zy1) * 0.5, z,
-							     ctx->cfg.highlight.zoom_in_ms,
-							     ctx->cfg.highlight.zoom_hold_ms,
-							     ctx->cfg.highlight.zoom_out_ms, ctx->time_ms);
-					blog(LOG_INFO, "[TopScreen] zoom spotlight: %.1fx", z);
+					ctx->zoom.spot_start(
+						(zx0 + zx1) * 0.5, (zy0 + zy1) * 0.5,
+						ctx->cfg.highlight.zoom_dir, z,
+						ctx->cfg.highlight.zoom_max,
+						ctx->cfg.highlight.zoom_in_ms,
+						ctx->cfg.highlight.zoom_hold_ms,
+						ctx->cfg.highlight.zoom_out_ms, ctx->time_ms);
+					blog(LOG_INFO, "[TopScreen] zoom spotlight: dir=%d %.2fx",
+					     ctx->cfg.highlight.zoom_dir, z);
 				}
 			}
 		}

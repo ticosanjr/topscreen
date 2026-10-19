@@ -86,6 +86,7 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Fade (ms) | `highlight_fade_ms` | double | 0–2000 | `300` |
 | | Drag action | `highlight_mode` | int | 0 box, 1 line, 2 zoom | `0` |
 | | Line thickness | `highlight_thickness` | double | 0.001–0.05 | `0.004` |
+| | Zoom direction | `highlight_zoom_dir` | int | 0 in, 1 out, 2 punch in, 3 punch out | `0` |
 | | Zoom max | `highlight_zoom_max` | double | 1.2–8 | `2.5` |
 | | Zoom in (ms) | `highlight_zoom_in_ms` | double | 50–2000 | `250` |
 | | Zoom hold (ms) | `highlight_zoom_hold_ms` | double | 0–5000 | `600` |

@@ -1,5 +1,7 @@
 #include "zoom.hpp"
 
+#include <algorithm>
+
 #include "geometry.hpp"
 #include "math.hpp"
 
@@ -50,15 +52,31 @@ void ZoomModel::set_cursor(double x, double y, double now_ms)
 	focus_on(x, y, now_ms);
 }
 
-void ZoomModel::spot_start(double cx, double cy, double target_zoom, double in_ms, double hold_ms,
-			   double out_ms, double now_ms)
+void ZoomModel::spot_start(double cx, double cy, int direction, double factor, double max_zoom,
+			   double in_ms, double hold_ms, double out_ms, double now_ms)
 {
 	spot_active_ = true;
 	spot_cx_ = clamp_range(cx, 0.0, 1.0);
 	spot_cy_ = clamp_range(cy, 0.0, 1.0);
-	spot_target_ = clamp_range(target_zoom, 1.0, 8.0);
+	spot_dir_ = direction;
+
+	/* The gesture starts from what is on screen right now (which may already be
+	 * zoomed) and returns to it. */
+	spot_base_ = std::max(1.0, zoom_.value());
+	spot_base_fx_ = fx_.value();
+	spot_base_fy_ = fy_.value();
+
+	const double f = factor > 1.0 ? factor : 1.0;
+	const double upper = max_zoom > 1.0 ? max_zoom : 8.0;
+	if (direction == 1 || direction == 3)
+		spot_target_ = clamp_range(spot_base_ / f, 1.0, 8.0);
+	else
+		spot_target_ = clamp_range(spot_base_ * f, 1.0, upper);
+
+	/* Punch: no hold — it goes in and immediately comes back. */
+	const bool punch = direction >= 2;
 	spot_in_ms_ = in_ms > 1.0 ? in_ms : 1.0;
-	spot_hold_ms_ = hold_ms >= 0.0 ? hold_ms : 0.0;
+	spot_hold_ms_ = punch ? 0.0 : (hold_ms >= 0.0 ? hold_ms : 0.0);
 	spot_out_ms_ = out_ms > 1.0 ? out_ms : 1.0;
 	spot_start_ms_ = now_ms;
 }
@@ -72,20 +90,20 @@ double ZoomModel::spot_zoom_at(double now_ms) const
 {
 	const double elapsed = now_ms - spot_start_ms_;
 	if (elapsed <= spot_in_ms_) {
-		/* Quick ease-out into the target. */
+		/* Quick ease-out into the target (punch is snappier). */
 		const double u = elapsed / spot_in_ms_;
-		const double e = 1.0 - (1.0 - u) * (1.0 - u) * (1.0 - u);
-		return 1.0 + (spot_target_ - 1.0) * e;
+		const double e = spot_dir_ >= 2 ? u * u : 1.0 - (1.0 - u) * (1.0 - u) * (1.0 - u);
+		return spot_base_ + (spot_target_ - spot_base_) * e;
 	}
 	if (elapsed <= spot_in_ms_ + spot_hold_ms_)
 		return spot_target_;
 
-	/* Slow, smooth return. */
+	/* Slow, smooth return to the state captured at the selection. */
 	const double u = (elapsed - spot_in_ms_ - spot_hold_ms_) / spot_out_ms_;
 	if (u >= 1.0)
-		return 1.0;
+		return spot_base_;
 	const double e = u * u * (3.0 - 2.0 * u); /* smoothstep */
-	return spot_target_ + (1.0 - spot_target_) * e;
+	return spot_target_ + (spot_base_ - spot_target_) * e;
 }
 
 double ZoomModel::spot_focus_at(double now_ms) const
@@ -159,8 +177,14 @@ ZoomRender ZoomModel::render() const
 		out.zoom = spot_zoom_at(last_update_ms_);
 		if (out.zoom < 1.0)
 			out.zoom = 1.0;
-		out.focus_x = clamp_focus(clamp_range(spot_cx_, 0.0, 1.0), out.zoom);
-		out.focus_y = clamp_focus(clamp_range(spot_cy_, 0.0, 1.0), out.zoom);
+		/* Focus moves from where it was to the selection and back. */
+		const double e = spot_target_ > spot_base_
+					 ? (out.zoom - spot_base_) / std::max(1e-6, spot_target_ - spot_base_)
+					 : 0.0;
+		const double fx = spot_base_fx_ + (clamp_range(spot_cx_, 0.0, 1.0) - spot_base_fx_) * e;
+		const double fy = spot_base_fy_ + (clamp_range(spot_cy_, 0.0, 1.0) - spot_base_fy_) * e;
+		out.focus_x = clamp_focus(clamp_range(fx, 0.0, 1.0), out.zoom);
+		out.focus_y = clamp_focus(clamp_range(fy, 0.0, 1.0), out.zoom);
 		return out;
 	}
 

@@ -38,6 +38,7 @@ private:
 	gs_technique_t *tech_ = nullptr;
 	gs_eparam_t *p_image_ = nullptr;
 	gs_eparam_t *p_color_ = nullptr;
+	std::vector<uint8_t> rgba_;
 	gs_texture_t *texture_ = nullptr;
 	uint32_t texture_revision_ = 0;
 	int texture_w_ = 0;

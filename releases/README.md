@@ -3,9 +3,10 @@
 Ready-to-use packages, versioned in this folder (no build required).
 Each version keeps its files; newer versions are added alongside.
 
-| Version | Linux | Windows |
-|---------|-------|---------|
-| **0.2.6** | [`topscreen-0.2.6-linux.tar.gz`](topscreen-0.2.6-linux.tar.gz) | [`topscreen-0.2.6-windows.zip`](topscreen-0.2.6-windows.zip) |
+| Version | Linux | Windows | Highlights |
+|---------|-------|---------|------------|
+| **0.2.7** | [`topscreen-0.2.7-linux.tar.gz`](topscreen-0.2.7-linux.tar.gz) | pending CI build | multi-monitor input fix (cursor/clicks/zoom on stacked or side-by-side screens) |
+| 0.2.6 | [`topscreen-0.2.6-linux.tar.gz`](topscreen-0.2.6-linux.tar.gz) | [`topscreen-0.2.6-windows.zip`](topscreen-0.2.6-windows.zip) | first build with the Windows Qt dock; 10 profiles |
 
 ## Install (Windows, no compiler, no admin)
 

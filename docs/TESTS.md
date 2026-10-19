@@ -84,13 +84,14 @@ That is where all the math and the state logic live — what actually must be ri
 | `test_docs.cpp` | `docs/` × code | every key in `keys.hpp` is documented; hotkeys from the code are in the reference |
 | `test_cursor_atlas.cpp` | `core/cursor_atlas.*` + `data/cursors/` | TSAT format, hotspots and **real atlas** (16 styles = `CursorStyle::Count`) |
 | `test_image.cpp` | `core/image.*` + `data/wallpapers/` | image decode (reads a **real wallpaper** 1920x1080) and invalid cases |
+| `test_monitor.cpp` | `core/monitor.*` + `core/coord.*` | monitor pick (hint/size/ambiguity) and global→content mapping with the capture **below/right/left/above**, including the old broken case |
 | `test_mapping.cpp` | `core/mapping.*` | content area (padding/aspect), forward zoom and **consistency with the shader** (proves the cursor lands on the right pixel at any zoom) |
 
 ## Current numbers
 
 ```
-127 tests | 2433 checks | 0 failures   (core)
-22 tests | 290 checks   | 0 failures   (integration with fake libobs)
+137 tests | 2509 checks | 0 failures   (core)
+23 tests | 298 checks   | 0 failures   (integration with fake libobs)
 ```
 
 ## What the integration layer covers

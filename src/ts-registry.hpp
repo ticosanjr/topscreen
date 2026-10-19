@@ -22,6 +22,8 @@ struct FilterControl {
 	virtual void apply_preset(int index) = 0;
 
 	virtual int input_tier() const = 0;
+	/** Origin of the captured monitor in global coordinates (0,0 when unknown). */
+	virtual void monitor_origin(double *x, double *y) const = 0;
 
 	/* Profiles (4 fixed slots). select_profile/save_profile also exist in
 	 * HotkeyContext (same signature); the instance implements them once. */

@@ -305,6 +305,49 @@ TEST(integration_profiles_save_and_switch)
 /* Creating the filter must register every hotkey on the source, once each,
  * with the stable TopScreen.* ids (the OBS UI groups them under the filter
  * instance name, so a missing section means these never registered). */
+TEST(integration_monitor_origin_from_environment)
+{
+	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
+
+	/* Monitor below the primary one: global y starts at 1080. */
+	TS_SETENV("TOPSCREEN_MONITOR_ORIGIN", "0,1080");
+
+	obs_source_t *parent = make_parent(1920, 1080);
+	obs_source_t *filter = fakeobs::make_source(&ts_filter_source_info, parent, 0, 0);
+	void *ctx = create_filter(filter);
+	REQUIRE(ctx != nullptr);
+	ts_filter_source_info.video_render(ctx, nullptr);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+
+	FilterControl *ctrl = registry_first();
+	REQUIRE(ctrl != nullptr);
+
+	double x = -1.0, y = -1.0;
+	ctrl->monitor_origin(&x, &y);
+	CHECK_NEAR(x, 0.0, 1e-9);
+	CHECK_NEAR(y, 1080.0, 1e-9);
+
+	ts_filter_source_info.destroy(ctx);
+
+	/* Without the override and without a resolvable monitor list, the origin
+	 * stays at (0,0): the previous behaviour is preserved. */
+	TS_UNSETENV("TOPSCREEN_MONITOR_ORIGIN");
+	obs_source_t *filter2 = fakeobs::make_source(&ts_filter_source_info, parent, 0, 0);
+	void *ctx2 = create_filter(filter2);
+	REQUIRE(ctx2 != nullptr);
+	ts_filter_source_info.video_render(ctx2, nullptr);
+	ts_filter_source_info.video_tick(ctx2, 1.0f / 60.0f);
+
+	FilterControl *ctrl2 = registry_first();
+	REQUIRE(ctrl2 != nullptr);
+	double x2 = -1.0, y2 = -1.0;
+	ctrl2->monitor_origin(&x2, &y2);
+	CHECK_NEAR(x2, 0.0, 1e-9);
+	CHECK_NEAR(y2, 0.0, 1e-9);
+
+	ts_filter_source_info.destroy(ctx2);
+}
+
 TEST(integration_registers_all_hotkeys)
 {
 	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);

@@ -7,6 +7,7 @@
 #include "core/profiles.hpp"
 #include "hotkeys/ts-hotkeys.hpp"
 #include "input/ts-input.hpp"
+#include "input/ts-monitor.hpp"
 #include "render/ts-compositor.hpp"
 #include "render/ts-frame.hpp"
 #include "ts-presets.hpp"
@@ -17,6 +18,7 @@
 #include <algorithm>
 #include <atomic>
 #include <cmath>
+#include <cstring>
 #include <string>
 
 using namespace topscreen;
@@ -120,6 +122,16 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 	int current_profile_ = 0;
 	int last_profile = -1;
 
+	/* Origin of the captured monitor in GLOBAL desktop coordinates: the input
+	 * reports global positions, so a monitor below/left of the primary one
+	 * needs its offset subtracted before normalizing. */
+	double origin_x_ = 0.0;
+	double origin_y_ = 0.0;
+	bool origin_known_ = false;
+	uint32_t origin_target_w_ = 0;
+	uint32_t origin_target_h_ = 0;
+	int origin_age_ticks_ = 0;
+
 	std::atomic<uint32_t> actions_{0};
 	std::atomic<int> pending_effects_{-1};
 	std::atomic<int> pending_preset_{-1};
@@ -138,6 +150,7 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 	void do_save_profile();
 	void process_actions();
 	void reload_from_settings();
+	void refresh_monitor_origin(bool force);
 
 	/* ---- HotkeyContext (hotkey thread: only queues) ---- */
 	void toggle_effects() override { actions_.fetch_or(A_TOGGLE_EFFECTS); }
@@ -170,6 +183,11 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 		actions_.fetch_or(A_APPLY_PRESET);
 	}
 	int input_tier() const override { return input_tier_cache_.load(); }
+	void monitor_origin(double *x, double *y) const override
+	{
+		*x = origin_known_ ? origin_x_ : 0.0;
+		*y = origin_known_ ? origin_y_ : 0.0;
+	}
 
 	/* ---- FilterControl: profiles ---- */
 	int profile_count() const override { return kProfileCount; }
@@ -234,6 +252,61 @@ void ts_filter_ctx::do_save_profile()
 {
 	store_profile_slot(current_profile_);
 	blog(LOG_INFO, "[TopScreen] profile saved: %s", core::profile_label(current_profile_));
+}
+
+/**
+ * Resolves which monitor this capture covers, so global cursor coordinates can
+ * be turned into content coordinates. Re-resolved when the target size changes
+ * and every ~10 s (monitor layouts can change while OBS runs).
+ */
+void ts_filter_ctx::refresh_monitor_origin(bool force)
+{
+	if (target_w == 0 || target_h == 0)
+		return;
+
+	const bool size_changed = target_w != origin_target_w_ || target_h != origin_target_h_;
+	if (!force && !size_changed && origin_age_ticks_ < 600)
+		return;
+
+	origin_age_ticks_ = 0;
+	origin_target_w_ = target_w;
+	origin_target_h_ = target_h;
+
+	/* The capture settings expose the monitor index on Windows (same order as
+	 * EnumDisplayMonitors). X11's "screen" is an X screen, not a monitor, so
+	 * the hint is not trusted there. */
+	int hint = -1;
+	bool trust_hint = false;
+	std::string device;
+	if (obs_source_t *parent = obs_filter_get_parent(source)) {
+		obs_data_t *s = obs_source_get_settings(parent);
+		if (s) {
+			/* Newer OBS identifies the monitor by device name
+			 * (alt_id/id, e.g. "\\.\DISPLAY2"); older builds use an
+			 * integer index. Both are optional. */
+			for (const char *key : {"alt_id", "device_id", "id"}) {
+				const char *v = obs_data_get_string(s, key);
+				if (v && *v && std::strncmp(v, "\\\\", 2) == 0) {
+					device = v;
+					break;
+				}
+			}
+			if (obs_data_has_user_value(s, "monitor") ||
+			    obs_data_has_default_value(s, "monitor")) {
+				hint = static_cast<int>(obs_data_get_int(s, "monitor"));
+				trust_hint = true;
+			}
+			obs_data_release(s);
+		}
+	}
+
+	const bool known = ts_resolve_monitor_origin(device.c_str(), hint, trust_hint, target_w,
+						     target_h, &origin_x_, &origin_y_);
+	if (!known) {
+		origin_x_ = 0.0;
+		origin_y_ = 0.0;
+	}
+	origin_known_ = known;
 }
 
 void ts_filter_ctx::reconfigure_models()
@@ -453,6 +526,11 @@ void ts_filter_tick(void *data, float seconds)
 
 	ctx->process_actions();
 
+	if (ctx->target_w > 0 && ctx->target_h > 0) {
+		++ctx->origin_age_ticks_;
+		ctx->refresh_monitor_origin(false);
+	}
+
 	ctx->input.poll();
 
 	/* Keys feed the overlay even without a cursor available. */
@@ -462,7 +540,9 @@ void ts_filter_tick(void *data, float seconds)
 
 	if (ctx->input.available() && ctx->target_w > 0 && ctx->target_h > 0) {
 		const InputState &st = ctx->input.state();
-		const core::Monitor mon{0.0, 0.0, static_cast<double>(ctx->target_w),
+		const core::Monitor mon{ctx->origin_known_ ? ctx->origin_x_ : 0.0,
+					ctx->origin_known_ ? ctx->origin_y_ : 0.0,
+					static_cast<double>(ctx->target_w),
 					static_cast<double>(ctx->target_h)};
 		const core::Vec2f c = core::screen_to_content(st.x, st.y, mon);
 

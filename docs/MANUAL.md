@@ -332,6 +332,16 @@ TOPSCREEN_DEBUG_KEY=Ctrl obs
   `failed to create the effect` appears, the file `data/effects/topscreen.effect`
   was not found — reinstall.
 
+**Cursor, clicks or zoom are offset on a second monitor**
+- Fixed in **0.2.7**: the capture now contributes its monitor origin, so a
+  screen placed **below**, **left** or **above** the primary one maps the mouse
+  correctly (previously the vertical axis used the total desktop height).
+- It is automatic: the monitor is matched by device name (Windows) or by the
+  capture size (X11/Xinerama). If the layout is exotic, force it with the
+  environment variable `TOPSCREEN_MONITOR_ORIGIN=x,y` (global coordinates of the
+  captured monitor, e.g. `0,1080` for the screen below the primary one) and
+  check the log line `monitor origin: (x,y)`.
+
 **Windows: the source disappears when the filter is enabled**
 - Fixed in **0.2.4**. The D3D11 device refuses to draw when *any* scalar
   shader parameter was never uploaded (`device_draw (D3D11): Not all shader

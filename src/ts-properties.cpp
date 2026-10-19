@@ -109,7 +109,30 @@ void add_click_group(obs_properties_t *props, const char *group_key, const char 
 
 } // namespace
 
-obs_properties_t *properties_create(void *data)
+/* Shows only the highlighter controls that apply to the current drag mode.
+ * The callback receives the top-level tree, and obs_properties_get() searches
+ * nested groups, so this works for the sub-groups below as well. */
+bool highlight_group_visible(obs_properties_t *props, const char *group, bool visible)
+{
+	obs_property_t *p = obs_properties_get(props, group);
+	if (!p)
+		return false;
+	obs_property_set_visible(p, visible);
+	return true;
+}
+
+bool highlight_mode_changed(obs_properties_t *props, obs_property_t *property, obs_data_t *settings)
+{
+	(void)property;
+	const long long mode = settings ? obs_data_get_int(settings, kHighlightMode)
+					: static_cast<long long>(HighlightMode::Box);
+	highlight_group_visible(props, "grp_hl_look", mode != static_cast<int>(HighlightMode::Zoom));
+	highlight_group_visible(props, "grp_hl_timing", mode != static_cast<int>(HighlightMode::Zoom));
+	highlight_group_visible(props, "grp_hl_zoom", mode == static_cast<int>(HighlightMode::Zoom));
+	return true;
+}
+
+obs_properties_t *properties_create(void *data, obs_data_t *settings)
 {
 	UNUSED_PARAMETER(data);
 
@@ -327,7 +350,8 @@ obs_properties_t *properties_create(void *data)
 	obs_properties_add_color(keys, kKeysBandColor, obs_module_text("Keys.BandColor"));
 	obs_properties_add_group(props, "grp_keys", obs_module_text("Group.Keys"), OBS_GROUP_NORMAL, keys);
 
-	/* ---------------- Highlighter ---------------- */
+	/* ---------------- Highlighter: action first, then only what applies.
+	 * The mode list below shows/hides the Look / Timing / Zoom groups. */
 	obs_properties_t *hl = obs_properties_create();
 	obs_properties_add_bool(hl, kHighlightEnabled, obs_module_text("Highlight.Enabled"));
 
@@ -340,22 +364,30 @@ obs_properties_t *properties_create(void *data)
 				  static_cast<int>(HighlightMode::Line));
 	obs_property_list_add_int(hmode, obs_module_text("Highlight.Mode.Zoom"),
 				  static_cast<int>(HighlightMode::Zoom));
+	obs_property_set_modified_callback(hmode, highlight_mode_changed);
 
-	/* Appearance (box + line). */
-	obs_properties_add_color(hl, kHighlightColor, obs_module_text("Highlight.Color"));
-	obs_properties_add_float_slider(hl, kHighlightOpacity, obs_module_text("Highlight.Opacity"), 0.0, 1.0,
-					0.01);
-	obs_properties_add_float_slider(hl, kHighlightThickness, obs_module_text("Highlight.Thickness"), 0.001,
-					0.05, 0.001);
+	/* Look (box + line). */
+	obs_properties_t *hl_look = obs_properties_create();
+	obs_properties_add_color(hl_look, kHighlightColor, obs_module_text("Highlight.Color"));
+	obs_properties_add_float_slider(hl_look, kHighlightOpacity, obs_module_text("Highlight.Opacity"),
+					0.0, 1.0, 0.01);
+	obs_properties_add_float_slider(hl_look, kHighlightThickness,
+					obs_module_text("Highlight.Thickness"), 0.001, 0.05, 0.001);
+	obs_properties_add_group(hl, "grp_hl_look", obs_module_text("Highlight.Look"), OBS_GROUP_NORMAL,
+				 hl_look);
 
-	/* Timing (box + line). */
-	obs_properties_add_float_slider(hl, kHighlightHoldMs, obs_module_text("Highlight.HoldMs"), 0.0, 5000.0,
-					50.0);
-	obs_properties_add_float_slider(hl, kHighlightFadeMs, obs_module_text("Highlight.FadeMs"), 0.0, 2000.0,
-					50.0);
+	/* Timing (box + line): how long the mark stays and fades. */
+	obs_properties_t *hl_timing = obs_properties_create();
+	obs_properties_add_float_slider(hl_timing, kHighlightHoldMs, obs_module_text("Highlight.HoldMs"),
+					0.0, 5000.0, 50.0);
+	obs_properties_add_float_slider(hl_timing, kHighlightFadeMs, obs_module_text("Highlight.FadeMs"),
+					0.0, 2000.0, 50.0);
+	obs_properties_add_group(hl, "grp_hl_timing", obs_module_text("Highlight.Timing"), OBS_GROUP_NORMAL,
+				 hl_timing);
 
-	/* Zoom gesture. */
-	obs_property_t *zdir = obs_properties_add_list(hl, kHighlightZoomDir,
+	/* Zoom gesture: only in Zoom mode. */
+	obs_properties_t *hl_zoom = obs_properties_create();
+	obs_property_t *zdir = obs_properties_add_list(hl_zoom, kHighlightZoomDir,
 						       obs_module_text("Highlight.ZoomDir"),
 						       OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
 	obs_property_list_add_int(zdir, obs_module_text("Highlight.ZoomDir.In"), 0);
@@ -363,17 +395,26 @@ obs_properties_t *properties_create(void *data)
 	obs_property_list_add_int(zdir, obs_module_text("Highlight.ZoomDir.PunchIn"), 2);
 	obs_property_list_add_int(zdir, obs_module_text("Highlight.ZoomDir.PunchOut"), 3);
 
-	obs_properties_add_float_slider(hl, kHighlightZoomMax, obs_module_text("Highlight.ZoomMax"), 1.2, 8.0,
-					0.1);
-	obs_properties_add_float_slider(hl, kHighlightZoomInMs,
+	obs_properties_add_float_slider(hl_zoom, kHighlightZoomDelayMs,
+					obs_module_text("Highlight.ZoomDelayMs"), 0.0, 5000.0,
+					50.0);
+	obs_properties_add_float_slider(hl_zoom, kHighlightZoomMax, obs_module_text("Highlight.ZoomMax"),
+					1.2, 8.0, 0.1);
+	obs_properties_add_float_slider(hl_zoom, kHighlightZoomInMs,
 					obs_module_text("Highlight.ZoomInMs"), 50.0, 2000.0, 10.0);
-	obs_properties_add_float_slider(hl, kHighlightZoomOutMs, obs_module_text("Highlight.ZoomOutMs"), 100.0,
-					8000.0, 50.0);
-	obs_properties_add_float_slider(hl, kHighlightZoomHoldMs,
-					obs_module_text("Highlight.ZoomHoldMs"), 0.0, 5000.0, 50.0);
+	obs_properties_add_float_slider(hl_zoom, kHighlightZoomOutMs, obs_module_text("Highlight.ZoomOutMs"),
+					100.0, 8000.0, 50.0);
+	obs_properties_add_float_slider(hl_zoom, kHighlightZoomHoldMs,
+					obs_module_text("Highlight.ZoomHoldMs"), 0.0, 5000.0,
+					50.0);
+	obs_properties_add_group(hl, "grp_hl_zoom", obs_module_text("Highlight.ZoomGroup"), OBS_GROUP_NORMAL,
+				 hl_zoom);
 
 	obs_properties_add_group(props, "grp_highlight", obs_module_text("Group.Highlight"), OBS_GROUP_NORMAL,
 				 hl);
+
+	/* Initial visibility matches the saved mode (the callback keeps it live). */
+	highlight_mode_changed(props, nullptr, settings);
 
 	/* ---------------- Monitor origin ---------------- */
 	obs_properties_t *mon = obs_properties_create();

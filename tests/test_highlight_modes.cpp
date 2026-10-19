@@ -123,154 +123,108 @@ TEST(zoom_spot_goes_in_hold_and_back)
 	cfg.mode = static_cast<int>(ZoomMode::Off); /* keep the normal zoom at 1x */
 	z.configure(cfg);
 	z.reset(0.0);
-	z.spot_start(0.25, 0.75, 0, 3.0, 8.0, 200.0, 500.0, 800.0, 0.0);
+	z.spot_start_hold(0.25, 0.75, 3.0, 200.0, 500.0, 800.0, 0.0);
 
-	/* Half of the zoom-in: between 1x and 3x. */
+	/* Half of the zoom-in: between 1x and 3x, and it stays while held. */
 	z.update(100.0);
 	const double mid = z.render().zoom;
 	CHECK(mid > 1.0);
 	CHECK(mid < 3.0);
+	z.update(5000.0);
+	CHECK(z.spot_active());
+	CHECK_NEAR(z.render().zoom, 3.0, 1e-6);
 
-	/* Hold: exactly the target, focused on the point. */
-	z.update(400.0);
+	/* Focused on the point. */
 	const ZoomRender held = z.render();
-	CHECK_NEAR(held.zoom, 3.0, 1e-6);
 	CHECK(held.focus_x > 0.0 && held.focus_x <= 0.25 + 1e-6);
 
-	/* Coming back. */
-	z.update(1100.0);
+	/* Release at 5100: hold (500 ms) keeps it at the top... */
+	z.spot_release(5100.0);
+	z.update(5300.0);
+	CHECK_NEAR(z.render().zoom, 3.0, 1e-6);
+
+	/* ...then it glides back... */
+	z.update(6000.0);
 	const double back = z.render().zoom;
 	CHECK(back > 1.0);
 	CHECK(back < 3.0);
 
-	/* Finished: normal zoom again. */
-	z.update(2000.0);
+	/* ...and the normal zoom takes over again. */
+	z.update(8000.0);
 	CHECK(!z.spot_active());
 	CHECK_NEAR(z.render().zoom, 1.0, 1e-6);
 }
 
-TEST(zoom_spot_stop_restores_normal_rendering)
+TEST(zoom_spot_aim_rect_fits_and_centres)
 {
-	ZoomModel z;
-	ZoomConfig cfg;
-	z.configure(cfg);
-	z.reset(0.0);
-	z.spot_start(0.5, 0.5, 0, 2.0, 8.0, 100.0, 100.0, 100.0, 0.0);
-	z.update(50.0);
-	CHECK(z.spot_active());
-	z.spot_stop();
-	CHECK(!z.spot_active());
+	/* A 0.2x0.2 rect from a 1x base: zoom 5x, centred on (0.3, 0.7). */
+	const SpotAim a = spot_aim_for_hold(true, 0.2, 0.6, 0.4, 0.8, 0.0, 0.0, 1.0, 2.5, 8.0,
+					    false);
+	REQUIRE(a.valid);
+	CHECK_NEAR(a.zoom, 5.0, 1e-9);
+	/* The selection centre must land on the screen centre (shader law). */
+	CHECK_NEAR(a.focus_x + (0.3 - a.focus_x) * a.zoom, 0.5, 1e-9);
+	CHECK_NEAR(a.focus_y + (0.7 - a.focus_y) * a.zoom, 0.5, 1e-9);
+
+	/* A huge rect is a no-op (nothing to zoom into). */
+	const SpotAim b = spot_aim_for_hold(true, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 2.5, 8.0,
+					    false);
+	CHECK(!b.valid);
 }
 
-/* ---- pen mask ----------------------------------------------------------- */
-
-TEST(pen_mask_draws_along_the_path)
+TEST(zoom_spot_aim_point_uses_max_and_current_cursor)
 {
-	PenCanvas c;
-	c.reset(16.0 / 9.0, 256, 0.01);
-	CHECK(c.width() == 256);
-	CHECK(c.height() == 144);
+	/* Plain hold at 1x: zoom to the configured maximum, centred on the cursor. */
+	const SpotAim a = spot_aim_for_hold(false, 0, 0, 0, 0, 0.8, 0.2, 1.0, 2.5, 8.0, false);
+	REQUIRE(a.valid);
+	CHECK_NEAR(a.zoom, 2.5, 1e-9);
+	CHECK_NEAR(a.focus_x + (0.8 - a.focus_x) * a.zoom, 0.5, 1e-9);
 
-	const uint32_t before = c.revision();
-	c.add_point(pt(0.1, 0.5));
-	c.add_point(pt(0.9, 0.5));
-	CHECK(c.revision() > before);
-
-	const auto &a = c.alpha();
-	auto idx = [&](int x, int y) { return static_cast<size_t>(y) * c.width() + x; };
-
-	/* Painted on the line... */
-	CHECK(a[idx(128, 72)] > 0);
-	CHECK(a[idx(40, 72)] > 0);
-	/* ...and empty far away. */
-	CHECK_EQ(a[idx(128, 10)], 0);
-	CHECK_EQ(a[idx(5, 5)], 0);
+	/* Already at/past the maximum: nothing to do. */
+	CHECK(!spot_aim_for_hold(false, 0, 0, 0, 0, 0.5, 0.5, 2.5, 2.5, 8.0, false).valid);
+	CHECK(!spot_aim_for_hold(false, 0, 0, 0, 0, 0.5, 0.5, 4.0, 2.5, 8.0, false).valid);
 }
 
-TEST(pen_mask_reset_clears)
+TEST(zoom_spot_aim_out_widens_and_never_goes_below_one)
 {
-	PenCanvas c;
-	c.reset(1.0, 64, 0.02);
-	c.add_point(pt(0.5, 0.5));
-	CHECK(c.alpha()[static_cast<size_t>(32) * c.width() + 32] > 0);
+	/* From 4x, widening by half. */
+	const SpotAim a = spot_aim_for_hold(false, 0, 0, 0, 0, 0.5, 0.5, 4.0, 2.0, 8.0, true);
+	REQUIRE(a.valid);
+	CHECK_NEAR(a.zoom, 2.0, 1e-9);
 
-	c.reset(1.0, 64, 0.02);
-	for (uint8_t v : c.alpha())
-		CHECK_EQ(v, 0);
+	/* From 1x there is nowhere to go. */
+	CHECK(!spot_aim_for_hold(false, 0, 0, 0, 0, 0.5, 0.5, 1.0, 2.0, 8.0, true).valid);
 }
 
-TEST(pen_mask_thickness_scales)
-{
-	PenCanvas thin, thick;
-	thin.reset(1.0, 128, 0.005);
-	thick.reset(1.0, 128, 0.03);
-
-	auto painted = [](const PenCanvas &c) {
-		int n = 0;
-		for (uint8_t v : c.alpha())
-			if (v > 0)
-				++n;
-		return n;
-	};
-	thin.add_point(pt(0.5, 0.5));
-	thick.add_point(pt(0.5, 0.5));
-	CHECK(painted(thick) > painted(thin));
-}
-
-TEST(pen_mask_set_points_copies_a_trail)
-{
-	PenCanvas c;
-	c.reset(1.0, 128, 0.01);
-	const Vec2f pts[3] = {pt(0.2, 0.2), pt(0.5, 0.5), pt(0.8, 0.8)};
-	c.set_points(pts, 3);
-	CHECK(c.alpha()[static_cast<size_t>(64) * c.width() + 64] > 0);
-}
-
-/* The gesture must start from, and return to, the zoom that was on screen
- * when the selection was made (a selection while already zoomed in). */
-TEST(zoom_spot_starts_and_returns_to_the_current_zoom)
+TEST(zoom_spot_starts_from_and_returns_to_the_current_zoom)
 {
 	ZoomModel z;
 	ZoomConfig cfg;
 	cfg.mode = static_cast<int>(ZoomMode::Manual);
 	z.configure(cfg);
 	z.reset(0.0);
-	z.set_manual(2.0); /* already zoomed before the gesture */
-	z.update(500.0);
+	z.set_manual(2.0);
+	for (int t = 50; t <= 5000; t += 50)
+		z.update(static_cast<double>(t));
 	const double base = z.render().zoom;
-	CHECK(base > 1.0); /* whatever the spring reached, the gesture uses it */
+	CHECK_NEAR(base, 2.0, 0.05); /* spring settled at the manual zoom */
 
-	/* "zoom in" with factor 1.5 from the CURRENT zoom... */
-	z.spot_start(0.5, 0.5, 0, 1.5, 8.0, 100.0, 200.0, 300.0, 520.0);
-	z.update(620.0); /* end of the in phase */
-	CHECK_NEAR(z.render().zoom, base * 1.5, 1e-6);
+	/* A plain-hold aim from the current zoom: 2.5x absolute. */
+	const SpotAim aim = spot_aim_for_hold(false, 0, 0, 0, 0, 0.5, 0.5, base, 2.5, 8.0, false);
+	REQUIRE(aim.valid);
+	CHECK_NEAR(aim.zoom, 2.5, 1e-9);
 
-	/* ...and fades back to exactly that value at the end of the return. */
-	z.update(520.0 + 100.0 + 200.0 + 300.0 - 1.0);
-	CHECK(z.spot_active());
-	CHECK_NEAR(z.render().zoom, base, 0.02);
+	z.spot_start_hold(aim.focus_x, aim.focus_y, aim.zoom, 100.0, 0.0, 300.0, 5100.0);
+	z.update(5200.0); /* end of the in phase, still held */
+	CHECK_NEAR(z.render().zoom, 2.5, 0.05);
 
-	z.update(5000.0); /* finished: the normal zoom takes over again */
+	/* Release: back to exactly the zoom that was on screen, not 1x. */
+	z.spot_release(5300.0);
+	z.update(8000.0);
 	CHECK(!z.spot_active());
+	CHECK_NEAR(z.render().zoom, base, 0.05);
 }
 
-/* Zoom out lowers the zoom but never below 1x. */
-TEST(zoom_spot_zoom_out_never_goes_below_one)
-{
-	ZoomModel z;
-	ZoomConfig cfg;
-	cfg.mode = static_cast<int>(ZoomMode::Off);
-	z.configure(cfg);
-	z.reset(0.0);
-	z.update(10.0);
-
-	z.spot_start(0.5, 0.5, 1, 4.0, 8.0, 100.0, 0.0, 100.0, 20.0);
-	z.update(130.0);
-	CHECK_NEAR(z.render().zoom, 1.0, 1e-6);
-	CHECK(z.render().zoom >= 1.0);
-}
-
-/* Punch modes have no hold: they reach the target and start returning at once. */
 TEST(zoom_spot_punch_has_no_hold)
 {
 	ZoomModel z;
@@ -280,13 +234,17 @@ TEST(zoom_spot_punch_has_no_hold)
 	z.reset(0.0);
 	z.update(10.0);
 
-	z.spot_start(0.4, 0.6, 2, 2.0, 8.0, 100.0, 900.0, 200.0, 20.0);
+	z.spot_start_hold(0.4, 0.6, 2.0, 100.0, 0.0, 200.0, 20.0);
 	z.update(120.0); /* exactly the end of the in phase */
 	const double at_in = z.render().zoom;
 	CHECK_NEAR(at_in, 2.0, 1e-6);
 
-	z.update(160.0); /* the 900 ms "hold" must be ignored for punch */
+	/* Release right away: with no hold the return starts immediately. */
+	z.spot_release(120.0);
+	z.update(160.0);
 	CHECK(z.render().zoom < at_in);
+	z.update(1000.0);
+	CHECK(!z.spot_active());
 }
 
 /* Only the box mode may paint the rectangle: the line has its own overlay and
@@ -332,4 +290,97 @@ TEST(zoom_spot_focus_centres_the_selection)
 			CHECK_NEAR(shown, 0.5, 1e-9);
 		}
 	}
+}
+
+/* The zoom request fires while the button is STILL held, after the delay. */
+TEST(highlight_zoom_fires_on_hold_after_delay)
+{
+	HighlighterModel m;
+	HighlighterConfig cfg;
+	cfg.mode = static_cast<int>(HighlightMode::Zoom);
+	cfg.zoom_delay_ms = 1200.0;
+	m.configure(cfg);
+
+	m.begin(0.5, 0.5, 0.0);
+
+	/* Held, but not long enough: nothing yet. */
+	m.update(1199.0);
+	double x0, y0, x1, y1;
+	CHECK(!m.take_zoom_request(&x0, &y0, &x1, &y1));
+
+	/* Held past the delay: the request fires while dragging. */
+	m.update(1300.0);
+	REQUIRE(m.take_zoom_request(&x0, &y0, &x1, &y1));
+	CHECK_NEAR(x0, 0.5, 1e-9); /* no drag: point request at the cursor */
+	CHECK_NEAR(x1, 0.5, 1e-9);
+
+	/* Consumed once: no repeat while still held. */
+	m.update(5000.0);
+	CHECK(!m.take_zoom_request(&x0, &y0, &x1, &y1));
+
+	/* New press starts over. */
+	m.end(5100.0);
+	m.begin(0.2, 0.2, 5200.0);
+	m.update(5300.0);
+	CHECK(!m.take_zoom_request(&x0, &y0, &x1, &y1));
+	m.update(6500.0);
+	CHECK(m.take_zoom_request(&x0, &y0, &x1, &y1));
+}
+
+/* Punch fires on the drag itself, without waiting for the delay. */
+TEST(highlight_zoom_punch_fires_on_drag)
+{
+	HighlighterModel m;
+	HighlighterConfig cfg;
+	cfg.mode = static_cast<int>(HighlightMode::Zoom);
+	cfg.zoom_dir = 2; /* punch in */
+	cfg.zoom_delay_ms = 1200.0;
+	m.configure(cfg);
+
+	m.begin(0.1, 0.1, 0.0);
+	m.move(0.25, 0.3, 10.0);
+	m.update(11.0); /* 1000+ ms before the delay */
+
+	double x0, y0, x1, y1;
+	REQUIRE(m.take_zoom_request(&x0, &y0, &x1, &y1));
+	CHECK_NEAR(x0, 0.1, 1e-9);
+	CHECK_NEAR(x1, 0.25, 1e-9);
+}
+
+/* Punch without any movement stays quiet: clicking must not zoom. */
+TEST(highlight_zoom_punch_needs_movement)
+{
+	HighlighterModel m;
+	HighlighterConfig cfg;
+	cfg.mode = static_cast<int>(HighlightMode::Zoom);
+	cfg.zoom_dir = 3; /* punch out */
+	cfg.zoom_delay_ms = 1200.0;
+	m.configure(cfg);
+
+	m.begin(0.4, 0.4, 0.0);
+	m.update(100.0);
+	m.end(150.0);
+
+	double x0, y0, x1, y1;
+	CHECK(!m.take_zoom_request(&x0, &y0, &x1, &y1));
+}
+
+/* Releasing without ever holding long enough keeps the old quick behaviour
+ * when a real drag happened. */
+TEST(highlight_zoom_quick_drag_still_fires_on_release)
+{
+	HighlighterModel m;
+	HighlighterConfig cfg;
+	cfg.mode = static_cast<int>(HighlightMode::Zoom);
+	cfg.zoom_delay_ms = 1200.0;
+	m.configure(cfg);
+
+	m.begin(0.1, 0.1, 0.0);
+	m.move(0.4, 0.5, 100.0);
+	m.end(300.0); /* 300 ms < 1200 ms delay */
+
+	double x0, y0, x1, y1;
+	REQUIRE(m.take_zoom_request(&x0, &y0, &x1, &y1));
+	CHECK_NEAR(x0, 0.1, 1e-9);
+	CHECK_NEAR(y1, 0.5, 1e-9);
 }

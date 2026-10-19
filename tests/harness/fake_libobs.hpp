@@ -29,11 +29,19 @@ struct obs_data {
 
 struct obs_property {
 	std::string name;
+	bool visible = true;
 };
 
 struct obs_properties {
 	std::map<std::string, obs_property *> items;
+	/* Nested groups, so obs_properties_get() can find them like the real one. */
+	std::map<std::string, obs_properties_t *> groups;
 };
+
+/** Visibility flag (mirrors obs_property_set_visible). */
+namespace fakeobs {
+bool property_visible(obs_property_t *prop);
+} // namespace fakeobs
 
 struct obs_source {
 	const obs_source_info *info = nullptr;

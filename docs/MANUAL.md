@@ -206,19 +206,32 @@ modifiers (`Esc` stays as text).
 | **Text shadow** | Dark outline for readability |
 | **Background band / Band color** | Rounded rectangle behind the text and its color |
 
-### Highlighter
-| Option | What it does |
-|-------|-----------|
-| **Enable highlighter** | Enables the left-drag action chosen in **Drag action** |
-| **Drag action** | **Filled box**, **Line** (freehand drawing that fades) or **Zoom to the selection** (no drawing) |
-| **Line thickness** | Stroke width for the line mode |
-| **Zoom direction** | **Zoom in**, **Zoom out**, **Punch in** or **Punch out** |
-| **Zoom max** | Zoom to the selection: maximum zoom |
-| **Zoom in / hold / out (ms)** | Zoom to the selection: quick in, short hold, slow return |
-| **Color** | Highlight color (use alpha < 255 for translucent) |
-| **Opacity** | Strength ceiling (0 = invisible, 1 = solid); keeps content readable |
-| **On-screen time (ms)** | How long it stays after you release |
-| **Fade (ms)** | Fade duration |
+### Highlighter (left-drag action)
+
+| Group | Option | What it does |
+|-------|--------|--------------|
+| — | **Enable drag actions** | Master switch for what a left-drag does |
+| — | **What a drag does** | **Filled box** (classic mark) · **Line** (draw freehand, fades out) · **Zoom to the selection** (no drawing) |
+| Look | **Color** | Highlight color (use alpha < 255 for translucent) |
+| Look | **Opacity** | Strength ceiling (0 = invisible, 1 = solid); keeps content readable |
+| Look | **Line thickness** | Stroke width as a fraction of the screen height |
+| Timing | **Keep on screen (ms)** | How long the mark stays after you release |
+| Timing | **Fade out (ms)** | How long the fade takes |
+| Zoom | **Zoom direction** | **Zoom in** (hold to zoom, release to come back) · **Zoom out** (hold to widen) · **Punch in/out** (same, but instant — no hold needed before) |
+| Zoom | **Zoom: hold-to-zoom delay** | Hold the button this long (ms) before the zoom kicks in (`0` = behaves like punch) |
+| Zoom | **Zoom: maximum** | Zoom ceiling for the gesture |
+| Zoom | **Zoom: zoom-in time** | How fast the zoom moves in |
+| Zoom | **Zoom: return time** | How slowly it glides back on release |
+| Zoom | **Zoom: hold at target** | Extra still time after release before gliding back |
+
+- **Hold-to-zoom in practice:** switch the drag action to **Zoom to the
+  selection**, then press the left button and **hold**. After the configured
+  delay the view eases into the zoom (fitted to your drag if you drew one,
+  otherwise centered where the pointer is) and **stays there while you hold**.
+  Let go and it glides back to exactly where it was — even if you were
+  already zoomed when you started.
+- Only the options of the selected mode are shown; switching mode hides the
+  rest.
 
 **Drag action in practice**
 - **Filled box**: marks a region (classic).

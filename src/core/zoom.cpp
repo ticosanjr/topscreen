@@ -1,5 +1,7 @@
 #include "zoom.hpp"
 
+#include <cmath>
+
 #include <algorithm>
 
 #include "geometry.hpp"
@@ -52,58 +54,101 @@ void ZoomModel::set_cursor(double x, double y, double now_ms)
 	focus_on(x, y, now_ms);
 }
 
-void ZoomModel::spot_start(double cx, double cy, int direction, double factor, double max_zoom,
-			   double in_ms, double hold_ms, double out_ms, double now_ms)
+void ZoomModel::spot_start_hold(double focus_x, double focus_y, double target, double in_ms,
+				  double hold_ms, double out_ms, double now_ms)
 {
 	spot_active_ = true;
-	spot_cx_ = clamp_range(cx, 0.0, 1.0);
-	spot_cy_ = clamp_range(cy, 0.0, 1.0);
-	spot_dir_ = direction;
+	spot_held_ = true;
+	spot_cx_ = clamp_range(focus_x, 0.0, 1.0);
+	spot_cy_ = clamp_range(focus_y, 0.0, 1.0);
 
 	/* The gesture starts from what is on screen right now (which may already be
 	 * zoomed) and returns to it. */
 	spot_base_ = std::max(1.0, zoom_.value());
 	spot_base_fx_ = fx_.value();
 	spot_base_fy_ = fy_.value();
+	spot_target_ = clamp_range(target, 1.0, 8.0);
+	spot_release_zoom_ = spot_base_;
 
-	const double f = factor > 1.0 ? factor : 1.0;
-	const double upper = max_zoom > 1.0 ? max_zoom : 8.0;
-	if (direction == 1 || direction == 3)
-		spot_target_ = clamp_range(spot_base_ / f, 1.0, 8.0);
-	else
-		spot_target_ = clamp_range(spot_base_ * f, 1.0, upper);
-
-	/* Punch: no hold — it goes in and immediately comes back. */
-	const bool punch = direction >= 2;
 	spot_in_ms_ = in_ms > 1.0 ? in_ms : 1.0;
-	spot_hold_ms_ = punch ? 0.0 : (hold_ms >= 0.0 ? hold_ms : 0.0);
+	spot_hold_ms_ = hold_ms >= 0.0 ? hold_ms : 0.0;
 	spot_out_ms_ = out_ms > 1.0 ? out_ms : 1.0;
 	spot_start_ms_ = now_ms;
+	spot_release_ms_ = now_ms;
+}
+
+void ZoomModel::spot_release(double now_ms)
+{
+	if (!spot_active_ || !spot_held_)
+		return;
+	/* Sample while still held: this is the peak the return starts from. */
+	spot_release_zoom_ = spot_zoom_at(now_ms);
+	spot_held_ = false;
+	spot_release_ms_ = now_ms;
 }
 
 void ZoomModel::spot_stop()
 {
 	spot_active_ = false;
+	spot_held_ = false;
+}
+
+SpotAim spot_aim_for_hold(bool has_rect, double rx0, double ry0, double rx1, double ry1,
+			  double cursor_x, double cursor_y, double base_zoom, double point_zoom,
+			  double max_zoom, bool zoom_out)
+{
+	SpotAim aim;
+	const double base = std::max(1.0, base_zoom);
+	const double upper = max_zoom > 1.0 ? max_zoom : 8.0;
+
+	double cx = clamp_range(cursor_x, 0.0, 1.0);
+	double cy = clamp_range(cursor_y, 0.0, 1.0);
+	double target = base;
+	if (has_rect) {
+		const double rw = std::max(1e-3, rx1 - rx0);
+		const double rh = std::max(1e-3, ry1 - ry0);
+		const double fit = std::min(1.0 / rw, 1.0 / rh);
+		cx = (rx0 + rx1) * 0.5;
+		cy = (ry0 + ry1) * 0.5;
+		target = zoom_out ? base / std::max(fit, 1.0) : std::min(fit, upper);
+	} else if (!zoom_out) {
+		target = std::min(std::max(point_zoom, 1.0), upper);
+	} else {
+		target = base / 2.0;
+	}
+
+	if (!zoom_out && target <= base * 1.001)
+		return aim; /* no visible change */
+
+	aim.valid = true;
+	aim.zoom = std::max(1.0, target);
+	if (std::fabs(aim.zoom - base) <= base * 0.001) {
+		aim.valid = false; /* clamping ate the whole gesture (e.g. out at 1x) */
+		return aim;
+	}
+	aim.focus_x = center_focus_for(cx, std::max(aim.zoom, 1.0001));
+	aim.focus_y = center_focus_for(cy, std::max(aim.zoom, 1.0001));
+	return aim;
 }
 
 double ZoomModel::spot_zoom_at(double now_ms) const
-{
-	const double elapsed = now_ms - spot_start_ms_;
-	if (elapsed <= spot_in_ms_) {
-		/* Quick ease-out into the target (punch is snappier). */
-		const double u = elapsed / spot_in_ms_;
-		const double e = spot_dir_ >= 2 ? u * u : 1.0 - (1.0 - u) * (1.0 - u) * (1.0 - u);
+{	if (spot_held_) {
+		/* Ease into the target and stay there while held. */
+		const double elapsed = now_ms - spot_start_ms_;
+		const double u = std::min(1.0, elapsed / spot_in_ms_);
+		const double e = 1.0 - (1.0 - u) * (1.0 - u) * (1.0 - u);
 		return spot_base_ + (spot_target_ - spot_base_) * e;
 	}
-	if (elapsed <= spot_in_ms_ + spot_hold_ms_)
-		return spot_target_;
 
-	/* Slow, smooth return to the state captured at the selection. */
-	const double u = (elapsed - spot_in_ms_ - spot_hold_ms_) / spot_out_ms_;
+	/* Released: optional hold at the target, then a smooth return to the exact
+	 * state captured at the selection. */
+	if (now_ms < spot_release_ms_ + spot_hold_ms_)
+		return spot_release_zoom_;
+	const double u = (now_ms - spot_release_ms_ - spot_hold_ms_) / spot_out_ms_;
 	if (u >= 1.0)
 		return spot_base_;
 	const double e = u * u * (3.0 - 2.0 * u); /* smoothstep */
-	return spot_target_ + (spot_base_ - spot_target_) * e;
+	return spot_release_zoom_ + (spot_base_ - spot_release_zoom_) * e;
 }
 
 double ZoomModel::spot_focus_at(double now_ms) const
@@ -129,7 +174,8 @@ void ZoomModel::update(double now_ms)
 	if (!started_)
 		reset(now_ms);
 
-	if (spot_active_ && now_ms - spot_start_ms_ > spot_in_ms_ + spot_hold_ms_ + spot_out_ms_)
+	if (spot_active_ && !spot_held_ &&
+	    now_ms - spot_release_ms_ > spot_hold_ms_ + spot_out_ms_)
 		spot_active_ = false;
 
 	double dt = (now_ms - last_update_ms_) / 1000.0;

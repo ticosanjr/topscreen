@@ -20,6 +20,8 @@ void HighlighterModel::begin(double x, double y, double now)
 	has_ = true;
 	alpha_ = 1.0;
 	zoom_request_ = false;
+	zoom_fired_ = false;
+	press_ms_ = now;
 
 	trail_count_ = 0;
 	if (cfg_.mode == static_cast<int>(HighlightMode::Line) && trail_count_ < kMaxPoints) {
@@ -65,7 +67,11 @@ void HighlighterModel::end(double now)
 
 	/* Zoom gesture: remember the selection so the filter can zoom into it.
 	 * Nothing is drawn. */
-	if (cfg_.mode == static_cast<int>(HighlightMode::Zoom) && cfg_.enabled && big_enough) {
+	/* Zoom gesture. The hold path (update) fires while the button is still
+	 * down; this path only handles a release that happened before the
+	 * trigger, with a real drag behind it. */
+	if (!zoom_fired_ && cfg_.mode == static_cast<int>(HighlightMode::Zoom) && cfg_.enabled &&
+	    big_enough) {
 		zx0_ = sx_ < ex_ ? sx_ : ex_;
 		zy0_ = sy_ < ey_ ? sy_ : ey_;
 		zx1_ = sx_ < ex_ ? ex_ : sx_;
@@ -91,8 +97,37 @@ bool HighlighterModel::take_zoom_request(double *x0, double *y0, double *x1, dou
 	return true;
 }
 
+/* Squared distance that counts as "started dragging" for punch modes. */
+static constexpr double kPunchDeadZone2 = 0.003 * 0.003;
+
 void HighlighterModel::update(double now)
 {
+	if (cfg_.mode == static_cast<int>(HighlightMode::Zoom) && cfg_.enabled && dragging_ &&
+	    !zoom_fired_) {
+		const bool punch = cfg_.zoom_dir >= 2;
+		const double dx = ex_ - sx_;
+		const double dy = ey_ - sy_;
+		const bool moved = dx * dx + dy * dy > kPunchDeadZone2;
+		const bool timeout = now - press_ms_ >= cfg_.zoom_delay_ms;
+		if ((punch && moved) || (!punch && timeout)) {
+			/* Point zoom when the button was just held; the drawn rect (if
+			 * any) always wins. */
+			const double rdx = std::fabs(ex_ - sx_);
+			const double rdy = std::fabs(ey_ - sy_);
+			if (rdx >= cfg_.min_span && rdy >= cfg_.min_span) {
+				zx0_ = sx_ < ex_ ? sx_ : ex_;
+				zy0_ = sy_ < ey_ ? sy_ : ey_;
+				zx1_ = sx_ < ex_ ? ex_ : sx_;
+				zy1_ = sy_ < ey_ ? ey_ : sy_;
+			} else {
+				zx0_ = zx1_ = ex_;
+				zy0_ = zy1_ = ey_;
+			}
+			zoom_request_ = true;
+			zoom_fired_ = true;
+		}
+	}
+
 	if (!has_) {
 		alpha_ = 0.0;
 		return;
@@ -121,13 +156,23 @@ HighlightRender HighlighterModel::render() const
 {
 	HighlightRender out;
 
-	const double dx = std::fabs(ex_ - sx_);
-	const double dy = std::fabs(ey_ - sy_);
-	const bool big_enough = dx >= cfg_.min_span && dy >= cfg_.min_span;
-
-	if (!cfg_.enabled || !has_ || alpha_ <= 0.01 || !big_enough) {
-		out.active = false;
-		return out;
+	/* The line is a freehand stroke: it only needs a trail (two points or
+	 * more). The filled box still needs a real drag, so plain clicks never
+	 * leave a mark behind. */
+	const bool is_line = cfg_.mode == static_cast<int>(HighlightMode::Line);
+	if (is_line) {
+		if (!cfg_.enabled || !has_ || alpha_ <= 0.01 || trail_count_ < 2) {
+			out.active = false;
+			return out;
+		}
+	} else {
+		const double dx = std::fabs(ex_ - sx_);
+		const double dy = std::fabs(ey_ - sy_);
+		if (!cfg_.enabled || !has_ || alpha_ <= 0.01 || dx < cfg_.min_span ||
+		    dy < cfg_.min_span) {
+			out.active = false;
+			return out;
+		}
 	}
 
 	/* Zoom mode never paints; the filter animates the zoom instead. */

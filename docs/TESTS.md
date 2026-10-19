@@ -90,8 +90,8 @@ That is where all the math and the state logic live — what actually must be ri
 ## Current numbers
 
 ```
-153 tests | 6759 checks | 0 failures   (core)
-24 tests | 302 checks   | 0 failures   (integration with fake libobs)
+154 tests | 2690 checks | 0 failures   (core)
+25 tests | 314 checks   | 0 failures   (integration with fake libobs)
 ```
 
 ## What the integration layer covers

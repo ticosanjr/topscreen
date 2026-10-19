@@ -95,6 +95,7 @@ void config_defaults(obs_data_t *s)
 	obs_data_set_default_int(s, kHighlightMode, def.highlight.mode);
 	obs_data_set_default_double(s, kHighlightThickness, def.highlight.thickness);
 	obs_data_set_default_int(s, kHighlightZoomDir, def.highlight.zoom_dir);
+	obs_data_set_default_double(s, kHighlightZoomDelayMs, def.highlight.zoom_delay_ms);
 	obs_data_set_default_double(s, kHighlightZoomMax, def.highlight.zoom_max);
 	obs_data_set_default_double(s, kHighlightZoomInMs, def.highlight.zoom_in_ms);
 	obs_data_set_default_double(s, kHighlightZoomHoldMs, def.highlight.zoom_hold_ms);
@@ -249,6 +250,7 @@ void config_load(obs_data_t *s, Config *c)
 	c->highlight.mode = static_cast<int>(read_int(s, kHighlightMode, d.highlight.mode));
 	c->highlight.thickness = read_double(s, kHighlightThickness, d.highlight.thickness);
 	c->highlight.zoom_dir = static_cast<int>(read_int(s, kHighlightZoomDir, d.highlight.zoom_dir));
+	c->highlight.zoom_delay_ms = read_double(s, kHighlightZoomDelayMs, d.highlight.zoom_delay_ms);
 	c->highlight.zoom_max = read_double(s, kHighlightZoomMax, d.highlight.zoom_max);
 	c->highlight.zoom_in_ms = read_double(s, kHighlightZoomInMs, d.highlight.zoom_in_ms);
 	c->highlight.zoom_hold_ms = read_double(s, kHighlightZoomHoldMs, d.highlight.zoom_hold_ms);
@@ -351,6 +353,7 @@ void config_store(obs_data_t *s, const Config &c)
 	obs_data_set_int(s, kHighlightMode, c.highlight.mode);
 	obs_data_set_double(s, kHighlightThickness, c.highlight.thickness);
 	obs_data_set_int(s, kHighlightZoomDir, c.highlight.zoom_dir);
+	obs_data_set_double(s, kHighlightZoomDelayMs, c.highlight.zoom_delay_ms);
 	obs_data_set_double(s, kHighlightZoomMax, c.highlight.zoom_max);
 	obs_data_set_double(s, kHighlightZoomInMs, c.highlight.zoom_in_ms);
 	obs_data_set_double(s, kHighlightZoomHoldMs, c.highlight.zoom_hold_ms);

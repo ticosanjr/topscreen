@@ -4,6 +4,7 @@
 #include <obs-module.h>
 
 #include <string>
+#include <utility>
 
 #include "audio/ts-click-sound.hpp"
 #include "core/keys.hpp"
@@ -137,6 +138,51 @@ TEST(properties_creates_expected_groups)
 	CHECK(obs_properties_get(p, "grp_keys") != nullptr);
 	CHECK(obs_properties_get(p, "grp_highlight") != nullptr);
 	obs_properties_destroy(p);
+}
+
+/* The highlighter shows only the controls that apply to the current mode:
+ * box/line get Look + Timing, zoom mode gets only the Zoom group. */
+TEST(properties_highlight_groups_follow_the_mode)
+{
+	auto make_props = [](int mode) {
+		obs_data_t *s = obs_data_create();
+		config_defaults(s);
+		obs_data_set_int(s, core::keys::kHighlightMode, static_cast<long long>(mode));
+		return std::make_pair(s, properties_create(nullptr, s));
+	};
+
+	/* Default is box: look + timing visible, zoom hidden. */
+	{
+		auto [s, p] = make_props(static_cast<int>(core::HighlightMode::Box));
+		CHECK(p != nullptr);
+		CHECK(fakeobs::property_visible(obs_properties_get(p, "grp_hl_look")));
+		CHECK(fakeobs::property_visible(obs_properties_get(p, "grp_hl_timing")));
+		CHECK(!fakeobs::property_visible(obs_properties_get(p, "grp_hl_zoom")));
+		obs_properties_destroy(p);
+		obs_data_release(s);
+	}
+
+	/* Zoom mode: only the zoom group. */
+	{
+		auto [s, p] = make_props(static_cast<int>(core::HighlightMode::Zoom));
+		CHECK(p != nullptr);
+		CHECK(!fakeobs::property_visible(obs_properties_get(p, "grp_hl_look")));
+		CHECK(!fakeobs::property_visible(obs_properties_get(p, "grp_hl_timing")));
+		CHECK(fakeobs::property_visible(obs_properties_get(p, "grp_hl_zoom")));
+		obs_properties_destroy(p);
+		obs_data_release(s);
+	}
+
+	/* Line mode behaves like box (look + timing, no zoom group). */
+	{
+		auto [s, p] = make_props(static_cast<int>(core::HighlightMode::Line));
+		CHECK(p != nullptr);
+		CHECK(fakeobs::property_visible(obs_properties_get(p, "grp_hl_look")));
+		CHECK(fakeobs::property_visible(obs_properties_get(p, "grp_hl_timing")));
+		CHECK(!fakeobs::property_visible(obs_properties_get(p, "grp_hl_zoom")));
+		obs_properties_destroy(p);
+		obs_data_release(s);
+	}
 }
 
 /* Input without backend: available=false, tier 0, no phantom edges. */

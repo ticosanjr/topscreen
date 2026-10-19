@@ -94,6 +94,7 @@ inline constexpr const char *kHighlightMode = "highlight_mode";
 inline constexpr const char *kHighlightThickness = "highlight_thickness";
 inline constexpr const char *kHighlightZoomMax = "highlight_zoom_max";
 inline constexpr const char *kHighlightZoomDir = "highlight_zoom_dir";
+inline constexpr const char *kHighlightZoomDelayMs = "highlight_zoom_delay_ms";
 inline constexpr const char *kHighlightZoomInMs = "highlight_zoom_in_ms";
 inline constexpr const char *kHighlightZoomHoldMs = "highlight_zoom_hold_ms";
 inline constexpr const char *kHighlightZoomOutMs = "highlight_zoom_out_ms";

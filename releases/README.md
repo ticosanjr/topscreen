@@ -5,7 +5,8 @@ Each version keeps its files; newer versions are added alongside.
 
 | Version | Linux | Windows | Highlights |
 |---------|-------|---------|------------|
-| **0.2.10** | [`topscreen-0.2.10-linux.tar.gz`](topscreen-0.2.10-linux.tar.gz) | [`topscreen-0.2.10-windows.zip`](topscreen-0.2.10-windows.zip) \* | line mode no longer paints the box, first-frame line overlay guard, zoom centre = selection centre |
+| **0.2.11** | [`topscreen-0.2.11-linux.tar.gz`](topscreen-0.2.11-linux.tar.gz) | [`topscreen-0.2.11-windows.zip`](topscreen-0.2.11-windows.zip) \* | line mode never paints the box, hold-to-zoom that starts on hold and glides back on release, zoom in/out/punch directions, settings reordered with conditional groups |
+| 0.2.10 | [`topscreen-0.2.10-linux.tar.gz`](topscreen-0.2.10-linux.tar.gz) | [`topscreen-0.2.10-windows.zip`](topscreen-0.2.10-windows.zip) \* | line mode no longer paints the box, first-frame line overlay guard, zoom centre = selection centre |
 | 0.2.9 | [`topscreen-0.2.9-linux.tar.gz`](topscreen-0.2.9-linux.tar.gz) | [`topscreen-0.2.9-windows.zip`](topscreen-0.2.9-windows.zip) \* | line drawing fixed (1:1 overlay), zoom gesture directions (in/out/punch in/punch out) starting from the current zoom, clearer/reordered settings |
 | 0.2.8 | [`topscreen-0.2.8-linux.tar.gz`](topscreen-0.2.8-linux.tar.gz) | [`topscreen-0.2.8-windows.zip`](topscreen-0.2.8-windows.zip) \* | 6 new realistic mouse clicks (14 total), 10 new cursors (26 total), highlighter **line** mode, **zoom to the selection** gesture, manual monitor origin |
 | 0.2.7 | [`topscreen-0.2.7-linux.tar.gz`](topscreen-0.2.7-linux.tar.gz) | [`topscreen-0.2.7-windows.zip`](topscreen-0.2.7-windows.zip) \* | multi-monitor input fix (cursor/clicks/zoom on stacked or side-by-side screens) + manual monitor origin |

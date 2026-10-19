@@ -27,6 +27,7 @@ struct HighlighterConfig {
 	int zoom_dir = 0;
 	/* Zoom mode timings/limits. */
 	double zoom_max = 2.5;
+	double zoom_delay_ms = 1200.0; // hold this long before the zoom kicks in
 	double zoom_in_ms = 250.0;
 	double zoom_hold_ms = 600.0;
 	double zoom_out_ms = 1200.0;
@@ -91,6 +92,8 @@ private:
 	int trail_count_ = 0;
 
 	bool zoom_request_ = false;
+	bool zoom_fired_ = false;
+	double press_ms_ = 0.0;
 	double zx0_ = 0.0, zy0_ = 0.0, zx1_ = 0.0, zy1_ = 0.0;
 };
 

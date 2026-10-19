@@ -372,7 +372,15 @@ obs_property_t *obs_properties_get(obs_properties_t *props, const char *property
 	if (!props || !property)
 		return nullptr;
 	auto it = props->items.find(property);
-	return it != props->items.end() ? it->second : nullptr;
+	if (it != props->items.end())
+		return it->second;
+	/* Nested groups, like the real obs_properties_get(). */
+	for (const auto &g : props->groups) {
+		obs_property_t *found = obs_properties_get(g.second, property);
+		if (found)
+			return found;
+	}
+	return nullptr;
 }
 
 obs_property_t *obs_properties_add_bool(obs_properties_t *props, const char *name, const char *)
@@ -389,6 +397,12 @@ obs_property_t *obs_properties_add_int(obs_properties_t *props, const char *name
 obs_property_t *obs_properties_add_color(obs_properties_t *props, const char *name, const char *)
 {
 	return add_prop(props, name);
+}
+
+void obs_property_set_visible(obs_property_t *prop, bool visible)
+{
+	if (prop)
+		prop->visible = visible;
 }
 
 obs_property_t *obs_properties_add_text(obs_properties_t *props, const char *name, const char *,
@@ -422,8 +436,10 @@ obs_property_t *obs_properties_add_path(obs_properties_t *props, const char *nam
 }
 
 obs_property_t *obs_properties_add_group(obs_properties_t *props, const char *name, const char *,
-					 enum obs_group_type, obs_properties_t *)
+					 enum obs_group_type, obs_properties_t *group)
 {
+	if (props && group && name)
+		props->groups[name] = group;
 	return add_prop(props, name);
 }
 
@@ -556,3 +572,12 @@ gs_texture_t *gs_texture_create(uint32_t, uint32_t, enum gs_color_format, uint32
 void gs_texture_destroy(gs_texture_t *) {}
 
 } // extern "C"
+
+namespace fakeobs {
+
+bool property_visible(obs_property_t *prop)
+{
+	return !prop || prop->visible;
+}
+
+} // namespace fakeobs

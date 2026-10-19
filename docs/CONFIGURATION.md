@@ -79,18 +79,19 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Text shadow | `keys_shadow` | bool | — | `true` |
 | | Background band | `keys_band` | bool | — | `true` |
 | | Band color | `keys_band_color` | color | — | `0x99000000` |
-| Highlighter | Enable highlighter | `highlight_enabled` | bool | — | `true` |
-| | Color | `highlight_color` | color | — | `0x6600E0FF` |
-| | Opacity | `highlight_opacity` | double | 0–1 | `0.35` |
-| | On-screen time (ms) | `highlight_hold_ms` | double | 0–5000 | `900` |
-| | Fade (ms) | `highlight_fade_ms` | double | 0–2000 | `300` |
-| | Drag action | `highlight_mode` | int | 0 box, 1 line, 2 zoom | `0` |
-| | Line thickness | `highlight_thickness` | double | 0.001–0.05 | `0.004` |
-| | Zoom direction | `highlight_zoom_dir` | int | 0 in, 1 out, 2 punch in, 3 punch out | `0` |
-| | Zoom max | `highlight_zoom_max` | double | 1.2–8 | `2.5` |
-| | Zoom in (ms) | `highlight_zoom_in_ms` | double | 50–2000 | `250` |
-| | Zoom hold (ms) | `highlight_zoom_hold_ms` | double | 0–5000 | `600` |
-| | Zoom out (ms) | `highlight_zoom_out_ms` | double | 100–8000 | `1200` |
+| Highlighter | Enable drag actions | `highlight_enabled` | bool | — | `true` |
+| Look | Drag action: box / line / zoom | `highlight_mode` | int | 0 box, 1 line, 2 zoom | `0` |
+| Look | Color | `highlight_color` | color | — | `0x6600E0FF` |
+| Look | Opacity (0 = invisible) | `highlight_opacity` | double | 0–1 | `0.35` |
+| Look | Line thickness (fraction of screen) | `highlight_thickness` | double | 0.001–0.05 | `0.004` |
+| Timing | Keep on screen (ms) | `highlight_hold_ms` | double | 0–5000 | `900` |
+| Timing | Fade out (ms) | `highlight_fade_ms` | double | 0–2000 | `300` |
+| Zoom | Zoom direction (in / out / punch) | `highlight_zoom_dir` | int | 0 in, 1 out, 2 punch in, 3 punch out | `0` |
+| Zoom | Hold-to-zoom delay (ms) | `highlight_zoom_delay_ms` | double | 0–5000 | `1200` |
+| Zoom | Maximum zoom | `highlight_zoom_max` | double | 1.2–8 | `2.5` |
+| Zoom | Zoom-in time (ms) | `highlight_zoom_in_ms` | double | 50–2000 | `250` |
+| Zoom | Return time after release (ms) | `highlight_zoom_out_ms` | double | 100–8000 | `1200` |
+| Zoom | Hold at target after release (ms) | `highlight_zoom_hold_ms` | double | 0–5000 | `600` |
 | Monitor | Manual origin | `monitor_manual` | bool | — | `false` |
 | | Origin X (px) | `monitor_x` | int | −32768…32767 | `0` |
 | | Origin Y (px) | `monitor_y` | int | −32768…32767 | `0` |

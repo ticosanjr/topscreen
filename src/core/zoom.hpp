@@ -23,6 +23,26 @@ struct ZoomRender {
 };
 
 /**
+ * Where a hold-to-zoom gesture should go, computed from the drag (or the lack
+ * of one) and the zoom that is on screen right now.
+ *
+ * - With a real rectangle: zoom so the rectangle fills the view, centered on it.
+ * - Without one (plain hold): zoom to `point_zoom`, centered on the cursor.
+ * - `zoom_out`: widen from the base instead (never below 1x).
+ * `valid` is false when the result would be a no-op (e.g. zooming out at 1x).
+ */
+struct SpotAim {
+	bool valid = false;
+	double zoom = 1.0;
+	double focus_x = 0.5;
+	double focus_y = 0.5;
+};
+
+SpotAim spot_aim_for_hold(bool has_rect, double rx0, double ry0, double rx1, double ry1,
+			  double cursor_x, double cursor_y, double base_zoom, double point_zoom,
+			  double max_zoom, bool zoom_out);
+
+/**
  * Zoom/pan model.
  *
  * Combines manual zoom (step by step via hotkey) with automatic zoom
@@ -41,19 +61,22 @@ public:
 	void set_cursor(double x, double y, double now_ms);
 
 	/**
-	 * Zoom-spotlight gesture: quick zoom into a point, short hold, slow return.
-	 * Takes precedence over the auto/manual zoom while active.
+	 * Starts a hold-to-zoom gesture at an ABSOLUTE zoom target.
+	 *
+	 * Callers compute the target first (see core::spot_aim_for_* below); the
+	 * model only animates base -> target while held and target -> base after
+	 * release(). The base is whatever is on screen right now (which may
+	 * already be zoomed) and the gesture returns to it.
+	 * @param focus_x/focus_y content point kept fixed while zoomed.
 	 */
-	/**
-	 * @param direction 0 zoom in, 1 zoom out, 2 punch in, 3 punch out.
-	 * @param factor    how much to zoom relative to the CURRENT zoom (which is
-	 *                  captured here, so a selection made while already zoomed
-	 *                  starts and returns from that state).
-	 */
-	void spot_start(double cx, double cy, int direction, double factor, double max_zoom,
-			double in_ms, double hold_ms, double out_ms, double now_ms);
+	void spot_start_hold(double focus_x, double focus_y, double target, double in_ms,
+			     double hold_ms, double out_ms, double now_ms);
+	/** Releases a held spot: the configured hold runs, then it eases back. */
+	void spot_release(double now_ms);
 	void spot_stop();
 	bool spot_active() const { return spot_active_; }
+	bool spot_held() const { return spot_held_; }
+	double spot_target() const { return spot_target_; }
 
 	/** Manual step: factor > 1 zooms in, factor < 1 zooms out. */
 	void manual_step(double factor);
@@ -72,18 +95,19 @@ private:
 
 	ZoomConfig cfg_;
 	bool spot_active_ = false;
+	bool spot_held_ = false;
 	double spot_cx_ = 0.5;
 	double spot_cy_ = 0.5;
 	double spot_target_ = 1.0;
 	double spot_base_ = 1.0;
 	double spot_base_fx_ = 0.5;
 	double spot_base_fy_ = 0.5;
-	int spot_dir_ = 0;
+	double spot_release_zoom_ = 1.0;
 	double spot_start_ms_ = 0.0;
+	double spot_release_ms_ = 0.0;
 	double spot_in_ms_ = 250.0;
 	double spot_hold_ms_ = 600.0;
 	double spot_out_ms_ = 1200.0;
-
 	/** Zoom/focus of the current spot frame (valid while spot_active_). */
 	double spot_zoom_at(double now_ms) const;
 	double spot_focus_at(double now_ms) const;

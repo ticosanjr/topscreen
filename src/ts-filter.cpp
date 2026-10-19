@@ -152,6 +152,7 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 	void process_actions();
 	void reload_from_settings();
 	void refresh_monitor_origin(bool force);
+	void start_zoom_spot(double zx0, double zy0, double zx1, double zy1, bool immediate_out);
 
 	/* ---- HotkeyContext (hotkey thread: only queues) ---- */
 	void toggle_effects() override { actions_.fetch_or(A_TOGGLE_EFFECTS); }
@@ -324,6 +325,36 @@ void ts_filter_ctx::refresh_monitor_origin(bool force)
 		origin_y_ = 0.0;
 	}
 	origin_known_ = known;
+}
+
+/**
+ * Starts a zoom-spotlight gesture from the model's request. A drawn rectangle
+ * is fitted (and centred); a bare hold zooms into the maximum. When the
+ * button was already released (immediate_out), the return starts at once.
+ */
+void ts_filter_ctx::start_zoom_spot(double zx0, double zy0, double zx1, double zy1, bool immediate_out)
+{
+	const double rw = std::max(1e-3, zx1 - zx0);
+	const double rh = std::max(1e-3, zy1 - zy0);
+	const bool has_rect = (rw >= cfg.highlight.min_span && rh >= cfg.highlight.min_span);
+	const double base = std::max(1.0, frame.zoom.zoom);
+	const int dir = cfg.highlight.zoom_dir;
+	const core::SpotAim aim =
+		core::spot_aim_for_hold(has_rect, zx0, zy0, zx1, zy1, (zx0 + zx1) * 0.5,
+					(zy0 + zy1) * 0.5, base, cfg.highlight.zoom_max,
+					cfg.highlight.zoom_max, dir == 1 || dir == 3);
+	if (!aim.valid)
+		return;
+
+	/* Punch modes skip the hold: snap in now, glide straight back out. */
+	const bool punch = dir >= 2;
+	zoom.spot_start_hold(aim.focus_x, aim.focus_y, aim.zoom, cfg.highlight.zoom_in_ms,
+			     (punch || immediate_out) ? 0.0 : cfg.highlight.zoom_hold_ms,
+			     cfg.highlight.zoom_out_ms, time_ms);
+	blog(LOG_INFO, "[TopScreen] zoom spotlight: dir=%d %.2fx%s", dir, aim.zoom,
+	     immediate_out ? " (quick)" : "");
+	if (immediate_out)
+		zoom.spot_release(time_ms);
 }
 
 void ts_filter_ctx::reconfigure_models()
@@ -578,33 +609,22 @@ void ts_filter_tick(void *data, float seconds)
 		if (!st.left && ctx->prev_left) {
 			ctx->highlight.end(ctx->time_ms);
 
-			/* Zoom gesture: zoom into the dragged region, hold, then return. */
+			/* Released before the trigger (or QuickZoom-style tap-drag):
+			 * if the model still holds a request, run the in/out cycle now. */
 			double zx0 = 0.0, zy0 = 0.0, zx1 = 0.0, zy1 = 0.0;
-			if (ctx->highlight.take_zoom_request(&zx0, &zy0, &zx1, &zy1)) {
-				const double rw = std::max(1e-3, zx1 - zx0);
-				const double rh = std::max(1e-3, zy1 - zy0);
-				double z = std::min(1.0 / rw, 1.0 / rh);
-				const double zmax = std::max(1.0, ctx->cfg.highlight.zoom_max);
-				z = std::min(z, zmax);
-				if (z > 1.0) {
-					/* The selection's centre must land in the centre of the
-					 * screen: convert it with the same centering law the
-					 * auto-zoom uses, otherwise the focus (the point that
-					 * stays put) would just be the centre itself. */
-					const double scx = (zx0 + zx1) * 0.5;
-					const double scy = (zy0 + zy1) * 0.5;
-					ctx->zoom.spot_start(core::center_focus_for(scx, z),
-							     core::center_focus_for(scy, z),
-							     ctx->cfg.highlight.zoom_dir, z,
-						ctx->cfg.highlight.zoom_max,
-						ctx->cfg.highlight.zoom_in_ms,
-						ctx->cfg.highlight.zoom_hold_ms,
-						ctx->cfg.highlight.zoom_out_ms, ctx->time_ms);
-					blog(LOG_INFO, "[TopScreen] zoom spotlight: dir=%d %.2fx",
-					     ctx->cfg.highlight.zoom_dir, z);
-				}
-			}
+			if (ctx->highlight.take_zoom_request(&zx0, &zy0, &zx1, &zy1))
+				ctx->start_zoom_spot(zx0, zy0, zx1, zy1, true);
+		} else if (st.left) {
+			/* While held: fire the zoom as soon as the model asks for it. */
+			double zx0 = 0.0, zy0 = 0.0, zx1 = 0.0, zy1 = 0.0;
+			if (ctx->highlight.take_zoom_request(&zx0, &zy0, &zx1, &zy1))
+				ctx->start_zoom_spot(zx0, zy0, zx1, zy1, false);
 		}
+
+		/* Let go: glide back with the configured out animation. */
+		if (!st.left && ctx->prev_left)
+			ctx->zoom.spot_release(ctx->time_ms);
+
 		ctx->prev_left = st.left;
 
 		if (st.left_pressed) {
@@ -675,7 +695,8 @@ void ts_filter_defaults(obs_data_t *settings)
 
 obs_properties_t *ts_filter_properties(void *data)
 {
-	return properties_create(data);
+	auto *ctx = static_cast<ts_filter_ctx *>(data);
+	return properties_create(data, ctx ? obs_source_get_settings(ctx->source) : nullptr);
 }
 
 } // namespace

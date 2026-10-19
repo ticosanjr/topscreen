@@ -270,21 +270,28 @@ void TextRenderer::draw(const core::KeyRender *items, int count, const core::Key
 	if (cfg.font != font_path_)
 		reload_font(cfg.font);
 
-	std::vector<std::string> labels;
+	/* Scratch buffers reused across frames: drawing keys must not allocate
+	 * on the hot path (single video thread, so thread-local is safe). */
+	thread_local std::vector<std::string> labels;
+	thread_local std::vector<float> widths;
+	labels.clear();
+	widths.clear();
 	labels.reserve(static_cast<size_t>(count));
-	std::vector<float> widths;
 	widths.reserve(static_cast<size_t>(count));
+	std::string text;
+	text.reserve(64);
 	for (int i = 0; i < count; ++i) {
-		/* Shows what was typed (no forced case); special keys become icons.
-		 * Falls back to the text label when the font lacks the symbol. */
-		std::string s = items[i].label;
+		/* Shows what was typed (no forced case); special keys become icons. */
+		text.assign(items[i].label);
 		if (const char *icon = icon_for_label(items[i].label)) {
 			int cp = 0;
 			utf8_next(icon, 3, &cp);
 			if (atlas_.glyph(cp))
-				s = icon;
+				text = icon;
 		}
-		labels.push_back(s);
+		if (text.size() >= 63)
+			text.resize(63);
+		labels.push_back(text);
 	}
 
 	const float base = static_cast<float>(target_h) * 0.030f;

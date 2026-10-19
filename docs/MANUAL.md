@@ -82,7 +82,7 @@ Places the screen "floating" over a background, with corners and shadow.
 | **Enable background** | Turns on the background + corners + spacing |
 | **Style** | Solid color, vertical or diagonal gradient (used when there is **no** image) |
 | **Color A / Color B** | Background colors (B only shows in gradients) |
-| **Wallpaper** | One of the **24 images** that ship with the plugin. Choosing one applies it |
+| **Wallpaper** | One of the **34 images** that ship with the plugin. Choosing one applies it |
 | **Image from PC** | Button to choose a **file from your PC** (jpg/png/bmp/tga/gif/webp). Choosing one **clears** the Wallpaper (they are mutually exclusive) |
 | **Wallpaper blur (px)** | Blurs the background image (0 = sharp) |
 | **Blur type** | No blur · Soft (box) · **Gaussian** · Creamy (very soft) |

@@ -74,7 +74,7 @@ That is where all the math and the state logic live — what actually must be ri
 | `test_preset_all_keys.cpp` | `core/preset.*` | all config keys are mapped (guarantees a complete preset) |
 | `test_locale_keys.cpp` | `data/locale/*.ini` | every key used in `obs_module_text()` exists in `en-US.ini`; no orphan keys |
 | `test_profiles.cpp` | `core/profiles.*` | distinct A–J seeds (colors + zoom), labels, index wrap |
-| `test_wallpapers.cpp` | `src/ts-wallpapers.*` | label/path/stem resolution, case-insensitivity, all 24 built-ins, invalid input |
+| `test_wallpapers.cpp` | `src/ts-wallpapers.*` | label/path/stem resolution, case-insensitivity, all 34 built-ins, invalid input |
 
 | `test_key_overlay.cpp` | `core/key_overlay.*` | key queue, TTL, repeat, modifier filter, limit, combo formatting |
 | `test_wav.cpp` | `core/wav.*` | PCM 8/16/24/32 and float, stereo, errors, and **real files** `data/sounds/*.wav`; the three real mouse recordings must be short (<150 ms) with the transient in the first 25 ms |
@@ -91,7 +91,7 @@ That is where all the math and the state logic live — what actually must be ri
 ## Current numbers
 
 ```
-166 tests | 2961 checks | 0 failures   (core)
+166 tests | 2991 checks | 0 failures   (core)
 26 tests | 364 checks   | 0 failures   (integration with fake libobs)
 ```
 

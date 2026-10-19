@@ -20,9 +20,9 @@ TEST(wallpapers_case_insensitive)
 	CHECK_EQ(std::string(wallpaper_path_for("MONTEREY")), std::string("wallpapers/monterey.jpg"));
 }
 
-TEST(wallpapers_all_24_resolve)
+TEST(wallpapers_all_resolve)
 {
-	CHECK_EQ(kWallpaperCount, 24);
+	CHECK_EQ(kWallpaperCount, 34);
 	for (int i = 0; i < kWallpaperCount; ++i) {
 		const WallpaperEntry &w = kWallpapers[i];
 		CHECK(wallpaper_path_for(w.name) != nullptr);

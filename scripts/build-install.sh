@@ -187,8 +187,8 @@ verify_install() {
 	done
 	[ "$fail" -ne 0 ] && return 1
 	local ver
-	ver=$(strings "$bin" 2>/dev/null | grep -oE "carregado v[0-9]+\.[0-9]+\.[0-9]+" | head -1)
-	log "Verified: $bin${ver:+ ($ver)} + $(ls "$data/wallpapers" | wc -l) wallpapers"
+	ver=$(strings "$bin" 2>/dev/null | grep -oE "loaded v[0-9]+\.[0-9]+\.[0-9]+" | head -1)
+	log "Verified: $bin${ver:+ ($ver)} + $(ls "$data/wallpapers"/*.jpg 2>/dev/null | wc -l) wallpapers"
 	return 0
 }
 

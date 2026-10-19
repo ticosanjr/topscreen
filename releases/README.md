@@ -5,6 +5,7 @@ Each version keeps its files; newer versions are added alongside.
 
 | Version | Linux | Windows | Highlights |
 |---------|-------|---------|------------|
+| **0.2.17** | [`topscreen-0.2.17-linux.tar.gz`](topscreen-0.2.17-linux.tar.gz) | [`topscreen-0.2.17-windows.zip`](topscreen-0.2.17-windows.zip) \* | **10 new photographic wallpapers** (34 total: Silk, Pastel, Helix, Fiber, Prism, Twilight, Ink, Spark, Cobalt, Dusk), 1920x1080, provenance in `data/wallpapers/SOURCES.txt` |
 | **0.2.16** | [`topscreen-0.2.16-linux.tar.gz`](topscreen-0.2.16-linux.tar.gz) | [`topscreen-0.2.16-windows.zip`](topscreen-0.2.16-windows.zip) \* | **11 link-hand cursors** (the same themes' own pointer, at last 37 styles) and **3 real mouse-click recordings** (CC0, `sounds/click-mouse-*.wav`) |
 | **0.2.15** | [`topscreen-0.2.15-linux.tar.gz`](topscreen-0.2.15-linux.tar.gz) | [`topscreen-0.2.15-windows.zip`](topscreen-0.2.15-windows.zip) \* | **Line + zoom** drag mode (draws the stroke *and* zooms, like Box + zoom), line zoom selection = the stroke's bounding box, so circling an area zooms into it; single set of mode predicates shared by the renderer and the settings UI, pinned by tests |
 | **0.2.14** | [`topscreen-0.2.14-linux.tar.gz`](topscreen-0.2.14-linux.tar.gz) | [`topscreen-0.2.14-windows.zip`](topscreen-0.2.14-windows.zip) \* | **line mode drawn by the main shader pass** (freehand trail as polyline segments — no separate effect/texture/draw call), line decimation unit-tested for the shader slots, dead highlighter overlay removed |

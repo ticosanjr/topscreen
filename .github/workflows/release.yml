@@ -148,13 +148,18 @@ jobs:
           # Minimal CMake package so find_package(obs-frontend-api) resolves.
           $pkgDir = "$PWD/.deps/lib/cmake/obs-frontend-api"
           New-Item -ItemType Directory -Force $pkgDir | Out-Null
+          # CMake strings treat backslash as an escape (D:\a\... -> 'invalid
+          # character escape'), so paths are written with forward slashes.
+          $libPath = "$PWD/.importlib/obs-frontend-api.lib".Replace('\', '/')
+          $incPath = "$env:OBS_SRC/frontend/api".Replace('\', '/')
           $cfg = @(
             'add_library(OBS::obs-frontend-api UNKNOWN IMPORTED)',
-            "set_target_properties(OBS::obs-frontend-api PROPERTIES",
-            "  IMPORTED_LOCATION `"$PWD/.importlib/obs-frontend-api.lib`"",
-            "  INTERFACE_INCLUDE_DIRECTORIES `"$env:OBS_SRC/frontend/api`")"
+            'set_target_properties(OBS::obs-frontend-api PROPERTIES',
+            "  IMPORTED_LOCATION `"$libPath`"",
+            "  INTERFACE_INCLUDE_DIRECTORIES `"$incPath`")"
           ) -join "`r`n"
           Set-Content -Path "$pkgDir/obs-frontend-apiConfig.cmake" -Value $cfg -Encoding ASCII
+          Get-Content "$pkgDir/obs-frontend-apiConfig.cmake"
           Write-Host 'frontend-api package written'
       - name: Configure and build the plugin
         shell: pwsh

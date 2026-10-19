@@ -264,6 +264,21 @@ void ts_filter_ctx::refresh_monitor_origin(bool force)
 	if (target_w == 0 || target_h == 0)
 		return;
 
+	/* Manual wins: it is the escape hatch when the platform detection cannot
+	 * decide (identical monitors stacked below/above each other). */
+	if (cfg.monitor_manual) {
+		const double nx = static_cast<double>(cfg.monitor_x);
+		const double ny = static_cast<double>(cfg.monitor_y);
+		if (force || !origin_known_ || nx != origin_x_ || ny != origin_y_) {
+			origin_x_ = nx;
+			origin_y_ = ny;
+			origin_known_ = true;
+			blog(LOG_INFO, "[TopScreen] monitor origin: (%.0f,%.0f) [manual]", nx, ny);
+		}
+		origin_age_ticks_ = 0;
+		return;
+	}
+
 	const bool size_changed = target_w != origin_target_w_ || target_h != origin_target_h_;
 	if (!force && !size_changed && origin_age_ticks_ < 600)
 		return;

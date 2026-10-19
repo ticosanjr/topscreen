@@ -217,6 +217,16 @@ bool ts_resolve_monitor_origin(const char *device_id, int hint, bool trust_hint,
 	core::Monitor monitors[kMaxMonitors];
 	const int count = ts_query_monitors(monitors, kMaxMonitors);
 
+	/* The list is printed once: the user can copy these numbers into the
+	 * manual Origin X/Y fields when auto-detection is not enough. */
+	static bool logged_list = false;
+	if (count > 0 && !logged_list) {
+		logged_list = true;
+		for (int i = 0; i < count; ++i)
+			blog(LOG_INFO, "[TopScreen] monitor %d: %.0fx%.0f at (%.0f,%.0f)", i,
+			     monitors[i].width, monitors[i].height, monitors[i].x, monitors[i].y);
+	}
+
 	core::Monitor picked;
 	if (core::pick_monitor(monitors, count, hint, trust_hint, capture_w, capture_h, &picked)) {
 		*origin_x = picked.x;

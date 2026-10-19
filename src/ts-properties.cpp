@@ -307,6 +307,15 @@ obs_properties_t *properties_create(void *data)
 	obs_properties_add_group(props, "grp_highlight", obs_module_text("Group.Highlight"), OBS_GROUP_NORMAL,
 				 hl);
 
+	/* ---------------- Monitor origin ---------------- */
+	obs_properties_t *mon = obs_properties_create();
+	obs_properties_add_text(mon, "monitor_hint", obs_module_text("Monitor.Hint"), OBS_TEXT_INFO);
+	obs_properties_add_bool(mon, kMonitorManual, obs_module_text("Monitor.Manual"));
+	obs_properties_add_int(mon, kMonitorX, obs_module_text("Monitor.X"), -32768, 32767, 1);
+	obs_properties_add_int(mon, kMonitorY, obs_module_text("Monitor.Y"), -32768, 32767, 1);
+	obs_properties_add_group(props, "grp_monitor", obs_module_text("Group.Monitor"), OBS_GROUP_NORMAL,
+				 mon);
+
 	/* ---------------- Profiles ---------------- */
 	return props;
 }

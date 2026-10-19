@@ -182,6 +182,11 @@ bool Preset::apply(Config *cfg, std::string *error) const
 	cfg->highlight.fade_ms = read_number(o, kHighlightFadeMs, cfg->highlight.fade_ms);
 	cfg->highlight.color = static_cast<uint32_t>(read_number(o, kHighlightColor, cfg->highlight.color));
 
+	/* Monitor origin */
+	cfg->monitor_manual = read_bool(o, kMonitorManual, cfg->monitor_manual);
+	cfg->monitor_x = static_cast<int>(read_int(o, kMonitorX, cfg->monitor_x));
+	cfg->monitor_y = static_cast<int>(read_int(o, kMonitorY, cfg->monitor_y));
+
 	return true;
 }
 

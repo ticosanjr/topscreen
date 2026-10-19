@@ -381,6 +381,12 @@ obs_property_t *obs_properties_add_bool(obs_properties_t *props, const char *nam
 	return add_prop(props, name);
 }
 
+obs_property_t *obs_properties_add_int(obs_properties_t *props, const char *name, const char *, int, int,
+				       int)
+{
+	return add_prop(props, name);
+}
+
 obs_property_t *obs_properties_add_color(obs_properties_t *props, const char *name, const char *)
 {
 	return add_prop(props, name);

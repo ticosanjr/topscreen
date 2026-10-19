@@ -91,6 +91,11 @@ inline constexpr const char *kHighlightFadeMs = "highlight_fade_ms";
 inline constexpr const char *kHighlightColor = "highlight_color";
 inline constexpr const char *kHighlightOpacity = "highlight_opacity";
 
+/* Monitor origin (multi-monitor input mapping). */
+inline constexpr const char *kMonitorManual = "monitor_manual";
+inline constexpr const char *kMonitorX = "monitor_x";
+inline constexpr const char *kMonitorY = "monitor_y";
+
 /* Profiles (fixed slots). Each slot stores the entire Config in a nested
  * obs_data. Labels run A..J (see core::profile_label). */
 inline constexpr int kProfileCount = 10;

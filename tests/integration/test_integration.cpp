@@ -348,6 +348,38 @@ TEST(integration_monitor_origin_from_environment)
 	ts_filter_source_info.destroy(ctx2);
 }
 
+TEST(integration_monitor_origin_manual_overrides_environment)
+{
+	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
+
+	/* Environment says (0,1080); the manual fields must win. */
+	TS_SETENV("TOPSCREEN_MONITOR_ORIGIN", "0,1080");
+
+	obs_source_t *parent = make_parent(1920, 1080);
+	obs_source_t *filter = fakeobs::make_source(&ts_filter_source_info, parent, 0, 0);
+
+	obs_data_t *set = filter->settings;
+	ts_filter_source_info.get_defaults(set);
+	obs_data_set_bool(set, core::keys::kMonitorManual, true);
+	obs_data_set_int(set, core::keys::kMonitorX, -1920);
+	obs_data_set_int(set, core::keys::kMonitorY, 0);
+
+	void *ctx = ts_filter_source_info.create(set, filter);
+	REQUIRE(ctx != nullptr);
+	ts_filter_source_info.video_render(ctx, nullptr);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+
+	FilterControl *ctrl = registry_first();
+	REQUIRE(ctrl != nullptr);
+	double x = 0.0, y = 0.0;
+	ctrl->monitor_origin(&x, &y);
+	CHECK_NEAR(x, -1920.0, 1e-9);
+	CHECK_NEAR(y, 0.0, 1e-9);
+
+	ts_filter_source_info.destroy(ctx);
+	TS_UNSETENV("TOPSCREEN_MONITOR_ORIGIN");
+}
+
 TEST(integration_registers_all_hotkeys)
 {
 	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);

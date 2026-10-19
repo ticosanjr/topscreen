@@ -85,7 +85,10 @@ TEST(preset_covers_all_keys)
             "highlight_enabled": false,
             "highlight_hold_ms": 777,
             "highlight_fade_ms": 222,
-            "highlight_color": 12345
+            "highlight_color": 12345,
+            "monitor_manual": true,
+            "monitor_x": -1920,
+            "monitor_y": 1080
         }
     })";
 
@@ -176,4 +179,8 @@ TEST(preset_covers_all_keys)
 	CHECK_NEAR(c.highlight.hold_ms, 777.0, 1e-9);
 	CHECK_NEAR(c.highlight.fade_ms, 222.0, 1e-9);
 	CHECK_EQ(c.highlight.color, 12345u);
+
+	CHECK(c.monitor_manual);
+	CHECK_EQ(c.monitor_x, -1920);
+	CHECK_EQ(c.monitor_y, 1080);
 }

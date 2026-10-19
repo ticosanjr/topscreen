@@ -84,6 +84,9 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Opacity | `highlight_opacity` | double | 0–1 | `0.35` |
 | | On-screen time (ms) | `highlight_hold_ms` | double | 0–5000 | `900` |
 | | Fade (ms) | `highlight_fade_ms` | double | 0–2000 | `300` |
+| Monitor | Manual origin | `monitor_manual` | bool | — | `false` |
+| | Origin X (px) | `monitor_x` | int | −32768…32767 | `0` |
+| | Origin Y (px) | `monitor_y` | int | −32768…32767 | `0` |
 | Profiles | Current profile | `profile_current` | int | 0–9 (A–J) | `0` |
 | | Profile slots | `profile_slot_0`, `profile_slot_1`, … `profile_slot_5` … `profile_slot_9` (profiles A–J) | object | Full config (nested obs_data) | — |
 

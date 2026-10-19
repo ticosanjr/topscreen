@@ -337,10 +337,15 @@ TOPSCREEN_DEBUG_KEY=Ctrl obs
   screen placed **below**, **left** or **above** the primary one maps the mouse
   correctly (previously the vertical axis used the total desktop height).
 - It is automatic: the monitor is matched by device name (Windows) or by the
-  capture size (X11/Xinerama). If the layout is exotic, force it with the
-  environment variable `TOPSCREEN_MONITOR_ORIGIN=x,y` (global coordinates of the
-  captured monitor, e.g. `0,1080` for the screen below the primary one) and
-  check the log line `monitor origin: (x,y)`.
+  capture size (X11/Xinerama). The OBS log lists every screen once, e.g.
+  `monitor 1: 1920x1080 at (0,1080)`.
+- If it is still off (e.g. two identical monitors stacked), open the filter
+  **Properties → Monitor (multi-screen)**, tick **Set the capture position
+  manually** and type the **Origin X/Y** from that log line (`0,1080` for the
+  screen below the primary one; negative values are allowed). Manual values win
+  over the automatic detection.
+- `TOPSCREEN_MONITOR_ORIGIN=x,y` (environment variable) does the same without
+  touching the scene, handy for support.
 
 **Windows: the source disappears when the filter is enabled**
 - Fixed in **0.2.4**. The D3D11 device refuses to draw when *any* scalar

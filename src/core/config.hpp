@@ -65,6 +65,13 @@ struct Config {	bool effects_enabled = true;
 	SpotlightConfig spotlight;
 	KeyOverlayConfig keys;
 	HighlighterConfig highlight;
+
+	/* Origin of the captured monitor in global desktop coordinates.
+	 * Automatic by default; `manual` wins when the platform detection cannot
+	 * decide (e.g. identical monitors stacked vertically). */
+	bool monitor_manual = false;
+	int monitor_x = 0;
+	int monitor_y = 0;
 };
 
 /**

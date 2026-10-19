@@ -82,6 +82,16 @@ int hotkey_count()
 	return static_cast<int>(g_hotkeys.size());
 }
 
+bool hotkeys_active_from(int index)
+{
+	if (index < 0 || index >= static_cast<int>(g_hotkeys.size()))
+		return false;
+	for (size_t i = static_cast<size_t>(index); i < g_hotkeys.size(); ++i)
+		if (!g_hotkeys[i].func || !g_hotkeys[i].active)
+			return false;
+	return true;
+}
+
 namespace {
 std::vector<std::string> g_uniforms;
 }

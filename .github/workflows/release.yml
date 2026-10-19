@@ -27,6 +27,9 @@ permissions:
 env:
   # Keep headers and runtime on the SAME version (see buildspec.json).
   OBS_VERSION: '31.1.1'
+  # Qt6 + third-party deps for the Windows dock (Qt 6.8.3; Qt6 is forward
+  # compatible within the major, so it also runs on newer OBS builds).
+  DEPS_VERSION: '2025-07-11'
 
 jobs:
   linux:
@@ -74,6 +77,11 @@ jobs:
           tar -xf obs-src.zip -C .obs
           curl.exe -sSL -o obs-runtime.zip "https://github.com/obsproject/obs-studio/releases/download/$v/OBS-Studio-$v-Windows-x64.zip"
           Expand-Archive -Path obs-runtime.zip -DestinationPath obs-runtime -Force
+          # Qt6 for the dock (same package the official plugin template uses).
+          New-Item -ItemType Directory -Force .deps | Out-Null
+          curl.exe -sSL -o qt6.zip "https://github.com/obsproject/obs-deps/releases/download/$env:DEPS_VERSION/windows-deps-qt6-$env:DEPS_VERSION-x64.zip"
+          tar -xf qt6.zip -C .deps
+          if (-not (Test-Path .deps/lib/cmake/Qt6/Qt6Config.cmake)) { throw 'Qt6 not found in obs-deps' }
           $src = (Get-ChildItem .obs -Directory | Select-Object -First 1).FullName
           # On Windows, libobs is shipped as bin\64bit\obs.dll.
           $dll = (Get-ChildItem obs-runtime -Recurse -File -Filter obs.dll | Select-Object -First 1).FullName
@@ -120,6 +128,34 @@ jobs:
           & $libexe.FullName /nologo /def:$def /out:.importlib\obs.lib /machine:x64
           if (-not (Test-Path .importlib\obs.lib)) { throw 'failed to build obs.lib' }
           Write-Host 'import library: .importlib\obs.lib'
+
+          # obs-frontend-api (C API used by the dock): same trick.
+          $fapi = (Get-ChildItem obs-runtime -Recurse -File -Filter obs-frontend-api.dll | Select-Object -First 1).FullName
+          if (-not $fapi) { throw 'obs-frontend-api.dll not found in the OBS runtime zip' }
+          $def2 = ".importlib\obs-frontend-api.def"
+          Set-Content -Path $def2 -Value "LIBRARY obs-frontend-api" -Encoding ASCII
+          Add-Content -Path $def2 -Value "EXPORTS" -Encoding ASCII
+          $names2 = & $dumpbin.FullName /nologo /exports $fapi |
+                    Select-String -Pattern '^\s+\d+\s+[0-9A-Fa-f]+\s+[0-9A-Fa-f]+\s+(\S+)' |
+                    ForEach-Object { $_.Matches[0].Groups[1].Value } |
+                    Sort-Object -Unique
+          Write-Host "frontend-api exports: $($names2.Count)"
+          if ($names2.Count -lt 5) { throw 'unexpected obs-frontend-api export list' }
+          Add-Content -Path $def2 -Value $names2 -Encoding ASCII
+          & $libexe.FullName /nologo /def:$def2 /out:.importlib\obs-frontend-api.lib /machine:x64
+          if (-not (Test-Path .importlib\obs-frontend-api.lib)) { throw 'failed to build obs-frontend-api.lib' }
+
+          # Minimal CMake package so find_package(obs-frontend-api) resolves.
+          $pkgDir = "$PWD/.deps/lib/cmake/obs-frontend-api"
+          New-Item -ItemType Directory -Force $pkgDir | Out-Null
+          $cfg = @(
+            'add_library(OBS::obs-frontend-api UNKNOWN IMPORTED)',
+            "set_target_properties(OBS::obs-frontend-api PROPERTIES",
+            "  IMPORTED_LOCATION `"$PWD/.importlib/obs-frontend-api.lib`"",
+            "  INTERFACE_INCLUDE_DIRECTORIES `"$env:OBS_SRC/frontend/api`")"
+          ) -join "`r`n"
+          Set-Content -Path "$pkgDir/obs-frontend-apiConfig.cmake" -Value $cfg -Encoding ASCII
+          Write-Host 'frontend-api package written'
       - name: Configure and build the plugin
         shell: pwsh
         run: |
@@ -135,6 +171,12 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'cmake configure failed' }
           cmake --build build --config Release
           if ($LASTEXITCODE -ne 0) { throw 'build failed' }
+          # Prove the dock is really linked in: the DLL must import Qt6.
+          $dll = Get-Item build\Release\topscreen.dll
+          $ascii = [System.Text.Encoding]::ASCII.GetString([System.IO.File]::ReadAllBytes($dll.FullName))
+          if ($ascii -notmatch 'Qt6Widgets') { throw 'the Qt dock was not linked (Qt6Widgets missing)' }
+          if ($ascii -notmatch 'obs-frontend-api') { throw 'obs-frontend-api missing from the plugin' }
+          Write-Host 'dock linked: Qt6Widgets + obs-frontend-api present'
 
       - name: Pack
         shell: pwsh

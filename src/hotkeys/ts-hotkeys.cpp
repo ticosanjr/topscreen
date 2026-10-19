@@ -62,12 +62,23 @@ const char *hotkey_description(int action)
 
 void Hotkeys::register_all(obs_source_t *source, HotkeyContext *ctx)
 {
+	int registered = 0;
 	for (int i = 0; i < HK_Count; ++i) {
 		bindings_[i].ctx = ctx;
 		bindings_[i].action = i;
 		ids_[i] = obs_hotkey_register_source(source, kHotkeyNames[i], hotkey_description(i),
 						     ts_hotkey_callback, &bindings_[i]);
+		if (ids_[i])
+			++registered;
 	}
+
+	/* Logged so a missing "TopScreen" section in Settings > Hotkeys can be
+	 * told apart from a registration failure: the OBS UI groups these under
+	 * the filter instance name. */
+	blog(LOG_INFO, "[TopScreen] hotkeys registered: %d/%d", registered, HK_Count);
+	for (int i = 0; i < HK_Count; ++i)
+		blog(LOG_INFO, "[TopScreen]   hotkey id=%d %s (%s)", static_cast<int>(ids_[i]),
+		     kHotkeyNames[i], hotkey_description(i));
 }
 
 void Hotkeys::unregister_all()
@@ -90,6 +101,9 @@ void ts_hotkey_callback(void *data, obs_hotkey_id id, obs_hotkey_t *key, bool pr
 	auto *binding = static_cast<HotkeyBinding *>(data);
 	if (!binding || !binding->ctx)
 		return;
+
+	blog(LOG_INFO, "[TopScreen] hotkey fired: %s",
+	     binding->action < HK_Count ? kHotkeyNames[binding->action] : "?");
 
 	switch (binding->action) {
 	case HK_ToggleEffects:

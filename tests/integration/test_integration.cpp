@@ -302,6 +302,43 @@ TEST(integration_profiles_save_and_switch)
 	CHECK(registry_first() == nullptr);
 }
 
+/* Creating the filter must register every hotkey on the source, once each,
+ * with the stable TopScreen.* ids (the OBS UI groups them under the filter
+ * instance name, so a missing section means these never registered). */
+TEST(integration_registers_all_hotkeys)
+{
+	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
+
+	obs_source_t *parent = make_parent(1280, 720);
+	obs_source_t *filter = fakeobs::make_source(&ts_filter_source_info, parent, 0, 0);
+	const int before = fakeobs::hotkey_count();
+	void *ctx = create_filter(filter);
+	REQUIRE(ctx != nullptr);
+
+	const char *names[] = {"TopScreen.ToggleEffects", "TopScreen.ToggleBackground",
+			       "TopScreen.ZoomIn",	      "TopScreen.ZoomOut",
+			       "TopScreen.ResetZoom",	      "TopScreen.NextPreset",
+			       "TopScreen.PrevPreset",	      "TopScreen.ProfileA",
+			       "TopScreen.ProfileB",	      "TopScreen.ProfileC",
+			       "TopScreen.ProfileD",	      "TopScreen.ProfileE",
+			       "TopScreen.ProfileF",	      "TopScreen.ProfileG",
+			       "TopScreen.ProfileH",	      "TopScreen.ProfileI",
+			       "TopScreen.ProfileJ",	      "TopScreen.ProfileSave"};
+	const int expected = static_cast<int>(sizeof(names) / sizeof(names[0]));
+
+	/* The harness keeps earlier registrations, so measure this filter's delta. */
+	CHECK_EQ(fakeobs::hotkey_count() - before, expected);
+	for (const char *n : names)
+		CHECK(fakeobs::find_hotkey(n) >= 0);
+
+	/* Every callback must be wired and active (a null func would make the UI
+	 * list an entry that never fires). */
+	CHECK(fakeobs::hotkeys_active_from(before));
+
+	ts_filter_source_info.destroy(ctx);
+	CHECK(!fakeobs::hotkeys_active_from(before));
+}
+
 TEST(integration_seeded_profiles_restore)
 {
 	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);

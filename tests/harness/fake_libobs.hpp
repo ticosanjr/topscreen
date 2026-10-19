@@ -62,6 +62,8 @@ int find_hotkey(const char *name);
 void invoke_hotkey(int index, bool pressed);
 
 int hotkey_count();
+/** True when every hotkey registered from `index` on has a callback and is active. */
+bool hotkeys_active_from(int index);
 
 /** Records a uniform upload (used to catch D3D11's "parameter not set"). */
 void note_uniform_set(const std::string &name);

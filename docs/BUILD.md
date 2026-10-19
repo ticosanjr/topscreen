@@ -45,7 +45,7 @@ and publishes a GitHub Release with the two archives.
 | Platform | Build environment |
 |----------|-------------------|
 | Linux | `ubuntu-24.04` + distro `libobs-dev` 30.0.2, `obs-frontend-api` and Qt6 (dock included) |
-| Windows | official OBS **sources** of the same version as the runtime (headers) + the libobs import library generated from `obs.dll`; the Qt dock is **not** in the Windows package |
+| Windows | official OBS **sources** of the same version as the runtime (headers) + import libraries generated from `obs.dll` and `obs-frontend-api.dll`, plus Qt6 from obs-deps: the release package includes the **Qt dock** like Linux |
 
 You can also run it by hand (**Actions → Release → Run workflow**) to get the
 archives as artifacts without publishing a release.

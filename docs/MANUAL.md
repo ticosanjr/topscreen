@@ -361,7 +361,18 @@ TOPSCREEN_DEBUG_KEY=Ctrl obs
 - Apply the udev rule from §10.
 
 **The dock does not appear**
-- The build did not have Qt6/obs-frontend-api. Install `qt6-base-dev` and reinstall.
+- The build did not have Qt6/obs-frontend-api. Install `qt6-base-dev` (Linux) and
+  reinstall, or use a release package (both the Linux and Windows packages from
+  **0.2.6** on include the dock).
+- On Windows the dock lists under **View → Docks → TopScreen**.
+
+**Hotkeys: I cannot find the TopScreen actions**
+- The hotkeys only exist while a source has the filter: add **TopScreen FX** to a
+  Display Capture first.
+- In **Settings → Hotkeys** the source/filter hotkeys are listed in the main list
+  under a header with the **filter instance name** (e.g. `TopScreen`); use the
+  search box and type `profile` or the name you gave the filter.
+- The log confirms it: `[TopScreen] hotkeys registered: 18/18`.
 
 **Zoom "jumps" or shakes**
 - Increase **Speed (ms)** and reduce **Intensity**.

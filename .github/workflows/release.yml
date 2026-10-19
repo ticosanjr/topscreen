@@ -58,7 +58,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: pkg-linux
-          path: dist/topscreen-*-linux.tar.gz
+          path: releases/topscreen-*-linux.tar.gz
           if-no-files-found: error
 
   windows:
@@ -189,64 +189,50 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           $ver = (Select-String -Path CMakeLists.txt -Pattern 'project\(TopScreen VERSION ([0-9.]+)').Matches[0].Groups[1].Value
-          New-Item -ItemType Directory -Force dist, pkg\topscreen\bin\64bit, pkg\topscreen\data | Out-Null
+          New-Item -ItemType Directory -Force releases, pkg\topscreen\bin\64bit, pkg\topscreen\data | Out-Null
           Copy-Item build\Release\topscreen.dll pkg\topscreen\bin\64bit\
           Copy-Item -Recurse data\* pkg\topscreen\data\
           # Launchers INSIDE the plugin folder, so nothing has to be moved.
           Copy-Item scripts\install-windows.bat pkg\topscreen\install.bat
           Copy-Item scripts\uninstall-windows.bat pkg\topscreen\uninstall.bat
-          Compress-Archive -Path pkg\topscreen -DestinationPath "dist\topscreen-$ver-windows.zip" -Force
-          Get-ChildItem dist
+          Compress-Archive -Path pkg\topscreen -DestinationPath "releases\topscreen-$ver-windows.zip" -Force
+          Get-ChildItem releases
 
       - uses: actions/upload-artifact@v4
         with:
           name: pkg-windows
-          path: dist/topscreen-*-windows.zip
+          path: releases/topscreen-*-windows.zip
           if-no-files-found: error
 
-  release:
-    name: Publish release
+  publish:
+    name: Publish into releases/
     needs: [linux, windows]
-    if: startsWith(github.ref, 'refs/tags/v') || inputs.create_release
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main
 
       - uses: actions/download-artifact@v4
         with:
           path: packages
           merge-multiple: true
 
-      - name: List packages
-        run: ls -la packages
+      - name: Copy the packages into releases/
+        run: |
+          mkdir -p releases
+          cp -f packages/* releases/
+          ls -la releases
 
-      - name: Publish
-        uses: softprops/action-gh-release@v2
-        with:
-          files: packages/*
-          generate_release_notes: true
-          body: |
-            ## TopScreen
-
-            ### Windows (no compiler, no admin)
-            1. Download `topscreen-${{ github.ref_name }}-windows.zip`.
-            2. **Extract the whole zip** and open the `topscreen` folder.
-            3. Double-click **`install.bat`** (it sits next to `bin` and `data`).
-               - Drag your **OBS portable** folder onto it to install there instead.
-               - Remove later with `uninstall.bat` (same folder).
-            4. Restart OBS, add a **Display Capture**, then
-               **Filters → + → "TopScreen FX"**.
-
-            The Windows build ships the filter itself (Properties, hotkeys,
-            presets and profiles). The Qt dock is Linux-only in this release.
-
-            ### Linux (no sudo)
-            ```bash
-            tar -xzf topscreen-*-linux.tar.gz -C ~/.config/obs-studio/plugins/
-            # optional, for the keystroke overlay:
-            sudo cp data/udev/99-topscreen.rules /etc/udev/rules.d/ &&
-              sudo udevadm control --reload-rules && sudo udevadm trigger
-            ```
-
-            Full manual: [`docs/MANUAL.md`](docs/MANUAL.md) · installation details:
-            [`docs/BUILD.md`](docs/BUILD.md)
+      - name: Commit and push
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet -- releases/; then
+            echo "releases/ already up to date"
+            exit 0
+          fi
+          git add releases/
+          git commit -m "release: ${GITHUB_REF_NAME}"
+          git push origin HEAD:main

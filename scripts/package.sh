@@ -3,30 +3,32 @@
 # Packs release archives from an already built tree (no compiler needed).
 #
 # Usage:
-#   scripts/package.sh                  # packs whatever was built into dist/
+#   scripts/package.sh                  # packs whatever was built into releases/
 #   scripts/package.sh --build-dir DIR   # use another build dir (default: build)
+#   scripts/package.sh --out DIR         # write elsewhere (default: releases/)
 #
 # Output:
-#   dist/topscreen-<version>-linux.tar.gz     (topscreen/{bin/64bit/*.so,data/...})
-#   dist/topscreen-<version>-windows.zip      (topscreen/{install.bat,uninstall.bat,
+#   releases/topscreen-<version>-linux.tar.gz     (topscreen/{bin/64bit/*.so,data/...})
+#   releases/topscreen-<version>-windows.zip      (topscreen/{install.bat,uninstall.bat,
 #                                              bin/64bit/*.dll,data/...})
 #
 # Install from a package (no build):
 #   Linux:  tar -xzf topscreen-<v>-linux.tar.gz -C ~/.config/obs-studio/plugins/
-#   Windows: extract topscreen-<v>-windows.zip into %ProgramData%\obs-studio\plugins\
-#            (portable OBS: copy bin\64bit\topscreen.dll to obs-plugins\64bit and
-#            data\* to data\obs-plugins\topscreen)
+#   Windows: extract the zip and double-click topscreen\install.bat
+#            (it installs for the user; drag an OBS portable folder onto it
+#            to install there instead)
 #
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 BUILD="$ROOT/build"
-OUT="$ROOT/dist"
+OUT="$ROOT/releases"
 
 while [ $# -gt 0 ]; do
 	case "$1" in
 	--build-dir) BUILD="$2"; shift 2 ;;
-	-h | --help) sed -n '2,17p' "$0"; exit 0 ;;
+	--out) OUT="$2"; shift 2 ;;
+	-h | --help) sed -n '2,18p' "$0"; exit 0 ;;
 	*) echo "unknown option: $1"; exit 2 ;;
 	esac
 done

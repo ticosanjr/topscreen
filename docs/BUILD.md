@@ -22,25 +22,33 @@ pwsh -File scripts\uninstall-windows.ps1 -ObsDir D:\OBS # portable OBS
 
 ## Install without compiling (release packages)
 
-`scripts/package.sh` packs whatever was built into `dist/`:
+Ready-to-use packages live in [`releases/`](../releases/README.md) (versioned in
+the repository, no build needed). `scripts/package.sh` packs whatever was built
+into `releases/`:
 
 | File | Install |
 |------|---------|
 | `topscreen-<v>-linux.tar.gz` | `tar -xzf topscreen-<v>-linux.tar.gz -C ~/.config/obs-studio/plugins/` |
 | `topscreen-<v>-windows.zip` | extract `topscreen\` into `%ProgramData%\obs-studio\plugins\` (portable: `bin\64bit\topscreen.dll` → `obs-plugins\64bit`, `data\*` → `data\obs-plugins\topscreen`) |
 
-CI (`Release` workflow, manual trigger or a `v*` tag) builds on Linux + Windows
-and publishes these archives. Every installer fully syncs `data/`, so
-stale files from older versions never linger.
+The `Release` workflow builds on Linux + Windows and, for a `v*` tag, commits the
+archives into `releases/` on `main` (no GitHub Release is created). Every
+installer fully syncs `data/`, so stale files from older versions never linger.
 
 ## Cutting a release
 
 ```bash
-git tag v0.2.1 && git push origin v0.2.1
+# locally (Linux): build + pack into releases/, then commit
+./scripts/build-install.sh
+./scripts/package.sh
+git add releases/ && git commit -m "release: $(./scripts/version.sh 2>/dev/null || echo x)" && git push
+
+# or let CI do it: push a version tag and the workflow packs both platforms
+git tag v0.2.7 && git push origin v0.2.7
 ```
 
-The `Release` workflow then builds both packages, runs the core tests on Linux
-and publishes a GitHub Release with the two archives.
+The `Release` workflow builds both packages, runs the core tests on Linux and
+commits them into `releases/` on `main`. GitHub Releases are not created.
 
 | Platform | Build environment |
 |----------|-------------------|

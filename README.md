@@ -72,7 +72,7 @@ pwsh -File tests\run.ps1  # Windows (or PowerShell on any OS)
 
 **Windows**
 ```powershell
-# 1) Download topscreen-<version>-windows.zip (GitHub release / CI artifact)
+# 1) Get releases/topscreen-<version>-windows.zip from this repository
 # 2) Extract the WHOLE zip and open the "topscreen" folder
 # 3) Double-click install.bat  (it sits next to bin/ and data/)
 install.bat                  # per-user plugin (no admin, no compiler)
@@ -95,6 +95,7 @@ pwsh -File scripts\install-windows.ps1 -Dll .\topscreen.dll
 ```
 </details>
 
+Packages for every version live in [`releases/`](releases/README.md).
 Full step by step in [`docs/BUILD.md`](docs/BUILD.md).
 
 ## Removal

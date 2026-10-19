@@ -34,6 +34,29 @@ bool has_lone_lf(const std::string &text)
 
 } // namespace
 
+/* Packages are versioned in releases/ and packed there by default. */
+TEST(package_releases_folder)
+{
+	const std::string root = std::string(TOPSCREEN_SOURCE_DIR) + "/";
+
+	const std::string packager = read_bytes(root + "scripts/package.sh");
+	CHECK(!packager.empty());
+	CHECK(packager.find("OUT=\"$ROOT/releases\"") != std::string::npos);
+
+	/* Index of every version, so the folder stays self-documenting. */
+	const std::string index = read_bytes(root + "releases/README.md");
+	CHECK(!index.empty());
+	CHECK(index.find("topscreen-0.2.6-windows.zip") != std::string::npos);
+	CHECK(index.find("topscreen-0.2.6-linux.tar.gz") != std::string::npos);
+	CHECK(index.find("install.bat") != std::string::npos);
+
+	/* CI publishes into releases/ and must not create GitHub Releases. */
+	const std::string workflow = read_bytes(root + ".github/workflows/release.yml");
+	CHECK(!workflow.empty());
+	CHECK(workflow.find("releases/") != std::string::npos);
+	CHECK(workflow.find("action-gh-release") == std::string::npos);
+}
+
 /* The Windows one-click launchers must exist, be CRLF (cmd.exe is picky
  * about LF-only files) and be packed by scripts/package.sh. */
 TEST(package_windows_launchers_present)

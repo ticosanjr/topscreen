@@ -8,6 +8,8 @@
 #include "core/config.hpp"
 #include "core/cursor_atlas.hpp"
 #include "render/ts-frame.hpp"
+#include "core/pen.hpp"
+#include "render/ts-highlight.hpp"
 #include "render/ts-text.hpp"
 
 #include <string>
@@ -107,6 +109,9 @@ private:
 	ClickParams click_[4];
 
 	TextRenderer text_;
+	HighlightRenderer highlight_;
+	core::PenCanvas pen_;
+	int pen_points_ = 0;
 
 	/* Cursor atlas (style bitmaps). */
 	gs_texture_t *cursor_tex_ = nullptr;

@@ -84,6 +84,9 @@ bool Compositor::load()
 		blog(LOG_ERROR, "[TopScreen] shader is incomplete: the filter will pass "
 				"the source through until this is fixed");
 
+	/* Freehand highlight overlay (best effort). */
+	highlight_.load();
+
 	/* Key overlay (best effort: if the font/effect is missing, proceeds without it). */
 	text_.load("fonts/DejaVuSans-Bold.ttf", "effects/text.effect");
 
@@ -314,6 +317,7 @@ bool Compositor::validate_params() const
 void Compositor::release()
 {
 	text_.release();
+	highlight_.release();
 	release_cursor_atlas();
 	release_bg_image();
 
@@ -510,6 +514,42 @@ void Compositor::render(obs_source_t *filter, const core::Config &cfg, const Fra
 		obs_source_process_filter_tech_end(filter, effect_, w, h, "PassThrough");
 	else
 		obs_source_process_filter_end(filter, effect_, w, h);
+
+	/* Freehand highlight (line mode) on top of the result. */
+	if (active && st.highlight.active && st.highlight.mode == 1 && st.highlight.point_count > 1 &&
+	    highlight_.loaded()) {
+		const int count = st.highlight.point_count;
+		if (count < pen_points_) {
+			pen_.reset(1.0, 512, st.highlight.thickness);
+			pen_points_ = 0;
+		}
+		if (pen_points_ == 0) {
+			const double ax = static_cast<double>(w) / static_cast<double>(h > 0 ? h : 1);
+			pen_.reset(ax, 512, st.highlight.thickness);
+		}
+		for (int i = pen_points_; i < count; ++i)
+			pen_.add_point(st.highlight.points[i]);
+		pen_points_ = count;
+
+		highlight_.upload(pen_.width(), pen_.height(), pen_.alpha(), pen_.revision());
+
+		/* Content rectangle, mirroring content_size()/content_origin() in the
+		 * shader, so the stroke lands exactly over the captured image. */
+		const float pad_x = bg ? static_cast<float>(cfg.bg.padding_x) : 0.0f;
+		const float pad_y = bg ? static_cast<float>(cfg.bg.padding_y) : 0.0f;
+		float cw = std::max(static_cast<float>(w) - pad_x * 2.0f, 1.0f);
+		float ch = std::max(static_cast<float>(h) - pad_y * 2.0f, 1.0f);
+		if (cfg.bg.keep_aspect && w > 0 && h > 0) {
+			const float sc = std::min(cw / static_cast<float>(w), ch / static_cast<float>(h));
+			cw = static_cast<float>(w) * sc;
+			ch = static_cast<float>(h) * sc;
+		}
+		const float ox = (static_cast<float>(w) - cw) * 0.5f;
+		const float oy = (static_cast<float>(h) - ch) * 0.5f;
+		highlight_.draw(ox, oy, cw, ch, st.highlight.color, static_cast<float>(st.highlight.alpha));
+	} else {
+		pen_points_ = 0;
+	}
 
 	/* Key overlay on top of the result. */
 	if (active && cfg.keys.enabled && st.key_count > 0)

@@ -40,6 +40,15 @@ public:
 	/** Focus following the cursor. */
 	void set_cursor(double x, double y, double now_ms);
 
+	/**
+	 * Zoom-spotlight gesture: quick zoom into a point, short hold, slow return.
+	 * Takes precedence over the auto/manual zoom while active.
+	 */
+	void spot_start(double cx, double cy, double target_zoom, double in_ms, double hold_ms,
+			double out_ms, double now_ms);
+	void spot_stop();
+	bool spot_active() const { return spot_active_; }
+
 	/** Manual step: factor > 1 zooms in, factor < 1 zooms out. */
 	void manual_step(double factor);
 	void set_manual(double value);
@@ -56,6 +65,19 @@ private:
 	double stiffness() const;
 
 	ZoomConfig cfg_;
+	bool spot_active_ = false;
+	double spot_cx_ = 0.5;
+	double spot_cy_ = 0.5;
+	double spot_target_ = 1.0;
+	double spot_start_ms_ = 0.0;
+	double spot_in_ms_ = 250.0;
+	double spot_hold_ms_ = 600.0;
+	double spot_out_ms_ = 1200.0;
+
+	/** Zoom/focus of the current spot frame (valid while spot_active_). */
+	double spot_zoom_at(double now_ms) const;
+	double spot_focus_at(double now_ms) const;
+
 	Spring zoom_;
 	Spring fx_;
 	Spring fy_;

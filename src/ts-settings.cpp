@@ -92,6 +92,12 @@ void config_defaults(obs_data_t *s)
 	obs_data_set_default_double(s, kHighlightFadeMs, def.highlight.fade_ms);
 	obs_data_set_default_int(s, kHighlightColor, static_cast<long long>(def.highlight.color));
 	obs_data_set_default_double(s, kHighlightOpacity, def.highlight.opacity);
+	obs_data_set_default_int(s, kHighlightMode, def.highlight.mode);
+	obs_data_set_default_double(s, kHighlightThickness, def.highlight.thickness);
+	obs_data_set_default_double(s, kHighlightZoomMax, def.highlight.zoom_max);
+	obs_data_set_default_double(s, kHighlightZoomInMs, def.highlight.zoom_in_ms);
+	obs_data_set_default_double(s, kHighlightZoomHoldMs, def.highlight.zoom_hold_ms);
+	obs_data_set_default_double(s, kHighlightZoomOutMs, def.highlight.zoom_out_ms);
 
 	obs_data_set_default_bool(s, kMonitorManual, def.monitor_manual);
 	obs_data_set_default_int(s, kMonitorX, def.monitor_x);
@@ -239,6 +245,12 @@ void config_load(obs_data_t *s, Config *c)
 	c->highlight.fade_ms = read_double(s, kHighlightFadeMs, d.highlight.fade_ms);
 	c->highlight.color = static_cast<uint32_t>(read_int(s, kHighlightColor, d.highlight.color));
 	c->highlight.opacity = read_double(s, kHighlightOpacity, d.highlight.opacity);
+	c->highlight.mode = static_cast<int>(read_int(s, kHighlightMode, d.highlight.mode));
+	c->highlight.thickness = read_double(s, kHighlightThickness, d.highlight.thickness);
+	c->highlight.zoom_max = read_double(s, kHighlightZoomMax, d.highlight.zoom_max);
+	c->highlight.zoom_in_ms = read_double(s, kHighlightZoomInMs, d.highlight.zoom_in_ms);
+	c->highlight.zoom_hold_ms = read_double(s, kHighlightZoomHoldMs, d.highlight.zoom_hold_ms);
+	c->highlight.zoom_out_ms = read_double(s, kHighlightZoomOutMs, d.highlight.zoom_out_ms);
 
 	c->monitor_manual = read_bool(s, kMonitorManual, d.monitor_manual);
 	c->monitor_x = static_cast<int>(read_int(s, kMonitorX, d.monitor_x));
@@ -334,6 +346,12 @@ void config_store(obs_data_t *s, const Config &c)
 	obs_data_set_double(s, kHighlightFadeMs, c.highlight.fade_ms);
 	obs_data_set_int(s, kHighlightColor, static_cast<long long>(c.highlight.color));
 	obs_data_set_double(s, kHighlightOpacity, c.highlight.opacity);
+	obs_data_set_int(s, kHighlightMode, c.highlight.mode);
+	obs_data_set_double(s, kHighlightThickness, c.highlight.thickness);
+	obs_data_set_double(s, kHighlightZoomMax, c.highlight.zoom_max);
+	obs_data_set_double(s, kHighlightZoomInMs, c.highlight.zoom_in_ms);
+	obs_data_set_double(s, kHighlightZoomHoldMs, c.highlight.zoom_hold_ms);
+	obs_data_set_double(s, kHighlightZoomOutMs, c.highlight.zoom_out_ms);
 
 	obs_data_set_bool(s, kMonitorManual, c.monitor_manual);
 	obs_data_set_int(s, kMonitorX, c.monitor_x);

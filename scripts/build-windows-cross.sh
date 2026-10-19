@@ -117,6 +117,7 @@ PY
 )
 
 echo "== compiling ($(echo "$SRCS" | wc -w) files, no Qt dock) ..."
+cd "$ROOT" # sources are relative to the repository
 # shellcheck disable=SC2086
 "$BIN/x86_64-w64-mingw32-clang++" -std=c++20 -O2 -shared \
 	-static-libstdc++ \

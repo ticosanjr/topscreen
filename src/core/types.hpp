@@ -46,7 +46,17 @@ enum class CursorStyle : int {
 	Dot = 13,
 	Cross = 14,
 	Onyx = 15,
-	Count = 16,
+	HandGrab = 16,
+	HandGrabbing = 17,
+	IBeam = 18,
+	DmzBlack = 19,
+	GoogleDotBlack = 20,
+	BreezeSnow = 21,
+	BibataIceOriginal = 22,
+	YaruGrab = 23,
+	YaruIBeam = 24,
+	BreezeIBeam = 25,
+	Count = 26,
 };
 
 /** Click effect types. */

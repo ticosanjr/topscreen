@@ -183,6 +183,13 @@ bool Preset::apply(Config *cfg, std::string *error) const
 	cfg->highlight.color = static_cast<uint32_t>(read_number(o, kHighlightColor, cfg->highlight.color));
 
 	/* Monitor origin */
+	cfg->highlight.mode = read_int(o, kHighlightMode, cfg->highlight.mode);
+	cfg->highlight.thickness = read_number(o, kHighlightThickness, cfg->highlight.thickness);
+	cfg->highlight.zoom_max = read_number(o, kHighlightZoomMax, cfg->highlight.zoom_max);
+	cfg->highlight.zoom_in_ms = read_number(o, kHighlightZoomInMs, cfg->highlight.zoom_in_ms);
+	cfg->highlight.zoom_hold_ms = read_number(o, kHighlightZoomHoldMs, cfg->highlight.zoom_hold_ms);
+	cfg->highlight.zoom_out_ms = read_number(o, kHighlightZoomOutMs, cfg->highlight.zoom_out_ms);
+
 	cfg->monitor_manual = read_bool(o, kMonitorManual, cfg->monitor_manual);
 	cfg->monitor_x = static_cast<int>(read_int(o, kMonitorX, cfg->monitor_x));
 	cfg->monitor_y = static_cast<int>(read_int(o, kMonitorY, cfg->monitor_y));

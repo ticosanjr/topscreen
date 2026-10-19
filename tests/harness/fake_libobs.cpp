@@ -23,7 +23,6 @@ struct RegisteredHotkey {
 std::vector<RegisteredHotkey> g_hotkeys;
 
 char g_effect_dummy = 0;
-char g_param_dummy = 0;
 char g_technique_dummy = 0;
 char g_texture_dummy = 0;
 
@@ -512,6 +511,8 @@ void gs_effect_set_val(gs_eparam_t *p, const void *, size_t) { note_param_set(p)
 void gs_effect_set_texture(gs_eparam_t *p, gs_texture_t *) { note_param_set(p); }
 void gs_effect_set_vec4(gs_eparam_t *p, const struct vec4 *) { note_param_set(p); }
 void gs_effect_set_matrix4(gs_eparam_t *p, const struct matrix4 *) { note_param_set(p); }
+
+void gs_texture_set_image(gs_texture_t *, const uint8_t *, uint32_t, bool) {}
 
 const char *fakeobs_uniform_name(gs_eparam_t *param)
 {

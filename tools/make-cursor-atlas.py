@@ -46,6 +46,17 @@ SOURCES = [
     ("dot", "__procedural_dot__"),
     ("cross", "__procedural_cross__"),
     ("onyx", "__procedural_onyx__"),
+    # Hands, text and extra styles (real themes when installed).
+    ("handgrab", f"{ICONS}/Adwaita/cursors/grab"),
+    ("handgrabbing", f"{ICONS}/Adwaita/cursors/grabbing"),
+    ("ibeam", f"{ICONS}/Adwaita/cursors/xterm"),
+    ("dmzblack", f"{ICONS}/DMZ-Black/cursors/left_ptr"),
+    ("googledotblack", f"{ICONS}/GoogleDot-Black/cursors/left_ptr"),
+    ("breezesnow", f"{ICONS}/Breeze_Snow/cursors/left_ptr"),
+    ("bibataiceorig", f"{ICONS}/Bibata-Original-Ice/cursors/left_ptr"),
+    ("yarugrab", f"{ICONS}/Yaru/cursors/grab"),
+    ("yaruibeam", f"{ICONS}/Yaru/cursors/xterm"),
+    ("breezeibeam", f"{ICONS}/breeze_cursors/cursors/xterm"),
 ]
 
 

@@ -50,6 +50,50 @@ void ZoomModel::set_cursor(double x, double y, double now_ms)
 	focus_on(x, y, now_ms);
 }
 
+void ZoomModel::spot_start(double cx, double cy, double target_zoom, double in_ms, double hold_ms,
+			   double out_ms, double now_ms)
+{
+	spot_active_ = true;
+	spot_cx_ = clamp_range(cx, 0.0, 1.0);
+	spot_cy_ = clamp_range(cy, 0.0, 1.0);
+	spot_target_ = clamp_range(target_zoom, 1.0, 8.0);
+	spot_in_ms_ = in_ms > 1.0 ? in_ms : 1.0;
+	spot_hold_ms_ = hold_ms >= 0.0 ? hold_ms : 0.0;
+	spot_out_ms_ = out_ms > 1.0 ? out_ms : 1.0;
+	spot_start_ms_ = now_ms;
+}
+
+void ZoomModel::spot_stop()
+{
+	spot_active_ = false;
+}
+
+double ZoomModel::spot_zoom_at(double now_ms) const
+{
+	const double elapsed = now_ms - spot_start_ms_;
+	if (elapsed <= spot_in_ms_) {
+		/* Quick ease-out into the target. */
+		const double u = elapsed / spot_in_ms_;
+		const double e = 1.0 - (1.0 - u) * (1.0 - u) * (1.0 - u);
+		return 1.0 + (spot_target_ - 1.0) * e;
+	}
+	if (elapsed <= spot_in_ms_ + spot_hold_ms_)
+		return spot_target_;
+
+	/* Slow, smooth return. */
+	const double u = (elapsed - spot_in_ms_ - spot_hold_ms_) / spot_out_ms_;
+	if (u >= 1.0)
+		return 1.0;
+	const double e = u * u * (3.0 - 2.0 * u); /* smoothstep */
+	return spot_target_ + (1.0 - spot_target_) * e;
+}
+
+double ZoomModel::spot_focus_at(double now_ms) const
+{
+	(void)now_ms;
+	return spot_cx_;
+}
+
 void ZoomModel::manual_step(double factor)
 {
 	if (factor <= 0.0)
@@ -66,6 +110,9 @@ void ZoomModel::update(double now_ms)
 {
 	if (!started_)
 		reset(now_ms);
+
+	if (spot_active_ && now_ms - spot_start_ms_ > spot_in_ms_ + spot_hold_ms_ + spot_out_ms_)
+		spot_active_ = false;
 
 	double dt = (now_ms - last_update_ms_) / 1000.0;
 	last_update_ms_ = now_ms;
@@ -107,6 +154,16 @@ void ZoomModel::update(double now_ms)
 ZoomRender ZoomModel::render() const
 {
 	ZoomRender out;
+
+	if (spot_active_) {
+		out.zoom = spot_zoom_at(last_update_ms_);
+		if (out.zoom < 1.0)
+			out.zoom = 1.0;
+		out.focus_x = clamp_focus(clamp_range(spot_cx_, 0.0, 1.0), out.zoom);
+		out.focus_y = clamp_focus(clamp_range(spot_cy_, 0.0, 1.0), out.zoom);
+		return out;
+	}
+
 	out.zoom = zoom_.value();
 	if (out.zoom < 1.0)
 		out.zoom = 1.0;

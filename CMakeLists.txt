@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 
-project(TopScreen VERSION 0.2.7 LANGUAGES C CXX)
+project(TopScreen VERSION 0.2.8 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -41,6 +41,7 @@ set(TOPSCREEN_CORE_SOURCES
     src/core/profiles.cpp
     src/core/mapping.cpp
     src/core/monitor.cpp
+    src/core/pen.cpp
     src/core/image.cpp
     src/core/stb_image_impl.cpp
 )
@@ -134,6 +135,7 @@ if(TOPSCREEN_BUILD_PLUGIN)
         src/ts-wallpapers.cpp
         src/render/ts-compositor.cpp
         src/render/ts-text.cpp
+        src/render/ts-highlight.cpp
         src/input/ts-input.cpp
         src/input/ts-monitor.cpp
         src/input/ts-input-platform.cpp

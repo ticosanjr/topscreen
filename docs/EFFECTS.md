@@ -11,7 +11,7 @@ Mode: `auto` reacts on its own · `hotkey` only by hotkey · `always` always on.
 | Feature | Mode | Status | Notes |
 |---------|------|--------|-------------|
 | Replace the pointer (turns off the native one) | auto | ✅ | turns off `capture_cursor`/`show_cursor` on the parent source |
-| **16 cursor styles** | auto | ✅ | macOS, Windows, Breeze, Bibata, Adwaita, GoogleDot, Pointer, DMZ, Yaru, XCursorPro, BibataIce, BibataOriginal, Neon, Dot, Crosshair, Onyx |
+| **26 cursor styles** | auto | ✅ | + Adwaita/Yaru hands (open/closed), I-beams (Adwaita, Yaru, Breeze), DMZ Black, Google Dot Black, Breeze Snow, Bibata Ice Original |
 | Size | auto | ✅ | 0.5–4× |
 | Shadow | auto | ✅ | |
 | Motion smoothing | auto | ✅ | critically damped spring |
@@ -25,7 +25,7 @@ Mode: `auto` reacts on its own · `hotkey` only by hotkey · `always` always on.
 |---------|------|--------|-------------|
 | Left button effect | auto | ✅ | ripple / orb / ring / force / glow / echo / flare + color/size/duration/curve |
 | Right button effect | auto | ✅ | independent of the left |
-| Click sound | auto | ✅ | plays through the system audio |
+| Click sound | auto | ✅ | 14 sounds (6 realistic mouse clicks + 8 FX), one per button, through the system audio |
 
 ## Framing
 
@@ -60,7 +60,7 @@ Mode: `auto` reacts on its own · `hotkey` only by hotkey · `always` always on.
 | Feature | Mode | Status | Notes |
 |---------|------|--------|-------------|
 | Key overlay | auto/hotkey | ✅ | TTF atlas (font/color/size/shadow) + X/Y position + background band |
-| Drag highlighter | auto | ✅ | dragged region with hold/fade |
+| Drag highlighter | auto | ✅ | filled box, freehand **line** or **zoom to the selection** (quick in, slow out); dragged region with hold/fade |
 
 > Highlighting the **text that is actually selected** (via accessibility) remains
 > out of scope — the substitute is the **drag highlighter**.

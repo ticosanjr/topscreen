@@ -225,6 +225,7 @@ void ts_filter_ctx::apply_profile(int index)
 
 	/* Session state: resets the manual zoom and reloads the sound if it changed. */
 	zoom.set_manual(1.0);
+	zoom.spot_stop();
 	click_sound.load(cfg.click_sound.file_left.c_str(), cfg.click_sound.file_right.c_str());
 }
 
@@ -414,6 +415,7 @@ void ts_filter_ctx::process_actions()
 		zoom.manual_step(0.8);
 	if (act & A_RESET_ZOOM)
 		zoom.set_manual(1.0);
+	zoom.spot_stop();
 	if (act & A_NEXT_PRESET)
 		request_preset(presets.next());
 	if (act & A_PREV_PRESET)
@@ -572,8 +574,26 @@ void ts_filter_tick(void *data, float seconds)
 			ctx->highlight.begin(cx, cy, ctx->time_ms);
 		else if (st.left)
 			ctx->highlight.move(cx, cy, ctx->time_ms);
-		if (!st.left && ctx->prev_left)
+		if (!st.left && ctx->prev_left) {
 			ctx->highlight.end(ctx->time_ms);
+
+			/* Zoom gesture: zoom into the dragged region, hold, then return. */
+			double zx0 = 0.0, zy0 = 0.0, zx1 = 0.0, zy1 = 0.0;
+			if (ctx->highlight.take_zoom_request(&zx0, &zy0, &zx1, &zy1)) {
+				const double rw = std::max(1e-3, zx1 - zx0);
+				const double rh = std::max(1e-3, zy1 - zy0);
+				double z = std::min(1.0 / rw, 1.0 / rh);
+				const double zmax = std::max(1.0, ctx->cfg.highlight.zoom_max);
+				z = std::min(z, zmax);
+				if (z > 1.0) {
+					ctx->zoom.spot_start((zx0 + zx1) * 0.5, (zy0 + zy1) * 0.5, z,
+							     ctx->cfg.highlight.zoom_in_ms,
+							     ctx->cfg.highlight.zoom_hold_ms,
+							     ctx->cfg.highlight.zoom_out_ms, ctx->time_ms);
+					blog(LOG_INFO, "[TopScreen] zoom spotlight: %.1fx", z);
+				}
+			}
+		}
 		ctx->prev_left = st.left;
 
 		if (st.left_pressed) {

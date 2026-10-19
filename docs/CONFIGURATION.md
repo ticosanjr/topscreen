@@ -84,6 +84,12 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Opacity | `highlight_opacity` | double | 0–1 | `0.35` |
 | | On-screen time (ms) | `highlight_hold_ms` | double | 0–5000 | `900` |
 | | Fade (ms) | `highlight_fade_ms` | double | 0–2000 | `300` |
+| | Drag action | `highlight_mode` | int | 0 box, 1 line, 2 zoom | `0` |
+| | Line thickness | `highlight_thickness` | double | 0.001–0.05 | `0.004` |
+| | Zoom max | `highlight_zoom_max` | double | 1.2–8 | `2.5` |
+| | Zoom in (ms) | `highlight_zoom_in_ms` | double | 50–2000 | `250` |
+| | Zoom hold (ms) | `highlight_zoom_hold_ms` | double | 0–5000 | `600` |
+| | Zoom out (ms) | `highlight_zoom_out_ms` | double | 100–8000 | `1200` |
 | Monitor | Manual origin | `monitor_manual` | bool | — | `false` |
 | | Origin X (px) | `monitor_x` | int | −32768…32767 | `0` |
 | | Origin Y (px) | `monitor_y` | int | −32768…32767 | `0` |

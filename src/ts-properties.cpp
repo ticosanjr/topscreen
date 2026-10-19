@@ -23,12 +23,25 @@ const char *const kFonts[][2] = {
 	{"DejaVu Serif Bold", "fonts/DejaVuSerif-Bold.ttf"},
 };
 
-/* Bundled click sounds (data/sounds). */
+/* Bundled click sounds (data/sounds): realistic mouse clicks first, then the
+ * FX palette for a more produced look. */
 const char *const kSounds[][2] = {
-	{"Soft", "sounds/click-soft.wav"},     {"Hard", "sounds/click-hard.wav"},
-	{"Pop", "sounds/click-pop.wav"},       {"Tick", "sounds/click-tick.wav"},
-	{"Wood", "sounds/click-wood.wav"},     {"Glass", "sounds/click-glass.wav"},
-	{"Bubble", "sounds/click-bubble.wav"}, {"Thock", "sounds/click-thock.wav"},
+	/* real mouse/switch clicks */
+	{"Crisp (switch)", "sounds/click-crisp.wav"},
+	{"Deep (thock)", "sounds/click-deep.wav"},
+	{"Pad (trackpad)", "sounds/click-pad.wav"},
+	{"Retro (double)", "sounds/click-retro.wav"},
+	{"Optical (dry)", "sounds/click-optical.wav"},
+	{"Muted (quiet)", "sounds/click-muted.wav"},
+	/* FX palette */
+	{"Soft", "sounds/click-soft.wav"},
+	{"Hard", "sounds/click-hard.wav"},
+	{"Pop", "sounds/click-pop.wav"},
+	{"Tick", "sounds/click-tick.wav"},
+	{"Wood", "sounds/click-wood.wav"},
+	{"Glass", "sounds/click-glass.wav"},
+	{"Bubble", "sounds/click-bubble.wav"},
+	{"Thock", "sounds/click-thock.wav"},
 };
 
 /* Image selector filter (hardcoded, as in OBS: avoids escaping risk). */
@@ -201,6 +214,26 @@ obs_properties_t *properties_create(void *data)
 				  static_cast<int>(CursorStyle::Cross));
 	obs_property_list_add_int(style, obs_module_text("Cursor.Style.Onyx"),
 				  static_cast<int>(CursorStyle::Onyx));
+	obs_property_list_add_int(style, obs_module_text("Cursor.Style.HandGrab"),
+				  static_cast<int>(CursorStyle::HandGrab));
+	obs_property_list_add_int(style, obs_module_text("Cursor.Style.HandGrabbing"),
+				  static_cast<int>(CursorStyle::HandGrabbing));
+	obs_property_list_add_int(style, obs_module_text("Cursor.Style.IBeam"),
+				  static_cast<int>(CursorStyle::IBeam));
+	obs_property_list_add_int(style, obs_module_text("Cursor.Style.DmzBlack"),
+				  static_cast<int>(CursorStyle::DmzBlack));
+	obs_property_list_add_int(style, obs_module_text("Cursor.Style.GoogleDotBlack"),
+				  static_cast<int>(CursorStyle::GoogleDotBlack));
+	obs_property_list_add_int(style, obs_module_text("Cursor.Style.BreezeSnow"),
+				  static_cast<int>(CursorStyle::BreezeSnow));
+	obs_property_list_add_int(style, obs_module_text("Cursor.Style.BibataIceOriginal"),
+				  static_cast<int>(CursorStyle::BibataIceOriginal));
+	obs_property_list_add_int(style, obs_module_text("Cursor.Style.YaruGrab"),
+				  static_cast<int>(CursorStyle::YaruGrab));
+	obs_property_list_add_int(style, obs_module_text("Cursor.Style.YaruIBeam"),
+				  static_cast<int>(CursorStyle::YaruIBeam));
+	obs_property_list_add_int(style, obs_module_text("Cursor.Style.BreezeIBeam"),
+				  static_cast<int>(CursorStyle::BreezeIBeam));
 
 	obs_properties_add_float_slider(cur, kCursorSize, obs_module_text("Cursor.Size"), 0.5, 4.0, 0.05);
 	obs_properties_add_float_slider(cur, kCursorSmooth, obs_module_text("Cursor.Smooth"), 0.0, 1.0, 0.01);
@@ -304,6 +337,26 @@ obs_properties_t *properties_create(void *data)
 					50.0);
 	obs_properties_add_float_slider(hl, kHighlightFadeMs, obs_module_text("Highlight.FadeMs"), 0.0, 2000.0,
 					50.0);
+
+	obs_property_t *hmode = obs_properties_add_list(hl, kHighlightMode, obs_module_text("Highlight.Mode"),
+							OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
+	obs_property_list_add_int(hmode, obs_module_text("Highlight.Mode.Box"),
+				  static_cast<int>(HighlightMode::Box));
+	obs_property_list_add_int(hmode, obs_module_text("Highlight.Mode.Line"),
+				  static_cast<int>(HighlightMode::Line));
+	obs_property_list_add_int(hmode, obs_module_text("Highlight.Mode.Zoom"),
+				  static_cast<int>(HighlightMode::Zoom));
+
+	obs_properties_add_float_slider(hl, kHighlightThickness, obs_module_text("Highlight.Thickness"), 0.001,
+					0.05, 0.001);
+	obs_properties_add_float_slider(hl, kHighlightZoomMax, obs_module_text("Highlight.ZoomMax"), 1.2, 8.0,
+					0.1);
+	obs_properties_add_float_slider(hl, kHighlightZoomInMs, obs_module_text("Highlight.ZoomInMs"), 50.0,
+					2000.0, 10.0);
+	obs_properties_add_float_slider(hl, kHighlightZoomHoldMs,
+					obs_module_text("Highlight.ZoomHoldMs"), 0.0, 5000.0, 50.0);
+	obs_properties_add_float_slider(hl, kHighlightZoomOutMs, obs_module_text("Highlight.ZoomOutMs"), 100.0,
+					8000.0, 50.0);
 	obs_properties_add_group(props, "grp_highlight", obs_module_text("Group.Highlight"), OBS_GROUP_NORMAL,
 				 hl);
 

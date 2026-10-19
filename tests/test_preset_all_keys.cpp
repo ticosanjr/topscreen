@@ -86,6 +86,12 @@ TEST(preset_covers_all_keys)
             "highlight_hold_ms": 777,
             "highlight_fade_ms": 222,
             "highlight_color": 12345,
+            "highlight_mode": 2,
+            "highlight_thickness": 0.012,
+            "highlight_zoom_max": 3.5,
+            "highlight_zoom_in_ms": 120,
+            "highlight_zoom_hold_ms": 400,
+            "highlight_zoom_out_ms": 2000,
             "monitor_manual": true,
             "monitor_x": -1920,
             "monitor_y": 1080
@@ -179,6 +185,13 @@ TEST(preset_covers_all_keys)
 	CHECK_NEAR(c.highlight.hold_ms, 777.0, 1e-9);
 	CHECK_NEAR(c.highlight.fade_ms, 222.0, 1e-9);
 	CHECK_EQ(c.highlight.color, 12345u);
+
+	CHECK_EQ(c.highlight.mode, 2);
+	CHECK_NEAR(c.highlight.thickness, 0.012, 1e-9);
+	CHECK_NEAR(c.highlight.zoom_max, 3.5, 1e-9);
+	CHECK_NEAR(c.highlight.zoom_in_ms, 120.0, 1e-9);
+	CHECK_NEAR(c.highlight.zoom_hold_ms, 400.0, 1e-9);
+	CHECK_NEAR(c.highlight.zoom_out_ms, 2000.0, 1e-9);
 
 	CHECK(c.monitor_manual);
 	CHECK_EQ(c.monitor_x, -1920);

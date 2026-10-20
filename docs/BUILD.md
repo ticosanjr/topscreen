@@ -31,29 +31,49 @@ into `releases/`:
 | `topscreen-<v>-linux.tar.gz` | `tar -xzf topscreen-<v>-linux.tar.gz -C ~/.config/obs-studio/plugins/` |
 | `topscreen-<v>-windows.zip` | extract `topscreen\` into `%ProgramData%\obs-studio\plugins\` (portable: `bin\64bit\topscreen.dll` → `obs-plugins\64bit`, `data\*` → `data\obs-plugins\topscreen`) |
 
-The `Release` workflow builds on Linux + Windows and, for a `v*` tag, commits the
-archives into `releases/` on `main` (no GitHub Release is created). Every
-installer fully syncs `data/`, so stale files from older versions never linger.
+The optional `Release` workflow builds on Linux + Windows and, for a `v*` tag,
+commits the archives into `releases/` on `main`; it does not publish a GitHub
+Release. Every installer fully syncs `data/`, so stale files from older versions
+never linger.
 
 ## Cutting a release
 
-```bash
-# locally (Linux): build + pack into releases/, then commit
-./scripts/build-install.sh
-./scripts/package.sh
-git add releases/ && git commit -m "release: $(./scripts/version.sh 2>/dev/null || echo x)" && git push
+The canonical release is built locally, attached to a GitHub Release with `gh`,
+and mirrored in `releases/`:
 
-# or let CI do it: push a version tag and the workflow packs both platforms
-git tag v0.2.7 && git push origin v0.2.7
+```bash
+VERSION=$(sed -n 's/^project(TopScreen VERSION \([0-9.]*\).*/\1/p' CMakeLists.txt)
+
+./scripts/build-install.sh              # Linux .so (with the Qt dock)
+./scripts/build-windows-cross.sh        # Windows .dll (without the Qt dock)
+./scripts/package.sh                    # writes both archives into releases/
+./tests/run-all.sh                      # core + OBS headers + integration
+
+git add -A
+git commit -m "release: $VERSION"
+git push origin main
+
+# Without GitHub Actions: keep the tag-triggered workflow from repacking it.
+gh workflow disable "Release"
+git tag -a "v$VERSION" -m "TopScreen $VERSION"
+git push origin "v$VERSION"
+gh release create "v$VERSION" --verify-tag \
+  --title "TopScreen $VERSION" \
+  --notes-file /tmp/topscreen-release-notes.md \
+  "releases/topscreen-$VERSION-linux.tar.gz" \
+  "releases/topscreen-$VERSION-windows.zip"
+gh workflow enable "Release"
 ```
 
-The `Release` workflow builds both packages, runs the core tests on Linux and
-commits them into `releases/` on `main`. GitHub Releases are not created.
+The `Release` workflow remains available for a CI-built release with the Qt dock
+on Windows; when Actions minutes are unavailable, use the local cross-build
+above. It produces the full filter **without the Qt dock**. GitHub Releases and
+the archives in `releases/` carry the same bytes.
 
 | Platform | Build environment |
 |----------|-------------------|
 | Linux | `ubuntu-24.04` + distro `libobs-dev` 30.0.2, `obs-frontend-api` and Qt6 (dock included) |
-| Windows | official OBS **sources** of the same version as the runtime (headers) + import libraries generated from `obs.dll` and `obs-frontend-api.dll`, plus Qt6 from obs-deps: the release package includes the **Qt dock** like Linux |
+| Windows | official OBS **sources** of the same version as the runtime (headers) + import libraries generated from `obs.dll` and `obs-frontend-api.dll`, plus Qt6 from obs-deps: CI-built packages include the **Qt dock** like Linux; local cross-builds (0.2.18–0.2.21) do not |
 
 You can also run it by hand (**Actions → Release → Run workflow**) to get the
 archives as artifacts without publishing a release.

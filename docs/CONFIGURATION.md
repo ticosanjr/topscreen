@@ -30,7 +30,7 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Shadow blur (px) | `bg_shadow_blur` | double | 0–200 | `48` |
 | | Shadow vertical offset (px) | `bg_shadow_offset` | double | -100–100 | `12` |
 | Cursor | Show cursor | `cursor_enabled` | bool | — | `true` |
-| | Style | `cursor_style` | int | arrows 0 macOS · 1 Windows · 2 Breeze · 3 Bibata · 4 Adwaita · 5 GoogleDot · 7 DMZ · 8 Yaru · 9 XCursorPro · 10 BibataIce · 11 BibataOriginal · 12 Neon · 13 Dot · 14 Cross · 15 Onyx · 19 DMZ Black · 20 Google Dot (black) · 21 Breeze Snow · 22 Bibata Ice Original; hands/text 6 Hand (pointer) · 16 Hand (open grab) · 17 Hand (closed) · 18 Text I-beam · 23 Yaru hand · 24 Yaru I-beam · 25 Breeze I-beam; link hands 26 Breeze · 27 Bibata · 28 Adwaita · 29 DMZ · 30 Yaru · 31 XCursorPro · 32 BibataIce · 33 BibataOriginal · 34 DMZ Black · 35 Breeze Snow · 36 Bibata Ice Original | `0` |
+| | Style (grouped by theme) | `cursor_style` | int | **Bibata** 3 arrow · 27 link hand · 10 Ice · 32 Ice link · 11 Original · 33 Original link · 22 Ice Original · 36 Ice Original link; **Breeze** 2 · 26 link · 21 Snow · 35 Snow link · 25 I-beam; **Adwaita** 4 · 28 link · 6 pointer hand · 16 grab open · 17 grab closed · 18 I-beam; **Yaru** 8 · 30 link · 23 grab · 24 I-beam; **DMZ** 7 white · 29 white link · 19 black · 34 black link; **Google Dot** 5 white · 20 black; **XCursor Pro** 9 · 31 link; **macOS** 0; **Windows** 1; **Effects** 12 Neon · 15 Onyx · 13 Dot · 14 Crosshair | `0` |
 | | Size | `cursor_size` | double | 0.5–4 | `1.4` |
 | | Cursor shadow | `cursor_shadow` | bool | — | `true` |
 | | Smoothing | `cursor_smooth` | double | 0–1 | `0.7` |
@@ -80,7 +80,7 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Background band | `keys_band` | bool | — | `true` |
 | | Band color | `keys_band_color` | color | — | `0x99000000` |
 | Highlighter | Enable drag actions | `highlight_enabled` | bool | — | `true` |
-| Look | Drag action: box / line / zoom / box+zoom / line+zoom | `highlight_mode` | int | 0 box, 1 line, 2 zoom, 3 box+zoom, 4 line+zoom | `0` |
+| Look | Drag action: box / line / zoom / press-zoom / box+zoom / line+zoom | `highlight_mode` | int | 0 box, 1 line, 2 zoom, 3 box+zoom, 4 line+zoom, 5 zoom on mouse press | `0` |
 | Look | Color | `highlight_color` | color | — | `0x6600E0FF` |
 | Look | Opacity (0 = invisible) | `highlight_opacity` | double | 0–1 | `0.35` |
 | Look | Line thickness (fraction of screen) | `highlight_thickness` | double | 0.001–0.05 | `0.004` |
@@ -88,6 +88,7 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | Timing | Fade out (ms) | `highlight_fade_ms` | double | 0–2000 | `300` |
 | Zoom | Zoom direction (in / out / punch) | `highlight_zoom_dir` | int | 0 in, 1 out, 2 punch in, 3 punch out | `0` |
 | Zoom | Hold-to-zoom delay (ms) | `highlight_zoom_delay_ms` | double | 0–5000 | `1200` |
+| Zoom | Zoom on mouse press: hold delay (ms) | `highlight_press_delay_ms` | double | 0–3000 | `400` |
 | Zoom | Maximum zoom | `highlight_zoom_max` | double | 1.2–8 | `2.5` |
 | Zoom | Zoom-in time (ms) | `highlight_zoom_in_ms` | double | 50–2000 | `250` |
 | Zoom | Return time after release (ms) | `highlight_zoom_out_ms` | double | 100–8000 | `1200` |
@@ -97,36 +98,61 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Origin Y (px) | `monitor_y` | int | −32768…32767 | `0` |
 | Profiles | Current profile | `profile_current` | int | 0–9 (A–J) | `0` |
 | | Profile slots | `profile_slot_0`, `profile_slot_1`, … `profile_slot_5` … `profile_slot_9` (profiles A–J) | object | Full config (nested obs_data) | — |
+| | Export path (Properties fallback) | `profile_export_path` | string | Any `.json` path | `""` |
+| | Import path (Properties fallback) | `profile_import_path` | string | Any `.json` path | `""` |
 
 > Profiles: switching profile applies the whole slot; subsequent edits are written
-> to the active slot (auto-save) and the chosen profile is re-applied when the
-> source loads.
+> to the active slot (auto-save, debounced by ~0.4 s) and the chosen profile is
+> re-applied when the source loads.
+
+### Profiles backup
+
+`Export profiles` writes a `.json` with the 10 slots and the active index:
+
+```json
+{
+  "topscreen_profiles": 1,
+  "plugin": "TopScreen",
+  "version": "0.2.21",
+  "current": 0,
+  "profile_slot_0": { "effects_enabled": true },
+  "profile_slot_1": { "effects_enabled": true },
+  "...": "profile_slot_2 ... profile_slot_8",
+  "profile_slot_9": { "effects_enabled": true }
+}
+```
+
+`Import profiles` validates the marker, `current` (0–9) and **all 10 slots**
+before changing anything. Import replaces profiles A–J and activates the
+profile stored in the file. Unknown keys are ignored, so newer backups remain
+readable by older versions. The file contains settings only; custom images and
+sounds are referenced by path and are not embedded.
 
 ## Hotkeys
 
 Registered IDs (global frontend hotkeys, shown in **Settings → Hotkeys**;
-they act on the first active filter):
+they act on the filter selected in the dock, or the first active one):
 
 | ID | Action |
 |----|------|
-| `TopScreen.ToggleEffects` | `TopScreen: Toggle effects` |
-| `TopScreen.ToggleBackground` | `TopScreen: Toggle background` |
-| `TopScreen.ZoomIn` | `TopScreen: Zoom in` |
-| `TopScreen.ZoomOut` | `TopScreen: Zoom out` |
-| `TopScreen.ResetZoom` | `TopScreen: Reset zoom` |
-| `TopScreen.NextPreset` | `TopScreen: Next preset` |
-| `TopScreen.PrevPreset` | `TopScreen: Previous preset` |
-| `TopScreen.ProfileA` | `TopScreen: Activate profile A` |
-| `TopScreen.ProfileB` | `TopScreen: Activate profile B` |
-| `TopScreen.ProfileC` | `TopScreen: Activate profile C` |
-| `TopScreen.ProfileD` | `TopScreen: Activate profile D` |
-| `TopScreen.ProfileE` | `TopScreen: Activate profile E` |
-| `TopScreen.ProfileF` | `TopScreen: Activate profile F` |
-| `TopScreen.ProfileG` | `TopScreen: Activate profile G` |
-| `TopScreen.ProfileH` | `TopScreen: Activate profile H` |
-| `TopScreen.ProfileI` | `TopScreen: Activate profile I` |
-| `TopScreen.ProfileJ` | `TopScreen: Activate profile J` |
-| `TopScreen.ProfileSave` | `TopScreen: Save to current profile` |
+| `TopScreen_ToggleEffects` | `TopScreen_ToggleEffects — Toggle effects` |
+| `TopScreen_ToggleBackground` | `TopScreen_ToggleBackground — Toggle background` |
+| `TopScreen_ZoomIn` | `TopScreen_ZoomIn — Zoom in` |
+| `TopScreen_ZoomOut` | `TopScreen_ZoomOut — Zoom out` |
+| `TopScreen_ResetZoom` | `TopScreen_ResetZoom — Reset zoom` |
+| `TopScreen_NextPreset` | `TopScreen_NextPreset — Next preset` |
+| `TopScreen_PrevPreset` | `TopScreen_PrevPreset — Previous preset` |
+| `TopScreen_ProfileA` | `TopScreen_ProfileA — Activate profile A` |
+| `TopScreen_ProfileB` | `TopScreen_ProfileB — Activate profile B` |
+| `TopScreen_ProfileC` | `TopScreen_ProfileC — Activate profile C` |
+| `TopScreen_ProfileD` | `TopScreen_ProfileD — Activate profile D` |
+| `TopScreen_ProfileE` | `TopScreen_ProfileE — Activate profile E` |
+| `TopScreen_ProfileF` | `TopScreen_ProfileF — Activate profile F` |
+| `TopScreen_ProfileG` | `TopScreen_ProfileG — Activate profile G` |
+| `TopScreen_ProfileH` | `TopScreen_ProfileH — Activate profile H` |
+| `TopScreen_ProfileI` | `TopScreen_ProfileI — Activate profile I` |
+| `TopScreen_ProfileJ` | `TopScreen_ProfileJ — Activate profile J` |
+| `TopScreen_ProfileSave` | `TopScreen_ProfileSave — Save to current profile` |
 
 ## Preset format
 

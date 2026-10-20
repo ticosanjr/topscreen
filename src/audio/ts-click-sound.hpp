@@ -3,6 +3,7 @@
 #include "core/wav.hpp"
 
 #include <string>
+#include <vector>
 
 namespace topscreen {
 
@@ -10,11 +11,12 @@ namespace topscreen {
  * Click sounds (left/right button).
  *
  * Decodes the WAV (via core/wav) in load() and plays through the system
- * audio (PlaySound on Windows; paplay/pw-play/aplay on Linux). The OBS
+ * audio (PlaySoundW on Windows; paplay/pw-play/aplay on Linux). The OBS
  * channel playback comes with F6 (dedicated source).
  *
  * Playback never blocks the video thread: the child is spawned detached
- * (SIGCHLD ignored) and never waited on.
+ * (POSIX_SPAWN_SETSID) and reaped lazily on the next click. No global
+ * signal handlers are installed.
  */
 class ClickSound {
 public:
@@ -31,16 +33,20 @@ public:
 private:
 	struct Slot {
 		bool loaded = false;
-		std::string path;
+		std::string module; // module-relative name used by the cache check
+		std::string path;   // resolved absolute path
 		core::WavData wav;
 	};
 
 	bool load_slot(Slot *slot, const char *module_file);
+	void reap_children();
 
 	bool loaded_ = false;
 	Slot left_;
 	Slot right_;
 	std::string player_; // Linux: resolved player path
+	bool player_checked_ = false;
+	std::vector<int> children_; // Linux: player PIDs waiting to be reaped
 };
 
 } // namespace topscreen

@@ -344,6 +344,7 @@ TEST(highlight_mode_predicates_are_pinned)
 		{HighlightMode::Zoom, false, false, true},
 		{HighlightMode::BoxZoom, true, false, true},
 		{HighlightMode::LineZoom, false, true, true},
+		{HighlightMode::PressZoom, false, false, true},
 	};
 
 	for (const Row &row : rows) {
@@ -653,4 +654,74 @@ TEST(highlight_zoom_quick_drag_still_fires_on_release)
 	REQUIRE(m.take_zoom_request(&x0, &y0, &x1, &y1));
 	CHECK_NEAR(x0, 0.1, 1e-9);
 	CHECK_NEAR(y1, 0.5, 1e-9);
+}
+
+/* ---- new mode: zoom on mouse press (press-only, no drag) ---------------- */
+
+/* The zoom starts after the short press delay, never before it. */
+TEST(highlight_presszoom_fires_only_after_the_press_delay)
+{
+	HighlighterModel m;
+	HighlighterConfig cfg;
+	cfg.mode = static_cast<int>(HighlightMode::PressZoom);
+	cfg.press_delay_ms = 400.0;
+	m.configure(cfg);
+
+	m.begin(0.3, 0.6, 0.0);
+	m.update(399.0);
+	double x0, y0, x1, y1;
+	CHECK(!m.take_zoom_request(&x0, &y0, &x1, &y1));
+
+	m.update(400.0);
+	REQUIRE(m.take_zoom_request(&x0, &y0, &x1, &y1));
+	CHECK_NEAR(x0, 0.3, 1e-9);
+	CHECK_NEAR(y0, 0.6, 1e-9);
+	CHECK_NEAR(x1, 0.3, 1e-9);
+	CHECK_NEAR(y1, 0.6, 1e-9);
+
+	/* It fires once per press and draws nothing. */
+	m.update(5000.0);
+	CHECK(!m.take_zoom_request(&x0, &y0, &x1, &y1));
+	CHECK(!m.render().active);
+}
+
+/* Dragging while held does not move the focus: the gesture is the press. */
+TEST(highlight_presszoom_ignores_the_drag)
+{
+	HighlighterModel m;
+	HighlighterConfig cfg;
+	cfg.mode = static_cast<int>(HighlightMode::PressZoom);
+	cfg.press_delay_ms = 100.0;
+	m.configure(cfg);
+
+	m.begin(0.2, 0.3, 0.0);
+	m.move(0.8, 0.9, 50.0);
+	m.update(150.0);
+
+	double x0, y0, x1, y1;
+	REQUIRE(m.take_zoom_request(&x0, &y0, &x1, &y1));
+	CHECK_NEAR(x0, 0.2, 1e-9);
+	CHECK_NEAR(y0, 0.3, 1e-9);
+	CHECK_NEAR(x1, 0.2, 1e-9);
+	CHECK_NEAR(y1, 0.3, 1e-9);
+	CHECK(!m.render().active);
+}
+
+/* A quick click (released before the delay) is just a click: no zoom. */
+TEST(highlight_presszoom_quick_click_does_nothing)
+{
+	HighlighterModel m;
+	HighlighterConfig cfg;
+	cfg.mode = static_cast<int>(HighlightMode::PressZoom);
+	cfg.press_delay_ms = 400.0;
+	m.configure(cfg);
+
+	m.begin(0.5, 0.5, 0.0);
+	m.move(0.6, 0.6, 50.0);
+	m.end(100.0);
+	m.update(500.0);
+
+	double x0, y0, x1, y1;
+	CHECK(!m.take_zoom_request(&x0, &y0, &x1, &y1));
+	CHECK(!m.render().active);
 }

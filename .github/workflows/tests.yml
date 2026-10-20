@@ -31,3 +31,16 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: ./tests/run.ps1
+
+  sanitizers:
+    name: Core tests (ASan + UBSan)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build and run with sanitizers
+        env:
+          CXXFLAGS: "-fsanitize=address,undefined -fno-omit-frame-pointer"
+          ASAN_OPTIONS: "detect_leaks=0"
+          UBSAN_OPTIONS: "print_stacktrace=1"
+        run: ./tests/run.sh

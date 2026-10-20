@@ -94,6 +94,7 @@ TEST(preset_covers_all_keys)
             "highlight_zoom_in_ms": 120,
             "highlight_zoom_hold_ms": 400,
             "highlight_zoom_out_ms": 2000,
+            "highlight_press_delay_ms": 650,
             "monitor_manual": true,
             "monitor_x": -1920,
             "monitor_y": 1080
@@ -196,6 +197,7 @@ TEST(preset_covers_all_keys)
 	CHECK_NEAR(c.highlight.zoom_in_ms, 120.0, 1e-9);
 	CHECK_NEAR(c.highlight.zoom_hold_ms, 400.0, 1e-9);
 	CHECK_NEAR(c.highlight.zoom_out_ms, 2000.0, 1e-9);
+	CHECK_NEAR(c.highlight.press_delay_ms, 650.0, 1e-9);
 
 	CHECK(c.monitor_manual);
 	CHECK_EQ(c.monitor_x, -1920);

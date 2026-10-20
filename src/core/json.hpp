@@ -1,11 +1,16 @@
 #pragma once
 
+#include <cstddef>
 #include <map>
 #include <memory>
 #include <string>
 #include <vector>
 
 namespace topscreen::core::json {
+
+/** Parser safety limits (JSON is also used for user-provided profile files). */
+inline constexpr int kMaxDepth = 128;
+inline constexpr std::size_t kMaxBytes = 16u * 1024u * 1024u;
 
 struct Value;
 

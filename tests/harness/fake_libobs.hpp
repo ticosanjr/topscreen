@@ -48,6 +48,7 @@ struct obs_source {
 	void *data = nullptr;
 	obs_data_t *settings = nullptr;
 	obs_source_t *parent = nullptr;
+	std::string name;
 	uint32_t base_w = 0;
 	uint32_t base_h = 0;
 };
@@ -59,6 +60,9 @@ void set_data_dir(const std::string &dir);
 
 /** Creates a fake source (without registering). */
 obs_source_t *make_source(const obs_source_info *info, obs_source_t *parent, uint32_t w, uint32_t h);
+
+/** Sets the name returned by obs_source_get_name() (default: "fake-parent"). */
+void set_source_name(obs_source_t *source, const std::string &name);
 
 /** Last source registered by obs_register_source(). */
 const obs_source_info *registered_source();
@@ -78,5 +82,13 @@ void note_uniform_set(const std::string &name);
 /** Names of every uniform uploaded since the last clear_uniforms(). */
 const std::vector<std::string> &uploaded_uniforms();
 void clear_uniforms();
+
+/* ---- graphics counters (text batching tests) ---- */
+void reset_graphics_counters();
+int graphics_draw_calls();
+int graphics_sprite_draw_calls();
+int graphics_render_starts();
+/** Makes gs_render_save() fail, exercising the per-glyph fallback. */
+void set_fail_vertex_buffers(bool fail);
 
 } // namespace fakeobs

@@ -4,30 +4,11 @@
 
 #include <obs-module.h>
 
+#include "ts-hotkey-actions.hpp"
+
 namespace topscreen {
 
-/** Hotkey actions (stable index - do not reorder without migrating configs). */
-enum HotkeyAction {
-	HK_ToggleEffects = 0,
-	HK_ToggleBackground,
-	HK_ZoomIn,
-	HK_ZoomOut,
-	HK_ResetZoom,
-	HK_NextPreset,
-	HK_PrevPreset,
-	HK_ProfileA,
-	HK_ProfileB,
-	HK_ProfileC,
-	HK_ProfileD,
-	HK_ProfileE,
-	HK_ProfileF,
-	HK_ProfileG,
-	HK_ProfileH,
-	HK_ProfileI,
-	HK_ProfileJ,
-	HK_ProfileSave,
-	HK_Count,
-};
+struct FilterControl;
 
 /** Interface implemented by the filter to react to hotkeys. */
 struct HotkeyContext {
@@ -39,9 +20,15 @@ struct HotkeyContext {
 	virtual void reset_zoom() = 0;
 	virtual void next_preset() = 0;
 	virtual void prev_preset() = 0;
-	/** Activates a profile (0..3) and queues saving into the current profile. */
+	/** Activates a profile (0..9) and queues saving into the current profile. */
 	virtual void select_profile(int index) = 0;
 	virtual void save_profile() = 0;
+
+	/**
+	 * The FilterControl implemented by the same object, when available.
+	 * The registry uses it to make hotkeys follow the dock's selected target.
+	 */
+	virtual FilterControl *filter_control() { return nullptr; }
 };
 
 struct HotkeyBinding {
@@ -56,8 +43,8 @@ void ts_hotkey_callback(void *data, obs_hotkey_id id, obs_hotkey_t *key, bool pr
  * OBS marks every filter source as private, so obs_hotkey_register_source()
  * always fails for filters (OBS_INVALID_HOTKEY_ID on every platform). The 18
  * actions are therefore registered ONCE as frontend hotkeys and dispatched to
- * the first active filter (same rule as the dock). Refcounted across filter
- * instances so creating/destroying filters never leaks or duplicates entries.
+ * the filter selected in the dock (or the first active one). Refcounted across
+ * filter instances so creating/destroying filters never leaks or duplicates entries.
  */
 class Hotkeys {
 public:

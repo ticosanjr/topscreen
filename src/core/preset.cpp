@@ -1,5 +1,6 @@
 #include "preset.hpp"
 
+#include "cursor_catalog.hpp"
 #include "keys.hpp"
 
 namespace topscreen::core {
@@ -102,7 +103,7 @@ bool Preset::apply(Config *cfg, std::string *error) const
 
 	/* Cursor */
 	cfg->cursor.enabled = read_bool(o, kCursorEnabled, cfg->cursor.enabled);
-	cfg->cursor.style = read_int(o, kCursorStyle, cfg->cursor.style);
+	cfg->cursor.style = cursor_style_clamp(read_int(o, kCursorStyle, cfg->cursor.style));
 	cfg->cursor.size = read_number(o, kCursorSize, cfg->cursor.size);
 	cfg->cursor.shadow = read_bool(o, kCursorShadow, cfg->cursor.shadow);
 	cfg->cursor.smooth = read_number(o, kCursorSmooth, cfg->cursor.smooth);
@@ -182,7 +183,6 @@ bool Preset::apply(Config *cfg, std::string *error) const
 	cfg->highlight.fade_ms = read_number(o, kHighlightFadeMs, cfg->highlight.fade_ms);
 	cfg->highlight.color = static_cast<uint32_t>(read_number(o, kHighlightColor, cfg->highlight.color));
 
-	/* Monitor origin */
 	cfg->highlight.mode = read_int(o, kHighlightMode, cfg->highlight.mode);
 	cfg->highlight.thickness = read_number(o, kHighlightThickness, cfg->highlight.thickness);
 	cfg->highlight.zoom_dir = read_int(o, kHighlightZoomDir, cfg->highlight.zoom_dir);
@@ -191,6 +191,7 @@ bool Preset::apply(Config *cfg, std::string *error) const
 	cfg->highlight.zoom_in_ms = read_number(o, kHighlightZoomInMs, cfg->highlight.zoom_in_ms);
 	cfg->highlight.zoom_hold_ms = read_number(o, kHighlightZoomHoldMs, cfg->highlight.zoom_hold_ms);
 	cfg->highlight.zoom_out_ms = read_number(o, kHighlightZoomOutMs, cfg->highlight.zoom_out_ms);
+	cfg->highlight.press_delay_ms = read_number(o, kHighlightPressDelayMs, cfg->highlight.press_delay_ms);
 
 	cfg->monitor_manual = read_bool(o, kMonitorManual, cfg->monitor_manual);
 	cfg->monitor_x = static_cast<int>(read_int(o, kMonitorX, cfg->monitor_x));

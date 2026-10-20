@@ -1,10 +1,16 @@
 # TopScreen releases
 
 Ready-to-use packages, versioned in this folder (no build required).
-Each version keeps its files; newer versions are added alongside.
+Each version keeps its files; newer versions are added alongside. The newest
+archives are also attached to
+[GitHub Releases](https://github.com/ticosanjr/topscreen/releases).
 
 | Version | Linux | Windows | Highlights |
 |---------|-------|---------|------------|
+| **0.2.21** | [`topscreen-0.2.21-linux.tar.gz`](topscreen-0.2.21-linux.tar.gz) | [`topscreen-0.2.21-windows.zip`](topscreen-0.2.21-windows.zip) \* | **Dock target selector** (dock buttons and hotkeys follow the chosen filter), **debounced profile auto-save** (~400 ms, flushed on switch/save/export/import/destroy), registry fallback tests. **Performance:** key overlay without per-frame heap allocations, cached X11/Xinerama display, O(1) ASCII glyph lookup, batched text glyph draws |
+| **0.2.20** | [`topscreen-0.2.20-linux.tar.gz`](topscreen-0.2.20-linux.tar.gz) | [`topscreen-0.2.20-windows.zip`](topscreen-0.2.20-windows.zip) \* | **Correctness:** Smoothing/Sway 0.7/0.3 are no longer reset, profile import validates size/depth, sound files are not re-read on every edit, no global `SIGCHLD` change, UTF-8 paths on Windows. **Performance:** key overlay no longer allocates per frame. **Tests/CI:** export/import round-trip, migration/property regressions, ASan+UBSan |
+| **0.2.19** | [`topscreen-0.2.19-linux.tar.gz`](topscreen-0.2.19-linux.tar.gz) | [`topscreen-0.2.19-windows.zip`](topscreen-0.2.19-windows.zip) \* | **Export/import profiles** (all 10 slots, dock buttons + Properties fallback), hotkey labels renamed to `TopScreen_<Action>` (visible as typed in OBS), previous 0.2.18 features included |
+| **0.2.18** | [`topscreen-0.2.18-linux.tar.gz`](topscreen-0.2.18-linux.tar.gz) | [`topscreen-0.2.18-windows.zip`](topscreen-0.2.18-windows.zip) \* | **Version visible in Properties and the dock**; **cursor list grouped by theme** (all Bibata together, clear names); every hotkey labeled `TopScreen.<Action>` so it is easy to find; new highlighter mode **Zoom on mouse press** (hold 400 ms, no dragging); highlighter zoom no longer cancelled by unrelated hotkeys |
 | **0.2.17** | [`topscreen-0.2.17-linux.tar.gz`](topscreen-0.2.17-linux.tar.gz) | [`topscreen-0.2.17-windows.zip`](topscreen-0.2.17-windows.zip) \* | **10 new photographic wallpapers** (34 total: Silk, Pastel, Helix, Fiber, Prism, Twilight, Ink, Spark, Cobalt, Dusk), 1920x1080, provenance in `data/wallpapers/SOURCES.txt` |
 | **0.2.16** | [`topscreen-0.2.16-linux.tar.gz`](topscreen-0.2.16-linux.tar.gz) | [`topscreen-0.2.16-windows.zip`](topscreen-0.2.16-windows.zip) \* | **11 link-hand cursors** (the same themes' own pointer, at last 37 styles) and **3 real mouse-click recordings** (CC0, `sounds/click-mouse-*.wav`) |
 | **0.2.15** | [`topscreen-0.2.15-linux.tar.gz`](topscreen-0.2.15-linux.tar.gz) | [`topscreen-0.2.15-windows.zip`](topscreen-0.2.15-windows.zip) \* | **Line + zoom** drag mode (draws the stroke *and* zooms, like Box + zoom), line zoom selection = the stroke's bounding box, so circling an area zooms into it; single set of mode predicates shared by the renderer and the settings UI, pinned by tests |
@@ -28,14 +34,16 @@ Each version keeps its files; newer versions are added alongside.
    - Remove later with `uninstall.bat` in the same folder.
 4. Restart OBS → add a **Display Capture** → **Filters → + → "TopScreen FX"**.
 
-The Windows package includes the Qt dock: **View → Docks → TopScreen**.
+CI-built Windows packages include the Qt dock: **View → Docks → TopScreen**.
+The 0.2.18–0.2.21 packages were cross-built locally and do **not** include the
+dock; the full filter still works normally.
 
-> \* **0.2.7 – 0.2.10 Windows**: built by cross-compiling from Linux
+> \* **0.2.7 – 0.2.10, 0.2.18, 0.2.19, 0.2.20 and 0.2.21 Windows**: built by cross-compiling from Linux
 > (`scripts/build-windows-cross.sh`) because the GitHub Actions minutes were
 > blocked. It is the full filter (Properties, hotkeys, presets, profiles,
-> multi-screen fix) but **without the Qt dock** — the next CI build will
-> replace it with the complete package. If the dock matters to you, stay on
-> 0.2.6 for now and update once the CI package is published.
+> multi-screen fix) but **without the Qt dock**. A CI-built package would include
+> the complete dock. If the dock matters to you, use the 0.2.6 package until a
+> CI-built Windows package is available.
 
 ## Install (Linux, no sudo)
 
@@ -52,23 +60,37 @@ Then restart OBS and add the filter as above.
 
 ```bash
 git pull
-# Linux (this machine):
-./scripts/build-install.sh          # builds build/topscreen.so
-./scripts/package.sh                # writes releases/topscreen-<v>-linux.tar.gz
+VERSION=$(sed -n 's/^project(TopScreen VERSION \([0-9.]*\).*/\1/p' CMakeLists.txt)
 
-# Windows package: built by the "Release" workflow (Actions → Release → Run
-# workflow) or on a Windows machine with `scripts\install-windows.ps1`; copy the
-# resulting zip here.
-git add releases/ && git commit -m "release: <version>" && git push
+./scripts/build-install.sh          # builds build/topscreen.so (with the Qt dock)
+./scripts/build-windows-cross.sh    # builds build/topscreen.dll (without the dock)
+./scripts/package.sh                # writes both archives into releases/
+./tests/run-all.sh
+
+git add -A
+git commit -m "release: $VERSION"
+git push origin main
+
+# Publish without Actions (the tag would otherwise trigger the Release workflow).
+gh workflow disable "Release"
+git tag -a "v$VERSION" -m "TopScreen $VERSION"
+git push origin "v$VERSION"
+gh release create "v$VERSION" --verify-tag \
+  --title "TopScreen $VERSION" \
+  --notes-file /tmp/topscreen-release-notes.md \
+  "releases/topscreen-$VERSION-linux.tar.gz" \
+  "releases/topscreen-$VERSION-windows.zip"
+gh workflow enable "Release"
 ```
 
 `scripts/package.sh` writes to this folder by default (`--out DIR` to override).
 Version numbers come from `CMakeLists.txt` (`project(TopScreen VERSION ...)`).
+The GitHub Release and the archives here carry the same bytes.
 
 ## Notes
 
-- These archives are the canonical download. GitHub Releases are no longer
-  created for new versions.
+- These archives are the canonical, versioned download. The newest archives are
+  mirrored in the GitHub Release so users can download without cloning.
 - Every package fully replaces `data/` on install, so stale files from older
   versions never linger.
 - Contents:

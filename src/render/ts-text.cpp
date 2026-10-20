@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <string_view>
 
 #include <graphics/vec2.h>
 #include <obs-module.h>
@@ -25,7 +26,7 @@ bool read_module_bytes(const char *module_file, std::vector<uint8_t> *out)
 }
 
 /* Special keys are shown as icons (one symbol each, UTF-8). */
-const char *icon_for_label(const std::string &label)
+const char *icon_for_label(std::string_view label)
 {
 	static const char *const kLabels[] = {
 		"Space", "Backspace", "Enter", "Tab", "Left", "Up",   "Right",
@@ -96,6 +97,9 @@ bool TextRenderer::reload_font(const std::string &module_file)
 	}
 
 	obs_enter_graphics();
+	/* The cached geometry points into the old atlas: drop it before the
+	 * atlas is replaced. */
+	destroy_geometry();
 	if (texture_) {
 		gs_texture_destroy(texture_);
 		texture_ = nullptr;
@@ -112,6 +116,11 @@ bool TextRenderer::reload_font(const std::string &module_file)
 
 	atlas_ = std::move(atlas);
 	font_path_ = module_file;
+	fallback_glyph_ = atlas_.glyph('?');
+	layout_glyphs_.clear();
+	layout_glyphs_.reserve(static_cast<size_t>(kMaxLabels * (kMaxLabelBytes + 1)));
+	layout_valid_ = false;
+	cached_count_ = 0;
 	return true;
 }
 
@@ -159,8 +168,9 @@ bool TextRenderer::load(const char *ttf_module_file, const char *effect_module_f
 
 void TextRenderer::release()
 {
-	if (texture_ || white_ || effect_) {
+	if (texture_ || white_ || effect_ || glyph_vb_) {
 		obs_enter_graphics();
+		destroy_geometry();
 		if (texture_) {
 			gs_texture_destroy(texture_);
 			texture_ = nullptr;
@@ -179,58 +189,187 @@ void TextRenderer::release()
 	p_image_ = p_color_ = nullptr;
 	p_band_size_ = p_band_radius_ = p_band_color_ = nullptr;
 	font_path_.clear();
+	fallback_glyph_ = nullptr;
+	layout_glyphs_.clear();
+	layout_valid_ = false;
+	cached_count_ = 0;
+	run_count_ = 0;
 }
 
-float TextRenderer::measure(const std::string &text, float scale) const
+bool TextRenderer::build_layout(const core::KeyRender *items, int count)
 {
-	float w = 0.0f;
-	for (size_t i = 0; i < text.size();) {
-		int cp = 0;
-		i += utf8_next(text.data() + i, text.size() - i, &cp);
-		const core::Glyph *g = atlas_.glyph(cp);
-		if (!g)
-			g = atlas_.glyph('?');
-		if (g)
-			w += static_cast<float>(g->advance) * scale;
-	}
-	return w;
-}
+	if (count > kMaxLabels)
+		count = kMaxLabels;
 
-void TextRenderer::draw_string(const std::string &text, float x, float baseline, float scale)
-{
-	float pen = x;
-	for (size_t i = 0; i < text.size();) {
-		int cp = 0;
-		i += utf8_next(text.data() + i, text.size() - i, &cp);
-		const core::Glyph *g = atlas_.glyph(cp);
-		if (!g)
-			g = atlas_.glyph('?');
-		if (!g)
-			continue;
-
-		if (g->w > 0 && g->h > 0) {
-			gs_matrix_push();
-			gs_matrix_translate3f(pen + static_cast<float>(g->xoff) * scale,
-					      baseline + static_cast<float>(g->yoff) * scale, 0.0f);
-			gs_matrix_scale3f(scale, scale, 1.0f);
-			gs_draw_sprite_subregion(texture_, 0, static_cast<uint32_t>(g->x),
-						 static_cast<uint32_t>(g->y), static_cast<uint32_t>(g->w),
-						 static_cast<uint32_t>(g->h));
-			gs_matrix_pop();
+	/* Resolve icons and the 63-byte limit once, then compare with the cached
+	 * labels. Progress/TTL do not change the glyphs. */
+	std::array<std::string_view, kMaxLabels> views{};
+	for (int i = 0; i < count; ++i) {
+		std::string_view view = items[i].label.view();
+		if (view.size() > kMaxLabelBytes)
+			view = view.substr(0, kMaxLabelBytes);
+		if (const char *icon = icon_for_label(view)) {
+			int cp = 0;
+			const size_t n = utf8_next(icon, 3, &cp);
+			if (atlas_.glyph(cp))
+				view = std::string_view(icon, n);
 		}
-
-		pen += static_cast<float>(g->advance) * scale;
+		views[i] = view;
 	}
+
+	bool changed = !layout_valid_ || count != cached_count_;
+	if (!changed) {
+		for (int i = 0; i < count; ++i) {
+			if (views[i] != cached_labels_[i].view()) {
+				changed = true;
+				break;
+			}
+		}
+	}
+	if (!changed)
+		return false;
+
+	for (int i = 0; i < count; ++i)
+		cached_labels_[i].assign(views[i]);
+	cached_count_ = count;
+
+	layout_glyphs_.clear();
+	run_count_ = 0;
+	for (int i = 0; i < count; ++i) {
+		Run &run = runs_[run_count_++];
+		run.first = static_cast<int>(layout_glyphs_.size());
+		run.width = 0.0f;
+
+		const std::string_view text = views[i];
+		for (size_t pos = 0; pos < text.size();) {
+			int cp = 0;
+			pos += utf8_next(text.data() + pos, text.size() - pos, &cp);
+			const core::Glyph *g = atlas_.glyph(cp);
+			if (!g)
+				g = fallback_glyph_;
+			if (!g)
+				continue;
+			layout_glyphs_.push_back(g);
+			run.width += static_cast<float>(g->advance);
+		}
+		run.count = static_cast<int>(layout_glyphs_.size()) - run.first;
+	}
+
+	layout_valid_ = true;
+	return true;
 }
 
-void TextRenderer::draw_labels(const std::vector<std::string> &labels, const std::vector<float> &widths,
-				 float x0, float baseline, float scale, float gap)
+void TextRenderer::destroy_geometry()
 {
-	float x = x0;
-	for (size_t i = 0; i < labels.size(); ++i) {
-		draw_string(labels[i], x, baseline, scale);
-		x += (i < widths.size() ? widths[i] : measure(labels[i], scale)) + gap;
+	if (glyph_vb_) {
+		gs_vertexbuffer_destroy(glyph_vb_);
+		glyph_vb_ = nullptr;
 	}
+	glyph_vertex_count_ = 0;
+}
+
+void TextRenderer::rebuild_geometry()
+{
+	/* Called with the graphics context active (inside draw/reload). */
+	destroy_geometry();
+	if (layout_glyphs_.empty() || atlas_.width <= 0 || atlas_.height <= 0)
+		return;
+
+	uint32_t vertices = 0;
+	for (const core::Glyph *g : layout_glyphs_) {
+		if (g->w > 0 && g->h > 0)
+			vertices += 6;
+	}
+	if (vertices == 0)
+		return;
+
+	const float atlas_w = static_cast<float>(atlas_.width);
+	const float atlas_h = static_cast<float>(atlas_.height);
+
+	gs_render_start(true);
+	float pen = 0.0f;
+	for (int r = 0; r < run_count_; ++r) {
+		const Run &run = runs_[r];
+		for (int i = 0; i < run.count; ++i) {
+			const core::Glyph *g = layout_glyphs_[run.first + i];
+			if (g->w > 0 && g->h > 0) {
+				const float x0 = pen + static_cast<float>(g->xoff);
+				const float y0 = static_cast<float>(g->yoff);
+				const float x1 = x0 + static_cast<float>(g->w);
+				const float y1 = y0 + static_cast<float>(g->h);
+				const float u0 = static_cast<float>(g->x) / atlas_w;
+				const float v0 = static_cast<float>(g->y) / atlas_h;
+				const float u1 = static_cast<float>(g->x + g->w) / atlas_w;
+				const float v1 = static_cast<float>(g->y + g->h) / atlas_h;
+
+				gs_vertex2f(x0, y0);
+				gs_texcoord(u0, v0, 0);
+				gs_vertex2f(x1, y0);
+				gs_texcoord(u1, v0, 0);
+				gs_vertex2f(x0, y1);
+				gs_texcoord(u0, v1, 0);
+				gs_vertex2f(x1, y0);
+				gs_texcoord(u1, v0, 0);
+				gs_vertex2f(x1, y1);
+				gs_texcoord(u1, v1, 0);
+				gs_vertex2f(x0, y1);
+				gs_texcoord(u0, v1, 0);
+			}
+			pen += static_cast<float>(g->advance);
+		}
+		/* Matches the previous gap of 14.0f * scale (same units as the
+		 * advances, which are scaled by the draw matrix). */
+		pen += kGapUnits;
+	}
+
+	glyph_vb_ = gs_render_save();
+	if (glyph_vb_)
+		glyph_vertex_count_ = vertices;
+}
+
+void TextRenderer::draw_geometry(float x, float baseline, float scale, uint32_t color)
+{
+	if (!glyph_vb_ || glyph_vertex_count_ == 0)
+		return;
+
+	if (p_color_)
+		gs_effect_set_color(p_color_, color);
+	gs_matrix_push();
+	gs_matrix_translate3f(x, baseline, 0.0f);
+	gs_matrix_scale3f(scale, scale, 1.0f);
+	gs_draw(GS_TRIS, 0, glyph_vertex_count_);
+	gs_matrix_pop();
+}
+
+void TextRenderer::draw_geometry_fallback(float x, float baseline, float scale, uint32_t color)
+{
+	if (p_color_)
+		gs_effect_set_color(p_color_, color);
+	gs_matrix_push();
+	gs_matrix_translate3f(x, baseline, 0.0f);
+
+	float pen = 0.0f;
+	for (int r = 0; r < run_count_; ++r) {
+		const Run &run = runs_[r];
+		for (int i = 0; i < run.count; ++i) {
+			const core::Glyph *g = layout_glyphs_[run.first + i];
+			if (g->w > 0 && g->h > 0) {
+				gs_matrix_push();
+				gs_matrix_translate3f(pen + static_cast<float>(g->xoff) * scale,
+						      static_cast<float>(g->yoff) * scale, 0.0f);
+				gs_matrix_scale3f(scale, scale, 1.0f);
+				gs_draw_sprite_subregion(texture_, 0, static_cast<uint32_t>(g->x),
+							 static_cast<uint32_t>(g->y),
+							 static_cast<uint32_t>(g->w),
+							 static_cast<uint32_t>(g->h));
+				gs_matrix_pop();
+			}
+			pen += static_cast<float>(g->advance) * scale;
+		}
+		pen += kGapUnits * scale;
+	}
+
+	gs_matrix_pop();
 }
 
 void TextRenderer::draw_band(float x, float y, float w, float h, float radius, uint32_t color)
@@ -269,44 +408,26 @@ void TextRenderer::draw(const core::KeyRender *items, int count, const core::Key
 
 	if (cfg.font != font_path_)
 		reload_font(cfg.font);
+	/* A failed texture creation frees the old texture: do not draw the
+	 * cached layout against a null texture. */
+	if (!loaded())
+		return;
 
-	/* Scratch buffers reused across frames: drawing keys must not allocate
-	 * on the hot path (single video thread, so thread-local is safe). */
-	thread_local std::vector<std::string> labels;
-	thread_local std::vector<float> widths;
-	labels.clear();
-	widths.clear();
-	labels.reserve(static_cast<size_t>(count));
-	widths.reserve(static_cast<size_t>(count));
-	std::string text;
-	text.reserve(64);
-	for (int i = 0; i < count; ++i) {
-		/* Shows what was typed (no forced case); special keys become icons. */
-		text.assign(items[i].label);
-		if (const char *icon = icon_for_label(items[i].label)) {
-			int cp = 0;
-			utf8_next(icon, 3, &cp);
-			if (atlas_.glyph(cp))
-				text = icon;
-		}
-		if (text.size() >= 63)
-			text.resize(63);
-		labels.push_back(text);
-	}
+	/* Decode/look up the glyphs only when the text or the font changed. */
+	if (build_layout(items, count))
+		rebuild_geometry();
 
 	const float base = static_cast<float>(target_h) * 0.030f;
 	const float scale = std::max(1.0f, base * static_cast<float>(cfg.size) / 32.0f);
-	const float gap = 14.0f * scale;
 	const float line_h = static_cast<float>(atlas_.line_height) * scale;
 
-	float total = 0.0f;
-	for (const std::string &s : labels) {
-		const float w = measure(s, scale);
-		widths.push_back(w);
-		total += w;
+	float total_units = 0.0f;
+	for (int i = 0; i < run_count_; ++i) {
+		total_units += runs_[i].width;
+		if (i + 1 < run_count_)
+			total_units += kGapUnits;
 	}
-	if (labels.size() > 1)
-		total += gap * static_cast<float>(labels.size() - 1);
+	const float total = total_units * scale;
 
 	const float cx = static_cast<float>(cfg.pos_x) * static_cast<float>(target_w);
 	const float baseline = static_cast<float>(cfg.pos_y) * static_cast<float>(target_h);
@@ -330,18 +451,28 @@ void TextRenderer::draw(const core::KeyRender *items, int count, const core::Key
 	if (p_image_)
 		gs_effect_set_texture(p_image_, texture_);
 
-	if (cfg.shadow) {
-		if (p_color_)
-			gs_effect_set_color(p_color_, 0xFF000000);
-		const float o = std::max(1.0f, 2.0f * scale);
-		const float offs[4][2] = {{-o, 0.0f}, {o, 0.0f}, {0.0f, -o}, {0.0f, o}};
-		for (const auto &of : offs)
-			draw_labels(labels, widths, x0 + of[0], baseline + of[1], scale, gap);
-	}
+	/* All glyphs share one vertex buffer: bind it once and draw it per
+	 * shadow offset/main pass. */
+	gs_load_indexbuffer(nullptr);
+	if (glyph_vb_)
+		gs_load_vertexbuffer(glyph_vb_);
 
-	if (p_color_)
-		gs_effect_set_color(p_color_, core::abgr_to_argb(cfg.color));
-	draw_labels(labels, widths, x0, baseline, scale, gap);
+	const float o = std::max(1.0f, 2.0f * scale);
+	const float offs[4][2] = {{-o, 0.0f}, {o, 0.0f}, {0.0f, -o}, {0.0f, o}};
+	if (glyph_vb_) {
+		if (cfg.shadow) {
+			for (const auto &of : offs)
+				draw_geometry(x0 + of[0], baseline + of[1], scale, 0xFF000000);
+		}
+		draw_geometry(x0, baseline, scale, core::abgr_to_argb(cfg.color));
+	} else {
+		if (cfg.shadow) {
+			for (const auto &of : offs)
+				draw_geometry_fallback(x0 + of[0], baseline + of[1], scale,
+						       0xFF000000);
+		}
+		draw_geometry_fallback(x0, baseline, scale, core::abgr_to_argb(cfg.color));
+	}
 
 	gs_technique_end_pass(tech_draw_);
 	gs_technique_end(tech_draw_);

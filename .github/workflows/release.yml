@@ -1,8 +1,9 @@
 name: Release
 
-# Publishes a GitHub Release with ready-to-use packages when a version tag
-# (v*) is pushed. Also runnable by hand (Actions > Release > Run workflow),
-# which builds the packages without creating the release.
+# Builds ready-to-use packages when a version tag (v*) is pushed and commits
+# them into releases/. It does not create a GitHub Release; publish one
+# manually with `gh release create` (see docs/BUILD.md). Also runnable by hand
+# (Actions > Release > Run workflow) for a test build.
 #
 #   topscreen-<version>-linux.tar.gz   -> extract into ~/.config/obs-studio/plugins/
 #   topscreen-<version>-windows.zip    -> extract, then double-click install.bat
@@ -15,11 +16,6 @@ on:
   push:
     tags: ['v*']
   workflow_dispatch:
-    inputs:
-      create_release:
-        description: 'Create the GitHub release (leave off for a test build)'
-        type: boolean
-        default: false
 
 permissions:
   contents: write

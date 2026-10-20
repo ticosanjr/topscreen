@@ -27,3 +27,11 @@ jobs:
         run: |
           chmod +x tests/run-integration.sh
           TOPSCREEN_CHECK_DIR="$RUNNER_TEMP/obscheck" ./tests/run-integration.sh
+
+      - name: Integration tests (ASan + UBSan)
+        env:
+          CXXFLAGS: "-fsanitize=address,undefined -fno-omit-frame-pointer"
+          ASAN_OPTIONS: "detect_leaks=0"
+          UBSAN_OPTIONS: "print_stacktrace=1"
+        run: |
+          TOPSCREEN_CHECK_DIR="$RUNNER_TEMP/obscheck" ./tests/run-integration.sh

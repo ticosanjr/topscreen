@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 
-project(TopScreen VERSION 0.2.17 LANGUAGES C CXX)
+project(TopScreen VERSION 0.2.21 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -39,6 +39,7 @@ set(TOPSCREEN_CORE_SOURCES
     src/core/highlighter.cpp
     src/core/cursor_atlas.cpp
     src/core/profiles.cpp
+    src/core/profiles_io.cpp
     src/core/mapping.cpp
     src/core/monitor.cpp
     src/core/image.cpp
@@ -150,6 +151,12 @@ if(TOPSCREEN_BUILD_PLUGIN)
     target_include_directories(topscreen PRIVATE src third_party)
     target_link_libraries(topscreen PRIVATE OBS::libobs)
     target_compile_definitions(topscreen PRIVATE TOPSCREEN_VERSION="${PROJECT_VERSION}")
+    if(MSVC)
+        target_compile_options(topscreen PRIVATE /W4)
+    else()
+        # OBS source-info structs are designed for partial initialization.
+        target_compile_options(topscreen PRIVATE -Wall -Wextra -Wno-missing-field-initializers)
+    endif()
 
     if(TOPSCREEN_HAVE_FRONTEND)
         target_compile_definitions(topscreen PRIVATE TOPSCREEN_HAVE_FRONTEND)

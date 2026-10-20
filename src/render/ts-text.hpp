@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -34,15 +35,41 @@ public:
 	bool loaded() const { return texture_ != nullptr && effect_ != nullptr; }
 
 private:
+	static constexpr int kMaxLabels = 8;
+	static constexpr int kMaxLabelBytes = 63;
+	static constexpr float kGapUnits = 14.0f;
+
+	struct Run {
+		int first = 0;
+		int count = 0;
+		float width = 0.0f; // font units
+	};
+
 	bool reload_font(const std::string &module_file);
-	float measure(const std::string &text, float scale) const;
-	void draw_string(const std::string &text, float x, float baseline, float scale);
-	void draw_labels(const std::vector<std::string> &labels, const std::vector<float> &widths, float x0,
-			 float baseline, float scale, float gap);
+	bool build_layout(const core::KeyRender *items, int count);
+	void rebuild_geometry();
+	void destroy_geometry();
+	void draw_geometry(float x, float baseline, float scale, uint32_t color);
+	void draw_geometry_fallback(float x, float baseline, float scale, uint32_t color);
 	void draw_band(float x, float y, float w, float h, float radius, uint32_t color);
 
 	core::FontAtlas atlas_;
 	std::string font_path_;
+	const core::Glyph *fallback_glyph_ = nullptr;
+
+	/* Key-overlay text is stable for seconds, so the decoded glyph runs and
+	 * the vertex buffer survive across frames. */
+	std::array<core::KeyLabel, kMaxLabels> cached_labels_;
+	int cached_count_ = 0;
+	bool layout_valid_ = false;
+	std::vector<const core::Glyph *> layout_glyphs_;
+	std::array<Run, kMaxLabels> runs_{};
+	int run_count_ = 0;
+
+	/* All glyph quads for the current text, in font units. */
+	gs_vertbuffer_t *glyph_vb_ = nullptr;
+	uint32_t glyph_vertex_count_ = 0;
+
 	gs_texture_t *texture_ = nullptr;
 	gs_texture_t *white_ = nullptr;
 	gs_effect_t *effect_ = nullptr;

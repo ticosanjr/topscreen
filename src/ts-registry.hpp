@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 #include "hotkeys/ts-hotkeys.hpp"
 
@@ -15,6 +16,9 @@ namespace topscreen {
 struct FilterControl {
 	virtual ~FilterControl() = default;
 
+	/** Display name of the OBS source that owns this filter (may be empty). */
+	virtual std::string source_name() const = 0;
+
 	virtual bool effects_enabled() const = 0;
 	virtual void set_effects_enabled(bool on) = 0;
 
@@ -27,27 +31,49 @@ struct FilterControl {
 	/** Origin of the captured monitor in global coordinates (0,0 when unknown). */
 	virtual void monitor_origin(double *x, double *y) const = 0;
 
-	/* Profiles (4 fixed slots). select_profile/save_profile also exist in
+	/* Profiles (10 fixed slots). select_profile/save_profile also exist in
 	 * HotkeyContext (same signature); the instance implements them once. */
 	virtual int profile_count() const = 0;
 	virtual int current_profile() const = 0;
 	virtual void select_profile(int index) = 0;
 	virtual void save_profile() = 0;
+
+	/* Profiles backup: the filter does the file I/O on the video thread and
+	 * publishes the last result (0 = none, 1 = export ok, 2 = export failed,
+	 * 3 = import ok, 4 = import failed). */
+	virtual void export_profiles(const std::string &path) = 0;
+	virtual void import_profiles(const std::string &json_text) = 0;
+	virtual int profile_io_result() const = 0;
+};
+
+/** One active filter, as shown in the dock's target selector. */
+struct FilterEntry {
+	FilterControl *control = nullptr;
+	std::string name;
 };
 
 /** Registers/unregisters an active filter. */
 void registry_add(FilterControl *control);
 void registry_remove(FilterControl *control);
 
-/** First active filter (or nullptr). Used by the dock. */
+/** Snapshot of the active filters in registration order (dock selector). */
+std::vector<FilterEntry> registry_list();
+
+/**
+ * Selects the dock/hotkey target. Returns false when the control is no longer
+ * registered (e.g. its source was deleted between two dock refreshes).
+ */
+bool registry_select(FilterControl *control);
+
+/** Selected active filter; falls back to the first one when none is selected. */
 FilterControl *registry_first();
 
 /**
  * Hotkey targets. OBS marks every filter source as private, so
  * obs_hotkey_register_source() always fails for filters (returns
  * OBS_INVALID_HOTKEY_ID on every platform). Hotkeys are therefore registered
- * once, process-wide, as *frontend* hotkeys and dispatched to the first
- * registered target (same rule as the dock).
+ * once, process-wide, as *frontend* hotkeys and dispatched to the filter
+ * selected in the dock (or the first one when nothing is selected).
  */
 void hotkey_target_add(HotkeyContext *target);
 void hotkey_target_remove(HotkeyContext *target);

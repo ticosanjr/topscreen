@@ -64,8 +64,9 @@ void HighlighterModel::end(double now)
 	/* Zoom gesture: remember the selection so the filter can zoom into it.
 	 * The hold path (update) fires while the button is still down; this path
 	 * only handles a release that happened before the trigger, with a real
-	 * drag behind it. */
-	if (!zoom_fired_ && mode_wants_zoom(cfg_.mode) && cfg_.enabled) {
+	 * drag behind it. PressZoom is press-only: a quick click must do nothing. */
+	if (!mode_is_press_zoom(cfg_.mode) && !zoom_fired_ && mode_wants_zoom(cfg_.mode) &&
+	    cfg_.enabled) {
 		double rx0 = 0.0, ry0 = 0.0, rx1 = 0.0, ry1 = 0.0;
 		selection_rect(&rx0, &ry0, &rx1, &ry1);
 		if (rx1 - rx0 >= cfg_.min_span && ry1 - ry0 >= cfg_.min_span) {
@@ -134,27 +135,38 @@ static constexpr double kPunchDeadZone2 = 0.003 * 0.003;
 void HighlighterModel::update(double now)
 {
 	if (mode_wants_zoom(cfg_.mode) && cfg_.enabled && dragging_ && !zoom_fired_) {
-		const bool punch = cfg_.zoom_dir >= 2;
-		const double dx = ex_ - sx_;
-		const double dy = ey_ - sy_;
-		const bool moved = dx * dx + dy * dy > kPunchDeadZone2;
-		const bool timeout = now - press_ms_ >= cfg_.zoom_delay_ms;
-		if ((punch && moved) || (!punch && timeout)) {
-			/* The drawn area always wins over the "just held" point; for the
-			 * line modes that area is the stroke's bounding box. */
-			double rx0 = 0.0, ry0 = 0.0, rx1 = 0.0, ry1 = 0.0;
-			selection_rect(&rx0, &ry0, &rx1, &ry1);
-			if (rx1 - rx0 >= cfg_.min_span && ry1 - ry0 >= cfg_.min_span) {
-				zx0_ = rx0;
-				zy0_ = ry0;
-				zx1_ = rx1;
-				zy1_ = ry1;
-			} else {
-				zx0_ = zx1_ = ex_;
-				zy0_ = zy1_ = ey_;
+		if (mode_is_press_zoom(cfg_.mode)) {
+			/* Press-and-hold, no drag: always zoom at the point where the
+			 * button went down (moving the mouse does not move the focus). */
+			if (now - press_ms_ >= cfg_.press_delay_ms) {
+				zx0_ = zx1_ = sx_;
+				zy0_ = zy1_ = sy_;
+				zoom_request_ = true;
+				zoom_fired_ = true;
 			}
-			zoom_request_ = true;
-			zoom_fired_ = true;
+		} else {
+			const bool punch = cfg_.zoom_dir >= 2;
+			const double dx = ex_ - sx_;
+			const double dy = ey_ - sy_;
+			const bool moved = dx * dx + dy * dy > kPunchDeadZone2;
+			const bool timeout = now - press_ms_ >= cfg_.zoom_delay_ms;
+			if ((punch && moved) || (!punch && timeout)) {
+				/* The drawn area always wins over the "just held" point; for
+				 * the line modes that area is the stroke's bounding box. */
+				double rx0 = 0.0, ry0 = 0.0, rx1 = 0.0, ry1 = 0.0;
+				selection_rect(&rx0, &ry0, &rx1, &ry1);
+				if (rx1 - rx0 >= cfg_.min_span && ry1 - ry0 >= cfg_.min_span) {
+					zx0_ = rx0;
+					zy0_ = ry0;
+					zx1_ = rx1;
+					zy1_ = ry1;
+				} else {
+					zx0_ = zx1_ = ex_;
+					zy0_ = zy1_ = ey_;
+				}
+				zoom_request_ = true;
+				zoom_fired_ = true;
+			}
 		}
 	}
 
@@ -205,9 +217,10 @@ HighlightRender HighlighterModel::render() const
 		}
 	}
 
-	/* Pure zoom never paints; BoxZoom draws the box and LineZoom the line
+	/* Pure zoom modes never paint; BoxZoom draws the box and LineZoom the line
 	 * below, while the filter animates the zoom. */
-	if (cfg_.mode == static_cast<int>(HighlightMode::Zoom)) {
+	if (cfg_.mode == static_cast<int>(HighlightMode::Zoom) ||
+	    cfg_.mode == static_cast<int>(HighlightMode::PressZoom)) {
 		out.active = false;
 		return out;
 	}

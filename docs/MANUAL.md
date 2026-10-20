@@ -111,48 +111,52 @@ Places the screen "floating" over a background, with corners and shadow.
 
 **Cursor styles available (37)**
 
+The dropdown is **grouped by theme**: every cursor of a theme sits together
+(all Bibata first, then all Breeze, and so on), and the label always starts
+with the theme name, so it is easy to scan.
+
 | Style | Appearance |
 |--------|-----------|
-| macOS (classic) | Black arrow with a white outline |
-| Windows (classic) | White arrow with a black outline |
-| Breeze (KDE) | Arrow from the Breeze theme |
-| Bibata (modern) | Modern rounded arrow (Bibata Modern Classic) |
-| Adwaita | Arrow from the Adwaita theme (GNOME) |
-| Google Dot | Circle with a dot (Google style) |
-| Hand (pointer) | Pointing hand |
-| DMZ (classic X11) | Classic arrow from the DMZ-White theme |
-| Yaru (Ubuntu) | Arrow from the Yaru theme |
-| XCursor Pro | Arrow from the XCursor-Pro theme |
-| Bibata Ice (blue) | Bibata with a blue highlight |
-| Bibata Original | Bibata in its original form |
-| Neon (cyan arrow) | Glowing cyan arrow for dark scenes |
-| Dot (touch) | Coral disc, centered (touch-style) |
-| Crosshair | Precision cross for pixel work |
-| Onyx (navy + gold) | Elegant dark arrow with a gold outline |
-| Hand (open grab) | Open hand (Adwaita) — good for "move this" |
-| Hand (closed) | Closed hand, for dragging |
-| Text I-beam | Text cursor — ideal for code demos |
-| DMZ Black | DMZ theme, black variant |
-| Google Dot (black) | Google-style dot, black variant |
-| Breeze Snow (light) | Very light Breeze arrow |
-| Bibata Ice Original | Bibata Ice, original shape |
-| Yaru hand (open) | Yaru open hand |
-| Yaru I-beam | Yaru text cursor |
-| Breeze I-beam | Breeze text cursor |
-| Breeze hand (link) | Breeze pointing hand (hover/link) |
-| Bibata hand (link) | Bibata pointing hand |
-| Adwaita hand (link) | Adwaita pointing hand |
-| DMZ hand (link) | DMZ pointing hand |
-| Yaru hand (link) | Yaru pointing hand |
-| XCursor Pro hand (link) | XCursor Pro pointing hand |
-| Bibata Ice hand (link) | Bibata Ice pointing hand |
-| Bibata Original hand (link) | Bibata Original pointing hand |
-| DMZ Black hand (link) | DMZ Black pointing hand |
-| Breeze Snow hand (link) | Breeze Snow pointing hand |
-| Bibata Ice Original hand (link) | Bibata Ice Original pointing hand |
+| Bibata — Arrow | Modern rounded arrow (Bibata Modern Classic) |
+| Bibata — Link hand | Bibata pointing hand (hover/link) |
+| Bibata Ice — Arrow | Bibata with a blue highlight |
+| Bibata Ice — Link hand | Bibata Ice pointing hand |
+| Bibata Original — Arrow | Bibata in its original shape |
+| Bibata Original — Link hand | Bibata Original pointing hand |
+| Bibata Ice Original — Arrow | Bibata Ice, original shape |
+| Bibata Ice Original — Link hand | Bibata Ice Original pointing hand |
+| Breeze — Arrow | Arrow from the Breeze theme (KDE) |
+| Breeze — Link hand | Breeze pointing hand |
+| Breeze Snow — Arrow | Very light Breeze arrow |
+| Breeze Snow — Link hand | Breeze Snow pointing hand |
+| Breeze — I-beam | Breeze text cursor |
+| Adwaita — Arrow | Arrow from the Adwaita theme (GNOME) |
+| Adwaita — Link hand | Adwaita pointing hand |
+| Adwaita — Pointer hand | Generic pointing hand |
+| Adwaita — Grab hand (open) | Open hand — good for "move this" |
+| Adwaita — Grab hand (closed) | Closed hand, for dragging |
+| Adwaita — I-beam | Text cursor — ideal for code demos |
+| Yaru — Arrow | Arrow from the Yaru theme (Ubuntu) |
+| Yaru — Link hand | Yaru pointing hand |
+| Yaru — Grab hand | Yaru open hand |
+| Yaru — I-beam | Yaru text cursor |
+| DMZ (white) — Arrow | Classic arrow from the DMZ-White theme |
+| DMZ (white) — Link hand | DMZ White pointing hand |
+| DMZ (black) — Arrow | DMZ theme, black variant |
+| DMZ (black) — Link hand | DMZ Black pointing hand |
+| Google Dot (white) — Arrow | Circle with a dot (Google style) |
+| Google Dot (black) — Arrow | Google-style dot, black variant |
+| XCursor Pro — Arrow | Arrow from the XCursor-Pro theme |
+| XCursor Pro — Link hand | XCursor Pro pointing hand |
+| macOS — Classic arrow | Black arrow with a white outline |
+| Windows — Classic arrow | White arrow with a black outline |
+| Effects — Neon | Glowing cyan arrow for dark scenes |
+| Effects — Onyx | Elegant dark arrow with a gold outline |
+| Effects — Dot | Coral disc, centered (touch-style) |
+| Effects — Crosshair | Precision cross for pixel work |
 
-> The **(link)** hands are the *same theme's own* pointer cursor, taken from the
-> theme package — so the "hovering a link" look matches the arrow you picked.
+> The **Link hand** styles are the *same theme's own* pointer cursor, taken from
+> the theme package — so the "hovering a link" look matches the arrow you picked.
 > Google Dot ships no hand at all (every cursor in that theme is a dot), so it
 > has no link variant.
 
@@ -222,12 +226,12 @@ modifiers (`Esc` stays as text).
 | **Text shadow** | Dark outline for readability |
 | **Background band / Band color** | Rounded rectangle behind the text and its color |
 
-### Highlighter (left-drag action)
+### Highlighter (left-button action)
 
 | Group | Option | What it does |
 |-------|--------|--------------|
 | — | **Enable drag actions** | Master switch for what a left-drag does |
-| — | **What a drag does** | **Filled box** (classic mark) · **Line** (draw freehand, fades out) · **Zoom to the selection** (no drawing) · **Box + zoom** (marks *and* zooms) · **Line + zoom** (draws freehand *and* zooms) |
+| — | **What a drag does** | **Filled box** (classic mark) · **Line** (draw freehand, fades out) · **Zoom to the selection** (no drawing) · **Zoom on mouse press** (hold the button, no drag) · **Box + zoom** (marks *and* zooms) · **Line + zoom** (draws freehand *and* zooms) |
 | Look | **Color** | Highlight color (use alpha < 255 for translucent) |
 | Look | **Opacity** | Strength ceiling (0 = invisible, 1 = solid); keeps content readable |
 | Look | **Line thickness** | Stroke width as a fraction of the screen height |
@@ -235,6 +239,7 @@ modifiers (`Esc` stays as text).
 | Timing | **Fade out (ms)** | How long the fade takes |
 | Zoom | **Zoom direction** | **Zoom in** (hold to zoom, release to come back) · **Zoom out** (hold to widen) · **Punch in/out** (same, but instant — no hold needed before) |
 | Zoom | **Zoom: hold-to-zoom delay** | Hold the button this long (ms) before the zoom kicks in (`0` = behaves like punch) |
+| Zoom | **Zoom on press: hold delay** | In *Zoom on mouse press*, how long the button stays down before the zoom starts (default 400 ms) |
 | Zoom | **Zoom: maximum** | Zoom ceiling for the gesture |
 | Zoom | **Zoom: zoom-in time** | How fast the zoom moves in |
 | Zoom | **Zoom: return time** | How slowly it glides back on release |
@@ -246,6 +251,12 @@ modifiers (`Esc` stays as text).
   otherwise centered where the pointer is) and **stays there while you hold**.
   Let go and it glides back to exactly where it was — even if you were
   already zoomed when you started.
+- **Zoom on mouse press in practice:** choose **Zoom on mouse press** and just
+  press and hold the left button — no dragging required. After the short hold
+  delay (400 ms by default) the view zooms at the point where you pressed and
+  stays there while the button is down; release and it glides back. Dragging
+  during the hold does **not** change the focus, and a quick click does
+  nothing (it stays a normal click).
 - Only the options of the selected mode are shown; switching mode hides the
   rest.
 
@@ -256,6 +267,9 @@ modifiers (`Esc` stays as text).
 - **Zoom to the selection**: drag over an area — or just press and hold — and
   TopScreen zooms into it, **holds while you keep the button down**, and glides
   back on release.
+- **Zoom on mouse press**: pure press-and-hold. No area selection: the zoom is
+  centered on the point where you pressed, ignores any drag, and starts after
+  the configured short delay. A quick click stays a click.
 - **Box + zoom**: draws the box *and* zooms, for when you want to mark the area
   you are inspecting.
 - **Line + zoom**: same gesture as *Box + zoom*, but the mark is the freehand
@@ -278,8 +292,10 @@ modifiers (`Esc` stays as text).
 ## 6. Hotkeys
 
 In **Settings → Hotkeys**, search for `TopScreen`: all 18 actions are labelled
-**`TopScreen: …`**, so they are easy to spot. They are global hotkeys, so they
-act on the **first active filter** if you have more than one:
+**`TopScreen_...`** (for example `TopScreen_ProfileA — Activate profile A`), so
+they are easy to spot. They are global hotkeys, so they
+act on the **target filter selected in the dock** (or the first active one
+when nothing is selected):
 
 | Action | Effect |
 |------|--------|
@@ -314,13 +330,32 @@ own, copy a file and adjust it — the format is in [`CONFIGURATION.md`](CONFIGU
 
 The **10 profiles** store the entire configuration and switch everything at once.
 The selector is at the **top** of Properties (group **Profiles → Current profile**)
-and in the dock as well.
+and in the dock as well. The dock also has a **Target filter** selector: all dock
+buttons and hotkeys act on the selected TopScreen filter (or the first one when
+nothing is selected).
 
 - **Switching profile applies EVERYTHING immediately** (background, cursor, clicks, zoom, keys…).
 - **Your changes are saved into the active profile automatically** — no need to
   remember to save (the *Save to profile* button and hotkey exist to force it).
+  The auto-save is debounced by ~0.4 s, so dragging a slider does not rewrite
+  the profile on every frame; switching profiles/saving/exporting flushes it.
 - The selected profile is re-applied **when OBS opens**, so the look comes back the same.
 - Hotkeys: **Activate profile A … J** and **Save to current profile**.
+
+### Backup / transfer
+
+- **Dock:** `Export profiles...` saves all 10 profiles to a `.json` file;
+  `Import profiles...` reads one back. The import asks for confirmation,
+  replaces profiles **A–J** and activates the profile that was active in the
+  file.
+- **Properties (no Qt dock):** group **Profiles → Backup / transfer** — choose
+  the file in *Export to file* / *Import from file* and click the corresponding
+  button.
+- The file stores **settings only** (background, cursor, clicks, zoom, keys,
+  highlighter, profiles). Custom images and sounds are referenced by path and
+  are **not embedded**.
+- Export includes the edits currently on screen (the active profile is saved
+  into the file first).
 
 They already ship with examples, so you can just switch and see the difference:
 
@@ -459,8 +494,8 @@ TOPSCREEN_DEBUG_KEY=Ctrl obs
 - They are **global frontend hotkeys** (filters cannot register per-source
   hotkeys in OBS), so they appear as flat entries in the main list — search
   for `TopScreen` or `Activate profile`.
-- With several filters, a hotkey acts on the **first active one** (same rule
-  as the dock).
+- With several filters, the hotkey acts on the dock's **Target filter**
+  (or the first active one when nothing is selected).
 - The log confirms registration: `[TopScreen] hotkeys registered: 18/18`.
 
 **Zoom "jumps" or shakes**
@@ -480,7 +515,8 @@ No — by definition it is **live only**. For later editing use an editor.
 Yes, the filter works on any video source. The screen selection is yours, on the source.
 
 **Can I use two TopScreen filters at the same time?**
-Yes, but each one is independent; the dock controls the **first** active filter.
+Yes, each one is independent. The dock's **Target filter** selector chooses
+which one the dock buttons and hotkeys control (default: the first one).
 
 **Can I turn off only the background at a specific moment?**
 Yes: hotkey **Enable/disable background**.

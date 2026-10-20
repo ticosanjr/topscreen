@@ -120,6 +120,42 @@ TEST(font_atlas_alpha_has_pixels)
 	CHECK(set_pixels > 0);
 }
 
+TEST(font_atlas_ascii_lookup_matches_ordered_search)
+{
+	std::vector<uint8_t> ttf;
+	REQUIRE(load_font(&ttf));
+	FontAtlas atlas;
+	std::string err;
+	FontAtlasOptions opt;
+	opt.pixel_height = 32;
+	REQUIRE(font_atlas_build(ttf.data(), ttf.size(), opt, &atlas, &err));
+
+	/* The fast ASCII index must return exactly the glyph the ordered
+	 * search would find (including absent codes). */
+	for (int code = 0; code < 128; ++code) {
+		const Glyph *fast = atlas.glyph(code);
+		const Glyph *slow = nullptr;
+		for (const Glyph &g : atlas.glyphs) {
+			if (g.code == code) {
+				slow = &g;
+				break;
+			}
+		}
+		CHECK_EQ(fast, slow);
+	}
+
+	/* Symbols still use the binary search and keep working. */
+	const Glyph *icon = atlas.glyph(0x2423);
+	REQUIRE(icon != nullptr);
+	CHECK_EQ(icon->code, 0x2423);
+	CHECK(atlas.glyph(0x10FFFF) == nullptr);
+
+	/* An atlas that was never built must not resolve ASCII codes. */
+	FontAtlas empty;
+	CHECK(empty.glyph('A') == nullptr);
+	CHECK(empty.glyph(' ') == nullptr);
+}
+
 TEST(font_atlas_rejects_invalid_data)
 {
 	FontAtlas atlas;

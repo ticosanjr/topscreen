@@ -49,7 +49,7 @@ OBS headers. See [`docs/TESTS.md`](docs/TESTS.md).
 ### Quick tests
 
 ```bash
-./tests/run.sh            # Linux: 126 core tests
+./tests/run.sh            # Linux: 192 core tests
 pwsh -File tests\run.ps1  # Windows (or PowerShell on any OS)
 ```
 
@@ -72,7 +72,7 @@ pwsh -File tests\run.ps1  # Windows (or PowerShell on any OS)
 
 **Windows**
 ```powershell
-# 1) Get releases/topscreen-<version>-windows.zip from this repository
+# 1) Get topscreen-<version>-windows.zip from GitHub Releases or releases/
 # 2) Extract the WHOLE zip and open the "topscreen" folder
 # 3) Double-click install.bat  (it sits next to bin/ and data/)
 install.bat                  # per-user plugin (no admin, no compiler)
@@ -95,7 +95,9 @@ pwsh -File scripts\install-windows.ps1 -Dll .\topscreen.dll
 ```
 </details>
 
-Packages for every version live in [`releases/`](releases/README.md).
+Packages for every version live in [`releases/`](releases/README.md); the
+latest archives are also attached to
+[GitHub Releases](https://github.com/ticosanjr/topscreen/releases).
 Full step by step in [`docs/BUILD.md`](docs/BUILD.md).
 
 ## Removal

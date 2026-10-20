@@ -1,0 +1,51 @@
+#pragma once
+
+/**
+ * Hotkey actions and their process-wide OBS IDs.
+ *
+ * This header is intentionally free of libobs includes so the naming policy
+ * (every ID starts with "TopScreen_") is unit-tested by the core test binary.
+ *
+ * The indexes are stable: append new actions at the end and never reorder the
+ * existing ones, otherwise saved hotkey assignments stop matching.
+ */
+namespace topscreen {
+
+enum HotkeyAction {
+	HK_ToggleEffects = 0,
+	HK_ToggleBackground,
+	HK_ZoomIn,
+	HK_ZoomOut,
+	HK_ResetZoom,
+	HK_NextPreset,
+	HK_PrevPreset,
+	HK_ProfileA,
+	HK_ProfileB,
+	HK_ProfileC,
+	HK_ProfileD,
+	HK_ProfileE,
+	HK_ProfileF,
+	HK_ProfileG,
+	HK_ProfileH,
+	HK_ProfileI,
+	HK_ProfileJ,
+	HK_ProfileSave,
+	HK_Count,
+};
+
+/** Mandatory prefix for every hotkey ID (easy to find in OBS). */
+inline constexpr const char *kHotkeyPrefix = "TopScreen_";
+
+/** IDs as shown/registered in Settings -> Hotkeys. Index = HotkeyAction. */
+inline constexpr const char *kHotkeyNames[HK_Count] = {
+	"TopScreen_ToggleEffects",  "TopScreen_ToggleBackground", "TopScreen_ZoomIn",
+	"TopScreen_ZoomOut",        "TopScreen_ResetZoom",        "TopScreen_NextPreset",
+	"TopScreen_PrevPreset",     "TopScreen_ProfileA",         "TopScreen_ProfileB",
+	"TopScreen_ProfileC",       "TopScreen_ProfileD",         "TopScreen_ProfileE",
+	"TopScreen_ProfileF",       "TopScreen_ProfileG",         "TopScreen_ProfileH",
+	"TopScreen_ProfileI",       "TopScreen_ProfileJ",         "TopScreen_ProfileSave",
+};
+
+inline constexpr int kHotkeyCount = HK_Count;
+
+} // namespace topscreen

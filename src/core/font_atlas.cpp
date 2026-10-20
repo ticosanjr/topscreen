@@ -18,7 +18,15 @@ namespace topscreen::core {
 
 const Glyph *FontAtlas::glyph(int code) const
 {
-	/* glyphs is ordered by code: binary search instead of linear scan. */
+	/* ASCII is the common case: one indexed load instead of a search. */
+	if (code >= 0 && code < 128) {
+		const int index = ascii[static_cast<size_t>(code)];
+		if (index >= 0 && static_cast<size_t>(index) < glyphs.size())
+			return &glyphs[static_cast<size_t>(index)];
+		return nullptr;
+	}
+
+	/* Symbols and the fallback keep the ordered binary search. */
 	auto it = std::lower_bound(glyphs.begin(), glyphs.end(), code,
 				   [](const Glyph &g, int value) { return g.code < value; });
 	if (it != glyphs.end() && it->code == code)
@@ -192,6 +200,14 @@ bool font_atlas_build(const uint8_t *ttf, size_t ttf_size, const FontAtlasOption
 	/* glyph() uses binary search: keep the vector sorted by code. */
 	std::sort(out->glyphs.begin(), out->glyphs.end(),
 		  [](const Glyph &a, const Glyph &b) { return a.code < b.code; });
+
+	/* Build the ASCII index after sorting (indices into the final vector). */
+	out->ascii.fill(-1);
+	for (size_t i = 0; i < out->glyphs.size(); ++i) {
+		const int code = out->glyphs[i].code;
+		if (code >= 0 && code < 128)
+			out->ascii[static_cast<size_t>(code)] = static_cast<int16_t>(i);
+	}
 
 	return true;
 }

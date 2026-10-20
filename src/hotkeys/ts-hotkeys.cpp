@@ -6,16 +6,9 @@ namespace topscreen {
 
 namespace {
 
-const char *const kHotkeyNames[HK_Count] = {
-	"TopScreen.ToggleEffects",  "TopScreen.ToggleBackground", "TopScreen.ZoomIn",
-	"TopScreen.ZoomOut",        "TopScreen.ResetZoom",        "TopScreen.NextPreset",
-	"TopScreen.PrevPreset",     "TopScreen.ProfileA",         "TopScreen.ProfileB",
-	"TopScreen.ProfileC",       "TopScreen.ProfileD",         "TopScreen.ProfileE",
-	"TopScreen.ProfileF",       "TopScreen.ProfileG",         "TopScreen.ProfileH",
-	"TopScreen.ProfileI",       "TopScreen.ProfileJ",         "TopScreen.ProfileSave",
-};
-
-/* Localized description of each hotkey (literals for the translation test). */
+/* Localized description of each hotkey (literals for the translation test).
+ * Every label starts with the literal ID ("TopScreen_ProfileA") so the OBS
+ * hotkey list is searchable by the same prefix as the registered ID. */
 const char *hotkey_description(int action)
 {
 	switch (action) {
@@ -117,7 +110,7 @@ void ts_hotkey_callback(void *data, obs_hotkey_id id, obs_hotkey_t *key, bool pr
 	if (!binding)
 		return;
 
-	/* Route to the first active filter (same rule as the dock). */
+	/* Route to the filter selected in the dock (or the first active one). */
 	HotkeyContext *target = hotkey_target_first();
 	if (!target)
 		return;

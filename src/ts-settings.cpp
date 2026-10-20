@@ -1,5 +1,6 @@
 #include "ts-settings.hpp"
 
+#include "core/cursor_catalog.hpp"
 #include "core/keys.hpp"
 
 using namespace topscreen::core;
@@ -100,6 +101,7 @@ void config_defaults(obs_data_t *s)
 	obs_data_set_default_double(s, kHighlightZoomInMs, def.highlight.zoom_in_ms);
 	obs_data_set_default_double(s, kHighlightZoomHoldMs, def.highlight.zoom_hold_ms);
 	obs_data_set_default_double(s, kHighlightZoomOutMs, def.highlight.zoom_out_ms);
+	obs_data_set_default_double(s, kHighlightPressDelayMs, def.highlight.press_delay_ms);
 
 	obs_data_set_default_bool(s, kMonitorManual, def.monitor_manual);
 	obs_data_set_default_int(s, kMonitorX, def.monitor_x);
@@ -176,7 +178,7 @@ void config_load(obs_data_t *s, Config *c)
 	c->bg.keep_aspect = read_bool(s, kBgKeepAspect, d.bg.keep_aspect);
 
 	c->cursor.enabled = read_bool(s, kCursorEnabled, d.cursor.enabled);
-	c->cursor.style = static_cast<int>(read_int(s, kCursorStyle, d.cursor.style));
+	c->cursor.style = cursor_style_clamp(static_cast<int>(read_int(s, kCursorStyle, d.cursor.style)));
 	c->cursor.size = read_double(s, kCursorSize, d.cursor.size);
 	c->cursor.shadow = read_bool(s, kCursorShadow, d.cursor.shadow);
 	c->cursor.smooth = read_double(s, kCursorSmooth, d.cursor.smooth);
@@ -255,16 +257,11 @@ void config_load(obs_data_t *s, Config *c)
 	c->highlight.zoom_in_ms = read_double(s, kHighlightZoomInMs, d.highlight.zoom_in_ms);
 	c->highlight.zoom_hold_ms = read_double(s, kHighlightZoomHoldMs, d.highlight.zoom_hold_ms);
 	c->highlight.zoom_out_ms = read_double(s, kHighlightZoomOutMs, d.highlight.zoom_out_ms);
+	c->highlight.press_delay_ms = read_double(s, kHighlightPressDelayMs, d.highlight.press_delay_ms);
 
 	c->monitor_manual = read_bool(s, kMonitorManual, d.monitor_manual);
 	c->monitor_x = static_cast<int>(read_int(s, kMonitorX, d.monitor_x));
 	c->monitor_y = static_cast<int>(read_int(s, kMonitorY, d.monitor_y));
-
-	/* Migration: 0.7/0.3 were the old cursor defaults (with "slide"). */
-	if (c->cursor.smooth == 0.7 && c->cursor.sway == 0.3) {
-		c->cursor.smooth = 0.0;
-		c->cursor.sway = 0.0;
-	}
 }
 
 void config_store(obs_data_t *s, const Config &c)
@@ -358,6 +355,7 @@ void config_store(obs_data_t *s, const Config &c)
 	obs_data_set_double(s, kHighlightZoomInMs, c.highlight.zoom_in_ms);
 	obs_data_set_double(s, kHighlightZoomHoldMs, c.highlight.zoom_hold_ms);
 	obs_data_set_double(s, kHighlightZoomOutMs, c.highlight.zoom_out_ms);
+	obs_data_set_double(s, kHighlightPressDelayMs, c.highlight.press_delay_ms);
 
 	obs_data_set_bool(s, kMonitorManual, c.monitor_manual);
 	obs_data_set_int(s, kMonitorX, c.monitor_x);

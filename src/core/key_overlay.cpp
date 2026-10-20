@@ -29,9 +29,13 @@ void KeyOverlayModel::configure(const KeyOverlayConfig &cfg)
 		cfg_.max_keys = 1;
 	if (cfg_.ttl_ms <= 0.0)
 		cfg_.ttl_ms = 1.0;
+	/* The queue never holds more than max_keys: reserve once instead of
+	 * growing the vector on the first keystrokes. Keep the hint bounded so
+	 * a malformed config cannot request a huge allocation here. */
+	entries_.reserve(static_cast<size_t>(std::min(cfg_.max_keys, 64)));
 }
 
-void KeyOverlayModel::press(const std::string &label, bool is_modifier, double now_ms)
+void KeyOverlayModel::press(std::string_view label, bool is_modifier, double now_ms)
 {
 	if (!cfg_.enabled || label.empty())
 		return;
@@ -40,7 +44,11 @@ void KeyOverlayModel::press(const std::string &label, bool is_modifier, double n
 
 	/* Every keystroke is appended as its own entry (repeats included), so
 	 * what you typed is what you see. Each letter expires on its own TTL. */
-	entries_.push_back({label, now_ms, is_modifier});
+	Entry entry;
+	entry.label.assign(label);
+	entry.born_ms = now_ms;
+	entry.modifier = is_modifier;
+	entries_.push_back(entry);
 
 	/* Respects the limit, discarding the oldest ones. */
 	while (static_cast<int>(entries_.size()) > cfg_.max_keys)

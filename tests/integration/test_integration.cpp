@@ -3,8 +3,10 @@
 
 #include <obs-module.h>
 
+#include <cstdio>
 #include <cstdlib>
 #include <string>
+#include <vector>
 
 #if defined(_WIN32)
 #define TS_SETENV(k, v) _putenv_s(k, v)
@@ -15,6 +17,7 @@
 #endif
 
 #include "core/keys.hpp"
+#include "core/file.hpp"
 #include "core/profiles.hpp"
 #include "core/types.hpp"
 #include "ts-filter.hpp"
@@ -64,6 +67,16 @@ void set_profile_from_properties(obs_source_t *filter, void *ctx, int index)
 	ts_filter_source_info.update(ctx, filter->settings);
 }
 
+bool slot_effects_enabled(obs_source_t *filter, int index)
+{
+	obs_data_t *slot = obs_data_get_obj(filter->settings, core::keys::kProfileSlots[index]);
+	if (!slot)
+		return false;
+	const bool value = obs_data_get_bool(slot, core::keys::kEffectsEnabled);
+	obs_data_release(slot);
+	return value;
+}
+
 } // namespace
 
 TEST(integration_filter_lifecycle)
@@ -91,14 +104,14 @@ TEST(integration_filter_lifecycle)
 	REQUIRE(fakeobs::hotkey_count() >= 12);
 
 	/* Toggle effects via hotkey. */
-	const int toggle = fakeobs::find_hotkey("TopScreen.ToggleEffects");
+	const int toggle = fakeobs::find_hotkey("TopScreen_ToggleEffects");
 	REQUIRE(toggle >= 0);
 	fakeobs::invoke_hotkey(toggle, true);
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
 	CHECK(!ctrl->effects_enabled());
 
 	/* Zoom via hotkey must not crash anything. */
-	const int zin = fakeobs::find_hotkey("TopScreen.ZoomIn");
+	const int zin = fakeobs::find_hotkey("TopScreen_ZoomIn");
 	REQUIRE(zin >= 0);
 	fakeobs::invoke_hotkey(zin, true);
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
@@ -136,7 +149,7 @@ TEST(integration_all_presets_and_toggle_background)
 		CHECK(!ctrl->preset_name(i).empty());
 	}
 
-	const int tg = fakeobs::find_hotkey("TopScreen.ToggleBackground");
+	const int tg = fakeobs::find_hotkey("TopScreen_ToggleBackground");
 	REQUIRE(tg >= 0);
 	const bool before = obs_data_get_bool(filter->settings, core::keys::kBgEnabled);
 	fakeobs::invoke_hotkey(tg, true);
@@ -161,15 +174,15 @@ TEST(integration_hotkeys_all_actions)
 	FilterControl *ctrl = registry_first();
 	REQUIRE(ctrl != nullptr);
 
-	const char *names[] = {"TopScreen.ToggleEffects", "TopScreen.ToggleBackground",
-			       "TopScreen.ZoomIn",	      "TopScreen.ZoomOut",
-			       "TopScreen.ResetZoom",	      "TopScreen.NextPreset",
-			       "TopScreen.PrevPreset",	      "TopScreen.ProfileA",
-			       "TopScreen.ProfileB",	      "TopScreen.ProfileC",
-			       "TopScreen.ProfileD",	      "TopScreen.ProfileE",
-			       "TopScreen.ProfileF",	      "TopScreen.ProfileG",
-			       "TopScreen.ProfileH",	      "TopScreen.ProfileI",
-			       "TopScreen.ProfileJ",	      "TopScreen.ProfileSave"};
+	const char *names[] = {"TopScreen_ToggleEffects", "TopScreen_ToggleBackground",
+			       "TopScreen_ZoomIn",	      "TopScreen_ZoomOut",
+			       "TopScreen_ResetZoom",	      "TopScreen_NextPreset",
+			       "TopScreen_PrevPreset",	      "TopScreen_ProfileA",
+			       "TopScreen_ProfileB",	      "TopScreen_ProfileC",
+			       "TopScreen_ProfileD",	      "TopScreen_ProfileE",
+			       "TopScreen_ProfileF",	      "TopScreen_ProfileG",
+			       "TopScreen_ProfileH",	      "TopScreen_ProfileI",
+			       "TopScreen_ProfileJ",	      "TopScreen_ProfileSave"};
 	for (const char *n : names)
 		REQUIRE(fakeobs::find_hotkey(n) >= 0);
 
@@ -177,45 +190,45 @@ TEST(integration_hotkeys_all_actions)
 	const bool fx0 = ctrl->effects_enabled();
 	ctrl->select_profile(0);
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
-	fakeobs::invoke_hotkey(fakeobs::find_hotkey("TopScreen.ToggleEffects"), false);
-	fakeobs::invoke_hotkey(fakeobs::find_hotkey("TopScreen.ProfileC"), false);
+	fakeobs::invoke_hotkey(fakeobs::find_hotkey("TopScreen_ToggleEffects"), false);
+	fakeobs::invoke_hotkey(fakeobs::find_hotkey("TopScreen_ProfileC"), false);
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
 	CHECK(ctrl->effects_enabled() == fx0);
 	CHECK_EQ(ctrl->current_profile(), 0);
 
 	/* pressed=true: each action reaches the filter. */
-	fakeobs::invoke_hotkey(fakeobs::find_hotkey("TopScreen.ToggleEffects"), true);
+	fakeobs::invoke_hotkey(fakeobs::find_hotkey("TopScreen_ToggleEffects"), true);
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
 	CHECK(ctrl->effects_enabled() == !fx0);
 
 	const bool bg0 = obs_data_get_bool(filter->settings, core::keys::kBgEnabled);
-	fakeobs::invoke_hotkey(fakeobs::find_hotkey("TopScreen.ToggleBackground"), true);
+	fakeobs::invoke_hotkey(fakeobs::find_hotkey("TopScreen_ToggleBackground"), true);
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
 	CHECK(obs_data_get_bool(filter->settings, core::keys::kBgEnabled) == !bg0);
 
-	fakeobs::invoke_hotkey(fakeobs::find_hotkey("TopScreen.ZoomIn"), true);
-	fakeobs::invoke_hotkey(fakeobs::find_hotkey("TopScreen.ZoomOut"), true);
-	fakeobs::invoke_hotkey(fakeobs::find_hotkey("TopScreen.ResetZoom"), true);
+	fakeobs::invoke_hotkey(fakeobs::find_hotkey("TopScreen_ZoomIn"), true);
+	fakeobs::invoke_hotkey(fakeobs::find_hotkey("TopScreen_ZoomOut"), true);
+	fakeobs::invoke_hotkey(fakeobs::find_hotkey("TopScreen_ResetZoom"), true);
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
 
-	fakeobs::invoke_hotkey(fakeobs::find_hotkey("TopScreen.NextPreset"), true);
+	fakeobs::invoke_hotkey(fakeobs::find_hotkey("TopScreen_NextPreset"), true);
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
 	CHECK(ctrl->current_preset() >= 0 && ctrl->current_preset() < ctrl->preset_count());
-	fakeobs::invoke_hotkey(fakeobs::find_hotkey("TopScreen.PrevPreset"), true);
+	fakeobs::invoke_hotkey(fakeobs::find_hotkey("TopScreen_PrevPreset"), true);
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
 	CHECK(ctrl->current_preset() >= 0 && ctrl->current_preset() < ctrl->preset_count());
 
-	const char *profiles[] = {"TopScreen.ProfileA", "TopScreen.ProfileB", "TopScreen.ProfileC",
-				   "TopScreen.ProfileD", "TopScreen.ProfileE", "TopScreen.ProfileF",
-				   "TopScreen.ProfileG", "TopScreen.ProfileH", "TopScreen.ProfileI",
-				   "TopScreen.ProfileJ"};
+	const char *profiles[] = {"TopScreen_ProfileA", "TopScreen_ProfileB", "TopScreen_ProfileC",
+				   "TopScreen_ProfileD", "TopScreen_ProfileE", "TopScreen_ProfileF",
+				   "TopScreen_ProfileG", "TopScreen_ProfileH", "TopScreen_ProfileI",
+				   "TopScreen_ProfileJ"};
 	for (int i = 0; i < 10; ++i) {
 		fakeobs::invoke_hotkey(fakeobs::find_hotkey(profiles[i]), true);
 		ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
 		CHECK_EQ(ctrl->current_profile(), i);
 	}
 
-	fakeobs::invoke_hotkey(fakeobs::find_hotkey("TopScreen.ProfileSave"), true);
+	fakeobs::invoke_hotkey(fakeobs::find_hotkey("TopScreen_ProfileSave"), true);
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
 	CHECK(obs_data_get_obj(filter->settings, core::keys::kProfileSlots[ctrl->current_profile()]) !=
 	      nullptr);
@@ -303,8 +316,183 @@ TEST(integration_profiles_save_and_switch)
 }
 
 /* Creating the filter must register every hotkey on the source, once each,
- * with the stable TopScreen.* ids (the OBS UI groups them under the filter
+ * with the stable TopScreen_* ids (the OBS UI groups them under the filter
  * instance name, so a missing section means these never registered). */
+/* Profiles backup: requests are queued to the video thread and invalid files
+ * are rejected before touching the source (the fake runtime reports the file
+ * write as failed, which exercises the result path too). */
+TEST(integration_profiles_io_roundtrip)
+{
+	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
+
+	obs_source_t *parent = make_parent(1920, 1080);
+	obs_source_t *filter = fakeobs::make_source(&ts_filter_source_info, parent, 0, 0);
+	void *ctx = create_filter(filter);
+	REQUIRE(ctx != nullptr);
+	ts_filter_source_info.video_render(ctx, nullptr);
+
+	FilterControl *ctrl = registry_first();
+	REQUIRE(ctrl != nullptr);
+	CHECK_EQ(ctrl->profile_io_result(), 0);
+
+	/* A = effects off, B = effects on. */
+	ctrl->select_profile(0);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	ctrl->set_effects_enabled(false);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	ctrl->save_profile();
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+
+	ctrl->select_profile(1);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	ctrl->set_effects_enabled(true);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	ctrl->save_profile();
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+
+	/* Invalid import is rejected before touching anything. */
+	ctrl->import_profiles("{\"not\":\"a bundle\"}");
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK_EQ(ctrl->profile_io_result(), 4);
+	CHECK_EQ(ctrl->current_profile(), 1);
+	CHECK(ctrl->effects_enabled());
+
+	/* Export while profile A is active. */
+	const std::string path = "/tmp/opencode/topscreen-profiles-test.json";
+	ctrl->select_profile(0);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	ctrl->export_profiles(path);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK_EQ(ctrl->profile_io_result(), 1);
+
+	/* Overwrite both slots with the opposite values. */
+	ctrl->set_effects_enabled(true);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	ctrl->save_profile();
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	ctrl->select_profile(1);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	ctrl->set_effects_enabled(false);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	ctrl->save_profile();
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+
+	/* Leave a pending debounced edit: importing must discard it instead of
+	 * writing it over the imported profile after the debounce expires. */
+	ctrl->set_effects_enabled(true);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK(ctrl->effects_enabled());
+
+	/* Import the file text (the dock validates it and passes the text). */
+	std::string text;
+	REQUIRE(core::read_file_text(path.c_str(), &text));
+	ctrl->import_profiles(text);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK_EQ(ctrl->profile_io_result(), 3);
+	CHECK_EQ(ctrl->current_profile(), 0);
+	CHECK(!ctrl->effects_enabled()); /* A: off restored */
+
+	ctrl->select_profile(1);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK(ctrl->effects_enabled()); /* B: on restored */
+
+	std::remove(path.c_str());
+	ts_filter_source_info.destroy(ctx);
+}
+
+TEST(integration_registry_target_selection)
+{
+	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
+
+	obs_source_t *parent = make_parent(1920, 1080);
+	obs_source_t *f1 = fakeobs::make_source(&ts_filter_source_info, parent, 0, 0);
+	obs_source_t *f2 = fakeobs::make_source(&ts_filter_source_info, parent, 0, 0);
+	fakeobs::set_source_name(f1, "TopScreen A");
+	fakeobs::set_source_name(f2, "TopScreen B");
+
+	void *ctx1 = create_filter(f1);
+	void *ctx2 = create_filter(f2);
+	REQUIRE(ctx1 != nullptr);
+	REQUIRE(ctx2 != nullptr);
+
+	const std::vector<FilterEntry> entries = registry_list();
+	REQUIRE(entries.size() == 2);
+	CHECK_EQ(entries[0].name, std::string("TopScreen A"));
+	CHECK_EQ(entries[1].name, std::string("TopScreen B"));
+	FilterControl *a = entries[0].control;
+	FilterControl *b = entries[1].control;
+	CHECK(registry_first() == a); // first registered is the default target
+
+	/* The dock selection also routes hotkeys to that filter. */
+	REQUIRE(registry_select(b));
+	CHECK(registry_first() == b);
+	CHECK(dynamic_cast<FilterControl *>(hotkey_target_first()) == b);
+
+	const int toggle = fakeobs::find_hotkey("TopScreen_ToggleEffects");
+	REQUIRE(toggle >= 0);
+	fakeobs::invoke_hotkey(toggle, true);
+	ts_filter_source_info.video_tick(ctx2, 1.0f / 60.0f);
+	CHECK(!b->effects_enabled());
+
+	ts_filter_source_info.video_tick(ctx1, 1.0f / 60.0f);
+	CHECK(a->effects_enabled());
+
+	/* Deleting the selected filter falls back to the remaining one. */
+	ts_filter_source_info.destroy(ctx2);
+	CHECK(registry_first() == a);
+	CHECK(dynamic_cast<FilterControl *>(hotkey_target_first()) == a);
+
+	ts_filter_source_info.destroy(ctx1);
+	CHECK(registry_first() == nullptr);
+	CHECK(hotkey_target_first() == nullptr);
+}
+
+TEST(integration_profile_autosave_is_debounced)
+{
+	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
+
+	obs_source_t *parent = make_parent(1920, 1080);
+	obs_source_t *filter = fakeobs::make_source(&ts_filter_source_info, parent, 0, 0);
+	void *ctx = create_filter(filter);
+	REQUIRE(ctx != nullptr);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+
+	FilterControl *ctrl = registry_first();
+	REQUIRE(ctrl != nullptr);
+
+	const bool before = slot_effects_enabled(filter, 0);
+	const bool target = !before;
+
+	/* A dock/hotkey edit updates the live config immediately, but the profile
+	 * slot is not written on the same tick. */
+	ctrl->set_effects_enabled(target);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK_EQ(ctrl->effects_enabled(), target);
+	CHECK_EQ(slot_effects_enabled(filter, 0), before);
+
+	/* 400 ms after the last edit, the debounce flushes the slot. */
+	ts_filter_source_info.video_tick(ctx, 0.5f);
+	CHECK_EQ(slot_effects_enabled(filter, 0), target);
+
+	/* Switching profiles before the debounce expires flushes the edit to the
+	 * profile being left instead of losing it. */
+	ctrl->set_effects_enabled(before);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK_EQ(slot_effects_enabled(filter, 0), target);
+
+	ctrl->select_profile(1);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK_EQ(slot_effects_enabled(filter, 0), before);
+	CHECK_EQ(ctrl->current_profile(), 1);
+
+	ctrl->select_profile(0);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK_EQ(ctrl->current_profile(), 0);
+	CHECK_EQ(ctrl->effects_enabled(), before);
+
+	ts_filter_source_info.destroy(ctx);
+}
+
 TEST(integration_monitor_origin_from_environment)
 {
 	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
@@ -390,15 +578,15 @@ TEST(integration_registers_all_hotkeys)
 	void *ctx = create_filter(filter);
 	REQUIRE(ctx != nullptr);
 
-	const char *names[] = {"TopScreen.ToggleEffects", "TopScreen.ToggleBackground",
-			       "TopScreen.ZoomIn",	      "TopScreen.ZoomOut",
-			       "TopScreen.ResetZoom",	      "TopScreen.NextPreset",
-			       "TopScreen.PrevPreset",	      "TopScreen.ProfileA",
-			       "TopScreen.ProfileB",	      "TopScreen.ProfileC",
-			       "TopScreen.ProfileD",	      "TopScreen.ProfileE",
-			       "TopScreen.ProfileF",	      "TopScreen.ProfileG",
-			       "TopScreen.ProfileH",	      "TopScreen.ProfileI",
-			       "TopScreen.ProfileJ",	      "TopScreen.ProfileSave"};
+	const char *names[] = {"TopScreen_ToggleEffects", "TopScreen_ToggleBackground",
+			       "TopScreen_ZoomIn",	      "TopScreen_ZoomOut",
+			       "TopScreen_ResetZoom",	      "TopScreen_NextPreset",
+			       "TopScreen_PrevPreset",	      "TopScreen_ProfileA",
+			       "TopScreen_ProfileB",	      "TopScreen_ProfileC",
+			       "TopScreen_ProfileD",	      "TopScreen_ProfileE",
+			       "TopScreen_ProfileF",	      "TopScreen_ProfileG",
+			       "TopScreen_ProfileH",	      "TopScreen_ProfileI",
+			       "TopScreen_ProfileJ",	      "TopScreen_ProfileSave"};
 	const int expected = static_cast<int>(sizeof(names) / sizeof(names[0]));
 
 	/* The harness keeps earlier registrations, so measure this filter's delta. */

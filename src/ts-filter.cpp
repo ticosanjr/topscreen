@@ -2,24 +2,29 @@
 
 #include "audio/ts-click-sound.hpp"
 #include "core/coord.hpp"
+#include "core/file.hpp"
 #include "core/keys.hpp"
 #include "core/math.hpp"
 #include "core/geometry.hpp"
 #include "core/profiles.hpp"
+#include "core/profiles_io.hpp"
 #include "hotkeys/ts-hotkeys.hpp"
 #include "input/ts-input.hpp"
 #include "input/ts-monitor.hpp"
 #include "render/ts-compositor.hpp"
 #include "render/ts-frame.hpp"
 #include "ts-presets.hpp"
+#include "ts-profiles-ui.hpp"
 #include "ts-properties.hpp"
 #include "ts-registry.hpp"
 #include "ts-settings.hpp"
+#include "ts-version.hpp"
 
 #include <algorithm>
 #include <atomic>
 #include <cmath>
 #include <cstring>
+#include <mutex>
 #include <string>
 
 using namespace topscreen;
@@ -41,6 +46,8 @@ enum ActionBits : uint32_t {
 	A_APPLY_PRESET = 1u << 8,
 	A_PROFILE_SET = 1u << 9,
 	A_SAVE_PROFILE = 1u << 10,
+	A_EXPORT_PROFILES = 1u << 11,
+	A_IMPORT_PROFILES = 1u << 12,
 };
 
 /**
@@ -99,6 +106,7 @@ void disable_parent_cursor(obs_source_t *parent)
  */
 struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 	obs_source_t *source = nullptr;
+	std::string source_name_; // cached OBS source name (dock target selector)
 	core::Config cfg;
 	Compositor compositor;
 	Input input;
@@ -122,6 +130,11 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 
 	int current_profile_ = 0;
 	int last_profile = -1;
+	/* Auto-save debounce: a slider drag must not write the profile slot on
+	 * every tick. Flushed on profile switch/save/export/destroy. */
+	bool profile_dirty_ = false;
+	double profile_dirty_since_ms_ = 0.0;
+	static constexpr double kProfileSaveDebounceMs = 400.0;
 
 	/* Origin of the captured monitor in GLOBAL desktop coordinates: the input
 	 * reports global positions, so a monitor below/left of the primary one
@@ -143,12 +156,22 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 	std::atomic<int> profile_cache_{0};
 	std::atomic<int> input_tier_cache_{0};
 
+	/* Profiles backup requests (UI thread -> video thread). */
+	std::mutex profile_io_mutex_;
+	std::string profile_io_path_;
+	std::string profile_io_text_;
+	std::atomic<int> profile_io_result_{0};
+
 	void push_settings();
 	void reconfigure_models();
 	void request_preset(int index);
 	void apply_profile(int index);
 	void store_profile_slot(int index);
+	void mark_profile_dirty();
+	void flush_profile_if_dirty();
 	void do_save_profile();
+	void do_export_profiles(const std::string &path);
+	void do_import_profiles(const std::string &json_text);
 	void process_actions();
 	void reload_from_settings();
 	void refresh_monitor_origin(bool force);
@@ -168,8 +191,10 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 		actions_.fetch_or(A_PROFILE_SET);
 	}
 	void save_profile() override { actions_.fetch_or(A_SAVE_PROFILE); }
+	FilterControl *filter_control() override { return this; }
 
 	/* ---- FilterControl (UI thread: only queues / reads atomic) ---- */
+	std::string source_name() const override { return source_name_; }
 	bool effects_enabled() const override { return effects_cache_.load(); }
 	void set_effects_enabled(bool on) override
 	{
@@ -194,6 +219,25 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 	/* ---- FilterControl: profiles ---- */
 	int profile_count() const override { return kProfileCount; }
 	int current_profile() const override { return profile_cache_.load(); }
+	void export_profiles(const std::string &path) override
+	{
+		{
+			std::lock_guard<std::mutex> lock(profile_io_mutex_);
+			profile_io_path_ = path;
+		}
+		profile_io_result_.store(0);
+		actions_.fetch_or(A_EXPORT_PROFILES);
+	}
+	void import_profiles(const std::string &json_text) override
+	{
+		{
+			std::lock_guard<std::mutex> lock(profile_io_mutex_);
+			profile_io_text_ = json_text;
+		}
+		profile_io_result_.store(0);
+		actions_.fetch_or(A_IMPORT_PROFILES);
+	}
+	int profile_io_result() const override { return profile_io_result_.load(); }
 };
 
 void ts_filter_ctx::push_settings()
@@ -201,6 +245,10 @@ void ts_filter_ctx::push_settings()
 	obs_data_t *s = obs_source_get_settings(source);
 	config_store(s, cfg);
 	obs_data_set_int(s, kProfileCurrent, current_profile_);
+
+	/* OBS defers the update callback for video sources; the next tick reloads
+	 * the values that were just written. This is expected (the reload is
+	 * cheap) and keeps the scene-collection state in sync. */
 	obs_source_update(source, s);
 	obs_data_release(s);
 }
@@ -251,10 +299,109 @@ void ts_filter_ctx::store_profile_slot(int index)
 	obs_data_release(s);
 }
 
+void ts_filter_ctx::mark_profile_dirty()
+{
+	profile_dirty_ = true;
+	profile_dirty_since_ms_ = time_ms;
+}
+
+void ts_filter_ctx::flush_profile_if_dirty()
+{
+	if (!profile_dirty_)
+		return;
+	store_profile_slot(current_profile_);
+	profile_dirty_ = false;
+}
+
 void ts_filter_ctx::do_save_profile()
 {
 	store_profile_slot(current_profile_);
+	profile_dirty_ = false;
 	blog(LOG_INFO, "[TopScreen] profile saved: %s", core::profile_label(current_profile_));
+}
+
+void ts_filter_ctx::do_export_profiles(const std::string &path)
+{
+	if (path.empty()) {
+		profile_io_result_.store(2);
+		blog(LOG_WARNING, "[TopScreen] profiles export: empty path");
+		return;
+	}
+
+	/* Make sure the active profile carries the edits that are on screen. */
+	store_profile_slot(current_profile_);
+	profile_dirty_ = false;
+
+	obs_data_t *s = obs_source_get_settings(source);
+	obs_data_t *bundle = obs_data_create();
+	obs_data_set_int(bundle, "topscreen_profiles", 1);
+	obs_data_set_string(bundle, "plugin", "TopScreen");
+	obs_data_set_string(bundle, "version", kVersion);
+	obs_data_set_int(bundle, "current", current_profile_);
+	for (int i = 0; i < kProfileCount; ++i) {
+		obs_data_t *slot = obs_data_get_obj(s, kProfileSlots[i]);
+		if (!slot) {
+			/* Should not happen (create() seeds every slot), but a broken
+			 * legacy source must still export a complete file. */
+			slot = obs_data_create();
+			config_store(slot, core::make_profile_seed(i));
+		}
+		obs_data_set_obj(bundle, kProfileSlots[i], slot);
+		obs_data_release(slot);
+	}
+	obs_data_release(s);
+
+	const bool ok = obs_data_save_json_pretty_safe(bundle, path.c_str(), "tmp", "bak");
+	obs_data_release(bundle);
+
+	profile_io_result_.store(ok ? 1 : 2);
+	if (ok)
+		blog(LOG_INFO, "[TopScreen] profiles exported: %s", path.c_str());
+	else
+		blog(LOG_WARNING, "[TopScreen] failed to export profiles: %s", path.c_str());
+}
+
+void ts_filter_ctx::do_import_profiles(const std::string &json_text)
+{
+	core::ProfileBundleInfo info;
+	std::string error;
+	if (!core::profile_bundle_validate(json_text, &info, &error)) {
+		profile_io_result_.store(4);
+		blog(LOG_WARNING, "[TopScreen] profiles import rejected: %s", error.c_str());
+		return;
+	}
+
+	obs_data_t *bundle = obs_data_create_from_json(json_text.c_str());
+	if (!bundle) {
+		profile_io_result_.store(4);
+		blog(LOG_WARNING, "[TopScreen] profiles import: could not parse the JSON");
+		return;
+	}
+
+	obs_data_t *s = obs_source_get_settings(source);
+	for (int i = 0; i < kProfileCount; ++i) {
+		obs_data_t *slot = obs_data_get_obj(bundle, kProfileSlots[i]);
+		if (!slot)
+			continue;
+		obs_data_set_obj(s, kProfileSlots[i], slot);
+		obs_data_release(slot);
+	}
+	obs_data_set_int(s, kProfileCurrent, info.current);
+	obs_data_release(s);
+	obs_data_release(bundle);
+
+	/* The imported slots replace everything; a pending debounce write must
+	 * not overwrite the freshly imported active profile. */
+	profile_dirty_ = false;
+	current_profile_ = info.current;
+	last_profile = info.current;
+	apply_profile(info.current);
+	reconfigure_models();
+	push_settings();
+
+	profile_io_result_.store(3);
+	blog(LOG_INFO, "[TopScreen] profiles imported: %d/%d, current=%s", info.slot_count,
+	     kProfileCount, core::profile_label(info.current));
 }
 
 /**
@@ -380,6 +527,7 @@ void ts_filter_ctx::request_preset(int index)
 
 	reconfigure_models();
 	push_settings();
+	mark_profile_dirty();
 	blog(LOG_INFO, "[TopScreen] preset applied: %s", presets.name(index).c_str());
 }
 
@@ -395,10 +543,12 @@ void ts_filter_ctx::reload_from_settings()
 	if (static_cast<int>(pc) != last_profile) {
 		/*
 		 * Profile switched (Properties list): applies the ENTIRE slot and
-		 * syncs the main keys. Without the push, the next reload
-		 * (any other property) would reload the old keys and
-		 * undo the profile.
+		 * syncs the main keys. Flush a pending auto-save to the OLD profile
+		 * first, so a slider edit immediately followed by a profile change
+		 * is not lost. Without the push, the next reload (any other
+		 * property) would reload the old keys and undo the profile.
 		 */
+		flush_profile_if_dirty();
 		last_profile = static_cast<int>(pc);
 		current_profile_ = want;
 		apply_profile(current_profile_);
@@ -410,14 +560,16 @@ void ts_filter_ctx::reload_from_settings()
 
 	/*
 	 * Normal edit: the active profile follows what is on screen (auto-save),
-	 * so the user's changes are not lost when switching profiles.
+	 * so the user's changes are not lost when switching profiles. The write
+	 * is debounced: slider drags update cfg every tick, and storing the
+	 * whole slot on each one is unnecessary I/O.
 	 */
 	current_profile_ = want;
 	reconfigure_models();
 	/* Reloads the click sounds when the selection changed (slots keep the
 	 * unchanged side, so this is cheap). */
 	click_sound.load(cfg.click_sound.file_left.c_str(), cfg.click_sound.file_right.c_str());
-	store_profile_slot(current_profile_);
+	mark_profile_dirty();
 }
 
 void ts_filter_ctx::process_actions()
@@ -429,17 +581,20 @@ void ts_filter_ctx::process_actions()
 	if (act & A_TOGGLE_EFFECTS) {
 		cfg.effects_enabled = !cfg.effects_enabled;
 		push_settings();
+		mark_profile_dirty();
 	}
 	if (act & A_SET_EFFECTS) {
 		const int v = pending_effects_.exchange(-1);
 		if (v >= 0) {
 			cfg.effects_enabled = (v != 0);
 			push_settings();
+			mark_profile_dirty();
 		}
 	}
 	if (act & A_TOGGLE_BG) {
 		cfg.bg.enabled = !cfg.bg.enabled;
 		push_settings();
+		mark_profile_dirty();
 	}
 	if (act & A_ZOOM_IN)
 		zoom.manual_step(1.25);
@@ -447,7 +602,10 @@ void ts_filter_ctx::process_actions()
 		zoom.manual_step(0.8);
 	if (act & A_RESET_ZOOM)
 		zoom.set_manual(1.0);
-	zoom.spot_stop();
+	/* Only a manual zoom gesture cancels a highlighter zoom; toggling effects
+	 * or switching presets must not interrupt it. */
+	if (act & (A_ZOOM_IN | A_ZOOM_OUT | A_RESET_ZOOM))
+		zoom.spot_stop();
 	if (act & A_NEXT_PRESET)
 		request_preset(presets.next());
 	if (act & A_PREV_PRESET)
@@ -460,6 +618,8 @@ void ts_filter_ctx::process_actions()
 	if (act & A_PROFILE_SET) {
 		const int i = pending_profile_.exchange(-1);
 		if (i >= 0 && i < kProfileCount) {
+			/* Save pending edits to the profile we are leaving. */
+			flush_profile_if_dirty();
 			current_profile_ = i;
 			last_profile = i;
 			apply_profile(i);
@@ -470,6 +630,19 @@ void ts_filter_ctx::process_actions()
 	}
 	if (act & A_SAVE_PROFILE)
 		do_save_profile();
+	if (act & (A_EXPORT_PROFILES | A_IMPORT_PROFILES)) {
+		std::string path;
+		std::string text;
+		{
+			std::lock_guard<std::mutex> lock(profile_io_mutex_);
+			path.swap(profile_io_path_);
+			text.swap(profile_io_text_);
+		}
+		if (act & A_EXPORT_PROFILES)
+			do_export_profiles(path);
+		if (act & A_IMPORT_PROFILES)
+			do_import_profiles(text);
+	}
 }
 
 /* ------------------------------------------------------------------ */
@@ -484,6 +657,8 @@ void *ts_filter_create(obs_data_t *settings, obs_source_t *source)
 {
 	auto *ctx = new ts_filter_ctx();
 	ctx->source = source;
+	const char *source_name = obs_source_get_name(source);
+	ctx->source_name_ = source_name ? source_name : "";
 
 	config_load(settings, &ctx->cfg);
 
@@ -492,7 +667,7 @@ void *ts_filter_create(obs_data_t *settings, obs_source_t *source)
 	ctx->last_profile = ctx->current_profile_;
 	ctx->profile_cache_.store(ctx->current_profile_);
 
-	/* Guarantees the 4 profile slots (seeds visible variations into the empty ones). */
+	/* Guarantees the 10 profile slots (seeds visible variations into the empty ones). */
 	{
 		obs_data_t *s = obs_source_get_settings(source);
 		for (int i = 0; i < kProfileCount; ++i) {
@@ -548,6 +723,7 @@ void ts_filter_destroy(void *data)
 {
 	auto *ctx = static_cast<ts_filter_ctx *>(data);
 
+	ctx->flush_profile_if_dirty();
 	registry_remove(ctx);
 	ctx->input.stop();
 	ctx->hotkeys.unregister_all(ctx);
@@ -561,6 +737,8 @@ void ts_filter_update(void *data, obs_data_t *settings)
 {
 	UNUSED_PARAMETER(settings);
 	auto *ctx = static_cast<ts_filter_ctx *>(data);
+	if (!ctx)
+		return;
 	/* Does not touch cfg here (UI thread); the tick reloads. */
 	ctx->pending_reload_.store(true);
 }
@@ -574,6 +752,11 @@ void ts_filter_tick(void *data, float seconds)
 		ctx->reload_from_settings();
 
 	ctx->process_actions();
+
+	/* Debounced profile auto-save (slider drags update cfg every tick). */
+	if (ctx->profile_dirty_ &&
+	    ctx->time_ms - ctx->profile_dirty_since_ms_ >= ts_filter_ctx::kProfileSaveDebounceMs)
+		ctx->flush_profile_if_dirty();
 
 	if (ctx->target_w > 0 && ctx->target_h > 0) {
 		++ctx->origin_age_ticks_;
@@ -696,10 +879,67 @@ void ts_filter_defaults(obs_data_t *settings)
 obs_properties_t *ts_filter_properties(void *data)
 {
 	auto *ctx = static_cast<ts_filter_ctx *>(data);
-	return properties_create(data, ctx ? obs_source_get_settings(ctx->source) : nullptr);
+	obs_data_t *settings = ctx ? obs_source_get_settings(ctx->source) : nullptr;
+	obs_properties_t *props = properties_create(data, settings);
+	obs_data_release(settings);
+	return props;
 }
 
 } // namespace
+
+namespace topscreen {
+
+bool profiles_export_from_properties(void *filter)
+{
+	auto *ctx = static_cast<ts_filter_ctx *>(filter);
+	if (!ctx || !ctx->source)
+		return false;
+
+	obs_data_t *s = obs_source_get_settings(ctx->source);
+	std::string path = s ? obs_data_get_string(s, kProfileExportPath) : "";
+	obs_data_release(s);
+
+	if (path.empty()) {
+		blog(LOG_WARNING, "[TopScreen] profiles export: choose a file first");
+		return false;
+	}
+	ctx->export_profiles(path);
+	return true;
+}
+
+bool profiles_import_from_properties(void *filter)
+{
+	auto *ctx = static_cast<ts_filter_ctx *>(filter);
+	if (!ctx || !ctx->source)
+		return false;
+
+	obs_data_t *s = obs_source_get_settings(ctx->source);
+	std::string path = s ? obs_data_get_string(s, kProfileImportPath) : "";
+	obs_data_release(s);
+
+	if (path.empty()) {
+		blog(LOG_WARNING, "[TopScreen] profiles import: choose a file first");
+		return false;
+	}
+
+	std::string text;
+	if (!core::read_file_text(path.c_str(), &text)) {
+		blog(LOG_WARNING, "[TopScreen] profiles import: could not read %s", path.c_str());
+		return false;
+	}
+
+	core::ProfileBundleInfo info;
+	std::string error;
+	if (!core::profile_bundle_validate(text, &info, &error)) {
+		blog(LOG_WARNING, "[TopScreen] profiles import rejected: %s", error.c_str());
+		return false;
+	}
+
+	ctx->import_profiles(text);
+	return true;
+}
+
+} // namespace topscreen
 
 struct obs_source_info ts_filter_source_info = {
 	.id = "topscreen_filter",

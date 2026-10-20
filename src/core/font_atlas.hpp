@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <string>
@@ -32,6 +33,14 @@ struct FontAtlas {
 	int ascent = 0;
 	std::vector<uint8_t> pixels; // RGBA8
 	std::vector<Glyph> glyphs;   // ordered by `code`
+
+	/* Direct index for ASCII: the text hot path looks up the same glyphs
+	 * every frame, and a binary search per character is unnecessary. */
+	std::array<int16_t, 128> ascii = [] {
+		std::array<int16_t, 128> table;
+		table.fill(-1);
+		return table;
+	}();
 
 	const Glyph *glyph(int code) const;
 };

@@ -43,7 +43,7 @@ if not defined DATA (
     echo      bin\64bit\topscreen.dll
     echo      data\effects\topscreen.effect
     echo.
-    echo  Download the zip from the releases/CI artifacts, or see
+    echo  Download the zip from GitHub Releases or the releases/ folder, or see
     echo  docs\BUILD.md to build from source.
     echo.
     pause
@@ -243,8 +243,8 @@ echo.
 echo  Choose ONE of these:
 echo.
 echo   1^) INSTALL A READY BUILD ^(easiest, no compiler^)
-echo      Download topscreen-^<version^>-windows.zip from the GitHub
-echo      releases or the "Build plugin" CI artifacts, extract it
+echo      Download topscreen-^<version^>-windows.zip from GitHub Releases
+echo      or the releases/ folder, extract it
 echo      COMPLETELY and double-click install.bat inside it.
 echo.
 echo   2^) BUILD IT YOURSELF ^(needs a toolchain^)

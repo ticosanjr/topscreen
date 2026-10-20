@@ -5,7 +5,7 @@
 namespace topscreen::core {
 
 /**
- * Initial configuration of a profile slot (0..3).
+ * Initial configuration of a profile slot (0..9, A..J).
  *
  * The slots are born with VISIBLE variations (click color, zoom and background),
  * so you can switch between profiles without having to save first.
@@ -18,14 +18,14 @@ namespace topscreen::core {
 Config make_profile_seed(int index);
 
 /**
- * Slot label (0..3): "Profile A" .. "Profile D".
+ * Slot label (0..9): "Profile A" .. "Profile J".
  *
  * It lives in the core (and not in the locale) on purpose: the label must always
  * be distinct, even if the language file is missing/outdated.
  */
 const char *profile_label(int index);
 
-/** Normalized index (0..3) of any slot. */
+/** Normalized index (0..9) of any slot. */
 int profile_index(int index);
 
 } // namespace topscreen::core

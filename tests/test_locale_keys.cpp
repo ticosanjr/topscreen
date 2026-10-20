@@ -1,5 +1,7 @@
 #include "test_framework.hpp"
 
+#include "core/cursor_catalog.hpp"
+
 #include <filesystem>
 #include <fstream>
 #include <set>
@@ -95,8 +97,13 @@ TEST(locale_covers_obs_module_text)
 /* en-US.ini must not carry leftover, unused keys. */
 TEST(locale_en_has_no_orphan_keys)
 {
-	const auto code = code_locale_keys(std::string(TOPSCREEN_SOURCE_DIR) + "/src");
+	auto code = code_locale_keys(std::string(TOPSCREEN_SOURCE_DIR) + "/src");
 	const auto en = ini_keys(std::string(TOPSCREEN_TEST_DATA_DIR) + "/locale/en-US.ini");
+
+	/* Cursor labels live in the catalog table (not inside an
+	 * obs_module_text("...") call), so add them explicitly. */
+	for (const auto &entry : topscreen::core::kCursorCatalog)
+		code.insert(entry.label_key);
 
 	CHECK(!code.empty());
 	CHECK(!en.empty());

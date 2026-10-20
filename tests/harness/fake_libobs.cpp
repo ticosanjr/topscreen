@@ -6,6 +6,8 @@
 #include <cstring>
 #include <fstream>
 
+#include "core/json.hpp"
+
 // ---------------------------------------------------------------------------
 // Internal state
 // ---------------------------------------------------------------------------
@@ -25,6 +27,12 @@ std::vector<RegisteredHotkey> g_hotkeys;
 char g_effect_dummy = 0;
 char g_technique_dummy = 0;
 char g_texture_dummy = 0;
+char g_vertex_dummy = 0;
+
+int g_draw_calls = 0;
+int g_sprite_draw_calls = 0;
+int g_render_starts = 0;
+bool g_fail_vertex_buffers = false;
 
 obs_property_t *add_prop(obs_properties_t *props, const char *name)
 {
@@ -52,6 +60,12 @@ obs_source_t *make_source(const obs_source_info *info, obs_source_t *parent, uin
 	s->base_h = h;
 	s->settings = obs_data_create();
 	return s;
+}
+
+void set_source_name(obs_source_t *source, const std::string &name)
+{
+	if (source)
+		source->name = name;
 }
 
 const obs_source_info *registered_source()
@@ -110,11 +124,156 @@ void clear_uniforms()
 	g_uniforms.clear();
 }
 
+void reset_graphics_counters()
+{
+	g_draw_calls = 0;
+	g_sprite_draw_calls = 0;
+	g_render_starts = 0;
+}
+
+int graphics_draw_calls()
+{
+	return g_draw_calls;
+}
+
+int graphics_sprite_draw_calls()
+{
+	return g_sprite_draw_calls;
+}
+
+int graphics_render_starts()
+{
+	return g_render_starts;
+}
+
+void set_fail_vertex_buffers(bool fail)
+{
+	g_fail_vertex_buffers = fail;
+}
+
 } // namespace fakeobs
 
 // ---------------------------------------------------------------------------
-// OBS API implementation
+// Minimal obs_data <-> JSON for the profiles round-trip test
 // ---------------------------------------------------------------------------
+namespace {
+
+void json_escape(std::string &out, const std::string &text)
+{
+	out += '"';
+	for (const unsigned char c : text) {
+		switch (c) {
+		case '"':
+			out += "\\\"";
+			break;
+		case '\\':
+			out += "\\\\";
+			break;
+		case '\n':
+			out += "\\n";
+			break;
+		case '\r':
+			out += "\\r";
+			break;
+		case '\t':
+			out += "\\t";
+			break;
+		case '\b':
+			out += "\\b";
+			break;
+		case '\f':
+			out += "\\f";
+			break;
+		default:
+			if (c < 0x20) {
+				char buf[8];
+				std::snprintf(buf, sizeof(buf), "\\u%04x", c);
+				out += buf;
+			} else {
+				out += static_cast<char>(c);
+			}
+		}
+	}
+	out += '"';
+}
+
+void write_obs_data(std::string &out, const obs_data_t *data)
+{
+	out += '{';
+	bool first = true;
+	auto comma = [&]() {
+		if (!first)
+			out += ',';
+		first = false;
+	};
+	auto key = [&](const std::string &name) {
+		comma();
+		json_escape(out, name);
+		out += ':';
+	};
+
+	for (const auto &[name, value] : data->bools) {
+		key(name);
+		out += value ? "true" : "false";
+	}
+	for (const auto &[name, value] : data->ints) {
+		key(name);
+		out += std::to_string(value);
+	}
+	for (const auto &[name, value] : data->doubles) {
+		key(name);
+		char buf[64];
+		std::snprintf(buf, sizeof(buf), "%.17g", value);
+		out += buf;
+	}
+	for (const auto &[name, value] : data->strings) {
+		key(name);
+		json_escape(out, value);
+	}
+	for (const auto &[name, value] : data->objs) {
+		key(name);
+		if (value)
+			write_obs_data(out, value);
+		else
+			out += "{}";
+	}
+	out += '}';
+}
+
+obs_data_t *obs_data_from_json_value(const topscreen::core::json::Value &value)
+{
+	if (!value.is_object())
+		return nullptr;
+	auto *data = obs_data_create();
+	for (const auto &[name, child] : *value.object) {
+		switch (child.type) {
+		case topscreen::core::json::Value::Bool:
+			data->bools[name] = child.as_bool();
+			break;
+		case topscreen::core::json::Value::Number: {
+			/* JSON has no int/double distinction; store both so the fake
+			 * get_int() and get_double() agree with the real OBS data. */
+			const double n = child.as_number();
+			data->doubles[name] = n;
+			if (n >= -9.2e18 && n <= 9.2e18 && n == static_cast<double>(static_cast<long long>(n)))
+				data->ints[name] = static_cast<long long>(n);
+			break;
+		}
+		case topscreen::core::json::Value::String:
+			data->strings[name] = child.as_string();
+			break;
+		case topscreen::core::json::Value::Object_:
+			if (obs_data_t *nested = obs_data_from_json_value(child))
+				data->objs[name] = nested;
+			break;
+		default:
+			break;
+		}
+	}
+	return data;
+}
+
+} // namespace
 
 extern "C" {
 
@@ -294,6 +453,33 @@ obs_data_t *obs_data_get_obj(obs_data_t *data, const char *name)
 	return it == data->objs.end() ? nullptr : it->second;
 }
 
+/* Test-only JSON support: the profiles export/import test writes and reads a
+ * real bundle, so the fake behaves like the OBS API for this subset. */
+obs_data_t *obs_data_create_from_json(const char *json_string)
+{
+	if (!json_string)
+		return nullptr;
+	topscreen::core::json::Value value;
+	std::string error;
+	if (!topscreen::core::json::parse(json_string, &value, &error))
+		return nullptr;
+	return obs_data_from_json_value(value);
+}
+
+bool obs_data_save_json_pretty_safe(obs_data_t *data, const char *file, const char *,
+				    const char *)
+{
+	if (!data || !file)
+		return false;
+	std::string text;
+	write_obs_data(text, data);
+	std::ofstream out(file, std::ios::binary);
+	if (!out)
+		return false;
+	out << text;
+	return static_cast<bool>(out);
+}
+
 // ---- obs_source ----
 obs_data_t *obs_source_get_settings(const obs_source_t *source)
 {
@@ -310,7 +496,8 @@ void obs_source_update(obs_source_t *source, obs_data_t *settings)
 
 const char *obs_source_get_name(const obs_source_t *source)
 {
-	(void)source;
+	if (source && !source->name.empty())
+		return source->name.c_str();
 	return "fake-parent";
 }
 
@@ -384,6 +571,18 @@ obs_property_t *obs_properties_get(obs_properties_t *props, const char *property
 }
 
 obs_property_t *obs_properties_add_bool(obs_properties_t *props, const char *name, const char *)
+{
+	return add_prop(props, name);
+}
+
+obs_property_t *obs_properties_add_button(obs_properties_t *props, const char *name, const char *,
+					  obs_property_clicked_t)
+{
+	return add_prop(props, name);
+}
+
+obs_property_t *obs_properties_add_button2(obs_properties_t *props, const char *name, const char *,
+					   obs_property_clicked_t, void *)
 {
 	return add_prop(props, name);
 }
@@ -569,7 +768,27 @@ void gs_matrix_pop(void) {}
 void gs_matrix_translate3f(float, float, float) {}
 void gs_matrix_scale3f(float, float, float) {}
 
-void gs_draw_sprite_subregion(gs_texture_t *, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t) {}
+void gs_draw_sprite_subregion(gs_texture_t *, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)
+{
+	++g_sprite_draw_calls;
+}
+
+void gs_render_start(bool) { ++g_render_starts; }
+void gs_vertex2f(float, float) {}
+void gs_texcoord(float, float, int) {}
+
+gs_vertbuffer_t *gs_render_save()
+{
+	if (g_fail_vertex_buffers)
+		return nullptr;
+	return reinterpret_cast<gs_vertbuffer_t *>(&g_vertex_dummy);
+}
+
+void gs_vertexbuffer_destroy(gs_vertbuffer_t *) {}
+void gs_load_vertexbuffer(gs_vertbuffer_t *) {}
+void gs_load_indexbuffer(gs_indexbuffer_t *) {}
+
+void gs_draw(enum gs_draw_mode, uint32_t, uint32_t) { ++g_draw_calls; }
 
 void gs_blend_state_push(void) {}
 void gs_blend_state_pop(void) {}
@@ -588,7 +807,7 @@ namespace fakeobs {
 
 bool property_visible(obs_property_t *prop)
 {
-	return !prop || prop->visible;
+	return prop && prop->visible;
 }
 
 } // namespace fakeobs

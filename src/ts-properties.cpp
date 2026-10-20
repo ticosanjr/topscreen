@@ -1,10 +1,15 @@
 #include "ts-properties.hpp"
 
 #include "core/easing.hpp"
+#include "core/cursor_catalog.hpp"
 #include "core/keys.hpp"
 #include "core/profiles.hpp"
 #include "core/types.hpp"
+#include "ts-profiles-ui.hpp"
+#include "ts-version.hpp"
 #include "ts-wallpapers.hpp"
+
+#include <string>
 
 using namespace topscreen::core;
 using namespace topscreen::core::keys;
@@ -52,6 +57,9 @@ const char *const kImageFilter =
 	"Images (*.png *.jpg *.jpeg *.bmp *.tga *.gif *.webp *.PNG *.JPG *.JPEG *.BMP *.TGA *.GIF *.WEBP)"
 	";;All files (*.*)";
 
+/* Profiles backup files. */
+const char *const kJsonFilter = "TopScreen profiles (*.json);;All files (*.*)";
+
 /* Wallpaper and PC Image are mutually exclusive. */
 bool wallpaper_modified(obs_properties_t *props, obs_property_t *p, obs_data_t *settings)
 {
@@ -71,6 +79,21 @@ bool bg_file_modified(obs_properties_t *props, obs_property_t *p, obs_data_t *se
 	if (v && *v)
 		obs_data_set_string(settings, kBgImage, "");
 	return true;
+}
+
+/* Profiles backup buttons (Properties fallback; the dock has its own dialogs). */
+bool export_profiles_clicked(obs_properties_t *props, obs_property_t *p, void *data)
+{
+	UNUSED_PARAMETER(props);
+	UNUSED_PARAMETER(p);
+	return profiles_export_from_properties(data);
+}
+
+bool import_profiles_clicked(obs_properties_t *props, obs_property_t *p, void *data)
+{
+	UNUSED_PARAMETER(props);
+	UNUSED_PARAMETER(p);
+	return profiles_import_from_properties(data);
 }
 
 void add_click_group(obs_properties_t *props, const char *group_key, const char *title,
@@ -135,25 +158,55 @@ bool highlight_mode_changed(obs_properties_t *props, obs_property_t *property, o
 	const bool draws_mark = mode_draws_mark(static_cast<int>(mode));
 	highlight_group_visible(props, "grp_hl_look", draws_mark);
 	highlight_group_visible(props, "grp_hl_timing", draws_mark);
-	highlight_group_visible(props, "grp_hl_zoom", mode_wants_zoom(static_cast<int>(mode)));
+	const bool wants_zoom = mode_wants_zoom(static_cast<int>(mode));
+	highlight_group_visible(props, "grp_hl_zoom", wants_zoom);
+
+	/* PressZoom is press-only: it uses its own short delay and the drag delay
+	 * has no meaning there (and vice versa). */
+	const bool press = mode_is_press_zoom(static_cast<int>(mode));
+	if (obs_property_t *p = obs_properties_get(props, kHighlightZoomDelayMs))
+		obs_property_set_visible(p, wants_zoom && !press);
+	if (obs_property_t *p = obs_properties_get(props, kHighlightPressDelayMs))
+		obs_property_set_visible(p, press);
 	return true;
 }
 
 obs_properties_t *properties_create(void *data, obs_data_t *settings)
 {
-	UNUSED_PARAMETER(data);
-
 	obs_properties_t *props = obs_properties_create();
+
+	/* ---------------- Version (always visible, first thing) ---------------- */
+	const std::string version_line = std::string("TopScreen ") + kVersion;
+	obs_properties_add_text(props, "topscreen_version", version_line.c_str(), OBS_TEXT_INFO);
 
 	/* ---------------- Profiles (at the top) ---------------- */
 	obs_properties_t *prof = obs_properties_create();
 	obs_property_t *plist = obs_properties_add_list(prof, kProfileCurrent, obs_module_text("Profile.Current"),
 							OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
-	/* Labels coming from the core: always "Profile A".."Profile D" (never repeated,
+	/* Labels coming from the core: always "Profile A".."Profile J" (never repeated,
 	 * even if the language file is missing/outdated). */
 	for (int i = 0; i < kProfileCount; ++i)
 		obs_property_list_add_int(plist, profile_label(i), i);
 	obs_properties_add_text(prof, "profile_hint", obs_module_text("Profile.Hint"), OBS_TEXT_INFO);
+
+	/* Backup / transfer: the OBS path widgets provide the native file chooser,
+	 * so this fallback works on builds without the Qt dock. */
+	obs_properties_t *backup = obs_properties_create();
+	obs_properties_add_text(backup, "profile_backup_hint", obs_module_text("Profile.BackupHint"),
+				OBS_TEXT_INFO);
+	obs_properties_add_path(backup, kProfileExportPath, obs_module_text("Profile.ExportPath"),
+				OBS_PATH_FILE_SAVE, kJsonFilter, nullptr);
+	obs_properties_add_button2(backup, "profile_export_btn",
+				   obs_module_text("Profile.ExportButton"), export_profiles_clicked,
+				   data);
+	obs_properties_add_path(backup, kProfileImportPath, obs_module_text("Profile.ImportPath"),
+				OBS_PATH_FILE, kJsonFilter, nullptr);
+	obs_properties_add_button2(backup, "profile_import_btn",
+				   obs_module_text("Profile.ImportButton"), import_profiles_clicked,
+				   data);
+	obs_properties_add_group(prof, "grp_profile_backup", obs_module_text("Profile.Backup"),
+				 OBS_GROUP_NORMAL, backup);
+
 	obs_properties_add_group(props, "grp_profiles", obs_module_text("Group.Profiles"), OBS_GROUP_NORMAL, prof);
 
 	obs_properties_add_bool(props, kEffectsEnabled, obs_module_text("Enabled"));
@@ -212,81 +265,10 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 
 	obs_property_t *style = obs_properties_add_list(cur, kCursorStyle, obs_module_text("Cursor.Style"),
 							OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
-	obs_property_list_add_int(style, obs_module_text("Cursor.Style.MacOs"),
-				  static_cast<int>(CursorStyle::MacOs));
-	obs_property_list_add_int(style, obs_module_text("Cursor.Style.Windows"),
-				  static_cast<int>(CursorStyle::Windows));
-	obs_property_list_add_int(style, obs_module_text("Cursor.Style.Breeze"),
-				  static_cast<int>(CursorStyle::Breeze));
-	obs_property_list_add_int(style, obs_module_text("Cursor.Style.Bibata"),
-				  static_cast<int>(CursorStyle::Bibata));
-	obs_property_list_add_int(style, obs_module_text("Cursor.Style.Adwaita"),
-				  static_cast<int>(CursorStyle::Adwaita));
-	obs_property_list_add_int(style, obs_module_text("Cursor.Style.GoogleDot"),
-				  static_cast<int>(CursorStyle::GoogleDot));
-	obs_property_list_add_int(style, obs_module_text("Cursor.Style.Pointer"),
-				  static_cast<int>(CursorStyle::Pointer));
-	obs_property_list_add_int(style, obs_module_text("Cursor.Style.Dmz"),
-				  static_cast<int>(CursorStyle::Dmz));
-	obs_property_list_add_int(style, obs_module_text("Cursor.Style.Yaru"),
-				  static_cast<int>(CursorStyle::Yaru));
-	obs_property_list_add_int(style, obs_module_text("Cursor.Style.XCursorPro"),
-				  static_cast<int>(CursorStyle::XCursorPro));
-	obs_property_list_add_int(style, obs_module_text("Cursor.Style.BibataIce"),
-				  static_cast<int>(CursorStyle::BibataIce));
-	obs_property_list_add_int(style, obs_module_text("Cursor.Style.BibataOriginal"),
-				  static_cast<int>(CursorStyle::BibataOriginal));
-	obs_property_list_add_int(style, obs_module_text("Cursor.Style.Neon"),
-				  static_cast<int>(CursorStyle::Neon));
-	obs_property_list_add_int(style, obs_module_text("Cursor.Style.Dot"),
-				  static_cast<int>(CursorStyle::Dot));
-	obs_property_list_add_int(style, obs_module_text("Cursor.Style.Cross"),
-				  static_cast<int>(CursorStyle::Cross));
-	obs_property_list_add_int(style, obs_module_text("Cursor.Style.Onyx"),
-				  static_cast<int>(CursorStyle::Onyx));
-	obs_property_list_add_int(style, obs_module_text("Cursor.Style.HandGrab"),
-				  static_cast<int>(CursorStyle::HandGrab));
-	obs_property_list_add_int(style, obs_module_text("Cursor.Style.HandGrabbing"),
-				  static_cast<int>(CursorStyle::HandGrabbing));
-	obs_property_list_add_int(style, obs_module_text("Cursor.Style.IBeam"),
-				  static_cast<int>(CursorStyle::IBeam));
-	obs_property_list_add_int(style, obs_module_text("Cursor.Style.DmzBlack"),
-				  static_cast<int>(CursorStyle::DmzBlack));
-	obs_property_list_add_int(style, obs_module_text("Cursor.Style.GoogleDotBlack"),
-				  static_cast<int>(CursorStyle::GoogleDotBlack));
-	obs_property_list_add_int(style, obs_module_text("Cursor.Style.BreezeSnow"),
-				  static_cast<int>(CursorStyle::BreezeSnow));
-	obs_property_list_add_int(style, obs_module_text("Cursor.Style.BibataIceOriginal"),
-				  static_cast<int>(CursorStyle::BibataIceOriginal));
-	obs_property_list_add_int(style, obs_module_text("Cursor.Style.YaruGrab"),
-				  static_cast<int>(CursorStyle::YaruGrab));
-	obs_property_list_add_int(style, obs_module_text("Cursor.Style.YaruIBeam"),
-				  static_cast<int>(CursorStyle::YaruIBeam));
-	obs_property_list_add_int(style, obs_module_text("Cursor.Style.BreezeIBeam"),
-				  static_cast<int>(CursorStyle::BreezeIBeam));
-	/* Hover (link) hands: the same themes' own pointer cursor. */
-	obs_property_list_add_int(style, obs_module_text("Cursor.Style.BreezeHover"),
-				  static_cast<int>(CursorStyle::BreezeHover));
-	obs_property_list_add_int(style, obs_module_text("Cursor.Style.BibataHover"),
-				  static_cast<int>(CursorStyle::BibataHover));
-	obs_property_list_add_int(style, obs_module_text("Cursor.Style.AdwaitaHover"),
-				  static_cast<int>(CursorStyle::AdwaitaHover));
-	obs_property_list_add_int(style, obs_module_text("Cursor.Style.DmzHover"),
-				  static_cast<int>(CursorStyle::DmzHover));
-	obs_property_list_add_int(style, obs_module_text("Cursor.Style.YaruHover"),
-				  static_cast<int>(CursorStyle::YaruHover));
-	obs_property_list_add_int(style, obs_module_text("Cursor.Style.XCursorProHover"),
-				  static_cast<int>(CursorStyle::XCursorProHover));
-	obs_property_list_add_int(style, obs_module_text("Cursor.Style.BibataIceHover"),
-				  static_cast<int>(CursorStyle::BibataIceHover));
-	obs_property_list_add_int(style, obs_module_text("Cursor.Style.BibataOriginalHover"),
-				  static_cast<int>(CursorStyle::BibataOriginalHover));
-	obs_property_list_add_int(style, obs_module_text("Cursor.Style.DmzBlackHover"),
-				  static_cast<int>(CursorStyle::DmzBlackHover));
-	obs_property_list_add_int(style, obs_module_text("Cursor.Style.BreezeSnowHover"),
-				  static_cast<int>(CursorStyle::BreezeSnowHover));
-	obs_property_list_add_int(style, obs_module_text("Cursor.Style.BibataIceOriginalHover"),
-				  static_cast<int>(CursorStyle::BibataIceOriginalHover));
+	/* One table drives the whole dropdown: same theme = adjacent entries and
+	 * labels that name the theme first ("Bibata — Arrow"). */
+	for (const auto &entry : kCursorCatalog)
+		obs_property_list_add_int(style, obs_module_text(entry.label_key), entry.style);
 
 	obs_properties_add_float_slider(cur, kCursorSize, obs_module_text("Cursor.Size"), 0.5, 4.0, 0.05);
 	obs_properties_add_float_slider(cur, kCursorSmooth, obs_module_text("Cursor.Smooth"), 0.0, 1.0, 0.01);
@@ -394,6 +376,8 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 				  static_cast<int>(HighlightMode::Line));
 	obs_property_list_add_int(hmode, obs_module_text("Highlight.Mode.Zoom"),
 				  static_cast<int>(HighlightMode::Zoom));
+	obs_property_list_add_int(hmode, obs_module_text("Highlight.Mode.PressZoom"),
+				  static_cast<int>(HighlightMode::PressZoom));
 	obs_property_list_add_int(hmode, obs_module_text("Highlight.Mode.BoxZoom"),
 				  static_cast<int>(HighlightMode::BoxZoom));
 	obs_property_list_add_int(hmode, obs_module_text("Highlight.Mode.LineZoom"),
@@ -431,6 +415,9 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 
 	obs_properties_add_float_slider(hl_zoom, kHighlightZoomDelayMs,
 					obs_module_text("Highlight.ZoomDelayMs"), 0.0, 5000.0,
+					50.0);
+	obs_properties_add_float_slider(hl_zoom, kHighlightPressDelayMs,
+					obs_module_text("Highlight.PressDelayMs"), 0.0, 3000.0,
 					50.0);
 	obs_properties_add_float_slider(hl_zoom, kHighlightZoomMax, obs_module_text("Highlight.ZoomMax"),
 					1.2, 8.0, 0.1);

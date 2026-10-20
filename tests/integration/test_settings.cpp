@@ -8,6 +8,7 @@
 
 #include "audio/ts-click-sound.hpp"
 #include "core/keys.hpp"
+#include "core/types.hpp"
 #include "input/ts-input.hpp"
 #include "ts-properties.hpp"
 #include "ts-settings.hpp"
@@ -109,8 +110,9 @@ TEST(settings_migrates_old_bg_padding)
 	obs_data_release(s);
 }
 
-/* Migration of the old cursor smoothing defaults. */
-TEST(settings_migrates_old_cursor_smooth)
+/* A deliberate Smoothing=0.7 + Sway=0.3 choice is valid and must survive a
+ * reload (the old migration used to reset it to 0). */
+TEST(settings_cursor_smooth_sway_are_preserved)
 {
 	obs_data_t *s = obs_data_create();
 	config_defaults(s);
@@ -119,8 +121,8 @@ TEST(settings_migrates_old_cursor_smooth)
 
 	core::Config c;
 	config_load(s, &c);
-	CHECK_NEAR(c.cursor.smooth, 0.0, 1e-9);
-	CHECK_NEAR(c.cursor.sway, 0.0, 1e-9);
+	CHECK_NEAR(c.cursor.smooth, 0.7, 1e-9);
+	CHECK_NEAR(c.cursor.sway, 0.3, 1e-9);
 
 	obs_data_release(s);
 }
@@ -169,6 +171,25 @@ TEST(properties_highlight_groups_follow_the_mode)
 		CHECK(!fakeobs::property_visible(obs_properties_get(p, "grp_hl_look")));
 		CHECK(!fakeobs::property_visible(obs_properties_get(p, "grp_hl_timing")));
 		CHECK(fakeobs::property_visible(obs_properties_get(p, "grp_hl_zoom")));
+		CHECK(fakeobs::property_visible(
+			obs_properties_get(p, core::keys::kHighlightZoomDelayMs)));
+		CHECK(!fakeobs::property_visible(
+			obs_properties_get(p, core::keys::kHighlightPressDelayMs)));
+		obs_properties_destroy(p);
+		obs_data_release(s);
+	}
+
+	/* PressZoom: no look/timing, zoom group with the press delay only. */
+	{
+		auto [s, p] = make_props(static_cast<int>(core::HighlightMode::PressZoom));
+		CHECK(p != nullptr);
+		CHECK(!fakeobs::property_visible(obs_properties_get(p, "grp_hl_look")));
+		CHECK(!fakeobs::property_visible(obs_properties_get(p, "grp_hl_timing")));
+		CHECK(fakeobs::property_visible(obs_properties_get(p, "grp_hl_zoom")));
+		CHECK(!fakeobs::property_visible(
+			obs_properties_get(p, core::keys::kHighlightZoomDelayMs)));
+		CHECK(fakeobs::property_visible(
+			obs_properties_get(p, core::keys::kHighlightPressDelayMs)));
 		obs_properties_destroy(p);
 		obs_data_release(s);
 	}
@@ -243,4 +264,36 @@ TEST(clicksound_fails_gracefully)
 	/* Does not actually play in the test (avoids fork/exec in the suite). */
 	snd.release();
 	CHECK(!snd.loaded());
+}
+
+/* Persisted styles outside the atlas range must never reach the renderer. */
+TEST(settings_cursor_style_is_clamped)
+{
+	obs_data_t *s = obs_data_create();
+	config_defaults(s);
+	core::Config c;
+
+	obs_data_set_int(s, core::keys::kCursorStyle, -5);
+	config_load(s, &c);
+	CHECK_EQ(c.cursor.style, 0);
+
+	obs_data_set_int(s, core::keys::kCursorStyle, 999);
+	config_load(s, &c);
+	CHECK_EQ(c.cursor.style, static_cast<int>(core::CursorStyle::Count) - 1);
+	obs_data_release(s);
+}
+
+/* The top of the Properties shows the version, and the Profiles group carries
+ * the backup/transfer controls (dock fallback for builds without Qt). */
+TEST(properties_version_and_profile_backup_are_present)
+{
+	obs_properties_t *p = properties_create(nullptr);
+	REQUIRE(p != nullptr);
+	CHECK(obs_properties_get(p, "topscreen_version") != nullptr);
+	CHECK(obs_properties_get(p, "grp_profile_backup") != nullptr);
+	CHECK(obs_properties_get(p, "profile_export_path") != nullptr);
+	CHECK(obs_properties_get(p, "profile_import_path") != nullptr);
+	CHECK(obs_properties_get(p, "profile_export_btn") != nullptr);
+	CHECK(obs_properties_get(p, "profile_import_btn") != nullptr);
+	obs_properties_destroy(p);
 }

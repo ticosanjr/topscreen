@@ -45,3 +45,17 @@ TEST(image_rejects_invalid_data)
 	CHECK(!image_decode(lixo.data(), lixo.size(), &img, &err));
 	CHECK(!err.empty());
 }
+
+/* A tiny file can declare huge dimensions (decompression bomb). The header
+ * check must reject it before the pixel buffer is allocated. */
+TEST(image_rejects_oversized_dimensions)
+{
+	CHECK(image_size_allowed(1920, 1080));
+	CHECK(image_size_allowed(7680, 4320));
+	CHECK(!image_size_allowed(30000, 30000));
+	CHECK(!image_size_allowed(0, 1080));
+	CHECK(!image_size_allowed(-1, 1080));
+
+	/* 9000x9000 = 81 MP > the 64 MP ceiling. */
+	CHECK(!image_size_allowed(9000, 9000));
+}

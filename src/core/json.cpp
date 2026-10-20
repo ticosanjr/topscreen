@@ -8,6 +8,12 @@ namespace topscreen::core::json {
 
 namespace {
 
+struct DepthGuard {
+	int &depth;
+	explicit DepthGuard(int &d) : depth(d) { ++depth; }
+	~DepthGuard() { --depth; }
+};
+
 class Parser {
 public:
 	Parser(const std::string &text) : s_(text) {}
@@ -83,6 +89,11 @@ private:
 
 	bool parse_object(Value *out, std::string *error)
 	{
+		if (depth_ >= kMaxDepth) {
+			fail(error, "nesting too deep");
+			return false;
+		}
+		DepthGuard guard(depth_);
 		++pos_; // '{'
 		out->type = Value::Object_;
 		out->object = std::make_shared<Object>();
@@ -137,6 +148,11 @@ private:
 
 	bool parse_array(Value *out, std::string *error)
 	{
+		if (depth_ >= kMaxDepth) {
+			fail(error, "nesting too deep");
+			return false;
+		}
+		DepthGuard guard(depth_);
 		++pos_; // '['
 		out->type = Value::Array_;
 		out->array = std::make_shared<Array>();
@@ -317,12 +333,23 @@ private:
 
 	const std::string &s_;
 	size_t pos_ = 0;
+	int depth_ = 0;
 };
 
 } // namespace
 
 bool parse(const std::string &text, Value *out, std::string *error)
 {
+	if (!out) {
+		if (error)
+			*error = "JSON: null output";
+		return false;
+	}
+	if (text.size() > kMaxBytes) {
+		if (error)
+			*error = "JSON: input too large";
+		return false;
+	}
 	Parser p(text);
 	return p.run(out, error);
 }

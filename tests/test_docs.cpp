@@ -1,5 +1,7 @@
 #include "test_framework.hpp"
 
+#include "hotkeys/ts-hotkey-actions.hpp"
+
 #include <fstream>
 #include <set>
 #include <sstream>
@@ -63,28 +65,50 @@ TEST(docs_document_every_key)
 	}
 }
 
-/* Every hotkey in the code must be listed in the reference as TopScreen.<Action>. */
+/* Every hotkey declared in the code must be listed in the reference. */
 TEST(docs_reference_lists_hotkeys)
 {
-	const std::string hotkeys =
-		read_text(std::string(TOPSCREEN_SOURCE_DIR) + "/src/hotkeys/ts-hotkeys.cpp");
+	const std::string header = read_text(std::string(TOPSCREEN_SOURCE_DIR) +
+					     "/src/hotkeys/ts-hotkey-actions.hpp");
 	const std::string doc = read_text(std::string(TOPSCREEN_SOURCE_DIR) + "/docs/CONFIGURATION.md");
 	CHECK(!doc.empty());
+	CHECK(!header.empty());
 
-	const char *actions[] = {"ToggleEffects", "ToggleBackground", "ZoomIn",
-				 "ZoomOut",       "ResetZoom",        "NextPreset",
-				 "PrevPreset",    "ProfileA",         "ProfileB",
-				 "ProfileC",      "ProfileD",         "ProfileE",
-				 "ProfileF",      "ProfileG",         "ProfileH",
-				 "ProfileI",      "ProfileJ",         "ProfileSave"};
-	for (const char *a : actions) {
+	for (int i = 0; i < topscreen::kHotkeyCount; ++i) {
+		const std::string id = topscreen::kHotkeyNames[i];
 		++tst::checks();
-		if (!contains(hotkeys, a))
-			tst::fail(__FILE__, __LINE__, std::string("hotkey action missing from the code: ") + a);
+		if (!contains(header, id))
+			tst::fail(__FILE__, __LINE__, "hotkey action missing from the code: " + id);
 
 		++tst::checks();
-		const std::string id = std::string("TopScreen.") + a;
 		if (!contains(doc, id))
 			tst::fail(__FILE__, __LINE__, "hotkey missing from docs/CONFIGURATION.md: " + id);
 	}
+}
+
+/* One version, two files: CMake builds it and buildspec declares it. Keep
+ * them equal so the OBS log, the filter properties and the packages agree. */
+TEST(version_matches_buildspec)
+{
+	const std::string cmake = read_text(std::string(TOPSCREEN_SOURCE_DIR) + "/CMakeLists.txt");
+	const std::string spec = read_text(std::string(TOPSCREEN_SOURCE_DIR) + "/buildspec.json");
+	REQUIRE(!cmake.empty());
+	REQUIRE(!spec.empty());
+
+	const std::string cmake_needle = "project(TopScreen VERSION ";
+	const auto cp = cmake.find(cmake_needle);
+	REQUIRE(cp != std::string::npos);
+	const auto ce = cmake.find_first_of(" \n\r", cp + cmake_needle.size());
+	const std::string cmake_version = cmake.substr(cp + cmake_needle.size(),
+						       ce - (cp + cmake_needle.size()));
+
+	const std::string spec_needle = "\"version\": \"";
+	const auto sp = spec.find(spec_needle);
+	REQUIRE(sp != std::string::npos);
+	const auto se = spec.find('"', sp + spec_needle.size());
+	const std::string spec_version = spec.substr(sp + spec_needle.size(),
+						     se - (sp + spec_needle.size()));
+
+	CHECK_EQ(cmake_version, spec_version);
+	CHECK(!cmake_version.empty());
 }

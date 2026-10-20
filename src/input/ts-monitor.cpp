@@ -95,6 +95,60 @@ struct XineramaScreenInfoLocal {
 	short height;
 };
 
+#if defined(TOPSCREEN_HAVE_X11)
+using xinerama_is_active_fn = int (*)(Display *);
+using xinerama_query_fn = XineramaScreenInfoLocal *(*)(Display *, int *);
+
+/*
+ * The monitor origin is refreshed every ~10 s. Reopening the X connection
+ * (and reloading the library) on every refresh is pointless: keep one display
+ * per thread. thread_local also preserves Xlib's single-thread rule.
+ */
+struct XineramaCache {
+	void *lib = nullptr;
+	Display *dpy = nullptr;
+	xinerama_is_active_fn is_active = nullptr;
+	xinerama_query_fn query = nullptr;
+
+	~XineramaCache()
+	{
+		if (dpy)
+			XCloseDisplay(dpy);
+		if (lib)
+			dlclose(lib);
+	}
+
+	bool load()
+	{
+		if (!lib) {
+			lib = dlopen("libXinerama.so.1", RTLD_LAZY | RTLD_LOCAL);
+			if (!lib)
+				lib = dlopen("libXinerama.so", RTLD_LAZY | RTLD_LOCAL);
+			if (!lib)
+				return false;
+		}
+
+		if (!is_active || !query) {
+			is_active = reinterpret_cast<xinerama_is_active_fn>(
+				dlsym(lib, "XineramaIsActive"));
+			query = reinterpret_cast<xinerama_query_fn>(
+				dlsym(lib, "XineramaQueryScreens"));
+			if (!is_active || !query) {
+				dlclose(lib);
+				lib = nullptr;
+				is_active = nullptr;
+				query = nullptr;
+				return false;
+			}
+		}
+
+		if (!dpy)
+			dpy = XOpenDisplay(nullptr);
+		return dpy != nullptr;
+	}
+};
+#endif
+
 #endif
 
 } // namespace
@@ -112,32 +166,14 @@ int ts_query_monitors(core::Monitor *out, int max)
 	return ctx.second;
 
 #elif defined(__linux__) && defined(TOPSCREEN_HAVE_X11)
-	void *lib = dlopen("libXinerama.so.1", RTLD_LAZY | RTLD_LOCAL);
-	if (!lib)
-		lib = dlopen("libXinerama.so", RTLD_LAZY | RTLD_LOCAL);
-	if (!lib)
+	static thread_local XineramaCache cache;
+	if (!cache.load())
 		return 0;
-
-	using is_active_fn = int (*)(Display *);
-	using query_fn = XineramaScreenInfoLocal *(*)(Display *, int *);
-
-	auto is_active = reinterpret_cast<is_active_fn>(dlsym(lib, "XineramaIsActive"));
-	auto query = reinterpret_cast<query_fn>(dlsym(lib, "XineramaQueryScreens"));
-	if (!is_active || !query) {
-		dlclose(lib);
-		return 0;
-	}
-
-	Display *dpy = XOpenDisplay(nullptr);
-	if (!dpy) {
-		dlclose(lib);
-		return 0;
-	}
 
 	int count = 0;
 	int written = 0;
-	if (is_active(dpy)) {
-		XineramaScreenInfoLocal *screens = query(dpy, &count);
+	if (cache.is_active(cache.dpy)) {
+		XineramaScreenInfoLocal *screens = cache.query(cache.dpy, &count);
 		if (screens) {
 			for (int i = 0; i < count && written < max; ++i) {
 				core::Monitor &m = out[written++];
@@ -150,8 +186,6 @@ int ts_query_monitors(core::Monitor *out, int max)
 		}
 	}
 
-	XCloseDisplay(dpy);
-	dlclose(lib);
 	return written;
 
 #else

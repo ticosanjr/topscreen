@@ -38,6 +38,17 @@ VER=$(grep -E '^project\(TopScreen VERSION' "$ROOT/CMakeLists.txt" | grep -oE '[
 
 command -v zip >/dev/null || { echo "zip not found (needed for the Windows package)"; exit 1; }
 
+# The binary must have been built from THIS source tree: packing a stale
+# topscreen.so/.dll under a newer version number is worse than failing.
+check_binary_version() {
+	local bin="$1"
+	if ! grep -aq "loaded v${VER}" "$bin"; then
+		echo "ERROR: $bin does not contain 'loaded v$VER' (stale build?)" >&2
+		echo "       rebuild the plugin before packaging." >&2
+		exit 1
+	fi
+}
+
 mkdir -p "$OUT"
 STAGE="$(mktemp -d)"
 trap 'rm -rf "$STAGE"' EXIT
@@ -51,6 +62,7 @@ pack_common() {
 made=0
 
 if [ -f "$BUILD/topscreen.so" ]; then
+	check_binary_version "$BUILD/topscreen.so"
 	T="topscreen-$VER-linux"
 	mkdir -p "$STAGE/$T/topscreen/bin/64bit"
 	cp -f "$BUILD/topscreen.so" "$STAGE/$T/topscreen/bin/64bit/"
@@ -62,6 +74,7 @@ fi
 
 for dll in "$BUILD/Release/topscreen.dll" "$BUILD/topscreen.dll"; do
 	if [ -f "$dll" ]; then
+		check_binary_version "$dll"
 		T="topscreen-$VER-windows"
 		mkdir -p "$STAGE/$T/topscreen/bin/64bit"
 		cp -f "$dll" "$STAGE/$T/topscreen/bin/64bit/"

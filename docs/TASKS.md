@@ -31,26 +31,29 @@ Status: ✅ done · 🟡 partial · ⬜ pending.
 | T1.6 | Initial Qt dock (presets/toggles) | ✅ |
 | T1.7 | Built-in JSON presets + loader (`ts-presets`) | ✅ |
 | T1.8 | Dock: apply preset and reflect live state | ✅ |
+| T1.9 | Profiles backup: export/import all 10 slots (dock + Properties fallback) | ✅ |
+| T1.10 | Dock **Target filter** selector (dock buttons + hotkeys follow it) | ✅ |
+| T1.11 | Debounced profile auto-save (~400 ms) with flush on switch/save/export/import/destroy | ✅ |
 
 ## F2 — Cursor
 
 | ID | Task | Status |
 |----|--------|--------|
 | T2.1 | Hide the parent's native cursor (detect screen capture) | ✅ |
-| T2.2 | Map global coordinates → canvas (DPI/multi-monitor) | 🟡 (origin 0,0) |
+| T2.2 | Map global coordinates → canvas (DPI/multi-monitor) | ✅ |
 | T2.3 | Enable/disable the filter cursor | ✅ |
 | T2.4 | Scalable procedural cursor + shadow | ✅ |
 | T2.5 | Motion smoothing (spring) | ✅ |
 | T2.6 | Sway (tilt on turns) | ✅ |
 | T2.7 | Hide idle cursor and loop | ✅ |
-| T2.8 | Cursor style presets (12 distinct styles) | ✅ |
+| T2.8 | Cursor styles grouped by theme (37 styles) | ✅ |
 
 ## F3 — Clicks, sound, hotkeys, presets
 
 | ID | Task | Status |
 |----|--------|--------|
 | T3.1 | Button edges in the input + event queue | ✅ |
-| T3.2 | Hotkey registration (`TopScreen.*`) + callbacks | ✅ |
+| T3.2 | Hotkey registration (`TopScreen_*`) + callbacks | ✅ |
 | T3.3 | Left click effect (ripple/orb/ring/force) | ✅ |
 | T3.4 | Independent right click effect | ✅ |
 | T3.5 | Click parameters (color/size/duration/curve) in the UI | ✅ |
@@ -81,7 +84,7 @@ Status: ✅ done · 🟡 partial · ⬜ pending.
 | T5.4 | Key overlay | ✅ |
 | T5.5 | Spotlight/dim following the cursor | ✅ |
 | T5.6 | Webcam bubble | ⬜ (needs its own source - F6) |
-| T5.7 | Drag highlighter | ✅ |
+| T5.7 | Drag highlighter (box, line, zoom to selection, zoom on mouse press) | ✅ |
 
 ## F6 — Own capture source + audio
 
@@ -102,7 +105,7 @@ Status: ✅ done · 🟡 partial · ⬜ pending.
 | T7.3 | `uaccess` udev rule + detection in the dock | ✅ (rule ready + log warning) |
 | T7.4 | Graceful degradation + tier report | ✅ (readable tier in the dock + log warnings) |
 | T7.5 | CI: Win + Linux build against OBS | 🟡 (tests CI + header check ✅; plugin build best-effort) |
-| T7.6 | Portable packaging + release | ⬜ |
+| T7.6 | Portable packaging + release | ✅ (packages in `releases/`, published as GitHub Release `v0.2.21`; Windows cross-build without the Qt dock) |
 | T7.7 | Final i18n + icon + screenshots | ⬜ |
 
 ## Infrastructure / documentation
@@ -112,7 +115,7 @@ Status: ✅ done · 🟡 partial · ⬜ pending.
 | TD.1 | Full GPL-2.0 license text (`COPYING`) | ✅ |
 | TD.2 | `CONTRIBUTING.md` and PR template | ✅ |
 | TD.3 | Adjust `buildspec.json`/presets for the official CI | ⬜ |
-| TD.4 | Core sanity tests | ✅ (117 tests + 19 integration + OBS header check) |
+| TD.4 | Core sanity tests | ✅ (192 core + 33 integration + 37 OBS header files + ASan/UBSan) |
 
 ---
 

@@ -10,7 +10,8 @@ OUT="${OUT_DIR}/topscreen_tests"
 mkdir -p "$OUT_DIR"
 
 echo "Compiling tests with ${CXX} ..."
-"${CXX}" -std=c++20 -O1 -g -Wall -Wextra \
+# shellcheck disable=SC2086
+"${CXX}" -std=c++20 -O1 -g -Wall -Wextra ${CXXFLAGS:-} \
     -I "${ROOT}/src" \
     -I "${ROOT}/third_party" \
     -DTOPSCREEN_TEST_DATA_DIR="\"${ROOT}/data\"" \

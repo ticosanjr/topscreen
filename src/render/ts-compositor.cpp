@@ -11,6 +11,7 @@
 
 #include "core/color.hpp"
 #include "core/cursor_atlas.hpp"
+#include "core/cursor_catalog.hpp"
 #include "core/file.hpp"
 #include "core/image.hpp"
 #include "core/types.hpp"
@@ -466,8 +467,9 @@ void Compositor::render(obs_source_t *filter, const core::Config &cfg, const Fra
 	set_f(p_cursor_tex_enabled_, has_atlas ? 1.0f : 0.0f);
 	{
 		const uint32_t idx =
-			has_atlas ? std::min<uint32_t>(static_cast<uint32_t>(cfg.cursor.style),
-						       cursor_atlas_.count - 1)
+			has_atlas ? std::min<uint32_t>(
+					    static_cast<uint32_t>(core::cursor_style_clamp(cfg.cursor.style)),
+					    cursor_atlas_.count - 1)
 				  : 0u;
 		const float n = has_atlas ? static_cast<float>(cursor_atlas_.count) : 1.0f;
 		set_v2(p_cursor_cell_off_, 0.0f, static_cast<float>(idx) / n);

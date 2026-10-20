@@ -1,7 +1,10 @@
 #pragma once
 
+#include <algorithm>
 #include <cstdint>
+#include <cstring>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace topscreen::core {
@@ -21,8 +24,36 @@ struct KeyOverlayConfig {
 	uint32_t band_color = 0x99000000;
 };
 
+/**
+ * Inline key label (no heap).
+ *
+ * The renderer already truncated labels to 63 bytes; keeping the same limit
+ * here makes `collect()` a trivial copy and removes the per-frame strings.
+ */
+struct KeyLabel {
+	static constexpr size_t kCapacity = 64; // 63 bytes + NUL
+	char data[kCapacity] = {};
+	uint8_t size = 0;
+
+	std::string_view view() const { return std::string_view(data, size); }
+
+	void assign(std::string_view text)
+	{
+		size = static_cast<uint8_t>(std::min(text.size(), kCapacity - 1));
+		if (size)
+			std::memmove(data, text.data(), size);
+		data[size] = '\0';
+	}
+
+	void clear()
+	{
+		size = 0;
+		data[0] = '\0';
+	}
+};
+
 struct KeyRender {
-	std::string label;
+	KeyLabel label;
 	double progress = 0.0; // 0..1
 	bool modifier = false;
 };
@@ -42,7 +73,7 @@ public:
 	void configure(const KeyOverlayConfig &cfg);
 
 	/** Registers a key. Repeating the same key resets the timer. */
-	void press(const std::string &label, bool is_modifier, double now_ms);
+	void press(std::string_view label, bool is_modifier, double now_ms);
 
 	void clear();
 
@@ -56,7 +87,7 @@ public:
 
 private:
 	struct Entry {
-		std::string label;
+		KeyLabel label;
 		double born_ms = 0.0;
 		bool modifier = false;
 	};

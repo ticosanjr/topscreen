@@ -79,3 +79,30 @@ TEST(json_escape_unicode)
 	REQUIRE(s != nullptr && s->is_string());
 	CHECK_EQ(s->as_string(), std::string("\xc3\xa9")); // U+00E9 in UTF-8
 }
+
+/* User-provided profile files must not be able to exhaust the stack. */
+TEST(json_depth_limit)
+{
+	std::string deep;
+	for (int i = 0; i < kMaxDepth + 1; ++i)
+		deep += '[';
+	for (int i = 0; i < kMaxDepth + 1; ++i)
+		deep += ']';
+
+	Value v;
+	std::string err;
+	CHECK(!parse(deep, &v, &err));
+	CHECK(!err.empty());
+
+	/* A normal (shallow) object still parses. */
+	CHECK(parse("{\"a\":[1,{\"b\":2}]}", &v, &err));
+}
+
+TEST(json_size_limit)
+{
+	std::string huge(kMaxBytes + 1, ' ');
+	Value v;
+	std::string err;
+	CHECK(!parse(huge, &v, &err));
+	CHECK(!err.empty());
+}

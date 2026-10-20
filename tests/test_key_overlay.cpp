@@ -1,7 +1,13 @@
 #include "core/key_overlay.hpp"
 #include "test_framework.hpp"
 
+#include <string_view>
+#include <type_traits>
+
 using namespace topscreen::core;
+
+static_assert(std::is_trivially_copyable_v<KeyLabel>);
+static_assert(std::is_trivially_copyable_v<KeyRender>);
 
 TEST(key_format_combo)
 {
@@ -26,8 +32,8 @@ TEST(key_press_and_collect)
 	KeyRender out[8];
 	const int n = m.collect(10.0, out, 8);
 	CHECK_EQ(n, 2);
-	CHECK_EQ(out[0].label, std::string("A"));
-	CHECK_EQ(out[1].label, std::string("B"));
+	CHECK_EQ(out[0].label.view(), std::string_view("A"));
+	CHECK_EQ(out[1].label.view(), std::string_view("B"));
 }
 
 TEST(key_expires_by_ttl)
@@ -74,7 +80,7 @@ TEST(key_case_is_preserved)
 	KeyRender out[8];
 	const int n = m.collect(0.0, out, 8);
 	REQUIRE(n == 1);
-	CHECK_EQ(out[0].label, std::string("a"));
+	CHECK_EQ(out[0].label.view(), std::string_view("a"));
 }
 
 TEST(key_modifiers_only_filters)
@@ -105,8 +111,8 @@ TEST(key_key_limit)
 
 	KeyRender out[8];
 	m.collect(3.0, out, 8);
-	CHECK_EQ(out[0].label, std::string("B")); /* "A" was discarded */
-	CHECK_EQ(out[2].label, std::string("D"));
+	CHECK_EQ(out[0].label.view(), std::string_view("B")); /* "A" was discarded */
+	CHECK_EQ(out[2].label.view(), std::string_view("D"));
 }
 
 TEST(key_clear)
@@ -127,4 +133,35 @@ TEST(key_disabled_ignores)
 	m.configure(cfg);
 	m.press("A", false, 0.0);
 	CHECK_EQ(m.active_count(), 0);
+}
+
+TEST(key_label_truncates_at_renderer_limit)
+{
+	KeyLabel label;
+	label.assign(std::string(100, 'x'));
+	CHECK_EQ(label.view().size(), KeyLabel::kCapacity - 1);
+	CHECK_EQ(label.view(), std::string_view(std::string(KeyLabel::kCapacity - 1, 'x')));
+
+	label.assign("Backspace");
+	CHECK_EQ(label.view(), std::string_view("Backspace"));
+
+	label.clear();
+	CHECK(label.view().empty());
+}
+
+TEST(key_collect_preserves_long_labels_up_to_limit)
+{
+	KeyOverlayModel m;
+	KeyOverlayConfig cfg;
+	cfg.max_keys = 2;
+	m.configure(cfg);
+
+	std::string long_label(80, 'k');
+	m.press(long_label, false, 0.0);
+
+	KeyRender out[2];
+	const int n = m.collect(0.0, out, 2);
+	REQUIRE(n == 1);
+	CHECK_EQ(out[0].label.view().size(), KeyLabel::kCapacity - 1);
+	CHECK_EQ(out[0].label.view(), std::string_view(long_label.substr(0, KeyLabel::kCapacity - 1)));
 }

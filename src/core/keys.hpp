@@ -98,6 +98,7 @@ inline constexpr const char *kHighlightZoomDelayMs = "highlight_zoom_delay_ms";
 inline constexpr const char *kHighlightZoomInMs = "highlight_zoom_in_ms";
 inline constexpr const char *kHighlightZoomHoldMs = "highlight_zoom_hold_ms";
 inline constexpr const char *kHighlightZoomOutMs = "highlight_zoom_out_ms";
+inline constexpr const char *kHighlightPressDelayMs = "highlight_press_delay_ms";
 
 /* Monitor origin (multi-monitor input mapping). */
 inline constexpr const char *kMonitorManual = "monitor_manual";

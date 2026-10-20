@@ -7,6 +7,15 @@
 
 namespace topscreen::core {
 
+/** Refuse decompression bombs (1920x1080 = 2.1 MP, 8K = 33 MP). */
+inline constexpr uint64_t kMaxImagePixels = 64ull * 1024ull * 1024ull;
+
+inline bool image_size_allowed(int width, int height)
+{
+	return width > 0 && height > 0 &&
+	       static_cast<uint64_t>(width) * static_cast<uint64_t>(height) <= kMaxImagePixels;
+}
+
 /** Decoded image (RGBA8, top->bottom). */
 struct Image {
 	int width = 0;

@@ -472,9 +472,14 @@ void Compositor::render(obs_source_t *filter, const core::Config &cfg, const Fra
 					    static_cast<uint32_t>(core::cursor_style_clamp(cfg.cursor.style)),
 					    cursor_atlas_.count - 1)
 				  : 0u;
-		const float n = has_atlas ? static_cast<float>(cursor_atlas_.count) : 1.0f;
-		set_v2(p_cursor_cell_off_, 0.0f, static_cast<float>(idx) / n);
-		set_v2(p_cursor_cell_scale_, 1.0f, 1.0f / n);
+		const uint32_t columns = has_atlas ? std::max<uint32_t>(cursor_atlas_.columns, 1u) : 1u;
+		const uint32_t rows = has_atlas ? std::max<uint32_t>(cursor_atlas_.rows(), 1u) : 1u;
+		const uint32_t col = idx % columns;
+		const uint32_t row = idx / columns;
+		set_v2(p_cursor_cell_off_, static_cast<float>(col) / static_cast<float>(columns),
+		       static_cast<float>(row) / static_cast<float>(rows));
+		set_v2(p_cursor_cell_scale_, 1.0f / static_cast<float>(columns),
+		       1.0f / static_cast<float>(rows));
 
 		core::Vec2f hs{0.05, 0.05};
 		if (has_atlas && idx < cursor_hotspots_.size())

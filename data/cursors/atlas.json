@@ -1,6 +1,7 @@
 {
   "cell": 128,
-  "count": 37,
+  "count": 106,
+  "columns": 16,
   "cursors": [
     {
       "name": "macos",
@@ -259,6 +260,489 @@
       "hotspot": [
         0.4375,
         0.0625
+      ]
+    },
+    {
+      "name": "purple-iris",
+      "hotspot": [
+        0.0664,
+        0.0508
+      ]
+    },
+    {
+      "name": "purple-iris-link",
+      "hotspot": [
+        0.5273,
+        0.0508
+      ]
+    },
+    {
+      "name": "strawberry-milk",
+      "hotspot": [
+        0.0664,
+        0.0508
+      ]
+    },
+    {
+      "name": "strawberry-milk-link",
+      "hotspot": [
+        0.5273,
+        0.0508
+      ]
+    },
+    {
+      "name": "interference-link",
+      "hotspot": [
+        0.3086,
+        0.0039
+      ]
+    },
+    {
+      "name": "interference",
+      "hotspot": [
+        0.1055,
+        0.0039
+      ]
+    },
+    {
+      "name": "chromatic-alt",
+      "hotspot": [
+        0.5273,
+        0.0039
+      ]
+    },
+    {
+      "name": "chromatic",
+      "hotspot": [
+        0.0508,
+        0.0039
+      ]
+    },
+    {
+      "name": "neon-hand-2769",
+      "hotspot": [
+        0.2305,
+        0.0039
+      ]
+    },
+    {
+      "name": "crystal-2769",
+      "hotspot": [
+        0.082,
+        0.0039
+      ]
+    },
+    {
+      "name": "white-hand-2786",
+      "hotspot": [
+        0.082,
+        0.0039
+      ]
+    },
+    {
+      "name": "white-arrow-2786",
+      "hotspot": [
+        0.043,
+        0.0039
+      ]
+    },
+    {
+      "name": "wireframe-alt",
+      "hotspot": [
+        0.2383,
+        0.0195
+      ]
+    },
+    {
+      "name": "wireframe",
+      "hotspot": [
+        0.1133,
+        0.0117
+      ]
+    },
+    {
+      "name": "amethyst-2898",
+      "hotspot": [
+        0.0664,
+        0.0039
+      ]
+    },
+    {
+      "name": "sapphire-2898",
+      "hotspot": [
+        0.0117,
+        0.0117
+      ]
+    },
+    {
+      "name": "lavender-classic",
+      "hotspot": [
+        0.0352,
+        0.0117
+      ]
+    },
+    {
+      "name": "lavender-classic-link",
+      "hotspot": [
+        0.2461,
+        0.0117
+      ]
+    },
+    {
+      "name": "checkerboard",
+      "hotspot": [
+        0.0273,
+        0.0039
+      ]
+    },
+    {
+      "name": "checkerboard-link",
+      "hotspot": [
+        0.2383,
+        0.0039
+      ]
+    },
+    {
+      "name": "energy-link",
+      "hotspot": [
+        0.1367,
+        0.0117
+      ]
+    },
+    {
+      "name": "silver",
+      "hotspot": [
+        0.043,
+        0.0039
+      ]
+    },
+    {
+      "name": "silver-link",
+      "hotspot": [
+        0.2305,
+        0.0039
+      ]
+    },
+    {
+      "name": "pixel-sword",
+      "hotspot": [
+        0.0352,
+        0.0039
+      ]
+    },
+    {
+      "name": "axolotl",
+      "hotspot": [
+        0.043,
+        0.0039
+      ]
+    },
+    {
+      "name": "jester",
+      "hotspot": [
+        0.1758,
+        0.0273
+      ]
+    },
+    {
+      "name": "witch-hat",
+      "hotspot": [
+        0.168,
+        0.0273
+      ]
+    },
+    {
+      "name": "enchanted-sword",
+      "hotspot": [
+        0.082,
+        0.0352
+      ]
+    },
+    {
+      "name": "paper-boat",
+      "hotspot": [
+        0.0117,
+        0.0039
+      ]
+    },
+    {
+      "name": "paper-plane",
+      "hotspot": [
+        0.0117,
+        0.0039
+      ]
+    },
+    {
+      "name": "pixel-3d",
+      "hotspot": [
+        0.0273,
+        0.0039
+      ]
+    },
+    {
+      "name": "pixel-3d-link",
+      "hotspot": [
+        0.2539,
+        0.0039
+      ]
+    },
+    {
+      "name": "prism-link-1237",
+      "hotspot": [
+        0.332,
+        0.0039
+      ]
+    },
+    {
+      "name": "prism-1238",
+      "hotspot": [
+        0.0195,
+        0.0039
+      ]
+    },
+    {
+      "name": "violet-link-1287",
+      "hotspot": [
+        0.3008,
+        0.0039
+      ]
+    },
+    {
+      "name": "violet-1288",
+      "hotspot": [
+        0.0039,
+        0.0039
+      ]
+    },
+    {
+      "name": "shadow-link-1359",
+      "hotspot": [
+        0.3398,
+        0.0039
+      ]
+    },
+    {
+      "name": "shadow-1360",
+      "hotspot": [
+        0.0273,
+        0.0039
+      ]
+    },
+    {
+      "name": "pastel-link-1717",
+      "hotspot": [
+        0.1914,
+        0.0039
+      ]
+    },
+    {
+      "name": "pastel-1718",
+      "hotspot": [
+        0.0117,
+        0.0039
+      ]
+    },
+    {
+      "name": "mint-link-1823",
+      "hotspot": [
+        0.4258,
+        0.0039
+      ]
+    },
+    {
+      "name": "lavender-1824",
+      "hotspot": [
+        0.0039,
+        0.0039
+      ]
+    },
+    {
+      "name": "bow-41",
+      "hotspot": [
+        0.082,
+        0.0117
+      ]
+    },
+    {
+      "name": "dagger-42",
+      "hotspot": [
+        0.0117,
+        0.0117
+      ]
+    },
+    {
+      "name": "victory-link-57",
+      "hotspot": [
+        0.4023,
+        0.0039
+      ]
+    },
+    {
+      "name": "cartoon-link-58",
+      "hotspot": [
+        0.1211,
+        0.0039
+      ]
+    },
+    {
+      "name": "neon-3d",
+      "hotspot": [
+        0.2305,
+        0.0039
+      ]
+    },
+    {
+      "name": "neon-3d-link",
+      "hotspot": [
+        0.1758,
+        0.0039
+      ]
+    },
+    {
+      "name": "octopus",
+      "hotspot": [
+        0.0273,
+        0.0039
+      ]
+    },
+    {
+      "name": "octopus-link",
+      "hotspot": [
+        0.168,
+        0.0039
+      ]
+    },
+    {
+      "name": "constellation",
+      "hotspot": [
+        0.0586,
+        0.043
+      ]
+    },
+    {
+      "name": "constellation-link",
+      "hotspot": [
+        0.3008,
+        0.0273
+      ]
+    },
+    {
+      "name": "comic",
+      "hotspot": [
+        0.0195,
+        0.0039
+      ]
+    },
+    {
+      "name": "comic-link",
+      "hotspot": [
+        0.2383,
+        0.0117
+      ]
+    },
+    {
+      "name": "sketch",
+      "hotspot": [
+        0.0039,
+        0.0039
+      ]
+    },
+    {
+      "name": "sketch-link",
+      "hotspot": [
+        0.2695,
+        0.0039
+      ]
+    },
+    {
+      "name": "diamond",
+      "hotspot": [
+        0.0039,
+        0.0039
+      ]
+    },
+    {
+      "name": "fire",
+      "hotspot": [
+        0.0273,
+        0.0039
+      ]
+    },
+    {
+      "name": "fire-link",
+      "hotspot": [
+        0.207,
+        0.0039
+      ]
+    },
+    {
+      "name": "glitch",
+      "hotspot": [
+        0.0664,
+        0.0039
+      ]
+    },
+    {
+      "name": "glitch-link",
+      "hotspot": [
+        0.3242,
+        0.0039
+      ]
+    },
+    {
+      "name": "projection",
+      "hotspot": [
+        0.0195,
+        0.0039
+      ]
+    },
+    {
+      "name": "projection-link",
+      "hotspot": [
+        0.0586,
+        0.0039
+      ]
+    },
+    {
+      "name": "stroke",
+      "hotspot": [
+        0.2539,
+        0.0195
+      ]
+    },
+    {
+      "name": "stroke-link",
+      "hotspot": [
+        0.3633,
+        0.0195
+      ]
+    },
+    {
+      "name": "cartoon",
+      "hotspot": [
+        0.1055,
+        0.0039
+      ]
+    },
+    {
+      "name": "thumbs-up",
+      "hotspot": [
+        0.2148,
+        0.0039
+      ]
+    },
+    {
+      "name": "ribbon",
+      "hotspot": [
+        0.3789,
+        0.0039
+      ]
+    },
+    {
+      "name": "ribbon-link",
+      "hotspot": [
+        0.2695,
+        0.0039
       ]
     }
   ]

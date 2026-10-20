@@ -1,0 +1,100 @@
+{
+  "sounds": [
+    {
+      "file": "camera-shutter.wav",
+      "label": "Camera Shutter"
+    },
+    {
+      "file": "classic-click.wav",
+      "label": "Classic Click"
+    },
+    {
+      "file": "clear-mouse-clicks.wav",
+      "label": "Clear Mouse Clicks"
+    },
+    {
+      "file": "interface-tone.wav",
+      "label": "Interface Tone"
+    },
+    {
+      "file": "fast-double-click.wav",
+      "label": "Fast Double Click"
+    },
+    {
+      "file": "gate-latch.wav",
+      "label": "Gate Latch"
+    },
+    {
+      "file": "gear-lock-tap.wav",
+      "label": "Gear Lock Tap"
+    },
+    {
+      "file": "metallic-lock.wav",
+      "label": "Metallic Lock"
+    },
+    {
+      "file": "gun-click.wav",
+      "label": "Gun Click"
+    },
+    {
+      "file": "handgun-click.mp3",
+      "label": "Handgun Click"
+    },
+    {
+      "file": "hard-click.wav",
+      "label": "Hard Click"
+    },
+    {
+      "file": "typewriter.wav",
+      "label": "Typewriter"
+    },
+    {
+      "file": "interface-hover.wav",
+      "label": "Interface Hover"
+    },
+    {
+      "file": "tech-select.wav",
+      "label": "Tech Select"
+    },
+    {
+      "file": "mouse-close.wav",
+      "label": "Mouse Close"
+    },
+    {
+      "file": "mouse-hard.wav",
+      "label": "Mouse Hard"
+    },
+    {
+      "file": "old-camera.wav",
+      "label": "Old Camera"
+    },
+    {
+      "file": "light-switch.wav",
+      "label": "Light Switch"
+    },
+    {
+      "file": "pebbles.wav",
+      "label": "Pebbles"
+    },
+    {
+      "file": "pen-click.wav",
+      "label": "Pen Click"
+    },
+    {
+      "file": "positive-interface.wav",
+      "label": "Positive Interface"
+    },
+    {
+      "file": "single-classic.wav",
+      "label": "Single Classic"
+    },
+    {
+      "file": "slide-click.wav",
+      "label": "Slide Click"
+    },
+    {
+      "file": "stapler.wav",
+      "label": "Stapler"
+    }
+  ]
+}

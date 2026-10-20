@@ -4,9 +4,11 @@ Generates the TopScreen built-in wallpapers (macOS style: soft gradients).
 
 Output: data/wallpapers/*.jpg (1920x1080) for the generated gradient set only.
 
-The Unsplash photographic wallpapers (silk, pastel, helix, fiber, prism,
-twilight, ink, spark, cobalt, dusk) are vendored separately - see
-data/wallpapers/SOURCES.txt; this tool never overwrites or removes them.
+The 18 Unsplash photographic wallpapers (silk, pastel, helix, fiber, prism,
+twilight, ink, spark, cobalt, dusk, violet-wave, wood-arch, color-melt,
+ivory-dunes, glacier, pink-ribbon, graphite-fold, amber-ribbon) are fetched by
+tools/fetch-unsplash-wallpapers.py - see data/wallpapers/SOURCES.txt; this tool
+never overwrites or removes them.
 
 Usage: python3 tools/make-wallpapers.py
 """

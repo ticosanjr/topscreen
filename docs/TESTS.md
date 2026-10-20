@@ -77,17 +77,18 @@ That is where all the math and the state logic live — what actually must be ri
 | `test_locale_keys.cpp` | `data/locale/*.ini` | every key used in `obs_module_text()` exists in `en-US.ini`; no orphan keys |
 | `test_profiles.cpp` | `core/profiles.*` | distinct A–J seeds (colors + zoom), labels, index wrap |
 | `test_profiles_io.cpp` | `core/profiles_io.*` | backup format validation: full bundle, marker/plugin, `current` range, all 10 slots, malformed JSON, extra keys accepted |
-| `test_wallpapers.cpp` | `src/ts-wallpapers.*` | label/path/stem resolution, case-insensitivity, all 34 built-ins, invalid input |
+| `test_wallpapers.cpp` | `src/ts-wallpapers.*` | label/path/stem resolution, case-insensitivity, all 42 built-ins, invalid input |
 | `test_key_overlay.cpp` | `core/key_overlay.*` | key queue, TTL, repeat, modifier filter, limit, combo formatting, inline `KeyLabel` truncation at the renderer's 63-byte limit |
 | `test_wav.cpp` | `core/wav.*` | PCM 8/16/24/32 and float, stereo, errors, and **real files** `data/sounds/*.wav`; the three real mouse recordings must be short (<150 ms) with the transient in the first 25 ms |
+| `test_sound_catalog.cpp` | `core/sound_catalog.hpp` + `data/sounds/` | 41 bundled entries, unique labels/paths, no forbidden source words, every WAV parses as mono 44.1 kHz |
 | `test_font_atlas.cpp` | `core/font_atlas.*` | atlas generated from the **real TTF**, per-glyph metrics, alpha, invalid cases, ASCII fast index equivalent to the ordered lookup |
 | `test_evdev.cpp` | `core/evdev.*` | `input_event` decoding, labels, modifiers, partial records |
 | `test_highlighter.cpp` | `core/highlighter.*` | drag, normalized rectangle, hold/fade, small drag, disabled |
 | `test_highlight_modes.cpp` | `core/highlighter.*`, `core/zoom.*` | trail dedupe/cap, line decimation into the shader slots (first/last kept, monotonic), a pinned predicate matrix for all 6 drag modes (box/line/zoom/press-zoom/box+zoom/line+zoom), zoom request timing, press-only zoom (delay, ignore drag, quick click does nothing), hold-to-release glide, stroke bounding box as the zoom selection for the line modes, box+zoom and line+zoom draw *and* zoom |
 | `test_docs.cpp` | `docs/` × code | every key in `keys.hpp` is documented; hotkeys from the code are in the reference; `CMakeLists.txt` and `buildspec.json` versions agree |
-| `test_cursor_catalog.cpp` | `core/cursor_catalog.hpp` + `data/locale/en-US.ini` | one entry per `CursorStyle`, families contiguous and ordered (all Bibata together), unique label keys present in the locale, style clamping |
+| `test_cursor_catalog.cpp` | `core/cursor_catalog.hpp` + `data/locale/en-US.ini` | one entry per `CursorStyle` (37 built-in + 69 custom), families contiguous and ordered, unique label keys present in the locale, no forbidden source words, style clamping |
 | `test_hotkeys.cpp` | `hotkeys/ts-hotkey-actions.hpp` + locale | every id starts with `TopScreen_`, no duplicates, every displayed description starts with the literal id, raw `Hotkey.*` fallback becomes the literal id |
-| `test_cursor_atlas.cpp` | `core/cursor_atlas.*` + `data/cursors/` | TSAT format, hotspots and **real atlas** (37 styles = `CursorStyle::Count`); every **(link)** hand must be populated with its hotspot at the fingertip |
+| `test_cursor_atlas.cpp` | `core/cursor_atlas.*` + `data/cursors/` | TSAT v1/v2, row-major grid, hotspots and **real atlas** (106 styles = `CursorStyle::Count`); built-in link hands plus every custom cell must be populated |
 | `test_image.cpp` | `core/image.*` + `data/wallpapers/` | image decode (reads a **real wallpaper** 1920x1080), invalid cases and the **decompression-bomb pixel cap** |
 | `test_monitor.cpp` (integration: manual origin wins over the env) | `core/monitor.*` + `core/coord.*` | monitor pick (hint/size/ambiguity) and global→content mapping with the capture **below/right/left/above**, including the old broken case |
 | `test_mapping.cpp` | `core/mapping.*` | content area (padding/aspect), forward zoom and **consistency with the shader** (proves the cursor lands on the right pixel at any zoom) |
@@ -95,7 +96,7 @@ That is where all the math and the state logic live — what actually must be ri
 ## Current numbers
 
 ```
-193 tests | 3639 checks | 0 failures   (core)
+195 tests | 5098 checks | 0 failures   (core)
 33 tests | 441 checks   | 0 failures   (integration with fake libobs)
 ```
 

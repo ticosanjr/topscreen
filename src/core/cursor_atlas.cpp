@@ -26,7 +26,9 @@ bool cursor_atlas_parse(const uint8_t *data, size_t size, CursorAtlas *out, std:
 		return fail("file too short");
 	if (std::memcmp(data, kCursorAtlasMagic, 4) != 0)
 		return fail("invalid magic");
-	if (rd_u32(data + 4) != kCursorAtlasVersion)
+
+	const uint32_t version = rd_u32(data + 4);
+	if (version != kCursorAtlasVersion1 && version != kCursorAtlasVersion)
 		return fail("unsupported version");
 
 	const uint32_t cell = rd_u32(data + 8);
@@ -34,13 +36,27 @@ bool cursor_atlas_parse(const uint8_t *data, size_t size, CursorAtlas *out, std:
 	if (cell == 0 || cell > 1024 || count == 0 || count > 256)
 		return fail("invalid dimensions");
 
-	const size_t expected = 16 + static_cast<size_t>(cell) * cell * 4 * count;
+	uint32_t columns = 1;
+	size_t header = 16;
+	if (version >= 2) {
+		if (size < 20)
+			return fail("file too short for the grid header");
+		columns = rd_u32(data + 16);
+		header = 20;
+	}
+	if (columns == 0 || columns > 256)
+		return fail("invalid column count");
+
+	const size_t rows = (static_cast<size_t>(count) + columns - 1) / columns;
+	const size_t cells = static_cast<size_t>(columns) * rows;
+	const size_t expected = header + static_cast<size_t>(cell) * cell * 4 * cells;
 	if (size < expected)
 		return fail("incomplete data");
 
 	out->cell = cell;
 	out->count = count;
-	out->pixels.assign(data + 16, data + expected);
+	out->columns = columns;
+	out->pixels.assign(data + header, data + expected);
 	return true;
 }
 

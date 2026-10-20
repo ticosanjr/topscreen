@@ -4,6 +4,7 @@
 #include "core/cursor_catalog.hpp"
 #include "core/keys.hpp"
 #include "core/profiles.hpp"
+#include "core/sound_catalog.hpp"
 #include "core/types.hpp"
 #include "ts-profiles-ui.hpp"
 #include "ts-version.hpp"
@@ -26,30 +27,6 @@ const char *const kFonts[][2] = {
 	{"DejaVu Sans Mono Bold", "fonts/DejaVuSansMono-Bold.ttf"},
 	{"DejaVu Sans Mono", "fonts/DejaVuSansMono.ttf"},
 	{"DejaVu Serif Bold", "fonts/DejaVuSerif-Bold.ttf"},
-};
-
-/* Bundled click sounds (data/sounds): realistic mouse clicks first, then the
- * FX palette for a more produced look. */
-const char *const kSounds[][2] = {
-	/* real mouse/switch clicks */
-	{"Mouse (tight click)", "sounds/click-mouse-tight.wav"},
-	{"Mouse (single click)", "sounds/click-mouse-single.wav"},
-	{"Mouse (right click)", "sounds/click-mouse-right.wav"},
-	{"Crisp (switch)", "sounds/click-crisp.wav"},
-	{"Deep (thock)", "sounds/click-deep.wav"},
-	{"Pad (trackpad)", "sounds/click-pad.wav"},
-	{"Retro (double)", "sounds/click-retro.wav"},
-	{"Optical (dry)", "sounds/click-optical.wav"},
-	{"Muted (quiet)", "sounds/click-muted.wav"},
-	/* FX palette */
-	{"Soft", "sounds/click-soft.wav"},
-	{"Hard", "sounds/click-hard.wav"},
-	{"Pop", "sounds/click-pop.wav"},
-	{"Tick", "sounds/click-tick.wav"},
-	{"Wood", "sounds/click-wood.wav"},
-	{"Glass", "sounds/click-glass.wav"},
-	{"Bubble", "sounds/click-bubble.wav"},
-	{"Thock", "sounds/click-thock.wav"},
 };
 
 /* Image selector filter (hardcoded, as in OBS: avoids escaping risk). */
@@ -301,8 +278,8 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 							   obs_module_text("ClickSound.RightSound"),
 							   OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
 	for (const auto &s : kSounds) {
-		obs_property_list_add_string(sndleft, s[0], s[1]);
-		obs_property_list_add_string(sndright, s[0], s[1]);
+		obs_property_list_add_string(sndleft, s.label, s.path);
+		obs_property_list_add_string(sndright, s.label, s.path);
 	}
 	obs_properties_add_float_slider(snd, kClickSoundVolume, obs_module_text("ClickSound.Volume"), 0.0, 1.0,
 					0.01);

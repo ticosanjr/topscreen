@@ -17,7 +17,7 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Style | `bg_mode` | int | 0 solid · 1 vertical · 2 diagonal | `2` |
 | | Color A | `bg_color_a` | color | — | `0xFF20242E` |
 | | Color B | `bg_color_b` | color | — | `0xFF3A2E5C` |
-| | Wallpaper | `bg_image` | string | "" or `wallpapers/*.jpg` (34) | `""` |
+| | Wallpaper | `bg_image` | string | "" or `wallpapers/*.jpg` (42) | `""` |
 | | Image from PC | `bg_image_file` | string | file path (**clears** the Wallpaper) | `""` |
 | | Wallpaper blur (px) | `bg_image_blur` | double | 0–60 | `0` |
 | | Blur type | `bg_image_blur_type` | int | 0 none · 1 soft · 2 gaussian · 3 creamy | `2` |
@@ -31,7 +31,7 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Shadow horizontal offset (px) | `bg_shadow_offset_x` | double | -100–100 | `0` |
 | | Shadow vertical offset (px) | `bg_shadow_offset` | double | -100–100 | `12` |
 | Cursor | Show cursor | `cursor_enabled` | bool | — | `true` |
-| | Style (grouped by theme) | `cursor_style` | int | **Bibata** 3 arrow · 27 link hand · 10 Ice · 32 Ice link · 11 Original · 33 Original link · 22 Ice Original · 36 Ice Original link; **Breeze** 2 · 26 link · 21 Snow · 35 Snow link · 25 I-beam; **Adwaita** 4 · 28 link · 6 pointer hand · 16 grab open · 17 grab closed · 18 I-beam; **Yaru** 8 · 30 link · 23 grab · 24 I-beam; **DMZ** 7 white · 29 white link · 19 black · 34 black link; **Google Dot** 5 white · 20 black; **XCursor Pro** 9 · 31 link; **macOS** 0; **Windows** 1; **Effects** 12 Neon · 15 Onyx · 13 Dot · 14 Crosshair | `0` |
+| | Style (grouped by theme) | `cursor_style` | int | **Bibata** 3 arrow · 27 link hand · 10 Ice · 32 Ice link · 11 Original · 33 Original link · 22 Ice Original · 36 Ice Original link; **Breeze** 2 · 26 link · 21 Snow · 35 Snow link · 25 I-beam; **Adwaita** 4 · 28 link · 6 hand · 16 grab open · 17 grab closed · 18 I-beam; **Yaru** 8 · 30 link · 23 grab · 24 I-beam; **DMZ** 7 white · 29 white link · 19 black · 34 black link; **Google Dot** 5 white · 20 black; **XCursor Pro** 9 · 31 link; **macOS** 0; **Windows** 1; **Effects** 12 Neon · 15 Onyx · 13 Dot · 14 Crosshair; **Custom** 37–105 (see [`CURSORS.md`](CURSORS.md)) | `0` |
 | | Size | `cursor_size` | double | 0.5–4 | `1.4` |
 | | Cursor shadow | `cursor_shadow` | bool | — | `true` |
 | | Smoothing | `cursor_smooth` | double | 0–1 | `0.7` |
@@ -57,7 +57,7 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Duration (ms) | `click_right_duration_ms` | double | 100–2000 | `700` |
 | | Curve | `click_right_easing` | int | same | `2` |
 | Click sound | Enable sound | `click_sound_enabled` | bool | — | `true` |
-| | Left click sound | `click_sound_file_left` | string | bundled `sounds/*.wav` (17; the three `click-mouse-*.wav` are real mouse recordings) | `sounds/click-soft.wav` |
+| | Left click sound | `click_sound_file_left` | string | bundled `sounds/*.wav` (41; the three `click-mouse-*.wav` are real mouse recordings) | `sounds/click-soft.wav` |
 | | Right click sound | `click_sound_file_right` | string | bundled `sounds/*.wav` | `sounds/click-pop.wav` |
 | | Legacy single file | `click_sound_file` | string | migrates to both sides | — |
 | | Volume | `click_sound_volume` | double | 0–1 (honored by paplay) | `0.6` |
@@ -114,7 +114,7 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 {
   "topscreen_profiles": 1,
   "plugin": "TopScreen",
-  "version": "0.2.22",
+  "version": "0.2.23",
   "current": 0,
   "profile_slot_0": { "effects_enabled": true },
   "profile_slot_1": { "effects_enabled": true },

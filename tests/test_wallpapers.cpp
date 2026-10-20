@@ -22,7 +22,7 @@ TEST(wallpapers_case_insensitive)
 
 TEST(wallpapers_all_resolve)
 {
-	CHECK_EQ(kWallpaperCount, 34);
+	CHECK_EQ(kWallpaperCount, 42);
 	for (int i = 0; i < kWallpaperCount; ++i) {
 		const WallpaperEntry &w = kWallpapers[i];
 		CHECK(wallpaper_path_for(w.name) != nullptr);

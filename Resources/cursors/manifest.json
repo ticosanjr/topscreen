@@ -1,0 +1,487 @@
+{
+  "cursors": [
+    {
+      "id": 37,
+      "slug": "purple-iris",
+      "label": "Purple Iris",
+      "role": "arrow",
+      "file": "cursors/purple-iris.png"
+    },
+    {
+      "id": 38,
+      "slug": "purple-iris-link",
+      "label": "Purple Iris Link",
+      "role": "link",
+      "file": "cursors/purple-iris-link.png"
+    },
+    {
+      "id": 39,
+      "slug": "strawberry-milk",
+      "label": "Strawberry Milk",
+      "role": "arrow",
+      "file": "cursors/strawberry-milk.png"
+    },
+    {
+      "id": 40,
+      "slug": "strawberry-milk-link",
+      "label": "Strawberry Milk Link",
+      "role": "link",
+      "file": "cursors/strawberry-milk-link.png"
+    },
+    {
+      "id": 41,
+      "slug": "interference-link",
+      "label": "Interference Link",
+      "role": "link",
+      "file": "cursors/interference-link.png"
+    },
+    {
+      "id": 42,
+      "slug": "interference",
+      "label": "Interference",
+      "role": "arrow",
+      "file": "cursors/interference.png"
+    },
+    {
+      "id": 43,
+      "slug": "chromatic-alt",
+      "label": "Chromatic Alt",
+      "role": "arrow",
+      "file": "cursors/chromatic-alt.png"
+    },
+    {
+      "id": 44,
+      "slug": "chromatic",
+      "label": "Chromatic",
+      "role": "arrow",
+      "file": "cursors/chromatic.png"
+    },
+    {
+      "id": 45,
+      "slug": "neon-hand-2769",
+      "label": "Neon Hand 2769",
+      "role": "link",
+      "file": "cursors/neon-hand-2769.png"
+    },
+    {
+      "id": 46,
+      "slug": "crystal-2769",
+      "label": "Crystal 2769",
+      "role": "arrow",
+      "file": "cursors/crystal-2769.png"
+    },
+    {
+      "id": 47,
+      "slug": "white-hand-2786",
+      "label": "White Hand 2786",
+      "role": "link",
+      "file": "cursors/white-hand-2786.png"
+    },
+    {
+      "id": 48,
+      "slug": "white-arrow-2786",
+      "label": "White Arrow 2786",
+      "role": "arrow",
+      "file": "cursors/white-arrow-2786.png"
+    },
+    {
+      "id": 49,
+      "slug": "wireframe-alt",
+      "label": "Wireframe Alt",
+      "role": "arrow",
+      "file": "cursors/wireframe-alt.png"
+    },
+    {
+      "id": 50,
+      "slug": "wireframe",
+      "label": "Wireframe",
+      "role": "arrow",
+      "file": "cursors/wireframe.png"
+    },
+    {
+      "id": 51,
+      "slug": "amethyst-2898",
+      "label": "Amethyst 2898",
+      "role": "arrow",
+      "file": "cursors/amethyst-2898.png"
+    },
+    {
+      "id": 52,
+      "slug": "sapphire-2898",
+      "label": "Sapphire 2898",
+      "role": "arrow",
+      "file": "cursors/sapphire-2898.png"
+    },
+    {
+      "id": 53,
+      "slug": "lavender-classic",
+      "label": "Lavender Classic",
+      "role": "arrow",
+      "file": "cursors/lavender-classic.png"
+    },
+    {
+      "id": 54,
+      "slug": "lavender-classic-link",
+      "label": "Lavender Classic Link",
+      "role": "link",
+      "file": "cursors/lavender-classic-link.png"
+    },
+    {
+      "id": 55,
+      "slug": "checkerboard",
+      "label": "Checkerboard",
+      "role": "arrow",
+      "file": "cursors/checkerboard.png"
+    },
+    {
+      "id": 56,
+      "slug": "checkerboard-link",
+      "label": "Checkerboard Link",
+      "role": "link",
+      "file": "cursors/checkerboard-link.png"
+    },
+    {
+      "id": 57,
+      "slug": "energy-link",
+      "label": "Energy Link",
+      "role": "link",
+      "file": "cursors/energy-link.png"
+    },
+    {
+      "id": 58,
+      "slug": "silver",
+      "label": "Silver",
+      "role": "arrow",
+      "file": "cursors/silver.png"
+    },
+    {
+      "id": 59,
+      "slug": "silver-link",
+      "label": "Silver Link",
+      "role": "link",
+      "file": "cursors/silver-link.png"
+    },
+    {
+      "id": 60,
+      "slug": "pixel-sword",
+      "label": "Pixel Sword",
+      "role": "arrow",
+      "file": "cursors/pixel-sword.png"
+    },
+    {
+      "id": 61,
+      "slug": "axolotl",
+      "label": "Axolotl",
+      "role": "arrow",
+      "file": "cursors/axolotl.png"
+    },
+    {
+      "id": 62,
+      "slug": "jester",
+      "label": "Jester",
+      "role": "arrow",
+      "file": "cursors/jester.png"
+    },
+    {
+      "id": 63,
+      "slug": "witch-hat",
+      "label": "Witch Hat",
+      "role": "arrow",
+      "file": "cursors/witch-hat.png"
+    },
+    {
+      "id": 64,
+      "slug": "enchanted-sword",
+      "label": "Enchanted Sword",
+      "role": "arrow",
+      "file": "cursors/enchanted-sword.png"
+    },
+    {
+      "id": 65,
+      "slug": "paper-boat",
+      "label": "Paper Boat",
+      "role": "arrow",
+      "file": "cursors/paper-boat.png"
+    },
+    {
+      "id": 66,
+      "slug": "paper-plane",
+      "label": "Paper Plane",
+      "role": "arrow",
+      "file": "cursors/paper-plane.png"
+    },
+    {
+      "id": 67,
+      "slug": "pixel-3d",
+      "label": "Pixel 3D",
+      "role": "arrow",
+      "file": "cursors/pixel-3d.png"
+    },
+    {
+      "id": 68,
+      "slug": "pixel-3d-link",
+      "label": "Pixel 3D Link",
+      "role": "link",
+      "file": "cursors/pixel-3d-link.png"
+    },
+    {
+      "id": 69,
+      "slug": "prism-link-1237",
+      "label": "Prism Link 1237",
+      "role": "link",
+      "file": "cursors/prism-link-1237.png"
+    },
+    {
+      "id": 70,
+      "slug": "prism-1238",
+      "label": "Prism 1238",
+      "role": "arrow",
+      "file": "cursors/prism-1238.png"
+    },
+    {
+      "id": 71,
+      "slug": "violet-link-1287",
+      "label": "Violet Link 1287",
+      "role": "link",
+      "file": "cursors/violet-link-1287.png"
+    },
+    {
+      "id": 72,
+      "slug": "violet-1288",
+      "label": "Violet 1288",
+      "role": "arrow",
+      "file": "cursors/violet-1288.png"
+    },
+    {
+      "id": 73,
+      "slug": "shadow-link-1359",
+      "label": "Shadow Link 1359",
+      "role": "link",
+      "file": "cursors/shadow-link-1359.png"
+    },
+    {
+      "id": 74,
+      "slug": "shadow-1360",
+      "label": "Shadow 1360",
+      "role": "arrow",
+      "file": "cursors/shadow-1360.png"
+    },
+    {
+      "id": 75,
+      "slug": "pastel-link-1717",
+      "label": "Pastel Link 1717",
+      "role": "link",
+      "file": "cursors/pastel-link-1717.png"
+    },
+    {
+      "id": 76,
+      "slug": "pastel-1718",
+      "label": "Pastel 1718",
+      "role": "arrow",
+      "file": "cursors/pastel-1718.png"
+    },
+    {
+      "id": 77,
+      "slug": "mint-link-1823",
+      "label": "Mint Link 1823",
+      "role": "link",
+      "file": "cursors/mint-link-1823.png"
+    },
+    {
+      "id": 78,
+      "slug": "lavender-1824",
+      "label": "Lavender 1824",
+      "role": "arrow",
+      "file": "cursors/lavender-1824.png"
+    },
+    {
+      "id": 79,
+      "slug": "bow-41",
+      "label": "Bow 41",
+      "role": "arrow",
+      "file": "cursors/bow-41.png"
+    },
+    {
+      "id": 80,
+      "slug": "dagger-42",
+      "label": "Dagger 42",
+      "role": "arrow",
+      "file": "cursors/dagger-42.png"
+    },
+    {
+      "id": 81,
+      "slug": "victory-link-57",
+      "label": "Victory Link 57",
+      "role": "link",
+      "file": "cursors/victory-link-57.png"
+    },
+    {
+      "id": 82,
+      "slug": "cartoon-link-58",
+      "label": "Cartoon Link 58",
+      "role": "link",
+      "file": "cursors/cartoon-link-58.png"
+    },
+    {
+      "id": 83,
+      "slug": "neon-3d",
+      "label": "Neon 3D",
+      "role": "arrow",
+      "file": "cursors/neon-3d.png"
+    },
+    {
+      "id": 84,
+      "slug": "neon-3d-link",
+      "label": "Neon 3D Link",
+      "role": "link",
+      "file": "cursors/neon-3d-link.png"
+    },
+    {
+      "id": 85,
+      "slug": "octopus",
+      "label": "Octopus",
+      "role": "arrow",
+      "file": "cursors/octopus.png"
+    },
+    {
+      "id": 86,
+      "slug": "octopus-link",
+      "label": "Octopus Link",
+      "role": "link",
+      "file": "cursors/octopus-link.png"
+    },
+    {
+      "id": 87,
+      "slug": "constellation",
+      "label": "Constellation",
+      "role": "arrow",
+      "file": "cursors/constellation.png"
+    },
+    {
+      "id": 88,
+      "slug": "constellation-link",
+      "label": "Constellation Link",
+      "role": "link",
+      "file": "cursors/constellation-link.png"
+    },
+    {
+      "id": 89,
+      "slug": "comic",
+      "label": "Comic",
+      "role": "arrow",
+      "file": "cursors/comic.png"
+    },
+    {
+      "id": 90,
+      "slug": "comic-link",
+      "label": "Comic Link",
+      "role": "link",
+      "file": "cursors/comic-link.png"
+    },
+    {
+      "id": 91,
+      "slug": "sketch",
+      "label": "Sketch",
+      "role": "arrow",
+      "file": "cursors/sketch.png"
+    },
+    {
+      "id": 92,
+      "slug": "sketch-link",
+      "label": "Sketch Link",
+      "role": "link",
+      "file": "cursors/sketch-link.png"
+    },
+    {
+      "id": 93,
+      "slug": "diamond",
+      "label": "Diamond",
+      "role": "arrow",
+      "file": "cursors/diamond.png"
+    },
+    {
+      "id": 94,
+      "slug": "fire",
+      "label": "Fire",
+      "role": "arrow",
+      "file": "cursors/fire.png"
+    },
+    {
+      "id": 95,
+      "slug": "fire-link",
+      "label": "Fire Link",
+      "role": "link",
+      "file": "cursors/fire-link.png"
+    },
+    {
+      "id": 96,
+      "slug": "glitch",
+      "label": "Glitch",
+      "role": "arrow",
+      "file": "cursors/glitch.png"
+    },
+    {
+      "id": 97,
+      "slug": "glitch-link",
+      "label": "Glitch Link",
+      "role": "link",
+      "file": "cursors/glitch-link.png"
+    },
+    {
+      "id": 98,
+      "slug": "projection",
+      "label": "Projection",
+      "role": "arrow",
+      "file": "cursors/projection.png"
+    },
+    {
+      "id": 99,
+      "slug": "projection-link",
+      "label": "Projection Link",
+      "role": "link",
+      "file": "cursors/projection-link.png"
+    },
+    {
+      "id": 100,
+      "slug": "stroke",
+      "label": "Stroke",
+      "role": "arrow",
+      "file": "cursors/stroke.png"
+    },
+    {
+      "id": 101,
+      "slug": "stroke-link",
+      "label": "Stroke Link",
+      "role": "link",
+      "file": "cursors/stroke-link.png"
+    },
+    {
+      "id": 102,
+      "slug": "cartoon",
+      "label": "Cartoon",
+      "role": "arrow",
+      "file": "cursors/cartoon.png"
+    },
+    {
+      "id": 103,
+      "slug": "thumbs-up",
+      "label": "Thumbs Up",
+      "role": "link",
+      "file": "cursors/thumbs-up.png"
+    },
+    {
+      "id": 104,
+      "slug": "ribbon",
+      "label": "Ribbon",
+      "role": "arrow",
+      "file": "cursors/ribbon.png"
+    },
+    {
+      "id": 105,
+      "slug": "ribbon-link",
+      "label": "Ribbon Link",
+      "role": "link",
+      "file": "cursors/ribbon-link.png"
+    }
+  ]
+}

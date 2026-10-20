@@ -6,14 +6,19 @@ Generates the TopScreen cursor atlas.
   GoogleDot) reading the XCursor format. Each themed arrow also ships the
   theme's own `pointer` (hover/link) hand.
 - Draws "macOS (classic)" and "Windows (classic)" procedurally.
+- Appends the user-supplied 128x128 PNGs from Resources/cursors.
 - Packs everything into data/cursors/atlas.rgba (TSAT) + atlas.json (hotspots).
 
 TSAT format (little-endian):
   0  : magic 'TSAT'
-  4  : u32 version = 1
+  4  : u32 version = 2
   8  : u32 cell (icon side, px)
   12 : u32 count
-  16 : pixels RGBA8 (cell x cell*count, top->bottom)
+  16 : u32 columns
+  20 : pixels RGBA8 (columns x ceil(count/columns) cells, row-major)
+
+Version 1 (no columns field, one vertical column) is still accepted by the
+runtime parser.
 
 Usage: python3 tools/make-cursor-atlas.py
 """
@@ -23,9 +28,13 @@ import os
 import struct
 import sys
 
+from PIL import Image
+
 CELL = 128
+COLUMNS = 16
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT_DIR = os.path.join(ROOT, "data", "cursors")
+CUSTOM_MANIFEST = os.path.join(ROOT, "Resources", "cursors", "manifest.json")
 
 ICONS = "/usr/share/icons"
 
@@ -286,18 +295,57 @@ def main():
         meta.append({"name": name, "hotspot": [round(hx, 4), round(hy, 4)]})
         print(f"[atlas] {name}: {im['w']}x{im['h']} hotspot=({hx:.3f},{hy:.3f}) from {src}")
 
+    # User-supplied PNGs (already 128x128, straight RGBA). The manifest order
+    # is the CursorStyle order; IDs start at 37 (after the 37 built-ins).
+    with open(CUSTOM_MANIFEST, "r", encoding="utf-8") as f:
+        custom = json.load(f)["cursors"]
+    for expected, entry in enumerate(custom, start=37):
+        if entry["id"] != expected:
+            raise SystemExit(f"custom cursor id {entry['id']} != {expected}")
+        path = os.path.join(ROOT, "Resources", entry["file"])
+        if not os.path.exists(path):
+            raise SystemExit(f"cursor not found: {path}")
+        im = Image.open(path).convert("RGBA")
+        if im.size != (CELL, CELL):
+            im = im.resize((CELL, CELL), Image.Resampling.LANCZOS)
+        rgba = bytearray(im.tobytes())
+        alpha = im.getchannel("A")
+        hx = hy = 0.05
+        for y in range(CELL):
+            for x in range(CELL):
+                if alpha.getpixel((x, y)) > 32:
+                    hx = (x + 0.5) / CELL
+                    hy = (y + 0.5) / CELL
+                    break
+            else:
+                continue
+            break
+        cells.append(rgba)
+        meta.append({"name": entry["slug"], "hotspot": [round(hx, 4), round(hy, 4)]})
+        print(f"[atlas] {entry['slug']}: PNG hotspot=({hx:.3f},{hy:.3f})")
+
     count = len(cells)
+    rows = (count + COLUMNS - 1) // COLUMNS
+    width = CELL * COLUMNS
+    height = CELL * rows
+    blob = bytearray(width * height * 4)
+    for idx, cell in enumerate(cells):
+        row, col = divmod(idx, COLUMNS)
+        for y in range(CELL):
+            src_off = y * CELL * 4
+            dst_off = ((row * CELL + y) * width + col * CELL) * 4
+            blob[dst_off:dst_off + CELL * 4] = cell[src_off:src_off + CELL * 4]
+
     with open(os.path.join(OUT_DIR, "atlas.rgba"), "wb") as f:
         f.write(b"TSAT")
-        f.write(struct.pack("<III", 1, CELL, count))
-        for c in cells:
-            f.write(c)
+        f.write(struct.pack("<IIII", 2, CELL, count, COLUMNS))
+        f.write(blob)
 
     with open(os.path.join(OUT_DIR, "atlas.json"), "w") as f:
-        json.dump({"cell": CELL, "count": count, "cursors": meta}, f, indent=2)
+        json.dump({"cell": CELL, "count": count, "columns": COLUMNS, "cursors": meta}, f, indent=2)
         f.write("\n")
 
-    print(f"[atlas] OK: {count} cursors, cell={CELL} -> data/cursors/")
+    print(f"[atlas] OK: {count} cursors, grid={COLUMNS}x{rows}, cell={CELL} -> data/cursors/")
 
 
 if __name__ == "__main__":

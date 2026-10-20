@@ -28,3 +28,12 @@ click-mouse-right.wav
 
 All are mono 16-bit PCM at 44100 Hz, the same format as the other bundled
 clicks.
+
+Custom click pack (24 files)
+  Source: Resources/sounds (renamed originals and manifest.json).
+  The project owner supplied this pack and confirmed authorization to modify,
+  normalize, and redistribute it with TopScreen.
+  Processed by the project's import step: mono, 16-bit PCM, 44100 Hz, silence
+  trimmed, peak normalised and short fades applied. The MP3 source was
+  converted to WAV. Original artwork/audio remains the property of its
+  respective authors.

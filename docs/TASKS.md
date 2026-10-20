@@ -46,7 +46,7 @@ Status: ✅ done · 🟡 partial · ⬜ pending.
 | T2.5 | Motion smoothing (spring) | ✅ |
 | T2.6 | Sway (tilt on turns) | ✅ |
 | T2.7 | Hide idle cursor and loop | ✅ |
-| T2.8 | Cursor styles grouped by theme (37 styles) | ✅ |
+| T2.8 | Cursor styles grouped by theme (37 built-in + 69 custom) | ✅ |
 
 ## F3 — Clicks, sound, hotkeys, presets
 
@@ -105,7 +105,7 @@ Status: ✅ done · 🟡 partial · ⬜ pending.
 | T7.3 | `uaccess` udev rule + detection in the dock | ✅ (rule ready + log warning) |
 | T7.4 | Graceful degradation + tier report | ✅ (readable tier in the dock + log warnings) |
 | T7.5 | CI: Win + Linux build against OBS | 🟡 (tests CI + header check ✅; plugin build best-effort) |
-| T7.6 | Portable packaging + release | ✅ (packages in `releases/`, published as GitHub Release `v0.2.22`; Windows cross-build without the Qt dock) |
+| T7.6 | Portable packaging + release | ✅ (packages in `releases/`, published as GitHub Release `v0.2.23`; Windows cross-build without the Qt dock) |
 | T7.7 | Final i18n + icon + screenshots | ⬜ |
 
 ## Infrastructure / documentation
@@ -115,7 +115,7 @@ Status: ✅ done · 🟡 partial · ⬜ pending.
 | TD.1 | Full GPL-2.0 license text (`COPYING`) | ✅ |
 | TD.2 | `CONTRIBUTING.md` and PR template | ✅ |
 | TD.3 | Adjust `buildspec.json`/presets for the official CI | ⬜ |
-| TD.4 | Core sanity tests | ✅ (193 core + 33 integration + 37 OBS header files + ASan/UBSan) |
+| TD.4 | Core sanity tests | ✅ (195 core + 33 integration + 37 OBS header files + ASan/UBSan) |
 
 ---
 

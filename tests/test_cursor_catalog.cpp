@@ -2,6 +2,8 @@
 
 #include "test_framework.hpp"
 
+#include <algorithm>
+#include <cctype>
 #include <fstream>
 #include <set>
 #include <sstream>
@@ -94,9 +96,22 @@ TEST(cursor_catalog_labels_are_unique_and_present_in_the_locale)
 			if (!value.empty() && value.back() == '\r')
 				value.pop_back();
 			++tst::checks();
-			if (value.empty())
+			if (value.empty()) {
 				tst::fail(__FILE__, __LINE__,
 					  std::string("empty cursor label: ") + entry.label_key);
+			} else {
+				std::string lower = value;
+				std::transform(lower.begin(), lower.end(), lower.begin(),
+					       [](unsigned char c) {
+						       return static_cast<char>(std::tolower(c));
+					       });
+				++tst::checks();
+				if (lower.find("starter") != std::string::npos ||
+				    lower.find("pointer") != std::string::npos ||
+				    lower.find("mixkit") != std::string::npos)
+					tst::fail(__FILE__, __LINE__,
+						  std::string("forbidden word in cursor label: ") + value);
+			}
 		}
 	}
 }

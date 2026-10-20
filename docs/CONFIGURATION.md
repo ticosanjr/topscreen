@@ -28,6 +28,7 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Window shadow | `bg_shadow` | bool | — | `true` |
 | | Shadow opacity | `bg_shadow_alpha` | double | 0–1 | `0.35` |
 | | Shadow blur (px) | `bg_shadow_blur` | double | 0–200 | `48` |
+| | Shadow horizontal offset (px) | `bg_shadow_offset_x` | double | -100–100 | `0` |
 | | Shadow vertical offset (px) | `bg_shadow_offset` | double | -100–100 | `12` |
 | Cursor | Show cursor | `cursor_enabled` | bool | — | `true` |
 | | Style (grouped by theme) | `cursor_style` | int | **Bibata** 3 arrow · 27 link hand · 10 Ice · 32 Ice link · 11 Original · 33 Original link · 22 Ice Original · 36 Ice Original link; **Breeze** 2 · 26 link · 21 Snow · 35 Snow link · 25 I-beam; **Adwaita** 4 · 28 link · 6 pointer hand · 16 grab open · 17 grab closed · 18 I-beam; **Yaru** 8 · 30 link · 23 grab · 24 I-beam; **DMZ** 7 white · 29 white link · 19 black · 34 black link; **Google Dot** 5 white · 20 black; **XCursor Pro** 9 · 31 link; **macOS** 0; **Windows** 1; **Effects** 12 Neon · 15 Onyx · 13 Dot · 14 Crosshair | `0` |
@@ -113,7 +114,7 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 {
   "topscreen_profiles": 1,
   "plugin": "TopScreen",
-  "version": "0.2.21",
+  "version": "0.2.22",
   "current": 0,
   "profile_slot_0": { "effects_enabled": true },
   "profile_slot_1": { "effects_enabled": true },
@@ -175,6 +176,8 @@ table above; missing keys keep the current value.
     "bg_shadow": true,
     "bg_shadow_alpha": 0.35,
     "bg_shadow_blur": 48,
+    "bg_shadow_offset_x": 0,
+    "bg_shadow_offset": 12,
     "cursor_enabled": true,
     "cursor_size": 1.6,
     "cursor_smooth": 0.8,

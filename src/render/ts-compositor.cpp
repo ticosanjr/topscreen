@@ -444,7 +444,8 @@ void Compositor::render(obs_source_t *filter, const core::Config &cfg, const Fra
 	const float shadow_alpha = (bg && cfg.bg.shadow) ? static_cast<float>(cfg.bg.shadow_alpha) : 0.0f;
 	set_f(p_shadow_alpha_, shadow_alpha);
 	set_f(p_shadow_blur_, static_cast<float>(cfg.bg.shadow_blur));
-	set_v2(p_shadow_offset_, 0.0f, static_cast<float>(cfg.bg.shadow_offset));
+	set_v2(p_shadow_offset_, static_cast<float>(cfg.bg.shadow_offset_x),
+	       static_cast<float>(cfg.bg.shadow_offset));
 
 	float zoom = active ? static_cast<float>(st.zoom.zoom) : 1.0f;
 	if (zoom < 1.0f)

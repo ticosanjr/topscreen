@@ -28,6 +28,7 @@ void config_defaults(obs_data_t *s)
 	obs_data_set_default_bool(s, kBgShadow, def.bg.shadow);
 	obs_data_set_default_double(s, kBgShadowAlpha, def.bg.shadow_alpha);
 	obs_data_set_default_double(s, kBgShadowBlur, def.bg.shadow_blur);
+	obs_data_set_default_double(s, kBgShadowOffsetX, def.bg.shadow_offset_x);
 	obs_data_set_default_double(s, kBgShadowOffset, def.bg.shadow_offset);
 	obs_data_set_default_bool(s, kBgKeepAspect, def.bg.keep_aspect);
 
@@ -174,6 +175,7 @@ void config_load(obs_data_t *s, Config *c)
 	c->bg.shadow = read_bool(s, kBgShadow, d.bg.shadow);
 	c->bg.shadow_alpha = read_double(s, kBgShadowAlpha, d.bg.shadow_alpha);
 	c->bg.shadow_blur = read_double(s, kBgShadowBlur, d.bg.shadow_blur);
+	c->bg.shadow_offset_x = read_double(s, kBgShadowOffsetX, d.bg.shadow_offset_x);
 	c->bg.shadow_offset = read_double(s, kBgShadowOffset, d.bg.shadow_offset);
 	c->bg.keep_aspect = read_bool(s, kBgKeepAspect, d.bg.keep_aspect);
 
@@ -282,6 +284,7 @@ void config_store(obs_data_t *s, const Config &c)
 	obs_data_set_bool(s, kBgShadow, c.bg.shadow);
 	obs_data_set_double(s, kBgShadowAlpha, c.bg.shadow_alpha);
 	obs_data_set_double(s, kBgShadowBlur, c.bg.shadow_blur);
+	obs_data_set_double(s, kBgShadowOffsetX, c.bg.shadow_offset_x);
 	obs_data_set_double(s, kBgShadowOffset, c.bg.shadow_offset);
 	obs_data_set_bool(s, kBgKeepAspect, c.bg.keep_aspect);
 

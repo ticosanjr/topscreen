@@ -24,6 +24,7 @@ inline constexpr const char *kBgCornerRadius = "bg_corner_radius";
 inline constexpr const char *kBgShadow = "bg_shadow";
 inline constexpr const char *kBgShadowAlpha = "bg_shadow_alpha";
 inline constexpr const char *kBgShadowBlur = "bg_shadow_blur";
+inline constexpr const char *kBgShadowOffsetX = "bg_shadow_offset_x";
 inline constexpr const char *kBgShadowOffset = "bg_shadow_offset";
 inline constexpr const char *kBgKeepAspect = "bg_keep_aspect";
 

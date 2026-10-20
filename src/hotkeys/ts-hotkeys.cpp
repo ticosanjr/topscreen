@@ -13,41 +13,41 @@ const char *hotkey_description(int action)
 {
 	switch (action) {
 	case HK_ToggleEffects:
-		return obs_module_text("Hotkey.ToggleEffects");
+		return hotkey_label_or_id(obs_module_text("Hotkey.ToggleEffects"), kHotkeyNames[action]);
 	case HK_ToggleBackground:
-		return obs_module_text("Hotkey.ToggleBackground");
+		return hotkey_label_or_id(obs_module_text("Hotkey.ToggleBackground"), kHotkeyNames[action]);
 	case HK_ZoomIn:
-		return obs_module_text("Hotkey.ZoomIn");
+		return hotkey_label_or_id(obs_module_text("Hotkey.ZoomIn"), kHotkeyNames[action]);
 	case HK_ZoomOut:
-		return obs_module_text("Hotkey.ZoomOut");
+		return hotkey_label_or_id(obs_module_text("Hotkey.ZoomOut"), kHotkeyNames[action]);
 	case HK_ResetZoom:
-		return obs_module_text("Hotkey.ResetZoom");
+		return hotkey_label_or_id(obs_module_text("Hotkey.ResetZoom"), kHotkeyNames[action]);
 	case HK_NextPreset:
-		return obs_module_text("Hotkey.NextPreset");
+		return hotkey_label_or_id(obs_module_text("Hotkey.NextPreset"), kHotkeyNames[action]);
 	case HK_PrevPreset:
-		return obs_module_text("Hotkey.PrevPreset");
+		return hotkey_label_or_id(obs_module_text("Hotkey.PrevPreset"), kHotkeyNames[action]);
 	case HK_ProfileA:
-		return obs_module_text("Hotkey.ProfileA");
+		return hotkey_label_or_id(obs_module_text("Hotkey.ProfileA"), kHotkeyNames[action]);
 	case HK_ProfileB:
-		return obs_module_text("Hotkey.ProfileB");
+		return hotkey_label_or_id(obs_module_text("Hotkey.ProfileB"), kHotkeyNames[action]);
 	case HK_ProfileC:
-		return obs_module_text("Hotkey.ProfileC");
+		return hotkey_label_or_id(obs_module_text("Hotkey.ProfileC"), kHotkeyNames[action]);
 	case HK_ProfileD:
-		return obs_module_text("Hotkey.ProfileD");
+		return hotkey_label_or_id(obs_module_text("Hotkey.ProfileD"), kHotkeyNames[action]);
 	case HK_ProfileE:
-		return obs_module_text("Hotkey.ProfileE");
+		return hotkey_label_or_id(obs_module_text("Hotkey.ProfileE"), kHotkeyNames[action]);
 	case HK_ProfileF:
-		return obs_module_text("Hotkey.ProfileF");
+		return hotkey_label_or_id(obs_module_text("Hotkey.ProfileF"), kHotkeyNames[action]);
 	case HK_ProfileG:
-		return obs_module_text("Hotkey.ProfileG");
+		return hotkey_label_or_id(obs_module_text("Hotkey.ProfileG"), kHotkeyNames[action]);
 	case HK_ProfileH:
-		return obs_module_text("Hotkey.ProfileH");
+		return hotkey_label_or_id(obs_module_text("Hotkey.ProfileH"), kHotkeyNames[action]);
 	case HK_ProfileI:
-		return obs_module_text("Hotkey.ProfileI");
+		return hotkey_label_or_id(obs_module_text("Hotkey.ProfileI"), kHotkeyNames[action]);
 	case HK_ProfileJ:
-		return obs_module_text("Hotkey.ProfileJ");
+		return hotkey_label_or_id(obs_module_text("Hotkey.ProfileJ"), kHotkeyNames[action]);
 	case HK_ProfileSave:
-		return obs_module_text("Hotkey.ProfileSave");
+		return hotkey_label_or_id(obs_module_text("Hotkey.ProfileSave"), kHotkeyNames[action]);
 	default:
 		return "";
 	}

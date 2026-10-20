@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstring>
+
 /**
  * Hotkey actions and their process-wide OBS IDs.
  *
@@ -47,5 +49,17 @@ inline constexpr const char *kHotkeyNames[HK_Count] = {
 };
 
 inline constexpr int kHotkeyCount = HK_Count;
+
+/**
+ * Returns the localized label, or the literal ID when OBS could not load the
+ * locale (obs_module_text then returns the key itself). Without this fallback
+ * Settings -> Hotkeys shows "Hotkey.ProfileA" instead of "TopScreen_ProfileA".
+ */
+inline const char *hotkey_label_or_id(const char *translated, const char *id)
+{
+	if (!translated || translated[0] == '\0' || std::strncmp(translated, "Hotkey.", 7) == 0)
+		return id;
+	return translated;
+}
 
 } // namespace topscreen

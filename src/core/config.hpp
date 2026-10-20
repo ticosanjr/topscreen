@@ -27,8 +27,9 @@ struct BackgroundConfig {
 	bool shadow = true;
 	double shadow_alpha = 0.35;
 	double shadow_blur = 48.0;
-	double shadow_offset = 12.0; // vertical offset (px)
-	bool keep_aspect = true;     // keeps the screen aspect ratio (without distortion)
+	double shadow_offset_x = 0.0; // horizontal offset (px)
+	double shadow_offset = 12.0;  // vertical offset (px)
+	bool keep_aspect = true;      // keeps the screen aspect ratio (without distortion)
 };
 
 struct ClickSoundConfig {

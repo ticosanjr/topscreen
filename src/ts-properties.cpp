@@ -255,7 +255,10 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 	obs_properties_add_bool(sh, kBgShadow, obs_module_text("Shadow.Enabled"));
 	obs_properties_add_float_slider(sh, kBgShadowAlpha, obs_module_text("Shadow.Opacity"), 0.0, 1.0, 0.01);
 	obs_properties_add_float_slider(sh, kBgShadowBlur, obs_module_text("Shadow.Blur"), 0.0, 200.0, 1.0);
-	obs_properties_add_float_slider(sh, kBgShadowOffset, obs_module_text("Shadow.Offset"), -100.0, 100.0, 1.0);
+	obs_properties_add_float_slider(sh, kBgShadowOffsetX, obs_module_text("Shadow.OffsetX"), -100.0, 100.0,
+					1.0);
+	obs_properties_add_float_slider(sh, kBgShadowOffset, obs_module_text("Shadow.Offset"), -100.0, 100.0,
+					1.0);
 	obs_properties_add_group(bg, "grp_shadow", obs_module_text("Group.Shadow"), OBS_GROUP_NORMAL, sh);
 	obs_properties_add_group(props, "grp_bg", obs_module_text("Group.Background"), OBS_GROUP_NORMAL, bg);
 

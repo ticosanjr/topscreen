@@ -93,7 +93,8 @@ Places the screen "floating" over a background, with corners and shadow.
 | ↳ **Enable shadow** | Turns the shadow behind the screen on/off |
 | ↳ **Intensity** | How strong the shadow is (0 = invisible, 1 = strong) |
 | ↳ **Softness / size** | How soft and large the shadow is |
-| ↳ **Downward distance** | Moves the shadow down (emboss effect) |
+| ↳ **Horizontal distance** | Moves the shadow left/right |
+| ↳ **Vertical distance** | Moves the shadow up/down (positive = down) |
 
 > The background appears **behind** the screen. Without an image, use the **Style** (color/gradient).
 

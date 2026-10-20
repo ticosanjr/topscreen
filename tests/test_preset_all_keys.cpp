@@ -30,6 +30,7 @@ TEST(preset_covers_all_keys)
             "bg_shadow": false,
             "bg_shadow_alpha": 0.11,
             "bg_shadow_blur": 13,
+            "bg_shadow_offset_x": -9,
             "bg_shadow_offset": 6,
             "bg_keep_aspect": false,
             "cursor_enabled": false,
@@ -124,6 +125,7 @@ TEST(preset_covers_all_keys)
 	CHECK(!c.bg.shadow);
 	CHECK_NEAR(c.bg.shadow_alpha, 0.11, 1e-9);
 	CHECK_NEAR(c.bg.shadow_blur, 13.0, 1e-9);
+	CHECK_NEAR(c.bg.shadow_offset_x, -9.0, 1e-9);
 	CHECK_NEAR(c.bg.shadow_offset, 6.0, 1e-9);
 	CHECK(!c.bg.keep_aspect);
 

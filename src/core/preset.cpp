@@ -98,6 +98,7 @@ bool Preset::apply(Config *cfg, std::string *error) const
 	cfg->bg.shadow = read_bool(o, kBgShadow, cfg->bg.shadow);
 	cfg->bg.shadow_alpha = read_number(o, kBgShadowAlpha, cfg->bg.shadow_alpha);
 	cfg->bg.shadow_blur = read_number(o, kBgShadowBlur, cfg->bg.shadow_blur);
+	cfg->bg.shadow_offset_x = read_number(o, kBgShadowOffsetX, cfg->bg.shadow_offset_x);
 	cfg->bg.shadow_offset = read_number(o, kBgShadowOffset, cfg->bg.shadow_offset);
 	cfg->bg.keep_aspect = read_bool(o, kBgKeepAspect, cfg->bg.keep_aspect);
 

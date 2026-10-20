@@ -71,6 +71,19 @@ TEST(hotkey_ids_are_unique)
 	}
 }
 
+/* If OBS cannot load the locale, obs_module_text() returns the raw key.
+ * Never show that in Settings -> Hotkeys: fall back to the literal ID. */
+TEST(hotkey_description_falls_back_to_the_literal_id)
+{
+	const char *id = kHotkeyNames[HK_ProfileA];
+	CHECK_EQ(std::string(hotkey_label_or_id("Hotkey.ProfileA", id)), std::string(id));
+	CHECK_EQ(std::string(hotkey_label_or_id("", id)), std::string(id));
+	CHECK_EQ(std::string(hotkey_label_or_id(nullptr, id)), std::string(id));
+
+	const char *translated = "TopScreen_ProfileA — Activate profile A";
+	CHECK_EQ(std::string(hotkey_label_or_id(translated, id)), std::string(translated));
+}
+
 /* The label OBS shows must contain the literal ID, so typing "TopScreen_"
  * in Settings -> Hotkeys finds every action (including future ones). */
 TEST(hotkey_descriptions_start_with_the_literal_id)

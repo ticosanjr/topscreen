@@ -86,7 +86,7 @@ That is where all the math and the state logic live — what actually must be ri
 | `test_highlight_modes.cpp` | `core/highlighter.*`, `core/zoom.*` | trail dedupe/cap, line decimation into the shader slots (first/last kept, monotonic), a pinned predicate matrix for all 6 drag modes (box/line/zoom/press-zoom/box+zoom/line+zoom), zoom request timing, press-only zoom (delay, ignore drag, quick click does nothing), hold-to-release glide, stroke bounding box as the zoom selection for the line modes, box+zoom and line+zoom draw *and* zoom |
 | `test_docs.cpp` | `docs/` × code | every key in `keys.hpp` is documented; hotkeys from the code are in the reference; `CMakeLists.txt` and `buildspec.json` versions agree |
 | `test_cursor_catalog.cpp` | `core/cursor_catalog.hpp` + `data/locale/en-US.ini` | one entry per `CursorStyle`, families contiguous and ordered (all Bibata together), unique label keys present in the locale, style clamping |
-| `test_hotkeys.cpp` | `hotkeys/ts-hotkey-actions.hpp` + locale | every id starts with `TopScreen_`, no duplicates, every displayed description starts with the literal id |
+| `test_hotkeys.cpp` | `hotkeys/ts-hotkey-actions.hpp` + locale | every id starts with `TopScreen_`, no duplicates, every displayed description starts with the literal id, raw `Hotkey.*` fallback becomes the literal id |
 | `test_cursor_atlas.cpp` | `core/cursor_atlas.*` + `data/cursors/` | TSAT format, hotspots and **real atlas** (37 styles = `CursorStyle::Count`); every **(link)** hand must be populated with its hotspot at the fingertip |
 | `test_image.cpp` | `core/image.*` + `data/wallpapers/` | image decode (reads a **real wallpaper** 1920x1080), invalid cases and the **decompression-bomb pixel cap** |
 | `test_monitor.cpp` (integration: manual origin wins over the env) | `core/monitor.*` + `core/coord.*` | monitor pick (hint/size/ambiguity) and global→content mapping with the capture **below/right/left/above**, including the old broken case |
@@ -95,8 +95,8 @@ That is where all the math and the state logic live — what actually must be ri
 ## Current numbers
 
 ```
-192 tests | 3631 checks | 0 failures   (core)
-33 tests | 439 checks   | 0 failures   (integration with fake libobs)
+193 tests | 3639 checks | 0 failures   (core)
+33 tests | 441 checks   | 0 failures   (integration with fake libobs)
 ```
 
 ## What the integration layer covers

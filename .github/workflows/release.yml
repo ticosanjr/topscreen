@@ -1,9 +1,10 @@
 name: Release
 
-# Builds ready-to-use packages when a version tag (v*) is pushed and commits
-# them into releases/. It does not create a GitHub Release; publish one
-# manually with `gh release create` (see docs/BUILD.md). Also runnable by hand
-# (Actions > Release > Run workflow) for a test build.
+# Builds ready-to-use packages when a version tag (v*) is pushed. The archives
+# are uploaded as workflow artifacts; they are not committed because only the
+# newest three versions are kept (GitHub Releases is the canonical download).
+# Publish a GitHub Release manually with `gh release create` (docs/BUILD.md).
+# Also runnable by hand (Actions > Release > Run workflow) for a test build.
 #
 #   topscreen-<version>-linux.tar.gz   -> extract into ~/.config/obs-studio/plugins/
 #   topscreen-<version>-windows.zip    -> extract, then double-click install.bat
@@ -199,36 +200,3 @@ jobs:
           name: pkg-windows
           path: releases/topscreen-*-windows.zip
           if-no-files-found: error
-
-  publish:
-    name: Publish into releases/
-    needs: [linux, windows]
-    if: startsWith(github.ref, 'refs/tags/v')
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: main
-
-      - uses: actions/download-artifact@v4
-        with:
-          path: packages
-          merge-multiple: true
-
-      - name: Copy the packages into releases/
-        run: |
-          mkdir -p releases
-          cp -f packages/* releases/
-          ls -la releases
-
-      - name: Commit and push
-        run: |
-          git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          if git diff --quiet -- releases/; then
-            echo "releases/ already up to date"
-            exit 0
-          fi
-          git add releases/
-          git commit -m "release: ${GITHUB_REF_NAME}"
-          git push origin HEAD:main

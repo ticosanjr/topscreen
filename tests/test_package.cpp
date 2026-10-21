@@ -49,12 +49,29 @@ TEST(package_releases_folder)
 	CHECK(verifier.find("loaded v$VER") != std::string::npos);
 	CHECK(verifier.find("sha256sum") != std::string::npos);
 
-	/* Index of every version, so the folder stays self-documenting. */
+	/* Only the newest three archives are retained; the pruner is part of the
+	 * package step. */
+	const std::string pruner = read_bytes(root + "scripts/prune-releases.sh");
+	CHECK(!pruner.empty());
+	CHECK(pruner.find("KEEP=3") != std::string::npos);
+
+	/* The index must point at the current release in GitHub Releases. */
+	const std::string cmake = read_bytes(root + "CMakeLists.txt");
+	const std::string version_marker = "project(TopScreen VERSION ";
+	const size_t version_at = cmake.find(version_marker);
+	REQUIRE(version_at != std::string::npos);
+	const size_t version_start = version_at + version_marker.size();
+	const size_t version_end = cmake.find(' ', version_start);
+	REQUIRE(version_end != std::string::npos);
+	const std::string version = cmake.substr(version_start, version_end - version_start);
+
 	const std::string index = read_bytes(root + "releases/README.md");
 	CHECK(!index.empty());
-	CHECK(index.find("topscreen-0.2.6-windows.zip") != std::string::npos);
-	CHECK(index.find("topscreen-0.2.6-linux.tar.gz") != std::string::npos);
+	CHECK(index.find("topscreen-" + version + "-windows.zip") != std::string::npos);
+	CHECK(index.find("topscreen-" + version + "-linux.tar.gz") != std::string::npos);
+	CHECK(index.find("releases/download/v" + version) != std::string::npos);
 	CHECK(index.find("install.bat") != std::string::npos);
+	CHECK(index.find("scripts/prune-releases.sh") != std::string::npos);
 
 	/* CI publishes into releases/ and must not create GitHub Releases. */
 	const std::string workflow = read_bytes(root + ".github/workflows/release.yml");

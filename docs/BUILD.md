@@ -31,10 +31,11 @@ into `releases/`:
 | `topscreen-<v>-linux.tar.gz` | `tar -xzf topscreen-<v>-linux.tar.gz -C ~/.config/obs-studio/plugins/` |
 | `topscreen-<v>-windows.zip` | extract `topscreen\` into `%ProgramData%\obs-studio\plugins\` (portable: `bin\64bit\topscreen.dll` → `obs-plugins\64bit`, `data\*` → `data\obs-plugins\topscreen`) |
 
-The optional `Release` workflow builds on Linux + Windows and, for a `v*` tag,
-commits the archives into `releases/` on `main`; it does not publish a GitHub
-Release. Every installer fully syncs `data/`, so stale files from older versions
-never linger.
+The optional `Release` workflow builds on Linux + Windows and uploads the
+archives as workflow artifacts; it does **not** commit them or publish a GitHub
+Release. Release archives are ignored by git and only the newest three are kept
+locally/GitHub Releases. Every installer fully syncs `data/`, so stale files
+from older versions never linger.
 
 ## Cutting a release
 
@@ -46,7 +47,7 @@ VERSION=$(sed -n 's/^project(TopScreen VERSION \([0-9.]*\).*/\1/p' CMakeLists.tx
 
 ./scripts/build-install.sh              # Linux .so (with the Qt dock)
 ./scripts/build-windows-cross.sh        # Windows .dll (without the Qt dock)
-./scripts/package.sh                    # writes both archives into releases/
+./scripts/package.sh                    # archives + auto-prune to the newest 3
 ./scripts/verify-release.sh             # structure, version, arch, data, SHA-256
 ./tests/run-all.sh                      # core + OBS headers + integration
 
@@ -64,6 +65,17 @@ gh release create "v$VERSION" --verify-tag \
   "releases/topscreen-$VERSION-linux.tar.gz" \
   "releases/topscreen-$VERSION-windows.zip"
 gh workflow enable "Release"
+```
+
+`scripts/package.sh` automatically calls `scripts/prune-releases.sh`, which
+keeps only the newest **three** versions in `releases/`. Release archives are
+ignored by git (only `releases/README.md` is tracked), so new packages do not
+grow the repository. After publishing, remove old GitHub Release entries
+(keeping their tags):
+
+```bash
+gh release list --limit 100
+gh release delete <old-tag> --yes
 ```
 
 The `Release` workflow remains available for a CI-built release with the Qt dock

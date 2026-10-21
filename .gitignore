@@ -4,7 +4,9 @@ build_*/
 _build/
 cmake-build-*/
 dist/
-# releases/ is tracked on purpose (versioned packages)
+# Release archives are local/GitHub artifacts; only releases/README.md is tracked
+/releases/*.tar.gz
+/releases/*.zip
 out/
 
 # Compiled

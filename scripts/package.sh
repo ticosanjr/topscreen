@@ -95,3 +95,8 @@ done
 	echo "build first (Linux: scripts/build-install.sh; Windows: install-windows.ps1)"
 	exit 1
 }
+
+# Retention policy: keep only the newest three archives in releases/.
+if [ -x "$ROOT/scripts/prune-releases.sh" ]; then
+	"$ROOT/scripts/prune-releases.sh" --dir "$OUT"
+fi

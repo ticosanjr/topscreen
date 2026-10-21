@@ -37,6 +37,11 @@ struct FilterControl {
 	virtual int current_profile() const = 0;
 	virtual void select_profile(int index) = 0;
 	virtual void save_profile() = 0;
+	virtual void toggle_highlight() = 0;
+	/** Test/diagnostic: the independent hotkey highlight is currently active. */
+	virtual bool hotkey_highlight_active() const = 0;
+	/** Test/diagnostic: resolved module path of the loaded click sound. */
+	virtual std::string loaded_sound_path(bool right) const = 0;
 
 	/* Profiles backup: the filter does the file I/O on the video thread and
 	 * publishes the last result (0 = none, 1 = export ok, 2 = export failed,

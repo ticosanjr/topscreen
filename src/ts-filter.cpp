@@ -48,6 +48,7 @@ enum ActionBits : uint32_t {
 	A_SAVE_PROFILE = 1u << 10,
 	A_EXPORT_PROFILES = 1u << 11,
 	A_IMPORT_PROFILES = 1u << 12,
+	A_TOGGLE_HIGHLIGHT = 1u << 13,
 };
 
 /**
@@ -127,6 +128,7 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 	bool loaded = false;
 	bool parent_cursor_checked = false;
 	bool prev_left = false;
+	bool hotkey_highlight_active_ = false;
 
 	int current_profile_ = 0;
 	int last_profile = -1;
@@ -176,7 +178,8 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 	void process_actions();
 	void reload_from_settings();
 	void refresh_monitor_origin(bool force);
-	void start_zoom_spot(double zx0, double zy0, double zx1, double zy1, bool immediate_out);
+	void start_zoom_spot(double zx0, double zy0, double zx1, double zy1, bool immediate_out,
+			     double hold_override_ms = -1.0);
 
 	/* ---- HotkeyContext (hotkey thread: only queues) ---- */
 	void toggle_effects() override { actions_.fetch_or(A_TOGGLE_EFFECTS); }
@@ -192,6 +195,7 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 		actions_.fetch_or(A_PROFILE_SET);
 	}
 	void save_profile() override { actions_.fetch_or(A_SAVE_PROFILE); }
+	void toggle_highlight() override { actions_.fetch_or(A_TOGGLE_HIGHLIGHT); }
 	FilterControl *filter_control() override { return this; }
 
 	/* ---- FilterControl (UI thread: only queues / reads atomic) ---- */
@@ -220,6 +224,11 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 	/* ---- FilterControl: profiles ---- */
 	int profile_count() const override { return kProfileCount; }
 	int current_profile() const override { return profile_cache_.load(); }
+	bool hotkey_highlight_active() const override { return hotkey_highlight_active_; }
+	std::string loaded_sound_path(bool right) const override
+	{
+		return click_sound.loaded_path(right);
+	}
 	void export_profiles(const std::string &path) override
 	{
 		{
@@ -288,6 +297,7 @@ void ts_filter_ctx::apply_profile(int index)
 	/* Session state: resets the manual zoom and reloads the sound if it changed. */
 	zoom.set_manual(1.0);
 	zoom.spot_stop();
+	hotkey_highlight_active_ = false;
 	click_sound.load(cfg.click_sound.file_left.c_str(), cfg.click_sound.file_right.c_str());
 }
 
@@ -352,14 +362,18 @@ void ts_filter_ctx::do_export_profiles(const std::string &path)
 	obs_data_set_int(bundle, "current", current_profile_);
 	for (int i = 0; i < kProfileCount; ++i) {
 		obs_data_t *slot = obs_data_get_obj(s, kProfileSlots[i]);
-		if (!slot) {
-			/* Should not happen (create() seeds every slot), but a broken
-			 * legacy source must still export a complete file. */
-			slot = obs_data_create();
-			config_store(slot, core::make_profile_seed(i));
+		/* Normalize every slot: older sources can miss fields added in a
+		 * newer version, and the exported bundle must always be complete. */
+		const core::Config seed = core::make_profile_seed(i);
+		core::Config normalized = seed;
+		if (slot) {
+			config_load(slot, &normalized, &seed);
+			obs_data_release(slot);
 		}
-		obs_data_set_obj(bundle, kProfileSlots[i], slot);
-		obs_data_release(slot);
+		obs_data_t *out_slot = obs_data_create();
+		config_store(out_slot, normalized);
+		obs_data_set_obj(bundle, kProfileSlots[i], out_slot);
+		obs_data_release(out_slot);
 	}
 	obs_data_release(s);
 
@@ -393,10 +407,20 @@ void ts_filter_ctx::do_import_profiles(const std::string &json_text)
 	obs_data_t *s = obs_source_get_settings(source);
 	for (int i = 0; i < kProfileCount; ++i) {
 		obs_data_t *slot = obs_data_get_obj(bundle, kProfileSlots[i]);
-		if (!slot)
-			continue;
-		obs_data_set_obj(s, kProfileSlots[i], slot);
-		obs_data_release(slot);
+		/* Start from the slot's seed and overlay the fields the imported file
+		 * actually has. Missing slots keep the seed; missing fields keep the
+		 * seed's value instead of becoming 0/false. This keeps old/new bundles
+		 * valid across added or removed settings. */
+		const core::Config seed = core::make_profile_seed(i);
+		core::Config normalized = seed;
+		if (slot) {
+			config_load(slot, &normalized, &seed);
+			obs_data_release(slot);
+		}
+		obs_data_t *out_slot = obs_data_create();
+		config_store(out_slot, normalized);
+		obs_data_set_obj(s, kProfileSlots[i], out_slot);
+		obs_data_release(out_slot);
 	}
 	obs_data_set_int(s, kProfileCurrent, info.current);
 	obs_data_release(s);
@@ -492,7 +516,8 @@ void ts_filter_ctx::refresh_monitor_origin(bool force)
  * is fitted (and centred); a bare hold zooms into the maximum. When the
  * button was already released (immediate_out), the return starts at once.
  */
-void ts_filter_ctx::start_zoom_spot(double zx0, double zy0, double zx1, double zy1, bool immediate_out)
+void ts_filter_ctx::start_zoom_spot(double zx0, double zy0, double zx1, double zy1, bool immediate_out,
+				   double hold_override_ms)
 {
 	const double rw = std::max(1e-3, zx1 - zx0);
 	const double rh = std::max(1e-3, zy1 - zy0);
@@ -508,8 +533,10 @@ void ts_filter_ctx::start_zoom_spot(double zx0, double zy0, double zx1, double z
 
 	/* Punch modes skip the hold: snap in now, glide straight back out. */
 	const bool punch = dir >= 2;
+	const double hold_ms = hold_override_ms >= 0.0 ? hold_override_ms
+						       : cfg.highlight.zoom_hold_ms;
 	zoom.spot_start_hold(aim.focus_x, aim.focus_y, aim.zoom, cfg.highlight.zoom_in_ms,
-			     (punch || immediate_out) ? 0.0 : cfg.highlight.zoom_hold_ms,
+			     (punch || immediate_out) ? 0.0 : hold_ms,
 			     cfg.highlight.zoom_out_ms, time_ms);
 	blog(LOG_INFO, "[TopScreen] zoom spotlight: dir=%d %.2fx%s", dir, aim.zoom,
 	     immediate_out ? " (quick)" : "");
@@ -525,6 +552,10 @@ void ts_filter_ctx::reconfigure_models()
 	clicks.set_right(cfg.click_right);
 	keys.configure(cfg.keys);
 	highlight.configure(cfg.highlight);
+	if (hotkey_highlight_active_ && (!cfg.highlight.enabled || !cfg.highlight.hotkey_enabled)) {
+		zoom.spot_release(time_ms);
+		hotkey_highlight_active_ = false;
+	}
 }
 
 void ts_filter_ctx::request_preset(int index)
@@ -539,6 +570,7 @@ void ts_filter_ctx::request_preset(int index)
 	}
 
 	reconfigure_models();
+	click_sound.load(cfg.click_sound.file_left.c_str(), cfg.click_sound.file_right.c_str());
 	push_settings();
 	refresh_properties();
 	mark_profile_dirty();
@@ -642,6 +674,27 @@ void ts_filter_ctx::process_actions()
 			push_settings();
 			refresh_properties();
 			blog(LOG_INFO, "[TopScreen] profile activated: %s", core::profile_label(i));
+		}
+	}
+	if (act & A_TOGGLE_HIGHLIGHT) {
+		if (!cfg.highlight.enabled || !cfg.highlight.hotkey_enabled) {
+			if (hotkey_highlight_active_) {
+				zoom.spot_release(time_ms);
+				hotkey_highlight_active_ = false;
+			}
+		} else if (hotkey_highlight_active_) {
+			/* Second press: same release/return path as the drag zoom. */
+			zoom.spot_release(time_ms);
+			hotkey_highlight_active_ = false;
+			blog(LOG_INFO, "[TopScreen] hotkey highlight: release");
+		} else {
+			/* First press: zoom into the current cursor position. */
+			const double cx = frame.cursor.x;
+			const double cy = frame.cursor.y;
+			start_zoom_spot(cx, cy, cx, cy, false, 0.0);
+			hotkey_highlight_active_ = zoom.spot_active();
+			blog(LOG_INFO, "[TopScreen] hotkey highlight: %s",
+			     hotkey_highlight_active_ ? "active" : "no-op");
 		}
 	}
 	if (act & A_SAVE_PROFILE)

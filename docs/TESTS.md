@@ -76,7 +76,7 @@ That is where all the math and the state logic live — what actually must be ri
 | `test_preset_all_keys.cpp` | `core/preset.*` | all config keys are mapped (guarantees a complete preset) |
 | `test_locale_keys.cpp` | `data/locale/*.ini` | every key used in `obs_module_text()` exists in `en-US.ini`; no orphan keys |
 | `test_profiles.cpp` | `core/profiles.*` | distinct A–J seeds (colors + zoom), labels, index wrap |
-| `test_profiles_io.cpp` | `core/profiles_io.*` | backup format validation: full bundle, marker/plugin, `current` range, all 10 slots, malformed JSON, extra keys accepted |
+| `test_profiles_io.cpp` | `core/profiles_io.*` | backup format validation: full bundle, marker/plugin, missing `current` defaults to 0, missing/empty slots accepted, slot object type, malformed JSON, extra keys accepted |
 | `test_wallpapers.cpp` | `src/ts-wallpapers.*` | label/path/stem resolution, case-insensitivity, all 42 built-ins, transparent sentinel, invalid input |
 | `test_key_overlay.cpp` | `core/key_overlay.*` | key queue, TTL, repeat, modifier filter, special-key ignore mode, limit, combo formatting, inline `KeyLabel` truncation at the renderer's 63-byte limit |
 | `test_wav.cpp` | `core/wav.*` | PCM 8/16/24/32 and float, stereo, errors, and **real files** `data/sounds/*.wav`; the three real mouse recordings must be short (<150 ms) with the transient in the first 25 ms |
@@ -96,8 +96,8 @@ That is where all the math and the state logic live — what actually must be ri
 ## Current numbers
 
 ```
-200 tests | 5145 checks | 0 failures   (core)
-34 tests | 448 checks   | 0 failures   (integration with fake libobs)
+201 tests | 5159 checks | 0 failures   (core)
+37 tests | 478 checks   | 0 failures   (integration with fake libobs)
 ```
 
 ## What the integration layer covers
@@ -108,7 +108,7 @@ fake libobs:
 
 | File | Coverage |
 |------|----------|
-| `test_integration.cpp` | filter lifecycle (create/tick/render/destroy), preset apply, background toggle, all 18 hotkeys, native-cursor shutdown on the parent, profiles (save/switch/seeds/list/auto-save/restart/export-import round-trip), **Properties refresh after profile/preset changes**, **dock target selection (hotkeys follow it)** and **debounced auto-save with flush** |
+| `test_integration.cpp` | filter lifecycle (create/tick/render/destroy), preset apply, background toggle, all 19 hotkeys, native-cursor shutdown on the parent, profiles (save/switch/seeds/list/auto-save/restart/export-import round-trip, **click-sound reload on switch**, **partial import fills missing fields/slots**), **independent hotkey highlight toggle**, **Properties refresh after profile/preset changes**, **dock target selection (hotkeys follow it)** and **debounced auto-save with flush** |
 | `test_integration.cpp` hotkeys | `integration_registers_all_hotkeys` covers every hotkey id/name/callback; `integration_hotkeys_shared_between_filters` proves one process-wide set shared across filters; `integration_registry_target_selection` proves selection routing/fallback |
 | `test_uniforms.cpp` | every uniform declared by `topscreen.effect` is uploaded on a plain frame (D3D11 aborts the draw otherwise) |
 | `test_text_render.cpp` | key-overlay text batches all glyphs + shadow quads into one vertex buffer (**1 draw total**, cache hit without rebuild) and falls back to per-glyph sprites if vertex-buffer creation fails |

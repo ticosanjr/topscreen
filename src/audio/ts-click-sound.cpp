@@ -72,6 +72,12 @@ bool ClickSound::load_slot(Slot *slot, const char *module_file)
 	if (slot->loaded && slot->module == module_file)
 		return true;
 
+#if !defined(_WIN32)
+	/* Flush any queued audio from the previous sound/profile before loading a
+	 * different WAV. The persistent player restarts lazily on the next click. */
+	stop_persistent();
+#endif
+
 	char *file_path = obs_module_file(module_file);
 	if (!file_path) {
 		blog(LOG_WARNING, "[TopScreen] sound not found: %s", module_file);

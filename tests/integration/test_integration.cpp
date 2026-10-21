@@ -182,7 +182,8 @@ TEST(integration_hotkeys_all_actions)
 			       "TopScreen_ProfileD",	      "TopScreen_ProfileE",
 			       "TopScreen_ProfileF",	      "TopScreen_ProfileG",
 			       "TopScreen_ProfileH",	      "TopScreen_ProfileI",
-			       "TopScreen_ProfileJ",	      "TopScreen_ProfileSave"};
+			       "TopScreen_ProfileJ",	      "TopScreen_ProfileSave",
+			       "TopScreen_ToggleHighlight"};
 	for (const char *n : names)
 		REQUIRE(fakeobs::find_hotkey(n) >= 0);
 
@@ -586,7 +587,8 @@ TEST(integration_registers_all_hotkeys)
 			       "TopScreen_ProfileD",	      "TopScreen_ProfileE",
 			       "TopScreen_ProfileF",	      "TopScreen_ProfileG",
 			       "TopScreen_ProfileH",	      "TopScreen_ProfileI",
-			       "TopScreen_ProfileJ",	      "TopScreen_ProfileSave"};
+			       "TopScreen_ProfileJ",	      "TopScreen_ProfileSave",
+			       "TopScreen_ToggleHighlight"};
 	const int expected = static_cast<int>(sizeof(names) / sizeof(names[0]));
 
 	/* The harness keeps earlier registrations, so measure this filter's delta. */
@@ -603,7 +605,7 @@ TEST(integration_registers_all_hotkeys)
 }
 
 /* Frontend hotkeys are process-wide: a second filter must NOT register a
- * second set of 18, and destroying one filter must keep them alive. */
+ * second set of 19, and destroying one filter must keep them alive. */
 TEST(integration_hotkeys_shared_between_filters)
 {
 	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
@@ -618,7 +620,7 @@ TEST(integration_hotkeys_shared_between_filters)
 	REQUIRE(ctx1 != nullptr);
 	REQUIRE(ctx2 != nullptr);
 
-	CHECK_EQ(fakeobs::hotkey_count() - before, 18);
+	CHECK_EQ(fakeobs::hotkey_count() - before, 19);
 	CHECK(fakeobs::hotkeys_active_from(before));
 
 	/* Destroying one filter keeps the shared hotkeys working. */
@@ -737,6 +739,132 @@ TEST(integration_profile_switch_refreshes_properties)
 	ctrl->apply_preset(0);
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
 	CHECK(fakeobs::property_update_calls() > 0);
+
+	ts_filter_source_info.destroy(ctx);
+}
+
+TEST(integration_hotkey_highlight_toggles_zoom)
+{
+	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
+
+	obs_source_t *parent = make_parent(1920, 1080);
+	obs_source_t *filter = fakeobs::make_source(&ts_filter_source_info, parent, 0, 0);
+	void *ctx = create_filter(filter);
+	REQUIRE(ctx != nullptr);
+	ts_filter_source_info.video_render(ctx, nullptr);
+
+	FilterControl *ctrl = registry_first();
+	REQUIRE(ctrl != nullptr);
+	CHECK(!ctrl->hotkey_highlight_active());
+
+	ctrl->toggle_highlight();
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK(ctrl->hotkey_highlight_active());
+
+	/* First press stays zoomed while held (it is a toggle, not a timed hold). */
+	for (int i = 0; i < 130; ++i)
+		ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK(ctrl->hotkey_highlight_active());
+
+	ctrl->toggle_highlight();
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK(!ctrl->hotkey_highlight_active());
+
+	/* Disabling the independent hotkey mode releases an active gesture. */
+	ctrl->toggle_highlight();
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK(ctrl->hotkey_highlight_active());
+	obs_data_set_bool(filter->settings, core::keys::kHighlightHotkeyEnabled, false);
+	ts_filter_source_info.update(ctx, filter->settings);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK(!ctrl->hotkey_highlight_active());
+
+	ts_filter_source_info.destroy(ctx);
+}
+
+TEST(integration_profile_switch_reloads_click_sounds)
+{
+	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
+
+	obs_source_t *parent = make_parent(1920, 1080);
+	obs_source_t *filter = fakeobs::make_source(&ts_filter_source_info, parent, 0, 0);
+	void *ctx = create_filter(filter);
+	REQUIRE(ctx != nullptr);
+	ts_filter_source_info.video_render(ctx, nullptr);
+
+	FilterControl *ctrl = registry_first();
+	REQUIRE(ctrl != nullptr);
+	CHECK(ctrl->loaded_sound_path(false).ends_with("sounds/click-soft.wav"));
+
+	/* User report: profile D did not switch the click sound. Give it two
+	 * distinct WAVs through the same slot path the Properties editor uses. */
+	obs_data_t *slot = obs_data_get_obj(filter->settings, core::keys::kProfileSlots[3]);
+	REQUIRE(slot != nullptr);
+	obs_data_set_string(slot, core::keys::kClickSoundFileLeft,
+			    "sounds/click-hard.wav");
+	obs_data_set_string(slot, core::keys::kClickSoundFileRight,
+			    "sounds/click-glass.wav");
+	obs_data_release(slot);
+
+	fakeobs::reset_property_update_calls();
+	ctrl->select_profile(3);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK(fakeobs::property_update_calls() > 0);
+	CHECK(ctrl->loaded_sound_path(false).ends_with("sounds/click-hard.wav"));
+	CHECK(ctrl->loaded_sound_path(true).ends_with("sounds/click-glass.wav"));
+
+	/* Switch away and back: the reload must not be cached across profiles. */
+	ctrl->select_profile(0);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK(ctrl->loaded_sound_path(false).ends_with("sounds/click-soft.wav"));
+
+	ctrl->select_profile(3);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK(ctrl->loaded_sound_path(false).ends_with("sounds/click-hard.wav"));
+	CHECK(ctrl->loaded_sound_path(true).ends_with("sounds/click-glass.wav"));
+
+	ts_filter_source_info.destroy(ctx);
+}
+
+TEST(integration_profile_import_fills_missing_fields)
+{
+	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
+
+	obs_source_t *parent = make_parent(1920, 1080);
+	obs_source_t *filter = fakeobs::make_source(&ts_filter_source_info, parent, 0, 0);
+	void *ctx = create_filter(filter);
+	REQUIRE(ctx != nullptr);
+	ts_filter_source_info.video_render(ctx, nullptr);
+
+	FilterControl *ctrl = registry_first();
+	REQUIRE(ctrl != nullptr);
+
+	/* Deliberately old/partial bundle: one slot, only two fields. */
+	const char *json = R"({
+		"topscreen_profiles": 1,
+		"plugin": "TopScreen",
+		"current": 3,
+		"profile_slot_3": {
+			"cursor_style": 60,
+			"bg_image": "wallpapers/glacier.jpg"
+		}
+	})";
+	ctrl->import_profiles(json);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+
+	CHECK_EQ(obs_data_get_int(filter->settings, core::keys::kProfileCurrent), 3);
+	CHECK_EQ(obs_data_get_int(filter->settings, core::keys::kCursorStyle), 60);
+	CHECK_EQ(obs_data_get_string(filter->settings, core::keys::kBgImage),
+		 std::string("wallpapers/glacier.jpg"));
+	CHECK_NEAR(obs_data_get_double(filter->settings, core::keys::kBgPaddingX), 64.0, 1e-9);
+	CHECK(obs_data_get_bool(filter->settings, core::keys::kKeysShowSpecial));
+	CHECK_EQ(obs_data_get_string(filter->settings, core::keys::kClickSoundFileLeft),
+		 std::string("sounds/click-soft.wav"));
+	/* Fields absent from the partial slot keep profile D's seed, not zeros. */
+	CHECK_EQ(obs_data_get_int(filter->settings, core::keys::kZoomMode),
+		 static_cast<long long>(core::ZoomMode::Off));
+	CHECK_EQ(obs_data_get_int(filter->settings, core::keys::kClickLeftColor),
+		 static_cast<long long>(0xFF00D6FF));
 
 	ts_filter_source_info.destroy(ctx);
 }

@@ -23,6 +23,7 @@ struct HotkeyContext {
 	/** Activates a profile (0..9) and queues saving into the current profile. */
 	virtual void select_profile(int index) = 0;
 	virtual void save_profile() = 0;
+	virtual void toggle_highlight() = 0;
 
 	/**
 	 * The FilterControl implemented by the same object, when available.

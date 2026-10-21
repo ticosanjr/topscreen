@@ -18,6 +18,8 @@ enum class HighlightMode : int {
 
 struct HighlighterConfig {
 	bool enabled = true;
+	/** Extra, independent of the drag modes: a hotkey toggles a zoom in/out. */
+	bool hotkey_enabled = true;
 	int mode = static_cast<int>(HighlightMode::Box);
 	double hold_ms = 900.0; // time visible after releasing
 	double fade_ms = 300.0; // fade duration

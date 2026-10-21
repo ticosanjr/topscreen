@@ -232,11 +232,12 @@ are ignored and only normal characters remain.
 | **Text shadow** | Dark outline for readability |
 | **Background band / Band color** | Rounded rectangle behind the text and its color |
 
-### Highlighter (left-button action)
+### Highlighter (drag + hotkey)
 
 | Group | Option | What it does |
 |-------|--------|--------------|
 | — | **Enable drag actions** | Master switch for what a left-drag does |
+| — | **Enable hotkey highlight** | Independent extra: assign `TopScreen_ToggleHighlight`. First press zooms at the current cursor; second press releases/returns. It works alongside the drag modes. |
 | — | **What a drag does** | **Filled box** (classic mark) · **Line** (draw freehand, fades out) · **Zoom to the selection** (no drawing) · **Zoom on mouse press** (hold the button, no drag) · **Box + zoom** (marks *and* zooms) · **Line + zoom** (draws freehand *and* zooms) |
 | Look | **Color** | Highlight color (use alpha < 255 for translucent) |
 | Look | **Opacity** | Strength ceiling (0 = invisible, 1 = solid); keeps content readable |
@@ -297,7 +298,7 @@ are ignored and only normal characters remain.
 
 ## 6. Hotkeys
 
-In **Settings → Hotkeys**, search for `TopScreen`: all 18 actions are labelled
+In **Settings → Hotkeys**, search for `TopScreen`: all 19 actions are labelled
 **`TopScreen_...`** (for example `TopScreen_ProfileA — Activate profile A`), so
 they are easy to spot. They are global hotkeys, so they
 act on the **target filter selected in the dock** (or the first active one
@@ -311,6 +312,7 @@ when nothing is selected):
 | **Next preset / Previous preset** | Switch preset |
 | **Activate profile A … J** | Applies the profile (all of its settings) |
 | **Save to current profile** | Writes the adjustments to the active profile |
+| **Toggle highlight** | Independent zoom toggle: first press zooms at the cursor, second press releases/returns (enable it under Highlighter) |
 
 **Linux/Wayland:** global OBS hotkeys may not work outside X11;
 use the hotkeys with OBS focused, or **obs-websocket** to trigger actions.
@@ -340,7 +342,7 @@ and in the dock as well. The dock also has a **Target filter** selector: all doc
 buttons and hotkeys act on the selected TopScreen filter (or the first one when
 nothing is selected).
 
-- **Switching profile applies EVERYTHING immediately** (background, cursor, clicks, zoom, keys…).
+- **Switching profile applies EVERYTHING immediately** (background, cursor, clicks, zoom, keys, click sounds…).
 - **Your changes are saved into the active profile automatically** — no need to
   remember to save (the *Save to profile* button and hotkey exist to force it).
   The auto-save is debounced by ~0.4 s, so dragging a slider does not rewrite
@@ -362,6 +364,9 @@ nothing is selected).
   are **not embedded**.
 - Export includes the edits currently on screen (the active profile is saved
   into the file first).
+- Older or partial files import safely: a missing `current` starts at A,
+  missing slots use their default seed, and missing fields keep that seed's
+  defaults instead of becoming zero.
 
 They already ship with examples, so you can just switch and see the difference:
 
@@ -502,7 +507,7 @@ TOPSCREEN_DEBUG_KEY=Ctrl obs
   for `TopScreen` or `Activate profile`.
 - With several filters, the hotkey acts on the dock's **Target filter**
   (or the first active one when nothing is selected).
-- The log confirms registration: `[TopScreen] hotkeys registered: 18/18`.
+- The log confirms registration: `[TopScreen] hotkeys registered: 19/19`.
 
 **Zoom "jumps" or shakes**
 - Increase **Speed (ms)** and reduce **Intensity**.

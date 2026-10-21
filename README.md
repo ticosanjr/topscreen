@@ -49,7 +49,7 @@ OBS headers. See [`docs/TESTS.md`](docs/TESTS.md).
 ### Quick tests
 
 ```bash
-./tests/run.sh            # Linux: 200 core tests
+./tests/run.sh            # Linux: 201 core tests
 pwsh -File tests\run.ps1  # Windows (or PowerShell on any OS)
 ```
 

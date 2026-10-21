@@ -71,18 +71,33 @@ TEST(profile_bundle_rejects_wrong_markers)
 				   "OtherPlugin")));
 }
 
-TEST(profile_bundle_rejects_missing_or_empty_slots)
+TEST(profile_bundle_accepts_missing_or_empty_slots)
 {
 	std::string text = valid_bundle(0);
 	const std::string slot = "\"profile_slot_4\":{\"effects_enabled\":true},";
 	text.erase(text.find(slot), slot.size());
-	CHECK(rejects(text));
+	ProfileBundleInfo info;
+	std::string error;
+	REQUIRE(profile_bundle_validate(text, &info, &error));
+	CHECK_EQ(info.slot_count, 9);
 
 	text = valid_bundle(0);
 	text.replace(text.find("\"profile_slot_4\":{\"effects_enabled\":true}"),
 		     std::string("\"profile_slot_4\":{\"effects_enabled\":true}").size(),
 		     "\"profile_slot_4\":{}");
-	CHECK(rejects(text));
+	REQUIRE(profile_bundle_validate(text, &info, &error));
+	CHECK_EQ(info.slot_count, 10);
+}
+
+TEST(profile_bundle_defaults_a_missing_current_index)
+{
+	std::string text = valid_bundle(0);
+	text.erase(text.find("\"current\":0,"), std::string("\"current\":0,").size());
+	ProfileBundleInfo info;
+	std::string error;
+	REQUIRE(profile_bundle_validate(text, &info, &error));
+	CHECK_EQ(info.current, 0);
+	CHECK_EQ(info.slot_count, 10);
 }
 
 TEST(profile_bundle_rejects_invalid_current_index)
@@ -93,10 +108,6 @@ TEST(profile_bundle_rejects_invalid_current_index)
 	std::string text = valid_bundle(0);
 	text.replace(text.find("\"current\":0"), std::string("\"current\":0").size(),
 		     "\"current\":1.5");
-	CHECK(rejects(text));
-
-	text = valid_bundle(0);
-	text.erase(text.find("\"current\":0,"), std::string("\"current\":0,").size());
 	CHECK(rejects(text));
 }
 

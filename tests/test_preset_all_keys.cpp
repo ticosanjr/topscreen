@@ -85,6 +85,7 @@ TEST(preset_covers_all_keys)
             "keys_band": false,
             "keys_band_color": 1234,
             "highlight_enabled": false,
+            "highlight_hotkey_enabled": false,
             "highlight_hold_ms": 777,
             "highlight_fade_ms": 222,
             "highlight_color": 12345,
@@ -189,6 +190,7 @@ TEST(preset_covers_all_keys)
 	CHECK_EQ(c.keys.band_color, 1234u);
 
 	CHECK(!c.highlight.enabled);
+	CHECK(!c.highlight.hotkey_enabled);
 	CHECK_NEAR(c.highlight.hold_ms, 777.0, 1e-9);
 	CHECK_NEAR(c.highlight.fade_ms, 222.0, 1e-9);
 	CHECK_EQ(c.highlight.color, 12345u);

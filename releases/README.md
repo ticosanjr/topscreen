@@ -7,6 +7,7 @@ archives are also attached to
 
 | Version | Linux | Windows | Highlights |
 |---------|-------|---------|------------|
+| **0.2.26** | [`topscreen-0.2.26-linux.tar.gz`](topscreen-0.2.26-linux.tar.gz) | [`topscreen-0.2.26-windows.zip`](topscreen-0.2.26-windows.zip) \* | **Click sounds follow the profile** (the persistent player is flushed before a different WAV loads, including profile D), **independent hotkey highlight** (`TopScreen_ToggleHighlight`: first press zooms at the cursor, second returns), and **tolerant profile import/export** (missing `current`, slots and fields load with defaults/seeds across versions) |
 | **0.2.25** | [`topscreen-0.2.25-linux.tar.gz`](topscreen-0.2.25-linux.tar.gz) | [`topscreen-0.2.25-windows.zip`](topscreen-0.2.25-windows.zip) \* | **Fix profile UI synchronization:** switching profiles (or applying presets/importing) now refreshes the Filters dialog, so cursor, wallpaper and click-sound dropdowns show the values actually active in that profile |
 | **0.2.24** | [`topscreen-0.2.24-linux.tar.gz`](topscreen-0.2.24-linux.tar.gz) | [`topscreen-0.2.24-windows.zip`](topscreen-0.2.24-windows.zip) \* | **Transparent wallpaper** as the first wallpaper option (shows the scene below, keeps corners/shadow), **special keys as icons or ignored**, punctuation capture (`@#!?`), text + shadow in **one draw**, 9-tap wallpaper blur, and a persistent `paplay` stream (no process spawn per click) |
 | **0.2.23** | [`topscreen-0.2.23-linux.tar.gz`](topscreen-0.2.23-linux.tar.gz) | [`topscreen-0.2.23-windows.zip`](topscreen-0.2.23-windows.zip) \* | **69 custom cursor styles** (grid atlas, IDs 37–105, searchable `Custom — …` labels), **24 new click sounds**, and **8 new Unsplash wallpapers** (42 total). No source/prefix names (`starter`, `pointer`, `mixkit`) in visible labels |
@@ -39,10 +40,10 @@ archives are also attached to
 4. Restart OBS → add a **Display Capture** → **Filters → + → "TopScreen FX"**.
 
 CI-built Windows packages include the Qt dock: **View → Docks → TopScreen**.
-The 0.2.18–0.2.25 packages were cross-built locally and do **not** include the
+The 0.2.18–0.2.26 packages were cross-built locally and do **not** include the
 dock; the full filter still works normally.
 
-> \* **0.2.7 – 0.2.10, 0.2.18, 0.2.19, 0.2.20, 0.2.21, 0.2.22, 0.2.23, 0.2.24 and 0.2.25 Windows**: built by cross-compiling from Linux
+> \* **0.2.7 – 0.2.10, 0.2.18, 0.2.19, 0.2.20, 0.2.21, 0.2.22, 0.2.23, 0.2.24, 0.2.25 and 0.2.26 Windows**: built by cross-compiling from Linux
 > (`scripts/build-windows-cross.sh`) because the GitHub Actions minutes were
 > blocked. It is the full filter (Properties, hotkeys, presets, profiles,
 > multi-screen fix) but **without the Qt dock**. A CI-built package would include

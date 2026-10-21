@@ -88,6 +88,7 @@ inline constexpr const char *kKeysBand = "keys_band";
 inline constexpr const char *kKeysBandColor = "keys_band_color";
 
 inline constexpr const char *kHighlightEnabled = "highlight_enabled";
+inline constexpr const char *kHighlightHotkeyEnabled = "highlight_hotkey_enabled";
 inline constexpr const char *kHighlightHoldMs = "highlight_hold_ms";
 inline constexpr const char *kHighlightFadeMs = "highlight_fade_ms";
 inline constexpr const char *kHighlightColor = "highlight_color";

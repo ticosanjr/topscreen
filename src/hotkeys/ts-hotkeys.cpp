@@ -48,6 +48,8 @@ const char *hotkey_description(int action)
 		return hotkey_label_or_id(obs_module_text("Hotkey.ProfileJ"), kHotkeyNames[action]);
 	case HK_ProfileSave:
 		return hotkey_label_or_id(obs_module_text("Hotkey.ProfileSave"), kHotkeyNames[action]);
+	case HK_ToggleHighlight:
+		return hotkey_label_or_id(obs_module_text("Hotkey.ToggleHighlight"), kHotkeyNames[action]);
 	default:
 		return "";
 	}
@@ -172,6 +174,9 @@ void ts_hotkey_callback(void *data, obs_hotkey_id id, obs_hotkey_t *key, bool pr
 		break;
 	case HK_ProfileSave:
 		target->save_profile();
+		break;
+	case HK_ToggleHighlight:
+		target->toggle_highlight();
 		break;
 	default:
 		break;

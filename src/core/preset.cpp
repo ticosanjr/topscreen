@@ -181,6 +181,8 @@ bool Preset::apply(Config *cfg, std::string *error) const
 
 	/* Highlighter */
 	cfg->highlight.enabled = read_bool(o, kHighlightEnabled, cfg->highlight.enabled);
+	cfg->highlight.hotkey_enabled =
+		read_bool(o, kHighlightHotkeyEnabled, cfg->highlight.hotkey_enabled);
 	cfg->highlight.hold_ms = read_number(o, kHighlightHoldMs, cfg->highlight.hold_ms);
 	cfg->highlight.fade_ms = read_number(o, kHighlightFadeMs, cfg->highlight.fade_ms);
 	cfg->highlight.color = static_cast<uint32_t>(read_number(o, kHighlightColor, cfg->highlight.color));

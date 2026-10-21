@@ -91,6 +91,7 @@ void config_defaults(obs_data_t *s)
 	obs_data_set_default_int(s, kKeysBandColor, static_cast<long long>(def.keys.band_color));
 
 	obs_data_set_default_bool(s, kHighlightEnabled, def.highlight.enabled);
+	obs_data_set_default_bool(s, kHighlightHotkeyEnabled, def.highlight.hotkey_enabled);
 	obs_data_set_default_double(s, kHighlightHoldMs, def.highlight.hold_ms);
 	obs_data_set_default_double(s, kHighlightFadeMs, def.highlight.fade_ms);
 	obs_data_set_default_int(s, kHighlightColor, static_cast<long long>(def.highlight.color));
@@ -148,9 +149,9 @@ std::string read_string(obs_data_t *s, const char *k, const std::string &d)
 
 } // namespace
 
-void config_load(obs_data_t *s, Config *c)
+void config_load(obs_data_t *s, Config *c, const Config *fallback)
 {
-	const Config d;
+	const Config d = fallback ? *fallback : Config();
 
 	c->effects_enabled = read_bool(s, kEffectsEnabled, d.effects_enabled);
 
@@ -249,6 +250,8 @@ void config_load(obs_data_t *s, Config *c)
 	c->keys.band_color = static_cast<uint32_t>(read_int(s, kKeysBandColor, d.keys.band_color));
 
 	c->highlight.enabled = read_bool(s, kHighlightEnabled, d.highlight.enabled);
+	c->highlight.hotkey_enabled =
+		read_bool(s, kHighlightHotkeyEnabled, d.highlight.hotkey_enabled);
 	c->highlight.hold_ms = read_double(s, kHighlightHoldMs, d.highlight.hold_ms);
 	c->highlight.fade_ms = read_double(s, kHighlightFadeMs, d.highlight.fade_ms);
 	c->highlight.color = static_cast<uint32_t>(read_int(s, kHighlightColor, d.highlight.color));
@@ -349,6 +352,7 @@ void config_store(obs_data_t *s, const Config &c)
 	obs_data_set_int(s, kKeysBandColor, static_cast<long long>(c.keys.band_color));
 
 	obs_data_set_bool(s, kHighlightEnabled, c.highlight.enabled);
+	obs_data_set_bool(s, kHighlightHotkeyEnabled, c.highlight.hotkey_enabled);
 	obs_data_set_double(s, kHighlightHoldMs, c.highlight.hold_ms);
 	obs_data_set_double(s, kHighlightFadeMs, c.highlight.fade_ms);
 	obs_data_set_int(s, kHighlightColor, static_cast<long long>(c.highlight.color));

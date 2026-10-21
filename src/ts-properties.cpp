@@ -349,6 +349,8 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 	 * The mode list below shows/hides the Look / Timing / Zoom groups. */
 	obs_properties_t *hl = obs_properties_create();
 	obs_properties_add_bool(hl, kHighlightEnabled, obs_module_text("Highlight.Enabled"));
+	obs_properties_add_bool(hl, kHighlightHotkeyEnabled,
+				obs_module_text("Highlight.HotkeyEnabled"));
 
 	obs_property_t *hmode = obs_properties_add_list(hl, kHighlightMode,
 							obs_module_text("Highlight.Mode"),

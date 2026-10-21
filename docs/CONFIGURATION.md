@@ -82,6 +82,7 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Background band | `keys_band` | bool | — | `true` |
 | | Band color | `keys_band_color` | color | — | `0x99000000` |
 | Highlighter | Enable drag actions | `highlight_enabled` | bool | — | `true` |
+| | Enable hotkey highlight (toggle zoom) | `highlight_hotkey_enabled` | bool | — | `true` |
 | Look | Drag action: box / line / zoom / press-zoom / box+zoom / line+zoom | `highlight_mode` | int | 0 box, 1 line, 2 zoom, 3 box+zoom, 4 line+zoom, 5 zoom on mouse press | `0` |
 | Look | Color | `highlight_color` | color | — | `0x6600E0FF` |
 | Look | Opacity (0 = invisible) | `highlight_opacity` | double | 0–1 | `0.35` |
@@ -115,7 +116,7 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 {
   "topscreen_profiles": 1,
   "plugin": "TopScreen",
-  "version": "0.2.25",
+  "version": "0.2.26",
   "current": 0,
   "profile_slot_0": { "effects_enabled": true },
   "profile_slot_1": { "effects_enabled": true },
@@ -124,11 +125,13 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 }
 ```
 
-`Import profiles` validates the marker, `current` (0–9) and **all 10 slots**
-before changing anything. Import replaces profiles A–J and activates the
-profile stored in the file. Unknown keys are ignored, so newer backups remain
-readable by older versions. The file contains settings only; custom images and
-sounds are referenced by path and are not embedded.
+`Import profiles` validates the marker and any present slots before changing
+anything. Missing `current` defaults to 0; missing or empty slots use that
+profile's default seed; missing fields keep that seed's defaults. Import
+replaces profiles A–J and activates the stored profile. Unknown keys are
+ignored, so newer/older backups and fields added or removed between versions
+remain readable. The file contains settings only; custom images and sounds are
+referenced by path and are not embedded.
 
 ## Hotkeys
 
@@ -155,6 +158,7 @@ they act on the filter selected in the dock, or the first active one):
 | `TopScreen_ProfileI` | `TopScreen_ProfileI — Activate profile I` |
 | `TopScreen_ProfileJ` | `TopScreen_ProfileJ — Activate profile J` |
 | `TopScreen_ProfileSave` | `TopScreen_ProfileSave — Save to current profile` |
+| `TopScreen_ToggleHighlight` | `TopScreen_ToggleHighlight — Toggle highlight zoom` |
 
 ## Preset format
 

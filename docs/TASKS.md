@@ -39,7 +39,7 @@ Status: ✅ done · 🟡 partial · ⬜ pending.
 
 | ID | Task | Status |
 |----|--------|--------|
-| T2.1 | Hide the parent's native cursor (detect screen capture) and restore it on effects-off/destroy | ✅ |
+| T2.1 | Hide/restore the parent native cursor (effects/cursor-off, destroy, shared across filters) | ✅ |
 | T2.2 | Map global coordinates → canvas (DPI/multi-monitor) | ✅ |
 | T2.3 | Enable/disable the filter cursor | ✅ |
 | T2.4 | Scalable procedural cursor + shadow | ✅ |
@@ -105,7 +105,7 @@ Status: ✅ done · 🟡 partial · ⬜ pending.
 | T7.3 | `uaccess` udev rule + detection in the dock | ✅ (rule ready + log warning) |
 | T7.4 | Graceful degradation + tier report | ✅ (readable tier in the dock + log warnings) |
 | T7.5 | CI: Win + Linux build against OBS | 🟡 (tests CI + header check ✅; plugin build best-effort) |
-| T7.6 | Portable packaging + release | ✅ (packages in `releases/`, published as GitHub Release `v0.3.0`; Windows cross-build without the Qt dock) |
+| T7.6 | Portable packaging + release | ✅ (packages in `releases/`, published as GitHub Release `v0.3.1`; Windows cross-build without the Qt dock) |
 | T7.7 | Final i18n + icon + screenshots | ⬜ |
 | T7.8 | Automated release archive verification (`scripts/verify-release.sh`) | ✅ |
 
@@ -116,7 +116,7 @@ Status: ✅ done · 🟡 partial · ⬜ pending.
 | TD.1 | Full GPL-2.0 license text (`COPYING`) | ✅ |
 | TD.2 | `CONTRIBUTING.md` and PR template | ✅ |
 | TD.3 | Adjust `buildspec.json`/presets for the official CI | ⬜ |
-| TD.4 | Core sanity tests | ✅ (201 core + 40 integration + 37 OBS header files + ASan/UBSan) |
+| TD.4 | Core sanity tests | ✅ (202 core + 44 integration + 37 OBS header files + ASan/UBSan) |
 
 ---
 

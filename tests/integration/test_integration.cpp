@@ -806,6 +806,26 @@ TEST(integration_hotkey_highlight_toggles_zoom)
 	ts_filter_source_info.destroy(ctx);
 }
 
+TEST(integration_hotkey_highlight_ignored_with_effects_off)
+{
+	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
+	obs_source_t *parent = make_parent(1920, 1080);
+	obs_source_t *filter = fakeobs::make_source(&ts_filter_source_info, parent, 0, 0);
+	void *ctx = create_filter(filter);
+	REQUIRE(ctx != nullptr);
+	ts_filter_source_info.video_render(ctx, nullptr);
+
+	FilterControl *ctrl = registry_first();
+	REQUIRE(ctrl != nullptr);
+	ctrl->set_effects_enabled(false);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	ctrl->toggle_highlight();
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK(!ctrl->hotkey_highlight_active());
+
+	ts_filter_source_info.destroy(ctx);
+}
+
 TEST(integration_profile_switch_reloads_click_sounds)
 {
 	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
@@ -846,6 +866,37 @@ TEST(integration_profile_switch_reloads_click_sounds)
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
 	CHECK(ctrl->loaded_sound_path(false).ends_with("sounds/click-hard.wav"));
 	CHECK(ctrl->loaded_sound_path(true).ends_with("sounds/click-glass.wav"));
+
+	ts_filter_source_info.destroy(ctx);
+}
+
+TEST(integration_profile_partial_slot_uses_seed)
+{
+	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
+	obs_source_t *parent = make_parent(1920, 1080);
+	obs_source_t *filter = fakeobs::make_source(&ts_filter_source_info, parent, 0, 0);
+	void *ctx = create_filter(filter);
+	REQUIRE(ctx != nullptr);
+	ts_filter_source_info.video_render(ctx, nullptr);
+
+	/* Legacy/partial slot: only the wallpaper field exists. */
+	obs_data_t *partial = obs_data_create();
+	obs_data_set_string(partial, core::keys::kBgImage, "wallpapers/glacier.jpg");
+	obs_data_set_obj(filter->settings, core::keys::kProfileSlots[3], partial);
+	obs_data_release(partial);
+
+	FilterControl *ctrl = registry_first();
+	REQUIRE(ctrl != nullptr);
+	ctrl->select_profile(3);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+
+	CHECK_EQ(obs_data_get_string(filter->settings, core::keys::kBgImage),
+		 std::string("wallpapers/glacier.jpg"));
+	/* Profile D's seed: zoom off and yellow left click. */
+	CHECK_EQ(obs_data_get_int(filter->settings, core::keys::kZoomMode),
+		 static_cast<long long>(core::ZoomMode::Off));
+	CHECK_EQ(obs_data_get_int(filter->settings, core::keys::kClickLeftColor),
+		 static_cast<long long>(0xFF00D6FF));
 
 	ts_filter_source_info.destroy(ctx);
 }
@@ -1010,6 +1061,59 @@ TEST(integration_keeps_parent_cursor_off_if_it_was_off)
 	CHECK(!obs_data_get_bool(parent->settings, "capture_cursor"));
 	ts_filter_source_info.destroy(ctx);
 	CHECK(!obs_data_get_bool(parent->settings, "capture_cursor"));
+}
+
+TEST(integration_native_cursor_follows_cursor_setting)
+{
+	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
+	obs_source_t *parent = make_parent(1920, 1080);
+	obs_source_t *filter = fakeobs::make_source(&ts_filter_source_info, parent, 0, 0);
+	void *ctx = create_filter(filter);
+	REQUIRE(ctx != nullptr);
+
+	ts_filter_source_info.video_render(ctx, nullptr);
+	CHECK(!obs_data_get_bool(parent->settings, "capture_cursor"));
+
+	/* Effects on, but TopScreen cursor disabled: no own cursor, so restore the
+	 * native one instead of leaving the screen without any cursor. */
+	obs_data_set_bool(filter->settings, core::keys::kCursorEnabled, false);
+	ts_filter_source_info.update(ctx, filter->settings);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	ts_filter_source_info.video_render(ctx, nullptr);
+	CHECK(obs_data_get_bool(parent->settings, "capture_cursor"));
+
+	obs_data_set_bool(filter->settings, core::keys::kCursorEnabled, true);
+	ts_filter_source_info.update(ctx, filter->settings);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	ts_filter_source_info.video_render(ctx, nullptr);
+	CHECK(!obs_data_get_bool(parent->settings, "capture_cursor"));
+
+	ts_filter_source_info.destroy(ctx);
+	CHECK(obs_data_get_bool(parent->settings, "capture_cursor"));
+}
+
+TEST(integration_shared_parent_cursor_refcount)
+{
+	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
+	obs_source_t *parent = make_parent(1920, 1080);
+	obs_source_t *f1 = fakeobs::make_source(&ts_filter_source_info, parent, 0, 0);
+	obs_source_t *f2 = fakeobs::make_source(&ts_filter_source_info, parent, 0, 0);
+	void *ctx1 = create_filter(f1);
+	void *ctx2 = create_filter(f2);
+	REQUIRE(ctx1 != nullptr);
+	REQUIRE(ctx2 != nullptr);
+
+	ts_filter_source_info.video_render(ctx1, nullptr);
+	ts_filter_source_info.video_render(ctx2, nullptr);
+	CHECK(!obs_data_get_bool(parent->settings, "capture_cursor"));
+
+	/* The first filter must not restore the cursor while the second still
+	 * draws its own. */
+	ts_filter_source_info.destroy(ctx1);
+	CHECK(!obs_data_get_bool(parent->settings, "capture_cursor"));
+
+	ts_filter_source_info.destroy(ctx2);
+	CHECK(obs_data_get_bool(parent->settings, "capture_cursor"));
 }
 
 /* Fake parent source that uses "show_cursor" (like Linux's xshm_input). */

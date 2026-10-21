@@ -42,7 +42,8 @@ inline bool read_file_bytes(const char *path, std::vector<uint8_t> *out)
 	return in && !out->empty();
 }
 
-inline bool read_file_text(const char *path, std::string *out)
+inline bool read_file_text(const char *path, std::string *out,
+			   std::size_t max_bytes = 0x04000000)
 {
 	if (!path || !out)
 		return false;
@@ -53,7 +54,7 @@ inline bool read_file_text(const char *path, std::string *out)
 
 	in.seekg(0, std::ios::end);
 	const std::streampos end = in.tellg();
-	if (end < 0 || end > 0x04000000)
+	if (end < 0 || static_cast<std::uintmax_t>(end) > max_bytes)
 		return false;
 	in.seekg(0, std::ios::beg);
 

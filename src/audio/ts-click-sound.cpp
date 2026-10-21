@@ -116,6 +116,7 @@ bool ClickSound::load_slot(Slot *slot, const char *module_file)
 bool ClickSound::load(const char *left_module_file, const char *right_module_file)
 {
 	std::lock_guard<std::mutex> lock(mutex_);
+	reap_children();
 	const bool l = load_slot(&left_, left_module_file);
 	const bool r = load_slot(&right_, right_module_file);
 	loaded_ = l || r;

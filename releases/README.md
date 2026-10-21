@@ -7,6 +7,7 @@ archives are also attached to
 
 | Version | Linux | Windows | Highlights |
 |---------|-------|---------|------------|
+| **0.3.1** | [`topscreen-0.3.1-linux.tar.gz`](topscreen-0.3.1-linux.tar.gz) | [`topscreen-0.3.1-windows.zip`](topscreen-0.3.1-windows.zip) \* | **Cursor correctness:** the native cursor is restored when **Cursor → Enabled** is off and the cursor lease is shared across multiple TopScreen filters on the same capture. The hotkey highlight is a no-op while **Effects enabled** is off, partial legacy profile slots use their seed defaults, the Properties import respects the 4 MB limit, and stale audio processes are reaped on load |
 | **0.3.0** | [`topscreen-0.3.0-linux.tar.gz`](topscreen-0.3.0-linux.tar.gz) | [`topscreen-0.3.0-windows.zip`](topscreen-0.3.0-windows.zip) \* | **Robustness release:** hotkey highlight is truly independent of drag modes (zoom controls visible in every mode, manual zoom/drag clears its state), the capture's **native cursor is restored** when effects are disabled or the filter is removed, click-sound volume no longer restarts the player (PCM scaling), profile partial-slot fallback is covered by tests, and a `scripts/verify-release.sh` validates every archive before publishing |
 | **0.2.26** | [`topscreen-0.2.26-linux.tar.gz`](topscreen-0.2.26-linux.tar.gz) | [`topscreen-0.2.26-windows.zip`](topscreen-0.2.26-windows.zip) \* | **Click sounds follow the profile** (the persistent player is flushed before a different WAV loads, including profile D), **independent hotkey highlight** (`TopScreen_ToggleHighlight`: first press zooms at the cursor, second returns), and **tolerant profile import/export** (missing `current`, slots and fields load with defaults/seeds across versions) |
 | **0.2.25** | [`topscreen-0.2.25-linux.tar.gz`](topscreen-0.2.25-linux.tar.gz) | [`topscreen-0.2.25-windows.zip`](topscreen-0.2.25-windows.zip) \* | **Fix profile UI synchronization:** switching profiles (or applying presets/importing) now refreshes the Filters dialog, so cursor, wallpaper and click-sound dropdowns show the values actually active in that profile |
@@ -41,10 +42,10 @@ archives are also attached to
 4. Restart OBS → add a **Display Capture** → **Filters → + → "TopScreen FX"**.
 
 CI-built Windows packages include the Qt dock: **View → Docks → TopScreen**.
-The 0.2.18–0.3.0 packages were cross-built locally and do **not** include the
+The 0.2.18–0.3.1 packages were cross-built locally and do **not** include the
 dock; the full filter still works normally.
 
-> \* **0.2.7 – 0.2.10, 0.2.18, 0.2.19, 0.2.20, 0.2.21, 0.2.22, 0.2.23, 0.2.24, 0.2.25, 0.2.26 and 0.3.0 Windows**: built by cross-compiling from Linux
+> \* **0.2.7 – 0.2.10, 0.2.18, 0.2.19, 0.2.20, 0.2.21, 0.2.22, 0.2.23, 0.2.24, 0.2.25, 0.2.26, 0.3.0 and 0.3.1 Windows**: built by cross-compiling from Linux
 > (`scripts/build-windows-cross.sh`) because the GitHub Actions minutes were
 > blocked. It is the full filter (Properties, hotkeys, presets, profiles,
 > multi-screen fix) but **without the Qt dock**. A CI-built package would include

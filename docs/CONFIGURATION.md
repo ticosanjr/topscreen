@@ -111,8 +111,10 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 > Highlighter: the hotkey toggle is independent of the drag modes and of the
 > **Enable drag actions** switch. It uses the same Zoom settings above, so the
 > Zoom group stays visible whenever the hotkey is enabled, even in Box/Line
-> mode. With **Zoom direction = out** at 1× there is nothing to zoom out from;
-> use **in** (the default) for the first press.
+> mode. The global **Effects enabled** master still applies: with effects off
+> the hotkey is a no-op (and releases an active gesture). With **Zoom direction
+> = out** at 1× there is nothing to zoom out from; use **in** (the default) for
+> the first press.
 
 ### Profiles backup
 
@@ -122,7 +124,7 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 {
   "topscreen_profiles": 1,
   "plugin": "TopScreen",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "current": 0,
   "profile_slot_0": { "effects_enabled": true },
   "profile_slot_1": { "effects_enabled": true },

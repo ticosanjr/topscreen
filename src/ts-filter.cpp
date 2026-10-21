@@ -24,6 +24,7 @@
 #include <atomic>
 #include <cmath>
 #include <cstring>
+#include <map>
 #include <mutex>
 #include <string>
 
@@ -51,86 +52,112 @@ enum ActionBits : uint32_t {
 	A_TOGGLE_HIGHLIGHT = 1u << 13,
 };
 
-struct ParentCursorState {
-	obs_source_t *parent = nullptr; // borrowed for the lifetime of the filter
-	bool captured = false;
+/* Native cursor ownership is shared by every TopScreen filter attached to the
+ * same capture. Each filter contributes one "hide" want while effects and its
+ * own cursor are enabled; the capture is restored only when the last want goes
+ * away. This avoids one filter restoring the cursor while another still draws
+ * its own. */
+struct CursorEntry {
+	int users = 0;
+	int hidden_wants = 0;
 	bool has[2] = {false, false};
 	bool was[2] = {false, false};
-	bool changed[2] = {false, false};
+	bool logged_missing = false;
 };
 
-/**
- * Captures the parent's original cursor values and hides/restores them.
- *
- * The plugin only restores a key that it actually changed, so a capture that
- * already had its native cursor disabled is left alone.
- */
-void topscreen_sync_parent_cursor(obs_source_t *parent, ParentCursorState *state, bool hide)
-{
-	if (!parent || !state)
-		return;
+std::mutex cursor_mutex;
+std::map<obs_source_t *, CursorEntry> cursor_entries;
 
+const char *const kCursorKeys[] = {"capture_cursor", "show_cursor"};
+
+void capture_cursor_state(obs_source_t *parent, CursorEntry *entry)
+{
 	obs_properties_t *props = obs_source_properties(parent);
 	if (!props)
 		return;
-
-	static const char *const kCursorKeys[] = {"capture_cursor", "show_cursor"};
-
-	if (!state->captured || state->parent != parent) {
-		*state = ParentCursorState{};
-		state->parent = parent;
-		state->captured = true;
-		for (int i = 0; i < 2; ++i)
-			state->has[i] = obs_properties_get(props, kCursorKeys[i]) != nullptr;
-
-		obs_data_t *s = obs_source_get_settings(parent);
-		if (s) {
-			for (int i = 0; i < 2; ++i) {
-				if (state->has[i])
-					state->was[i] = obs_data_get_bool(s, kCursorKeys[i]);
-			}
-			obs_data_release(s);
-		}
-
-		if (!state->has[0] && !state->has[1])
-			blog(LOG_INFO, "[TopScreen] parent source does not expose a native cursor option (%s)",
-			     obs_source_get_name(parent) ? obs_source_get_name(parent) : "?");
-	}
+	for (int i = 0; i < 2; ++i)
+		entry->has[i] = obs_properties_get(props, kCursorKeys[i]) != nullptr;
 	obs_properties_destroy(props);
 
+	obs_data_t *s = obs_source_get_settings(parent);
+	if (s) {
+		for (int i = 0; i < 2; ++i) {
+			if (entry->has[i])
+				entry->was[i] = obs_data_get_bool(s, kCursorKeys[i]);
+		}
+		obs_data_release(s);
+	}
+
+	if (!entry->has[0] && !entry->has[1] && !entry->logged_missing) {
+		entry->logged_missing = true;
+		blog(LOG_INFO, "[TopScreen] parent source does not expose a native cursor option (%s)",
+		     obs_source_get_name(parent) ? obs_source_get_name(parent) : "?");
+	}
+}
+
+void apply_cursor_state(obs_source_t *parent, CursorEntry *entry)
+{
 	obs_data_t *s = obs_source_get_settings(parent);
 	if (!s)
 		return;
 
+	const bool hide = entry->hidden_wants > 0;
 	bool changed = false;
 	for (int i = 0; i < 2; ++i) {
-		if (!state->has[i])
+		if (!entry->has[i])
 			continue;
+		const bool want = hide ? false : entry->was[i];
 		const bool current = obs_data_get_bool(s, kCursorKeys[i]);
-		if (hide) {
-			if (current) {
-				obs_data_set_bool(s, kCursorKeys[i], false);
-				changed = true;
-				if (!state->changed[i]) {
-					state->was[i] = current;
-					state->changed[i] = true;
-					blog(LOG_INFO, "[TopScreen] capture native cursor disabled (%s, was %s)",
-					     kCursorKeys[i], current ? "on" : "off");
-				}
-			}
-		} else if (state->changed[i]) {
-			if (current != state->was[i]) {
-				obs_data_set_bool(s, kCursorKeys[i], state->was[i]);
-				changed = true;
-			}
-			state->changed[i] = false;
-			blog(LOG_INFO, "[TopScreen] capture native cursor restored (%s, %s)",
-			     kCursorKeys[i], state->was[i] ? "on" : "off");
-		}
+		if (current == want)
+			continue;
+		obs_data_set_bool(s, kCursorKeys[i], want);
+		changed = true;
+		blog(LOG_INFO, "[TopScreen] capture native cursor %s (%s, was %s)",
+		     want ? "restored" : "disabled", kCursorKeys[i], current ? "on" : "off");
 	}
 	if (changed)
 		obs_source_update(parent, s);
 	obs_data_release(s);
+}
+
+void acquire_parent_cursor(obs_source_t *parent)
+{
+	std::lock_guard<std::mutex> lock(cursor_mutex);
+	CursorEntry &entry = cursor_entries[parent];
+	if (entry.users++ == 0)
+		capture_cursor_state(parent, &entry);
+}
+
+void set_parent_cursor_wanted(obs_source_t *parent, bool hide)
+{
+	std::lock_guard<std::mutex> lock(cursor_mutex);
+	auto it = cursor_entries.find(parent);
+	if (it == cursor_entries.end())
+		return;
+	CursorEntry &entry = it->second;
+	if (hide)
+		++entry.hidden_wants;
+	else if (entry.hidden_wants > 0)
+		--entry.hidden_wants;
+	apply_cursor_state(parent, &entry);
+}
+
+void release_parent_cursor(obs_source_t *parent, bool was_hiding)
+{
+	std::lock_guard<std::mutex> lock(cursor_mutex);
+	auto it = cursor_entries.find(parent);
+	if (it == cursor_entries.end())
+		return;
+	CursorEntry &entry = it->second;
+	if (was_hiding && entry.hidden_wants > 0)
+		--entry.hidden_wants;
+	if (entry.users > 0)
+		--entry.users;
+	if (entry.users == 0) {
+		entry.hidden_wants = 0;
+		apply_cursor_state(parent, &entry);
+		cursor_entries.erase(it);
+	}
 }
 
 /**
@@ -162,11 +189,11 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 	uint32_t target_h = 0;
 	double time_ms = 0.0;
 	bool loaded = false;
-	bool parent_cursor_checked = false;
-	bool parent_cursor_hidden = false;
+	obs_source_t *cursor_parent_ = nullptr; // parent that owns the cursor lease
+	bool cursor_acquired_ = false;
+	bool cursor_hiding_ = false;
 	bool prev_left = false;
 	std::atomic<bool> hotkey_highlight_active_{false};
-	ParentCursorState parent_cursor_;
 
 	int current_profile_ = 0;
 	int last_profile = -1;
@@ -322,7 +349,10 @@ void ts_filter_ctx::apply_profile(int index)
 	obs_data_t *s = obs_source_get_settings(source);
 	obs_data_t *p = obs_data_get_obj(s, kProfileSlots[index]);
 	if (p) {
-		config_load(p, &cfg);
+		/* Old/partial slots: fields absent from the slot keep that profile's
+		 * seed instead of falling back to the global defaults. */
+		const core::Config seed = core::make_profile_seed(index);
+		config_load(p, &cfg, &seed);
 		obs_data_release(p);
 	} else {
 		/* Empty slot (legacy source): capture the current state instead of doing
@@ -555,17 +585,33 @@ void ts_filter_ctx::refresh_monitor_origin(bool force)
 void ts_filter_ctx::sync_parent_cursor(bool hide)
 {
 	obs_source_t *parent = obs_filter_get_parent(source);
-	if (parent)
-		topscreen_sync_parent_cursor(parent, &parent_cursor_, hide);
+
+	if (parent != cursor_parent_) {
+		if (cursor_parent_ && cursor_acquired_)
+			release_parent_cursor(cursor_parent_, cursor_hiding_);
+		cursor_parent_ = parent;
+		cursor_acquired_ = false;
+		cursor_hiding_ = false;
+		if (parent) {
+			acquire_parent_cursor(parent);
+			cursor_acquired_ = true;
+		}
+	}
+
+	if (!cursor_acquired_ || hide == cursor_hiding_)
+		return;
+	set_parent_cursor_wanted(cursor_parent_, hide);
+	cursor_hiding_ = hide;
 }
 
 void ts_filter_ctx::restore_parent_cursor()
 {
-	if (!parent_cursor_.captured)
-		return;
 	obs_source_t *parent = obs_filter_get_parent(source);
-	if (parent && parent == parent_cursor_.parent)
-		topscreen_sync_parent_cursor(parent, &parent_cursor_, false);
+	if (parent && parent == cursor_parent_ && cursor_acquired_)
+		release_parent_cursor(cursor_parent_, cursor_hiding_);
+	cursor_parent_ = nullptr;
+	cursor_acquired_ = false;
+	cursor_hiding_ = false;
 }
 
 /**
@@ -609,7 +655,8 @@ void ts_filter_ctx::reconfigure_models()
 	clicks.set_right(cfg.click_right);
 	keys.configure(cfg.keys);
 	highlight.configure(cfg.highlight);
-	if (hotkey_highlight_active_.load() && !cfg.highlight.hotkey_enabled) {
+	if (hotkey_highlight_active_.load() &&
+	    (!cfg.effects_enabled || !cfg.highlight.hotkey_enabled)) {
 		zoom.spot_release(time_ms);
 		hotkey_highlight_active_.store(false);
 	}
@@ -735,7 +782,7 @@ void ts_filter_ctx::process_actions()
 		}
 	}
 	if (act & A_TOGGLE_HIGHLIGHT) {
-		if (!cfg.highlight.hotkey_enabled) {
+		if (!cfg.effects_enabled || !cfg.highlight.hotkey_enabled) {
 			if (hotkey_highlight_active_.load()) {
 				zoom.spot_release(time_ms);
 				hotkey_highlight_active_.store(false);
@@ -999,13 +1046,9 @@ void ts_filter_render(void *data, gs_effect_t *effect)
 		ctx->target_h = obs_source_get_base_height(target);
 	}
 
-	/* The capture's native cursor follows the master switch: hidden while the
-	 * TopScreen cursor is drawn, restored when effects are turned off. */
-	if (!ctx->parent_cursor_checked || ctx->parent_cursor_hidden != ctx->cfg.effects_enabled) {
-		ctx->parent_cursor_checked = true;
-		ctx->parent_cursor_hidden = ctx->cfg.effects_enabled;
-		ctx->sync_parent_cursor(ctx->cfg.effects_enabled);
-	}
+	/* The capture's native cursor follows the master switch and the TopScreen
+	 * cursor setting: hidden only while TopScreen actually draws its own. */
+	ctx->sync_parent_cursor(ctx->cfg.effects_enabled && ctx->cfg.cursor.enabled);
 
 	ctx->compositor.render(ctx->source, ctx->cfg, ctx->frame);
 }
@@ -1062,7 +1105,7 @@ bool profiles_import_from_properties(void *filter)
 	}
 
 	std::string text;
-	if (!core::read_file_text(path.c_str(), &text)) {
+	if (!core::read_file_text(path.c_str(), &text, core::kMaxProfileBundleBytes)) {
 		blog(LOG_WARNING, "[TopScreen] profiles import: could not read %s", path.c_str());
 		return false;
 	}

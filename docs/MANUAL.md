@@ -59,10 +59,11 @@ The **Effects enabled** (top of Properties) is the "master": it turns everything
 off at once (useful as push-to-talk for effects).
 
 ### Own cursor
-When the effects are enabled, TopScreen **turns off the native cursor of the
-capture** and draws its own, smoothed and scalable. That is why you see **a
-single cursor**. Turning **Effects enabled** off (or removing the filter)
-restores the capture's original cursor setting.
+When the effects are enabled **and Cursor → Enabled is on**, TopScreen turns off
+the native cursor of the capture and draws its own, smoothed and scalable. That
+is why you see **a single cursor**. Turning **Effects enabled** off, turning the
+TopScreen cursor off, or removing the filter restores the capture's original
+cursor setting.
 
 ### Coordinates
 The effects work over the **captured area**. The cursor is mapped from the mouse
@@ -541,12 +542,16 @@ Yes: hotkey **Enable/disable background**.
 - It uses the highlighter Zoom settings. With **Zoom direction = out** at 1×
   there is nothing to zoom out from; use **in** (default) or zoom in once
   manually before pressing.
+- The global **Effects enabled** master must be on; with effects off the hotkey
+  does nothing.
 - Manual zoom and a left-button drag take over the zoom and clear the toggle;
   press the hotkey again to start a new one.
 
-**I turned effects off and now there is no cursor**
-- Fixed in **0.3.0**: TopScreen restores the capture's original native cursor
-  when **Effects enabled** is off and when the filter is removed.
+**I turned effects off (or the cursor off) and now there is no cursor**
+- TopScreen restores the capture's original native cursor when **Effects
+  enabled** is off, when **Cursor → Enabled** is off, and when the filter is
+  removed. The "effects off" case was fixed in **0.3.0**; the cursor-off case
+  and multiple filters sharing a capture were fixed in **0.3.1**.
 
 **Windows: do I need admin?**
 No, the default installer uses the per-user plugins folder.

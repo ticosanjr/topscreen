@@ -31,3 +31,21 @@ TEST(file_read_write_with_utf8_name)
 
 	std::filesystem::remove(path);
 }
+
+TEST(file_text_respects_size_limit)
+{
+	const std::filesystem::path path =
+		std::filesystem::temp_directory_path() / "topscreen-size-limit.txt";
+	{
+		std::ofstream out(path, std::ios::binary);
+		REQUIRE(static_cast<bool>(out));
+		out << "hello";
+	}
+
+	std::string text;
+	CHECK(!read_file_text(path.string().c_str(), &text, 4));
+	CHECK(read_file_text(path.string().c_str(), &text, 5));
+	CHECK_EQ(text, std::string("hello"));
+
+	std::filesystem::remove(path);
+}

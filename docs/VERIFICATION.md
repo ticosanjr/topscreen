@@ -39,7 +39,7 @@ Add a **Display Capture** and the **TopScreen FX** filter. Then:
 | 14 | Presets (hotkey) | next/previous switch the look |
 | 15 | Profiles | switching A–J also reloads the click sounds (test A vs. D with different WAVs) |
 | 16 | Profile import | an older/partial `.json` imports with defaults instead of failing |
-| 17 | Effects off / filter removed | the capture's native cursor comes back (no missing cursor) |
+| 17 | Effects off / cursor off / filter removed | the capture's native cursor comes back; with two TopScreen filters on the same capture it only returns after the last one releases it |
 | 18 | Dock | reflects the state and shows the input tier |
 
 ## 3. Hotkeys

@@ -30,6 +30,7 @@ char g_texture_dummy = 0;
 char g_vertex_dummy = 0;
 
 int g_draw_calls = 0;
+int g_property_updates = 0;
 int g_sprite_draw_calls = 0;
 int g_render_starts = 0;
 bool g_fail_vertex_buffers = false;
@@ -144,6 +145,16 @@ int graphics_sprite_draw_calls()
 int graphics_render_starts()
 {
 	return g_render_starts;
+}
+
+void reset_property_update_calls()
+{
+	g_property_updates = 0;
+}
+
+int property_update_calls()
+{
+	return g_property_updates;
 }
 
 void set_fail_vertex_buffers(bool fail)
@@ -484,6 +495,11 @@ bool obs_data_save_json_pretty_safe(obs_data_t *data, const char *file, const ch
 obs_data_t *obs_source_get_settings(const obs_source_t *source)
 {
 	return source ? source->settings : nullptr;
+}
+
+void obs_source_update_properties(obs_source_t *)
+{
+	++g_property_updates;
 }
 
 void obs_source_update(obs_source_t *source, obs_data_t *settings)

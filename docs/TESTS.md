@@ -97,7 +97,7 @@ That is where all the math and the state logic live — what actually must be ri
 
 ```
 200 tests | 5145 checks | 0 failures   (core)
-33 tests | 443 checks   | 0 failures   (integration with fake libobs)
+34 tests | 448 checks   | 0 failures   (integration with fake libobs)
 ```
 
 ## What the integration layer covers
@@ -108,7 +108,7 @@ fake libobs:
 
 | File | Coverage |
 |------|----------|
-| `test_integration.cpp` | filter lifecycle (create/tick/render/destroy), preset apply, background toggle, all 18 hotkeys, native-cursor shutdown on the parent, profiles (save/switch/seeds/list/auto-save/restart/export-import round-trip), **dock target selection (hotkeys follow it)** and **debounced auto-save with flush** |
+| `test_integration.cpp` | filter lifecycle (create/tick/render/destroy), preset apply, background toggle, all 18 hotkeys, native-cursor shutdown on the parent, profiles (save/switch/seeds/list/auto-save/restart/export-import round-trip), **Properties refresh after profile/preset changes**, **dock target selection (hotkeys follow it)** and **debounced auto-save with flush** |
 | `test_integration.cpp` hotkeys | `integration_registers_all_hotkeys` covers every hotkey id/name/callback; `integration_hotkeys_shared_between_filters` proves one process-wide set shared across filters; `integration_registry_target_selection` proves selection routing/fallback |
 | `test_uniforms.cpp` | every uniform declared by `topscreen.effect` is uploaded on a plain frame (D3D11 aborts the draw otherwise) |
 | `test_text_render.cpp` | key-overlay text batches all glyphs + shadow quads into one vertex buffer (**1 draw total**, cache hit without rebuild) and falls back to per-glyph sprites if vertex-buffer creation fails |

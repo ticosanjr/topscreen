@@ -163,6 +163,7 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 	std::atomic<int> profile_io_result_{0};
 
 	void push_settings();
+	void refresh_properties();
 	void reconfigure_models();
 	void request_preset(int index);
 	void apply_profile(int index);
@@ -251,6 +252,17 @@ void ts_filter_ctx::push_settings()
 	 * cheap) and keeps the scene-collection state in sync. */
 	obs_source_update(source, s);
 	obs_data_release(s);
+}
+
+void ts_filter_ctx::refresh_properties()
+{
+	/* OBS keeps the Filters dialog widgets alive; changing settings from the
+	 * video thread does not update their current selection. This signal makes
+	 * OBS rebuild the view, so cursor/wallpaper/sound dropdowns show the
+	 * profile that is actually active. Only call it for bulk changes
+	 * (profile/preset/import), never for every slider tick. */
+	if (source)
+		obs_source_update_properties(source);
 }
 
 void ts_filter_ctx::apply_profile(int index)
@@ -398,6 +410,7 @@ void ts_filter_ctx::do_import_profiles(const std::string &json_text)
 	apply_profile(info.current);
 	reconfigure_models();
 	push_settings();
+	refresh_properties();
 
 	profile_io_result_.store(3);
 	blog(LOG_INFO, "[TopScreen] profiles imported: %d/%d, current=%s", info.slot_count,
@@ -527,6 +540,7 @@ void ts_filter_ctx::request_preset(int index)
 
 	reconfigure_models();
 	push_settings();
+	refresh_properties();
 	mark_profile_dirty();
 	blog(LOG_INFO, "[TopScreen] preset applied: %s", presets.name(index).c_str());
 }
@@ -554,6 +568,7 @@ void ts_filter_ctx::reload_from_settings()
 		apply_profile(current_profile_);
 		reconfigure_models();
 		push_settings();
+		refresh_properties();
 		blog(LOG_INFO, "[TopScreen] profile activated: %s", core::profile_label(current_profile_));
 		return;
 	}
@@ -625,6 +640,7 @@ void ts_filter_ctx::process_actions()
 			apply_profile(i);
 			reconfigure_models();
 			push_settings();
+			refresh_properties();
 			blog(LOG_INFO, "[TopScreen] profile activated: %s", core::profile_label(i));
 		}
 	}

@@ -91,4 +91,8 @@ int graphics_render_starts();
 /** Makes gs_render_save() fail, exercising the per-glyph fallback. */
 void set_fail_vertex_buffers(bool fail);
 
+/* ---- properties refresh counter (profile/preset UI synchronization) ---- */
+void reset_property_update_calls();
+int property_update_calls();
+
 } // namespace fakeobs

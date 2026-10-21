@@ -73,7 +73,7 @@ the archives in `releases/` carry the same bytes.
 | Platform | Build environment |
 |----------|-------------------|
 | Linux | `ubuntu-24.04` + distro `libobs-dev` 30.0.2, `obs-frontend-api` and Qt6 (dock included) |
-| Windows | official OBS **sources** of the same version as the runtime (headers) + import libraries generated from `obs.dll` and `obs-frontend-api.dll`, plus Qt6 from obs-deps: CI-built packages include the **Qt dock** like Linux; local cross-builds (0.2.18–0.2.24) do not |
+| Windows | official OBS **sources** of the same version as the runtime (headers) + import libraries generated from `obs.dll` and `obs-frontend-api.dll`, plus Qt6 from obs-deps: CI-built packages include the **Qt dock** like Linux; local cross-builds (0.2.18–0.2.25) do not |
 
 You can also run it by hand (**Actions → Release → Run workflow**) to get the
 archives as artifacts without publishing a release.

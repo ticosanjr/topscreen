@@ -703,6 +703,44 @@ TEST(integration_profile_from_list_restores_everything)
 	CHECK(registry_first() == nullptr);
 }
 
+/* Profile/preset changes replace many widgets at once. OBS does not refresh
+ * the Filters dialog on obs_source_update(), so the plugin must emit
+ * update_properties or the cursor/wallpaper/sound dropdowns show stale values
+ * from the profile that was active before. */
+TEST(integration_profile_switch_refreshes_properties)
+{
+	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
+
+	obs_source_t *parent = make_parent(1920, 1080);
+	obs_source_t *filter = fakeobs::make_source(&ts_filter_source_info, parent, 0, 0);
+	void *ctx = create_filter(filter);
+	REQUIRE(ctx != nullptr);
+	ts_filter_source_info.video_render(ctx, nullptr);
+
+	FilterControl *ctrl = registry_first();
+	REQUIRE(ctrl != nullptr);
+
+	/* Dock/hotkey path. */
+	fakeobs::reset_property_update_calls();
+	ctrl->select_profile(1);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK(fakeobs::property_update_calls() > 0);
+
+	/* Properties profile-list path. */
+	fakeobs::reset_property_update_calls();
+	set_profile_from_properties(filter, ctx, 2);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK(fakeobs::property_update_calls() > 0);
+
+	/* Preset changes also replace multiple assets/widgets. */
+	fakeobs::reset_property_update_calls();
+	ctrl->apply_preset(0);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK(fakeobs::property_update_calls() > 0);
+
+	ts_filter_source_info.destroy(ctx);
+}
+
 TEST(integration_profile_keeps_user_edit)
 {
 	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);

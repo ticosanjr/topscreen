@@ -204,6 +204,8 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 	obs_property_t *wp = obs_properties_add_list(bg, kBgImage, obs_module_text("Background.Image"),
 						     OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
 	obs_property_set_modified_callback(wp, wallpaper_modified);
+	obs_property_list_add_string(wp, obs_module_text("Background.Image.Transparent"),
+				     kTransparentWallpaper);
 	obs_property_list_add_string(wp, obs_module_text("Background.Image.None"), "");
 	for (const auto &entry : kWallpapers)
 		obs_property_list_add_string(wp, entry.name, entry.path);
@@ -325,6 +327,7 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 	obs_properties_t *keys = obs_properties_create();
 	obs_properties_add_bool(keys, kKeysEnabled, obs_module_text("Keys.Enabled"));
 	obs_properties_add_bool(keys, kKeysModifiersOnly, obs_module_text("Keys.ModifiersOnly"));
+	obs_properties_add_bool(keys, kKeysShowSpecial, obs_module_text("Keys.ShowSpecial"));
 	obs_properties_add_float_slider(keys, kKeysTtlMs, obs_module_text("Keys.TtlMs"), 500.0, 8000.0, 50.0);
 	obs_properties_add_int_slider(keys, kKeysMax, obs_module_text("Keys.Max"), 1, 12, 1);
 	obs_properties_add_float_slider(keys, kKeysPosX, obs_module_text("Keys.PosX"), 0.0, 1.0, 0.01);

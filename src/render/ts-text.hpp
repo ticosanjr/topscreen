@@ -65,6 +65,7 @@ private:
 	std::vector<const core::Glyph *> layout_glyphs_;
 	std::array<Run, kMaxLabels> runs_{};
 	int run_count_ = 0;
+	bool geometry_with_shadow_ = false;
 
 	/* All glyph quads for the current text, in font units. */
 	gs_vertbuffer_t *glyph_vb_ = nullptr;

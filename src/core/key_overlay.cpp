@@ -22,6 +22,19 @@ std::string format_combo(const std::vector<std::string> &modifiers, const std::s
 	return out;
 }
 
+bool is_special_key_label(std::string_view label)
+{
+	static constexpr std::string_view kSpecial[] = {
+		"Space", "Backspace", "Enter", "Tab", "Esc", "Del", "Delete",
+		"Left",  "Right",     "Up",    "Down", "Shift", "Ctrl", "Alt", "Win",
+	};
+	for (std::string_view s : kSpecial) {
+		if (label == s)
+			return true;
+	}
+	return false;
+}
+
 void KeyOverlayModel::configure(const KeyOverlayConfig &cfg)
 {
 	cfg_ = cfg;
@@ -39,8 +52,12 @@ void KeyOverlayModel::press(std::string_view label, bool is_modifier, double now
 {
 	if (!cfg_.enabled || label.empty())
 		return;
-	if (cfg_.modifiers_only && !is_modifier)
+	if (cfg_.modifiers_only) {
+		if (!is_modifier)
+			return;
+	} else if (!cfg_.show_special && is_special_key_label(label)) {
 		return;
+	}
 
 	/* Every keystroke is appended as its own entry (repeats included), so
 	 * what you typed is what you see. Each letter expires on its own TTL. */

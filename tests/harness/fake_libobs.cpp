@@ -776,6 +776,7 @@ void gs_draw_sprite_subregion(gs_texture_t *, uint32_t, uint32_t, uint32_t, uint
 void gs_render_start(bool) { ++g_render_starts; }
 void gs_vertex2f(float, float) {}
 void gs_texcoord(float, float, int) {}
+void gs_color4v(const struct vec4 *) {}
 
 gs_vertbuffer_t *gs_render_save()
 {

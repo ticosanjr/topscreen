@@ -21,6 +21,7 @@ uniform float4 bg_b;
 uniform float  bg_mode;       // 0 solid, 1 vertical, 2 diagonal, 3 image
 uniform texture2d bg_tex;     // wallpaper
 uniform float  bg_tex_enabled;
+uniform float  bg_transparent; // 1 = transparent outside the floating screen
 uniform float  bg_tex_aspect; // image w/h
 uniform float  bg_keep_aspect;
 uniform float  bg_blur;       // wallpaper blur (px)
@@ -267,9 +268,12 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 	float  radius       = min(corner_radius, min(content_half.x, content_half.y));
 	radius              = max(radius, 0.0);
 
-	// Background: image (if present) takes priority over color/gradient
+	// Background: image (if present) takes priority over color/gradient.
+	// Transparent mode ignores both and clears the frame outside the screen.
 	float4 col = bg_a;
-	if (bg_tex_enabled > 0.5) {
+	if (bg_transparent > 0.5) {
+		col = float4(0.0, 0.0, 0.0, 0.0);
+	} else if (bg_tex_enabled > 0.5) {
 		float at = target_size.x / max(target_size.y, 1.0);
 		float ai = max(bg_tex_aspect, 0.0001);
 		float2 sc = float2(1.0, 1.0);
@@ -280,32 +284,26 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 		float2 buv = (vert_in.uv - 0.5) * sc + 0.5;
 
 		if (bg_blur > 0.01 && bg_blur_type > 0.5) {
-			// 13 samples (2 rings); weights and radius vary by type
+			// 9 samples (center + cross + diagonals). The previous version
+			// used 13 taps; dropping the half-radius ring halves the extra
+			// memory bandwidth with no visible difference at 1080p/4K.
 			float rmul = 2.0;
-			float w0 = 0.20, w1 = 0.10, w2 = 0.075, wd = 0.025; // soft (box)
-			if (bg_blur_type >= 1.5) {
-				w0 = 0.30; w1 = 0.10; w2 = 0.055; wd = 0.02;   // gaussian
-			}
-			if (bg_blur_type >= 2.5) {
-				rmul = 3.2; w0 = 0.24; w1 = 0.115; w2 = 0.055; wd = 0.02; // creamy
-			}
+			if (bg_blur_type >= 1.5)
+				rmul = 2.6;
+			if (bg_blur_type >= 2.5)
+				rmul = 3.2;
 
 			float2 o = (bg_blur * rmul) / max(target_size, float2(1.0, 1.0));
-			float2 h = o * 0.5;
 
-			col = bg_tex.Sample(def_sampler, buv) * w0;
-			col += bg_tex.Sample(def_sampler, buv + float2(h.x, 0.0)) * w1;
-			col += bg_tex.Sample(def_sampler, buv - float2(h.x, 0.0)) * w1;
-			col += bg_tex.Sample(def_sampler, buv + float2(0.0, h.y)) * w1;
-			col += bg_tex.Sample(def_sampler, buv - float2(0.0, h.y)) * w1;
-			col += bg_tex.Sample(def_sampler, buv + float2(o.x, 0.0)) * w2;
-			col += bg_tex.Sample(def_sampler, buv - float2(o.x, 0.0)) * w2;
-			col += bg_tex.Sample(def_sampler, buv + float2(0.0, o.y)) * w2;
-			col += bg_tex.Sample(def_sampler, buv - float2(0.0, o.y)) * w2;
-			col += bg_tex.Sample(def_sampler, buv + o) * wd;
-			col += bg_tex.Sample(def_sampler, buv - o) * wd;
-			col += bg_tex.Sample(def_sampler, buv + float2(o.x, -o.y)) * wd;
-			col += bg_tex.Sample(def_sampler, buv - float2(o.x, -o.y)) * wd;
+			col = bg_tex.Sample(def_sampler, buv) * 0.25;
+			col += bg_tex.Sample(def_sampler, buv + float2(o.x, 0.0)) * 0.125;
+			col += bg_tex.Sample(def_sampler, buv - float2(o.x, 0.0)) * 0.125;
+			col += bg_tex.Sample(def_sampler, buv + float2(0.0, o.y)) * 0.125;
+			col += bg_tex.Sample(def_sampler, buv - float2(0.0, o.y)) * 0.125;
+			col += bg_tex.Sample(def_sampler, buv + o) * 0.0625;
+			col += bg_tex.Sample(def_sampler, buv - o) * 0.0625;
+			col += bg_tex.Sample(def_sampler, buv + float2(o.x, -o.y)) * 0.0625;
+			col += bg_tex.Sample(def_sampler, buv - float2(o.x, -o.y)) * 0.0625;
 		} else {
 			col = bg_tex.Sample(def_sampler, buv);
 		}
@@ -320,7 +318,10 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 		float2 sp = p - shadow_offset;
 		float  ds = sd_round_box(sp, content_half + shadow_blur, radius + shadow_blur);
 		float  s  = 1.0 - smoothstep(-shadow_blur, shadow_blur, ds);
-		col.rgb   = lerp(col.rgb, float3(0.0, 0.0, 0.0), s * shadow_alpha);
+		if (bg_transparent > 0.5)
+			col = float4(0.0, 0.0, 0.0, max(col.a, s * shadow_alpha));
+		else
+			col.rgb = lerp(col.rgb, float3(0.0, 0.0, 0.0), s * shadow_alpha);
 	}
 
 	// Content: corner mask with anti-aliasing
@@ -344,7 +345,10 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 			screen = image.Sample(def_sampler, uv_screen);
 		}
 
-		col = lerp(col, screen, mask);
+		if (bg_transparent > 0.5)
+			col = float4(screen.rgb, mask * screen.a);
+		else
+			col = lerp(col, screen, mask);
 
 		// Click effects (4 explicit slots)
 		if (click_count > 0.5)
@@ -534,9 +538,10 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 		}
 	}
 
-	// Force an opaque frame: this filter replaces the source's output, so alpha
-	// here must never make the source vanish.
-	col.a = 1.0;
+	// Normal backgrounds replace the source output with an opaque frame.
+	// Transparent mode lets the scene below show through the padding.
+	if (bg_transparent < 0.5)
+		col.a = 1.0;
 	return col;
 }
 

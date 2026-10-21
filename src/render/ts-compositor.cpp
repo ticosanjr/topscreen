@@ -176,6 +176,7 @@ void Compositor::cache_params()
 	p_bg_tex_ = P("bg_tex");
 	p_bg_tex_enabled_ = P("bg_tex_enabled");
 	p_bg_tex_aspect_ = P("bg_tex_aspect");
+	p_bg_transparent_ = P("bg_transparent");
 	p_bg_keep_aspect_ = P("bg_keep_aspect");
 	p_bg_blur_ = P("bg_blur");
 	p_bg_blur_type_ = P("bg_blur_type");
@@ -354,7 +355,7 @@ void Compositor::release()
 	effect_ = nullptr;
 	p_target_size_ = p_pad_ = p_radius_ = p_zoom_ = p_focus_ = nullptr;
 	p_bg_a_ = p_bg_b_ = p_bg_mode_ = nullptr;
-	p_bg_tex_ = p_bg_tex_enabled_ = p_bg_tex_aspect_ = nullptr;
+	p_bg_tex_ = p_bg_tex_enabled_ = p_bg_tex_aspect_ = p_bg_transparent_ = nullptr;
 	p_bg_keep_aspect_ = nullptr;
 	p_bg_blur_ = nullptr;
 	p_bg_blur_type_ = nullptr;
@@ -427,9 +428,12 @@ void Compositor::render(obs_source_t *filter, const core::Config &cfg, const Fra
 
 	/* Wallpaper: if there is an image (from the PC or built-in), it is used.
 	 * The path is passed as a C string so the hot path does not allocate. */
-	load_bg_image(active ? core::resolve_bg_path(cfg.bg.image.c_str(), cfg.bg.image_file.c_str())
-			     : "");
-	const bool bgimg = bg && bg_tex_ != nullptr;
+	const bool bg_transparent = bg && wallpaper_is_transparent(cfg.bg.image.c_str());
+	load_bg_image(active && !bg_transparent
+			      ? core::resolve_bg_path(cfg.bg.image.c_str(), cfg.bg.image_file.c_str())
+			      : "");
+	const bool bgimg = bg && !bg_transparent && bg_tex_ != nullptr;
+	set_f(p_bg_transparent_, bg_transparent ? 1.0f : 0.0f);
 	/* D3D11 aborts the draw ("Not all shader parameters were set") when any
 	 * scalar uniform was never uploaded, leaving the frame empty, so every
 	 * uniform below is uploaded on EVERY frame, even with the feature off.

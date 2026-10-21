@@ -96,6 +96,61 @@ TEST(key_modifiers_only_filters)
 	CHECK_EQ(m.active_count(), 1);
 }
 
+TEST(key_special_keys_can_be_ignored)
+{
+	KeyOverlayModel m;
+	KeyOverlayConfig cfg;
+	cfg.show_special = false;
+	m.configure(cfg);
+
+	m.press("A", false, 0.0);
+	m.press("1", false, 0.0);
+	m.press("@", false, 0.0);
+	m.press("Space", false, 0.0);
+	m.press("Left", false, 0.0);
+	m.press("Ctrl", true, 0.0);
+	CHECK_EQ(m.active_count(), 3);
+
+	m.press("Esc", false, 0.0);
+	CHECK_EQ(m.active_count(), 3);
+
+	KeyRender out[8];
+	const int n = m.collect(0.0, out, 8);
+	REQUIRE(n == 3);
+	CHECK_EQ(out[0].label.view(), std::string_view("A"));
+	CHECK_EQ(out[1].label.view(), std::string_view("1"));
+	CHECK_EQ(out[2].label.view(), std::string_view("@"));
+}
+
+TEST(key_modifiers_only_wins_over_special_filter)
+{
+	KeyOverlayModel m;
+	KeyOverlayConfig cfg;
+	cfg.modifiers_only = true;
+	cfg.show_special = false;
+	m.configure(cfg);
+
+	m.press("A", false, 0.0);
+	m.press("Ctrl", true, 0.0);
+	m.press("Shift", true, 0.0);
+	CHECK_EQ(m.active_count(), 2);
+}
+
+TEST(key_special_label_classifier)
+{
+	CHECK(is_special_key_label("Space"));
+	CHECK(is_special_key_label("Backspace"));
+	CHECK(is_special_key_label("Enter"));
+	CHECK(is_special_key_label("Tab"));
+	CHECK(is_special_key_label("Esc"));
+	CHECK(is_special_key_label("Left"));
+	CHECK(is_special_key_label("Ctrl"));
+	CHECK(is_special_key_label("Win"));
+	CHECK(!is_special_key_label("A"));
+	CHECK(!is_special_key_label("1"));
+	CHECK(!is_special_key_label("@"));
+}
+
 TEST(key_key_limit)
 {
 	KeyOverlayModel m;

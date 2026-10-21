@@ -38,3 +38,11 @@ TEST(wallpapers_invalids_return_nullptr)
 	CHECK(wallpaper_path_for("does-not-exist") == nullptr);
 	CHECK(wallpaper_path_for("/tmp/foto.png") == nullptr);
 }
+
+TEST(wallpapers_transparent_sentinel)
+{
+	CHECK(wallpaper_is_transparent(kTransparentWallpaper));
+	CHECK(!wallpaper_is_transparent("wallpapers/aurora.jpg"));
+	CHECK(!wallpaper_is_transparent(""));
+	CHECK(!wallpaper_is_transparent(nullptr));
+}

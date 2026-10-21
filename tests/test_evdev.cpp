@@ -92,6 +92,28 @@ TEST(evdev_labels)
 	CHECK_EQ(evdev_key_label(999), std::string(""));
 }
 
+TEST(evdev_shifted_punctuation)
+{
+	CHECK_EQ(evdev_key_label_with_shift(2, true), std::string("!"));  /* 1 */
+	CHECK_EQ(evdev_key_label_with_shift(3, true), std::string("@"));  /* 2 */
+	CHECK_EQ(evdev_key_label_with_shift(4, true), std::string("#"));  /* 3 */
+	CHECK_EQ(evdev_key_label_with_shift(5, true), std::string("$"));  /* 4 */
+	CHECK_EQ(evdev_key_label_with_shift(6, true), std::string("%"));  /* 5 */
+	CHECK_EQ(evdev_key_label_with_shift(7, true), std::string("^"));  /* 6 */
+	CHECK_EQ(evdev_key_label_with_shift(8, true), std::string("&"));  /* 7 */
+	CHECK_EQ(evdev_key_label_with_shift(9, true), std::string("*"));  /* 8 */
+	CHECK_EQ(evdev_key_label_with_shift(10, true), std::string("(")); /* 9 */
+	CHECK_EQ(evdev_key_label_with_shift(11, true), std::string(")")); /* 0 */
+	CHECK_EQ(evdev_key_label_with_shift(12, false), std::string("-"));
+	CHECK_EQ(evdev_key_label_with_shift(12, true), std::string("_"));
+	CHECK_EQ(evdev_key_label_with_shift(13, true), std::string("+"));
+	CHECK_EQ(evdev_key_label_with_shift(26, true), std::string("{"));
+	CHECK_EQ(evdev_key_label_with_shift(39, true), std::string(":"));
+	CHECK_EQ(evdev_key_label_with_shift(53, true), std::string("?"));
+	CHECK_EQ(evdev_key_label_with_shift(30, false), std::string("A"));
+	CHECK_EQ(evdev_key_label_with_shift(57, false), std::string("Space"));
+}
+
 TEST(evdev_modifiers)
 {
 	CHECK(evdev_key_is_modifier(29));  /* LeftCtrl */

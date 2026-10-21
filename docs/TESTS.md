@@ -77,12 +77,12 @@ That is where all the math and the state logic live — what actually must be ri
 | `test_locale_keys.cpp` | `data/locale/*.ini` | every key used in `obs_module_text()` exists in `en-US.ini`; no orphan keys |
 | `test_profiles.cpp` | `core/profiles.*` | distinct A–J seeds (colors + zoom), labels, index wrap |
 | `test_profiles_io.cpp` | `core/profiles_io.*` | backup format validation: full bundle, marker/plugin, `current` range, all 10 slots, malformed JSON, extra keys accepted |
-| `test_wallpapers.cpp` | `src/ts-wallpapers.*` | label/path/stem resolution, case-insensitivity, all 42 built-ins, invalid input |
-| `test_key_overlay.cpp` | `core/key_overlay.*` | key queue, TTL, repeat, modifier filter, limit, combo formatting, inline `KeyLabel` truncation at the renderer's 63-byte limit |
+| `test_wallpapers.cpp` | `src/ts-wallpapers.*` | label/path/stem resolution, case-insensitivity, all 42 built-ins, transparent sentinel, invalid input |
+| `test_key_overlay.cpp` | `core/key_overlay.*` | key queue, TTL, repeat, modifier filter, special-key ignore mode, limit, combo formatting, inline `KeyLabel` truncation at the renderer's 63-byte limit |
 | `test_wav.cpp` | `core/wav.*` | PCM 8/16/24/32 and float, stereo, errors, and **real files** `data/sounds/*.wav`; the three real mouse recordings must be short (<150 ms) with the transient in the first 25 ms |
 | `test_sound_catalog.cpp` | `core/sound_catalog.hpp` + `data/sounds/` | 41 bundled entries, unique labels/paths, no forbidden source words, every WAV parses as mono 44.1 kHz |
 | `test_font_atlas.cpp` | `core/font_atlas.*` | atlas generated from the **real TTF**, per-glyph metrics, alpha, invalid cases, ASCII fast index equivalent to the ordered lookup |
-| `test_evdev.cpp` | `core/evdev.*` | `input_event` decoding, labels, modifiers, partial records |
+| `test_evdev.cpp` | `core/evdev.*` | `input_event` decoding, labels, shifted punctuation (`!@#$%^&*()` and symbols), modifiers, partial records |
 | `test_highlighter.cpp` | `core/highlighter.*` | drag, normalized rectangle, hold/fade, small drag, disabled |
 | `test_highlight_modes.cpp` | `core/highlighter.*`, `core/zoom.*` | trail dedupe/cap, line decimation into the shader slots (first/last kept, monotonic), a pinned predicate matrix for all 6 drag modes (box/line/zoom/press-zoom/box+zoom/line+zoom), zoom request timing, press-only zoom (delay, ignore drag, quick click does nothing), hold-to-release glide, stroke bounding box as the zoom selection for the line modes, box+zoom and line+zoom draw *and* zoom |
 | `test_docs.cpp` | `docs/` × code | every key in `keys.hpp` is documented; hotkeys from the code are in the reference; `CMakeLists.txt` and `buildspec.json` versions agree |
@@ -96,8 +96,8 @@ That is where all the math and the state logic live — what actually must be ri
 ## Current numbers
 
 ```
-195 tests | 5098 checks | 0 failures   (core)
-33 tests | 441 checks   | 0 failures   (integration with fake libobs)
+200 tests | 5145 checks | 0 failures   (core)
+33 tests | 443 checks   | 0 failures   (integration with fake libobs)
 ```
 
 ## What the integration layer covers
@@ -111,7 +111,7 @@ fake libobs:
 | `test_integration.cpp` | filter lifecycle (create/tick/render/destroy), preset apply, background toggle, all 18 hotkeys, native-cursor shutdown on the parent, profiles (save/switch/seeds/list/auto-save/restart/export-import round-trip), **dock target selection (hotkeys follow it)** and **debounced auto-save with flush** |
 | `test_integration.cpp` hotkeys | `integration_registers_all_hotkeys` covers every hotkey id/name/callback; `integration_hotkeys_shared_between_filters` proves one process-wide set shared across filters; `integration_registry_target_selection` proves selection routing/fallback |
 | `test_uniforms.cpp` | every uniform declared by `topscreen.effect` is uploaded on a plain frame (D3D11 aborts the draw otherwise) |
-| `test_text_render.cpp` | key-overlay text batches all glyphs into one vertex buffer (1 draw per shadow offset/main pass, cache hit without rebuild) and falls back to per-glyph sprites if vertex-buffer creation fails |
+| `test_text_render.cpp` | key-overlay text batches all glyphs + shadow quads into one vertex buffer (**1 draw total**, cache hit without rebuild) and falls back to per-glyph sprites if vertex-buffer creation fails |
 | `test_settings.cpp` | defaults match `Config`, legacy source falls back, store/load roundtrip, migrations, properties tree, input without a backend, click sound error handling |
 
 ## What is NOT covered (and why)

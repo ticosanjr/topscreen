@@ -12,6 +12,8 @@ namespace topscreen::core {
 struct KeyOverlayConfig {
 	bool enabled = true;
 	bool modifiers_only = false;
+	/** Keep named keys (Space/Enter/arrows/modifiers) in the overlay. */
+	bool show_special = true;
 	double ttl_ms = 2000.0;
 	int max_keys = 6;
 	double pos_x = 0.5;  // 0..1 (horizontal center of the band)
@@ -60,6 +62,9 @@ struct KeyRender {
 
 /** Formats a combo: {"Ctrl","Shift"} + "K" => "Ctrl + Shift + K". */
 std::string format_combo(const std::vector<std::string> &modifiers, const std::string &key);
+
+/** Named keys that are displayed as icons (or ignored) by the overlay. */
+bool is_special_key_label(std::string_view label);
 
 /**
  * Key overlay.

@@ -2,6 +2,9 @@
 
 #include <obs-module.h>
 
+#include <algorithm>
+#include <cerrno>
+#include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <string>
@@ -13,6 +16,8 @@
 #include <windows.h>
 #include <mmsystem.h>
 #else
+#include <fcntl.h>
+#include <signal.h>
 #include <spawn.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -114,8 +119,13 @@ bool ClickSound::load(const char *left_module_file, const char *right_module_fil
 	if (!player_checked_) {
 		player_ = find_player();
 		player_checked_ = true;
+		persistent_checked_ = true;
+		persistent_available_ =
+			player_.size() >= 6 && player_.compare(player_.size() - 6, 6, "paplay") == 0;
 		if (player_.empty())
 			blog(LOG_WARNING, "[TopScreen] no audio player found for the click sound");
+		else if (persistent_available_)
+			blog(LOG_INFO, "[TopScreen] using a persistent paplay stream");
 	}
 #endif
 
@@ -125,7 +135,10 @@ bool ClickSound::load(const char *left_module_file, const char *right_module_fil
 void ClickSound::release()
 {
 #if !defined(_WIN32)
+	stop_persistent();
 	reap_children();
+	persistent_checked_ = false;
+	persistent_available_ = false;
 #endif
 	loaded_ = false;
 	left_ = Slot{};
@@ -149,27 +162,115 @@ void ClickSound::reap_children()
 #endif
 }
 
-void ClickSound::play(bool right, double volume)
+#if !defined(_WIN32)
+bool ClickSound::start_persistent(double volume)
 {
-	const Slot &slot = right ? right_ : left_;
-	if (!slot.loaded || slot.path.empty())
-		return;
+	if (player_.empty())
+		return false;
 
-	if (volume < 0.0)
-		volume = 0.0;
-	if (volume > 1.0)
-		volume = 1.0;
+	int fds[2];
+	if (::pipe(fds) != 0)
+		return false;
+	::fcntl(fds[1], F_SETFL, ::fcntl(fds[1], F_GETFL, 0) | O_NONBLOCK);
 
-#if defined(_WIN32)
-	/* UTF-8 -> UTF-16: OBS installation paths may contain accents. */
-	const int need = MultiByteToWideChar(CP_UTF8, 0, slot.path.c_str(), -1, nullptr, 0);
-	if (need > 0) {
-		std::wstring wide(static_cast<size_t>(need), L'\0');
-		MultiByteToWideChar(CP_UTF8, 0, slot.path.c_str(), -1, wide.data(), need);
-		PlaySoundW(wide.c_str(), nullptr, SND_ASYNC | SND_FILENAME | SND_NODEFAULT);
+	posix_spawn_file_actions_t actions;
+	posix_spawn_file_actions_init(&actions);
+	posix_spawn_file_actions_adddup2(&actions, fds[0], STDIN_FILENO);
+	posix_spawn_file_actions_addclose(&actions, fds[0]);
+	posix_spawn_file_actions_addclose(&actions, fds[1]);
+
+	char vol[32];
+	std::snprintf(vol, sizeof(vol), "--volume=%d", static_cast<int>(volume * 65536.0));
+	const char *argv[] = {player_.c_str(),
+			      "--raw",
+			      "--format=s16le",
+			      "--rate=44100",
+			      "--channels=1",
+			      "--latency-msec=20",
+			      "--client-name=TopScreen",
+			      vol,
+			      nullptr};
+
+	posix_spawnattr_t attr;
+	posix_spawnattr_init(&attr);
+#if defined(POSIX_SPAWN_SETSID)
+	posix_spawnattr_setflags(&attr, POSIX_SPAWN_SETSID);
+#endif
+
+	pid_t pid = 0;
+	const int rc = ::posix_spawn(&pid, player_.c_str(), &actions, &attr,
+				     const_cast<char *const *>(argv), environ);
+	posix_spawnattr_destroy(&attr);
+	posix_spawn_file_actions_destroy(&actions);
+	::close(fds[0]);
+	if (rc != 0) {
+		::close(fds[1]);
+		blog(LOG_WARNING, "[TopScreen] could not start the persistent audio player (%d)", rc);
+		return false;
 	}
-#else
-	/* No SIGCHLD handler: spawn detached and reap previous players here. */
+
+	player_pid_ = static_cast<int>(pid);
+	player_stdin_ = fds[1];
+	player_volume_ = volume;
+	return true;
+}
+
+bool ClickSound::ensure_persistent(double volume)
+{
+	if (!persistent_checked_)
+		return false;
+	if (!persistent_available_)
+		return false;
+	if (player_stdin_ >= 0 && std::fabs(player_volume_ - volume) < 0.01)
+		return true;
+	stop_persistent();
+	return start_persistent(volume);
+}
+
+void ClickSound::stop_persistent()
+{
+	if (player_stdin_ >= 0) {
+		::close(player_stdin_);
+		player_stdin_ = -1;
+	}
+	if (player_pid_ > 0) {
+		::kill(static_cast<pid_t>(player_pid_), SIGTERM);
+		::waitpid(static_cast<pid_t>(player_pid_), nullptr, 0);
+		player_pid_ = -1;
+	}
+	player_volume_ = -1.0;
+}
+
+bool ClickSound::write_pcm(const Slot &slot)
+{
+	if (player_stdin_ < 0 || slot.wav.samples.empty())
+		return false;
+
+	pcm_scratch_.resize(slot.wav.samples.size());
+	for (size_t i = 0; i < slot.wav.samples.size(); ++i) {
+		const float v = std::max(-1.0f, std::min(1.0f, slot.wav.samples[i]));
+		pcm_scratch_[i] = static_cast<int16_t>(std::lround(v * 32767.0f));
+	}
+
+	const uint8_t *data = reinterpret_cast<const uint8_t *>(pcm_scratch_.data());
+	size_t left = pcm_scratch_.size() * sizeof(int16_t);
+	while (left > 0) {
+		const ssize_t n = ::write(player_stdin_, data, left);
+		if (n > 0) {
+			data += n;
+			left -= static_cast<size_t>(n);
+			continue;
+		}
+		if (n < 0 && (errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK))
+			break; // drop the remainder instead of blocking the video thread
+		return false;
+	}
+	return true;
+}
+
+void ClickSound::spawn_and_play(const Slot &slot, double volume)
+{
+	/* Fallback for systems without paplay: spawn a one-shot player. */
 	reap_children();
 	if (player_.empty())
 		return;
@@ -177,7 +278,6 @@ void ClickSound::play(bool right, double volume)
 	char vol[16];
 	std::vector<char *> argv;
 	argv.push_back(const_cast<char *>(player_.c_str()));
-	/* Only paplay honors a volume flag; the other players play as-is. */
 	if (player_.size() >= 6 && player_.compare(player_.size() - 6, 6, "paplay") == 0) {
 		std::snprintf(vol, sizeof(vol), "%d", static_cast<int>(volume * 65536.0));
 		argv.push_back(const_cast<char *>("--volume"));
@@ -199,6 +299,35 @@ void ClickSound::play(bool right, double volume)
 		children_.push_back(static_cast<int>(pid));
 	else
 		blog(LOG_WARNING, "[TopScreen] could not start the audio player (%d)", rc);
+}
+#endif
+
+void ClickSound::play(bool right, double volume)
+{
+	const Slot &slot = right ? right_ : left_;
+	if (!slot.loaded || slot.path.empty())
+		return;
+
+	if (volume < 0.0)
+		volume = 0.0;
+	if (volume > 1.0)
+		volume = 1.0;
+
+#if defined(_WIN32)
+	/* UTF-8 -> UTF-16: OBS installation paths may contain accents. */
+	const int need = MultiByteToWideChar(CP_UTF8, 0, slot.path.c_str(), -1, nullptr, 0);
+	if (need > 0) {
+		std::wstring wide(static_cast<size_t>(need), L'\0');
+		MultiByteToWideChar(CP_UTF8, 0, slot.path.c_str(), -1, wide.data(), need);
+		PlaySoundW(wide.c_str(), nullptr, SND_ASYNC | SND_FILENAME | SND_NODEFAULT);
+	}
+#else
+	if (ensure_persistent(volume) && write_pcm(slot))
+		return;
+
+	/* A broken/dead stream falls back to the old one-shot path. */
+	stop_persistent();
+	spawn_and_play(slot, volume);
 #endif
 }
 

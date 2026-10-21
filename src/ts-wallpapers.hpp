@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstring>
+
 namespace topscreen {
 
 struct WallpaperEntry {
@@ -38,6 +40,14 @@ inline constexpr WallpaperEntry kWallpapers[] = {
 };
 
 inline constexpr int kWallpaperCount = sizeof(kWallpapers) / sizeof(kWallpapers[0]);
+
+/** Synthetic wallpaper entry: transparent outside the floating screen. */
+inline constexpr const char *kTransparentWallpaper = "__transparent__";
+
+inline bool wallpaper_is_transparent(const char *value)
+{
+	return value && std::strcmp(value, kTransparentWallpaper) == 0;
+}
 
 /**
  * If `value` is the label/base of a built-in wallpaper (e.g.: "Aurora" or

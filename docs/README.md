@@ -14,6 +14,7 @@ Start with the **user manual**.
 | [`BUILD.md`](BUILD.md) | Build and install (Linux/Windows) |
 | [`VERIFICATION.md`](VERIFICATION.md) | Script to validate on a real OBS |
 | [`TESTS.md`](TESTS.md) | Automated tests: how to run and what they cover |
+| [`PERFORMANCE.md`](PERFORMANCE.md) | Text/blur/audio optimizations and the OBS benchmark |
 
 ## For developers
 

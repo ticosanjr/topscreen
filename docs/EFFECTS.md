@@ -32,7 +32,8 @@ Mode: `auto` reacts on its own · `hotkey` only by hotkey · `always` always on.
 | Feature | Mode | Status | Notes |
 |---------|------|--------|-------------|
 | Background (color/gradient) | always | ✅ | solid, vertical, diagonal |
-| Image background | always | ✅ | 42 built-in wallpapers or an image from your PC |
+| Image background | always | ✅ | 42 built-in wallpapers, an image from your PC, or **Transparent** (show the scene below) |
+| Text overlay | auto | ✅ | one draw for text + shadow/outline via vertex colors |
 | Rounded corners | always | ✅ | |
 | Spacing (padding X and Y) | always | ✅ | separate axes |
 | Window shadow | always | ✅ | opacity, blur and offset |

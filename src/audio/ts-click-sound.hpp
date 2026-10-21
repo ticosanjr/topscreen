@@ -2,6 +2,7 @@
 
 #include "core/wav.hpp"
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -44,9 +45,24 @@ private:
 	bool loaded_ = false;
 	Slot left_;
 	Slot right_;
-	std::string player_; // Linux: resolved player path
+	std::string player_; // Linux: resolved fallback player path
 	bool player_checked_ = false;
-	std::vector<int> children_; // Linux: player PIDs waiting to be reaped
+	std::vector<int> children_; // Linux: fallback player PIDs waiting to be reaped
+
+#if !defined(_WIN32)
+	bool ensure_persistent(double volume);
+	bool start_persistent(double volume);
+	void stop_persistent();
+	bool write_pcm(const Slot &slot);
+	void spawn_and_play(const Slot &slot, double volume);
+
+	int player_pid_ = -1;
+	int player_stdin_ = -1;
+	double player_volume_ = -1.0;
+	bool persistent_checked_ = false;
+	bool persistent_available_ = false;
+	std::vector<int16_t> pcm_scratch_;
+#endif
 };
 
 } // namespace topscreen

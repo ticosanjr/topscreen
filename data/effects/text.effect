@@ -14,22 +14,26 @@ sampler_state def_sampler {
 };
 
 struct VertInOut {
-	float4 pos : POSITION;
-	float2 uv  : TEXCOORD0;
+	float4 pos   : POSITION;
+	float2 uv    : TEXCOORD0;
+	float4 vcol  : COLOR;
 };
 
 VertInOut VSText(VertInOut vert_in)
 {
 	VertInOut vert_out;
-	vert_out.pos = mul(float4(vert_in.pos.xyz, 1.0), ViewProj);
-	vert_out.uv  = vert_in.uv;
+	vert_out.pos  = mul(float4(vert_in.pos.xyz, 1.0), ViewProj);
+	vert_out.uv   = vert_in.uv;
+	vert_out.vcol = vert_in.vcol;
 	return vert_out;
 }
 
 float4 PSText(VertInOut vert_in) : TARGET
 {
 	float4 c = image.Sample(def_sampler, vert_in.uv);
-	return float4(color.rgb, c.a * color.a);
+	// Shadow vertices are black, main vertices are white. The uniform still
+	// carries the configured text color, so one draw covers both.
+	return float4(color.rgb * vert_in.vcol.rgb, c.a * color.a * vert_in.vcol.a);
 }
 
 float sdBand(float2 p, float2 b, float r)

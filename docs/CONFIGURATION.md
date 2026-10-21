@@ -17,7 +17,7 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Style | `bg_mode` | int | 0 solid · 1 vertical · 2 diagonal | `2` |
 | | Color A | `bg_color_a` | color | — | `0xFF20242E` |
 | | Color B | `bg_color_b` | color | — | `0xFF3A2E5C` |
-| | Wallpaper | `bg_image` | string | "" or `wallpapers/*.jpg` (42) | `""` |
+| | Wallpaper | `bg_image` | string | "" (none), `__transparent__` (show the scene below), or `wallpapers/*.jpg` (42) | `""` |
 | | Image from PC | `bg_image_file` | string | file path (**clears** the Wallpaper) | `""` |
 | | Wallpaper blur (px) | `bg_image_blur` | double | 0–60 | `0` |
 | | Blur type | `bg_image_blur_type` | int | 0 none · 1 soft · 2 gaussian · 3 creamy | `2` |
@@ -70,6 +70,7 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Dimming | `spotlight_dim` | double | 0–1 | `0.60` |
 | Keys | Show typed keys | `keys_enabled` | bool | — | `true` |
 | | Modifiers only | `keys_modifiers_only` | bool | — | `false` |
+| | Show special keys as icons | `keys_show_special` | bool | — | `true` (off = ignore Space/Enter/arrows/modifiers) |
 | | On-screen time (ms) | `keys_ttl_ms` | double | 500–8000 | `2000` |
 | | Max keys | `keys_max` | int | 1–12 | `6` |
 | | Position X | `keys_pos_x` | double | 0–1 | `0.5` |
@@ -114,7 +115,7 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 {
   "topscreen_profiles": 1,
   "plugin": "TopScreen",
-  "version": "0.2.23",
+  "version": "0.2.24",
   "current": 0,
   "profile_slot_0": { "effects_enabled": true },
   "profile_slot_1": { "effects_enabled": true },

@@ -38,21 +38,21 @@ TEST(integration_text_batches_glyph_draws)
 	fakeobs::reset_graphics_counters();
 	text.draw(keys, 2, cfg, 1920, 1080);
 	CHECK_EQ(fakeobs::graphics_render_starts(), 1);
-	CHECK_EQ(fakeobs::graphics_draw_calls(), 5); /* 4 shadow offsets + text */
+	CHECK_EQ(fakeobs::graphics_draw_calls(), 1); /* shadow + text in one buffer */
 	CHECK_EQ(fakeobs::graphics_sprite_draw_calls(), 0);
 
 	/* Same labels: the cached layout/vertex buffer is reused. */
 	fakeobs::reset_graphics_counters();
 	text.draw(keys, 2, cfg, 1920, 1080);
 	CHECK_EQ(fakeobs::graphics_render_starts(), 0);
-	CHECK_EQ(fakeobs::graphics_draw_calls(), 5);
+	CHECK_EQ(fakeobs::graphics_draw_calls(), 1);
 	CHECK_EQ(fakeobs::graphics_sprite_draw_calls(), 0);
 
-	/* No shadow: one draw, still no rebuild. */
+	/* No shadow: the shadow quads leave the cached buffer, still one draw. */
 	cfg.shadow = false;
 	fakeobs::reset_graphics_counters();
 	text.draw(keys, 2, cfg, 1920, 1080);
-	CHECK_EQ(fakeobs::graphics_render_starts(), 0);
+	CHECK_EQ(fakeobs::graphics_render_starts(), 1);
 	CHECK_EQ(fakeobs::graphics_draw_calls(), 1);
 	CHECK_EQ(fakeobs::graphics_sprite_draw_calls(), 0);
 
@@ -62,7 +62,7 @@ TEST(integration_text_batches_glyph_draws)
 	fakeobs::reset_graphics_counters();
 	text.draw(keys, 2, cfg, 1920, 1080);
 	CHECK_EQ(fakeobs::graphics_render_starts(), 1);
-	CHECK_EQ(fakeobs::graphics_draw_calls(), 5);
+	CHECK_EQ(fakeobs::graphics_draw_calls(), 1);
 	CHECK_EQ(fakeobs::graphics_sprite_draw_calls(), 0);
 }
 
@@ -93,6 +93,6 @@ TEST(integration_text_falls_back_to_glyph_sprites)
 	fakeobs::reset_graphics_counters();
 	text.draw(keys, 2, cfg, 1920, 1080);
 	CHECK_EQ(fakeobs::graphics_render_starts(), 1);
-	CHECK_EQ(fakeobs::graphics_draw_calls(), 5);
+	CHECK_EQ(fakeobs::graphics_draw_calls(), 1);
 	CHECK_EQ(fakeobs::graphics_sprite_draw_calls(), 0);
 }

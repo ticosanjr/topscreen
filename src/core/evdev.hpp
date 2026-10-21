@@ -19,6 +19,9 @@ inline constexpr size_t kEvdevRecord64 = 24;
 /** Readable label for a Linux keycode ("" if unknown). */
 std::string evdev_key_label(int code);
 
+/** Layout-independent fallback for shifted ASCII punctuation (US/ABNT top row). */
+std::string evdev_key_label_with_shift(int code, bool shift, bool altgr = false);
+
 /** true if the keycode is a modifier (Ctrl/Shift/Alt/Meta). */
 bool evdev_key_is_modifier(int code);
 

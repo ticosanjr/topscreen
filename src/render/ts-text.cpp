@@ -5,6 +5,7 @@
 #include <string_view>
 
 #include <graphics/vec2.h>
+#include <graphics/vec4.h>
 #include <obs-module.h>
 
 #include "core/color.hpp"
@@ -275,10 +276,11 @@ void TextRenderer::rebuild_geometry()
 	if (layout_glyphs_.empty() || atlas_.width <= 0 || atlas_.height <= 0)
 		return;
 
+	const int copies = geometry_with_shadow_ ? 5 : 1;
 	uint32_t vertices = 0;
 	for (const core::Glyph *g : layout_glyphs_) {
 		if (g->w > 0 && g->h > 0)
-			vertices += 6;
+			vertices += static_cast<uint32_t>(6 * copies);
 	}
 	if (vertices == 0)
 		return;
@@ -293,27 +295,44 @@ void TextRenderer::rebuild_geometry()
 		for (int i = 0; i < run.count; ++i) {
 			const core::Glyph *g = layout_glyphs_[run.first + i];
 			if (g->w > 0 && g->h > 0) {
-				const float x0 = pen + static_cast<float>(g->xoff);
-				const float y0 = static_cast<float>(g->yoff);
-				const float x1 = x0 + static_cast<float>(g->w);
-				const float y1 = y0 + static_cast<float>(g->h);
+				const float gx0 = pen + static_cast<float>(g->xoff);
+				const float gy0 = static_cast<float>(g->yoff);
+				const float gx1 = gx0 + static_cast<float>(g->w);
+				const float gy1 = gy0 + static_cast<float>(g->h);
 				const float u0 = static_cast<float>(g->x) / atlas_w;
 				const float v0 = static_cast<float>(g->y) / atlas_h;
 				const float u1 = static_cast<float>(g->x + g->w) / atlas_w;
 				const float v1 = static_cast<float>(g->y + g->h) / atlas_h;
 
-				gs_vertex2f(x0, y0);
-				gs_texcoord(u0, v0, 0);
-				gs_vertex2f(x1, y0);
-				gs_texcoord(u1, v0, 0);
-				gs_vertex2f(x0, y1);
-				gs_texcoord(u0, v1, 0);
-				gs_vertex2f(x1, y0);
-				gs_texcoord(u1, v0, 0);
-				gs_vertex2f(x1, y1);
-				gs_texcoord(u1, v1, 0);
-				gs_vertex2f(x0, y1);
-				gs_texcoord(u0, v1, 0);
+				auto quad = [&](float ox, float oy, bool shadow) {
+					struct vec4 color;
+					vec4_set(&color, shadow ? 0.0f : 1.0f, shadow ? 0.0f : 1.0f,
+						 shadow ? 0.0f : 1.0f, 1.0f);
+					gs_color4v(&color);
+					gs_vertex2f(gx0 + ox, gy0 + oy);
+					gs_texcoord(u0, v0, 0);
+					gs_vertex2f(gx1 + ox, gy0 + oy);
+					gs_texcoord(u1, v0, 0);
+					gs_vertex2f(gx0 + ox, gy1 + oy);
+					gs_texcoord(u0, v1, 0);
+					gs_vertex2f(gx1 + ox, gy0 + oy);
+					gs_texcoord(u1, v0, 0);
+					gs_vertex2f(gx1 + ox, gy1 + oy);
+					gs_texcoord(u1, v1, 0);
+					gs_vertex2f(gx0 + ox, gy1 + oy);
+					gs_texcoord(u0, v1, 0);
+				};
+
+				/* Shadow offsets are in font units, so they scale with the
+				 * text just like the old per-draw screen-space offsets. */
+				const float shadow = 2.0f;
+				if (geometry_with_shadow_) {
+					quad(-shadow, 0.0f, true);
+					quad(shadow, 0.0f, true);
+					quad(0.0f, -shadow, true);
+					quad(0.0f, shadow, true);
+				}
+				quad(0.0f, 0.0f, false);
 			}
 			pen += static_cast<float>(g->advance);
 		}
@@ -413,9 +432,14 @@ void TextRenderer::draw(const core::KeyRender *items, int count, const core::Key
 	if (!loaded())
 		return;
 
-	/* Decode/look up the glyphs only when the text or the font changed. */
-	if (build_layout(items, count))
+	/* Decode/look up the glyphs only when the text, font, or shadow mode
+	 * changed. The vertex buffer already contains the four shadow quads and
+	 * the main quad: one draw call shades all of them with vertex colors. */
+	const bool layout_changed = build_layout(items, count);
+	if (layout_changed || cfg.shadow != geometry_with_shadow_) {
+		geometry_with_shadow_ = cfg.shadow;
 		rebuild_geometry();
+	}
 
 	const float base = static_cast<float>(target_h) * 0.030f;
 	const float scale = std::max(1.0f, base * static_cast<float>(cfg.size) / 32.0f);
@@ -451,22 +475,17 @@ void TextRenderer::draw(const core::KeyRender *items, int count, const core::Key
 	if (p_image_)
 		gs_effect_set_texture(p_image_, texture_);
 
-	/* All glyphs share one vertex buffer: bind it once and draw it per
-	 * shadow offset/main pass. */
+	/* All glyphs (and their shadow quads) live in one vertex buffer. */
 	gs_load_indexbuffer(nullptr);
 	if (glyph_vb_)
 		gs_load_vertexbuffer(glyph_vb_);
 
-	const float o = std::max(1.0f, 2.0f * scale);
-	const float offs[4][2] = {{-o, 0.0f}, {o, 0.0f}, {0.0f, -o}, {0.0f, o}};
 	if (glyph_vb_) {
-		if (cfg.shadow) {
-			for (const auto &of : offs)
-				draw_geometry(x0 + of[0], baseline + of[1], scale, 0xFF000000);
-		}
 		draw_geometry(x0, baseline, scale, core::abgr_to_argb(cfg.color));
 	} else {
+		const float o = std::max(1.0f, 2.0f * scale);
 		if (cfg.shadow) {
+			const float offs[4][2] = {{-o, 0.0f}, {o, 0.0f}, {0.0f, -o}, {0.0f, o}};
 			for (const auto &of : offs)
 				draw_geometry_fallback(x0 + of[0], baseline + of[1], scale,
 						       0xFF000000);

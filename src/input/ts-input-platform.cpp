@@ -24,14 +24,43 @@ struct WinInput {
 	unsigned char prev[256] = {};
 };
 
-std::string win_key_label(int vk, bool *is_mod)
+std::string win_unicode_label(int vk)
+{
+	BYTE state[256] = {};
+	if (!GetKeyboardState(state))
+		return {};
+
+	wchar_t text[8] = {};
+	const int n = ToUnicodeEx(vk, MapVirtualKey(vk, MAPVK_VK_TO_VSC), state, text,
+				  static_cast<int>(sizeof(text) / sizeof(text[0])), 0,
+				  GetKeyboardLayout(0));
+	if (n <= 0)
+		return {};
+	if (n == 1 && text[0] < 0x20)
+		return {};
+
+	const int bytes = WideCharToMultiByte(CP_UTF8, 0, text, n, nullptr, 0, nullptr, nullptr);
+	if (bytes <= 0)
+		return {};
+	std::string out(static_cast<size_t>(bytes), '\0');
+	WideCharToMultiByte(CP_UTF8, 0, text, n, out.data(), bytes, nullptr, nullptr);
+	return out;
+}
+
+std::string win_key_label(int vk, bool *is_mod, bool shift)
 {
 	*is_mod = false;
 
 	if (vk >= 'A' && vk <= 'Z')
 		return std::string(1, static_cast<char>(vk));
-	if (vk >= '0' && vk <= '9')
+	if (vk >= '0' && vk <= '9') {
+		if (shift) {
+			const std::string text = win_unicode_label(vk);
+			if (!text.empty())
+				return text;
+		}
 		return std::string(1, static_cast<char>(vk));
+	}
 
 	switch (vk) {
 	case VK_SPACE:
@@ -74,7 +103,24 @@ std::string win_key_label(int vk, bool *is_mod)
 		*is_mod = true;
 		return "Win";
 	default:
-		return {};
+		switch (vk) {
+		case VK_OEM_1:
+		case VK_OEM_PLUS:
+		case VK_OEM_COMMA:
+		case VK_OEM_MINUS:
+		case VK_OEM_PERIOD:
+		case VK_OEM_2:
+		case VK_OEM_3:
+		case VK_OEM_4:
+		case VK_OEM_5:
+		case VK_OEM_6:
+		case VK_OEM_7:
+		case VK_OEM_8:
+		case VK_OEM_102:
+			return win_unicode_label(vk);
+		default:
+			return {};
+		}
 	}
 }
 
@@ -106,6 +152,11 @@ void ts_input_platform_poll(void *state, InputState *out)
 	out->left = (GetAsyncKeyState(VK_LBUTTON) & 0x8000) != 0;
 	out->right = (GetAsyncKeyState(VK_RBUTTON) & 0x8000) != 0;
 
+	BYTE keyboard[256] = {};
+	GetKeyboardState(keyboard);
+	const bool shift = (keyboard[VK_SHIFT] & 0x80) != 0 || (keyboard[VK_LSHIFT] & 0x80) != 0 ||
+			   (keyboard[VK_RSHIFT] & 0x80) != 0;
+
 	/* Only the keys win_key_label() understands (buttons handled above). */
 	static const int kWatched[] = {
 		'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
@@ -115,13 +166,16 @@ void ts_input_platform_poll(void *state, InputState *out)
 		VK_LEFT, VK_UP, VK_RIGHT, VK_DOWN,
 		VK_SHIFT, VK_LSHIFT, VK_RSHIFT, VK_CONTROL, VK_LCONTROL, VK_RCONTROL,
 		VK_MENU, VK_LMENU, VK_RMENU, VK_LWIN, VK_RWIN,
+		VK_OEM_1, VK_OEM_PLUS, VK_OEM_COMMA, VK_OEM_MINUS, VK_OEM_PERIOD,
+		VK_OEM_2, VK_OEM_3, VK_OEM_4, VK_OEM_5, VK_OEM_6, VK_OEM_7,
+		VK_OEM_8, VK_OEM_102,
 	};
 	for (size_t i = 0; i < sizeof(kWatched) / sizeof(kWatched[0]); ++i) {
 		const int vk = kWatched[i];
 		const bool down = (GetAsyncKeyState(vk) & 0x8000) != 0;
 		if (down && !s->prev[vk]) {
 			bool is_mod = false;
-			const std::string label = win_key_label(vk, &is_mod);
+			const std::string label = win_key_label(vk, &is_mod, shift);
 			if (!label.empty() && out->key_count < InputState::kMaxKeyEvents) {
 				out->key_labels[out->key_count] = label;
 				out->key_modifier[out->key_count] = is_mod;
@@ -170,13 +224,37 @@ struct LinuxInput {
 	int fd = -1;
 	unsigned char buf[1024] = {};
 	size_t buflen = 0;
+	bool shift = false;
+	bool altgr = false;
 #endif
 };
 
 #if defined(TOPSCREEN_HAVE_X11)
+std::string utf8_from_keysym(KeySym ks)
+{
+	if (ks >= 0x20 && ks <= 0x7E) {
+		char c = static_cast<char>(ks);
+		if (std::isalpha(static_cast<unsigned char>(c)))
+			c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
+		return std::string(1, c);
+	}
+	if (ks >= 0xA0 && ks <= 0xFF) {
+		char buf[2];
+		buf[0] = static_cast<char>(0xC0 | (ks >> 6));
+		buf[1] = static_cast<char>(0x80 | (ks & 0x3F));
+		return std::string(buf, 2);
+	}
+	return {};
+}
+
 std::string x11_label(KeySym ks, bool *is_mod)
 {
 	*is_mod = false;
+
+	if (ks == XK_space)
+		return "Space";
+	if (const std::string text = utf8_from_keysym(ks); !text.empty())
+		return text;
 
 	char *name = XKeysymToString(ks);
 	if (!name)
@@ -224,6 +302,19 @@ std::string x11_label(KeySym ks, bool *is_mod)
 		return n;
 
 	return {};
+}
+
+std::string x11_label_from_keycode(Display *dpy, int evdev_code, bool shift, bool altgr)
+{
+	if (!dpy || evdev_code <= 0)
+		return {};
+	const KeyCode kc = static_cast<KeyCode>(evdev_code + 8);
+	const int level = (shift ? 1 : 0) + (altgr ? 2 : 0);
+	const KeySym ks = XkbKeycodeToKeysym(dpy, kc, 0, level);
+	if (ks == NoSymbol)
+		return {};
+	bool is_mod = false;
+	return x11_label(ks, &is_mod);
 }
 #endif
 
@@ -363,9 +454,23 @@ void ts_input_platform_poll(void *state, InputState *out)
 			s->buflen -= usable;
 
 			for (const core::EvdevKey &k : events) {
+				if (k.code == KEY_LEFTSHIFT || k.code == KEY_RIGHTSHIFT) {
+					s->shift = k.pressed;
+					continue;
+				}
+				if (k.code == KEY_RIGHTALT) {
+					s->altgr = k.pressed;
+					continue;
+				}
 				if (!k.pressed)
 					continue;
-				const std::string label = core::evdev_key_label(k.code);
+
+				std::string label;
+#if defined(TOPSCREEN_HAVE_X11)
+				label = x11_label_from_keycode(s->dpy, k.code, s->shift, s->altgr);
+#endif
+				if (label.empty())
+					label = core::evdev_key_label_with_shift(k.code, s->shift, s->altgr);
 				if (label.empty())
 					continue;
 				if (out->key_count < InputState::kMaxKeyEvents) {
@@ -384,12 +489,19 @@ void ts_input_platform_poll(void *state, InputState *out)
 	if (x11 && !keys_done) {
 		char keys[32] = {};
 		XQueryKeymap(s->dpy, keys);
+		auto down = [&](KeyCode kc) {
+			const unsigned char bit = static_cast<unsigned char>(1u << (kc & 7));
+			return kc > 0 && (keys[kc >> 3] & bit) != 0;
+		};
+		const bool shift = down(XKeysymToKeycode(s->dpy, XK_Shift_L)) ||
+				   down(XKeysymToKeycode(s->dpy, XK_Shift_R));
 		for (int kc = 8; kc < 256; ++kc) {
 			const unsigned char bit = static_cast<unsigned char>(1u << (kc & 7));
-			const bool down = (keys[kc >> 3] & bit) != 0;
+			const bool is_down = (keys[kc >> 3] & bit) != 0;
 			const bool was = (s->prev[kc >> 3] & bit) != 0;
-			if (down && !was) {
-				const KeySym ks = XkbKeycodeToKeysym(s->dpy, static_cast<KeyCode>(kc), 0, 0);
+			if (is_down && !was) {
+				const KeySym ks = XkbKeycodeToKeysym(s->dpy, static_cast<KeyCode>(kc), 0,
+								      shift ? 1 : 0);
 				if (ks != NoSymbol) {
 					bool is_mod = false;
 					const std::string label = x11_label(ks, &is_mod);

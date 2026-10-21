@@ -82,7 +82,7 @@ Places the screen "floating" over a background, with corners and shadow.
 | **Enable background** | Turns on the background + corners + spacing |
 | **Style** | Solid color, vertical or diagonal gradient (used when there is **no** image) |
 | **Color A / Color B** | Background colors (B only shows in gradients) |
-| **Wallpaper** | One of the **42 images** that ship with the plugin. Choosing one applies it |
+| **Wallpaper** | **Transparent (show the scene below)**, **(none)**, or one of the **42 images** that ship with the plugin. Choosing one applies it |
 | **Image from PC** | Button to choose a **file from your PC** (jpg/png/bmp/tga/gif/webp). Choosing one **clears** the Wallpaper (they are mutually exclusive) |
 | **Wallpaper blur (px)** | Blurs the background image (0 = sharp) |
 | **Blur type** | No blur · Soft (box) · **Gaussian** · Creamy (very soft) |
@@ -97,6 +97,7 @@ Places the screen "floating" over a background, with corners and shadow.
 | ↳ **Vertical distance** | Moves the shadow up/down (positive = down) |
 
 > The background appears **behind** the screen. Without an image, use the **Style** (color/gradient).
+> **Transparent** removes the background/padding and lets the scene below show through; the captured screen, corners, shadow, cursor, clicks and keys stay on top.
 
 ### Cursor
 | Option | What it does |
@@ -215,13 +216,15 @@ Each button has its own independent effect.
 |-------|-----------|
 | **Show typed keys** | Shows what you type on screen |
 | **Modifiers only** | Shows only Ctrl/Shift/Alt/Win |
+| **Show special keys as icons** | On: Space/Enter/arrows/modifiers appear as icons. Off: those keys are ignored and only normal characters (letters, digits, `@#!?` etc.) are shown |
 | **On-screen time (ms)** | How long each key stays |
 | **Max keys** | How many simultaneous keys to show |
 
-Every keystroke appears as its own letter (repeats included) exactly as typed,
-then fades out after the on-screen time. Special keys are shown as icons:
-`␣` Space, `⌫` Backspace, `⏎` Enter, `⇥` Tab, arrows, `⇧`/`⌃`/`⌥`/`⊞` for the
-modifiers (`Esc` stays as text).
+Every keystroke appears as its own character (repeats included) exactly as typed,
+then fades out after the on-screen time. Letters, digits and punctuation such as
+`@#!?` are shown as text. With **Show special keys as icons** on, Space/Backspace/
+Enter/Tab/arrows/modifiers are icons (`Esc` stays as text); off, those named keys
+are ignored and only normal characters remain.
 | **Position X / Y** | Where the band sits (0 = left/top, 1 = right/bottom) |
 | **Text size** | Text scale |
 | **Font** | DejaVu Sans Bold / Sans / ExtraLight / Mono Bold / Mono / Serif Bold, or a path to a `.ttf` |

@@ -42,6 +42,40 @@ std::string evdev_key_label(int code)
 	}
 }
 
+std::string evdev_key_label_with_shift(int code, bool shift, bool altgr)
+{
+	(void)altgr;
+	const std::string base = evdev_key_label(code);
+	if (!base.empty()) {
+		if (shift && base.size() == 1 && base[0] >= '1' && base[0] <= '9')
+			return std::string(1, "!@#$%^&*("[base[0] - '1']);
+		if (shift && base == "0")
+			return ")";
+		return base;
+	}
+
+	switch (code) {
+	case 12: return shift ? "_" : "-";   /* minus */
+	case 13: return shift ? "+" : "=";   /* equal */
+	case 26: return shift ? "{" : "[";   /* left brace */
+	case 27: return shift ? "}" : "]";   /* right brace */
+	case 39: return shift ? ":" : ";";   /* semicolon */
+	case 40: return shift ? "\"" : "'";  /* apostrophe */
+	case 41: return shift ? "~" : "`";   /* grave */
+	case 43: return shift ? "|" : "\\";  /* backslash */
+	case 51: return shift ? "<" : ",";   /* comma */
+	case 52: return shift ? ">" : ".";   /* dot */
+	case 53: return shift ? "?" : "/";   /* slash */
+	case 86: return shift ? "|" : "\\";  /* 102nd key */
+	case 55: return "*";                 /* keypad multiply */
+	case 74: return "-";                 /* keypad minus */
+	case 78: return "+";                 /* keypad plus */
+	case 83: return ".";                 /* keypad dot */
+	case 98: return "/";                 /* keypad slash */
+	default: return {};
+	}
+}
+
 bool evdev_key_is_modifier(int code)
 {
 	switch (code) {

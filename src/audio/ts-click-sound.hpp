@@ -3,6 +3,7 @@
 #include "core/wav.hpp"
 
 #include <cstdint>
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -24,12 +25,12 @@ public:
 	/** Loads the left/right files (module-relative). Unchanged slots are kept. */
 	bool load(const char *left_module_file, const char *right_module_file);
 	void release();
-	/** Plays a side at the given volume (0..1; only paplay honors it). */
+	/** Plays a side at the given volume (0..1; PCM is scaled for persistent players). */
 	void play(bool right, double volume);
 	bool loaded() const { return left_.loaded || right_.loaded; }
 	const core::WavData &wav() const { return left_.wav; }
-	/** Resolved path of the loaded slot ("" when not loaded). */
-	const std::string &loaded_path(bool right) const { return right ? right_.path : left_.path; }
+	/** Resolved path of the loaded slot ("" when not loaded). Thread-safe copy. */
+	std::string loaded_path(bool right) const;
 
 private:
 	struct Slot {
@@ -42,6 +43,7 @@ private:
 	bool load_slot(Slot *slot, const char *module_file);
 	void reap_children();
 
+	mutable std::mutex mutex_;
 	bool loaded_ = false;
 	Slot left_;
 	Slot right_;
@@ -53,12 +55,11 @@ private:
 	bool ensure_persistent(double volume);
 	bool start_persistent(double volume);
 	void stop_persistent();
-	bool write_pcm(const Slot &slot);
+	bool write_pcm(const Slot &slot, double volume);
 	void spawn_and_play(const Slot &slot, double volume);
 
 	int player_pid_ = -1;
 	int player_stdin_ = -1;
-	double player_volume_ = -1.0;
 	bool persistent_checked_ = false;
 	bool persistent_available_ = false;
 	std::vector<int16_t> pcm_scratch_;

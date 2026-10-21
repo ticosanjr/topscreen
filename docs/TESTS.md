@@ -96,8 +96,8 @@ That is where all the math and the state logic live — what actually must be ri
 ## Current numbers
 
 ```
-201 tests | 5159 checks | 0 failures   (core)
-37 tests | 478 checks   | 0 failures   (integration with fake libobs)
+201 tests | 5162 checks | 0 failures   (core)
+40 tests | 503 checks   | 0 failures   (integration with fake libobs)
 ```
 
 ## What the integration layer covers
@@ -108,11 +108,11 @@ fake libobs:
 
 | File | Coverage |
 |------|----------|
-| `test_integration.cpp` | filter lifecycle (create/tick/render/destroy), preset apply, background toggle, all 19 hotkeys, native-cursor shutdown on the parent, profiles (save/switch/seeds/list/auto-save/restart/export-import round-trip, **click-sound reload on switch**, **partial import fills missing fields/slots**), **independent hotkey highlight toggle**, **Properties refresh after profile/preset changes**, **dock target selection (hotkeys follow it)** and **debounced auto-save with flush** |
+| `test_integration.cpp` | filter lifecycle (create/tick/render/destroy), preset apply, background toggle, all 19 hotkeys, native-cursor shutdown/restore on the parent, profiles (save/switch/seeds/list/auto-save/restart/export-import round-trip, **click-sound reload on switch**, **partial import fills missing fields/slots**), **independent hotkey highlight toggle (manual zoom/drag ownership)**, **Properties refresh after profile/preset changes**, **dock target selection (hotkeys follow it)** and **debounced auto-save with flush** |
 | `test_integration.cpp` hotkeys | `integration_registers_all_hotkeys` covers every hotkey id/name/callback; `integration_hotkeys_shared_between_filters` proves one process-wide set shared across filters; `integration_registry_target_selection` proves selection routing/fallback |
 | `test_uniforms.cpp` | every uniform declared by `topscreen.effect` is uploaded on a plain frame (D3D11 aborts the draw otherwise) |
 | `test_text_render.cpp` | key-overlay text batches all glyphs + shadow quads into one vertex buffer (**1 draw total**, cache hit without rebuild) and falls back to per-glyph sprites if vertex-buffer creation fails |
-| `test_settings.cpp` | defaults match `Config`, legacy source falls back, store/load roundtrip, migrations, properties tree, input without a backend, click sound error handling |
+| `test_settings.cpp` | defaults match `Config`, legacy source falls back, store/load roundtrip, partial-slot fallback, migrations, properties tree/zoom-group visibility with the hotkey, input without a backend, click sound error handling |
 
 ## What is NOT covered (and why)
 

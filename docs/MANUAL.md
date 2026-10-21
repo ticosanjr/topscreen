@@ -61,7 +61,8 @@ off at once (useful as push-to-talk for effects).
 ### Own cursor
 When the effects are enabled, TopScreen **turns off the native cursor of the
 capture** and draws its own, smoothed and scalable. That is why you see **a
-single cursor**.
+single cursor**. Turning **Effects enabled** off (or removing the filter)
+restores the capture's original cursor setting.
 
 ### Coordinates
 The effects work over the **captured area**. The cursor is mapped from the mouse
@@ -237,7 +238,7 @@ are ignored and only normal characters remain.
 | Group | Option | What it does |
 |-------|--------|--------------|
 | — | **Enable drag actions** | Master switch for what a left-drag does |
-| — | **Enable hotkey highlight** | Independent extra: assign `TopScreen_ToggleHighlight`. First press zooms at the current cursor; second press releases/returns. It works alongside the drag modes. |
+| — | **Enable hotkey highlight** | Independent extra: assign `TopScreen_ToggleHighlight`. First press zooms at the current cursor; second press releases/returns. It works with drag actions on or off, and the Zoom group stays visible so those values can be tuned in any drag mode. |
 | — | **What a drag does** | **Filled box** (classic mark) · **Line** (draw freehand, fades out) · **Zoom to the selection** (no drawing) · **Zoom on mouse press** (hold the button, no drag) · **Box + zoom** (marks *and* zooms) · **Line + zoom** (draws freehand *and* zooms) |
 | Look | **Color** | Highlight color (use alpha < 255 for translucent) |
 | Look | **Opacity** | Strength ceiling (0 = invisible, 1 = solid); keeps content readable |
@@ -495,8 +496,10 @@ TOPSCREEN_DEBUG_KEY=Ctrl obs
 
 **The dock does not appear**
 - The build did not have Qt6/obs-frontend-api. Install `qt6-base-dev` (Linux) and
-  reinstall, or use a release package (both the Linux and Windows packages from
-  **0.2.6** on include the dock).
+  reinstall, or use a release package.
+- Linux packages include the dock. Windows CI builds do too; the locally
+  cross-built Windows packages (0.2.18 and newer) do **not** include the dock,
+  but the full filter still works.
 - On Windows the dock lists under **View → Docks → TopScreen**.
 
 **Hotkeys: I cannot find the TopScreen actions**
@@ -531,6 +534,19 @@ which one the dock buttons and hotkeys control (default: the first one).
 
 **Can I turn off only the background at a specific moment?**
 Yes: hotkey **Enable/disable background**.
+
+**The hotkey highlight does nothing**
+- Enable **Highlighter → Enable hotkey highlight** and assign
+  `TopScreen_ToggleHighlight` in **Settings → Hotkeys**.
+- It uses the highlighter Zoom settings. With **Zoom direction = out** at 1×
+  there is nothing to zoom out from; use **in** (default) or zoom in once
+  manually before pressing.
+- Manual zoom and a left-button drag take over the zoom and clear the toggle;
+  press the hotkey again to start a new one.
+
+**I turned effects off and now there is no cursor**
+- Fixed in **0.3.0**: TopScreen restores the capture's original native cursor
+  when **Effects enabled** is off and when the filter is removed.
 
 **Windows: do I need admin?**
 No, the default installer uses the per-user plugins folder.

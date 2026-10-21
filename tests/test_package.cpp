@@ -43,6 +43,12 @@ TEST(package_releases_folder)
 	CHECK(!packager.empty());
 	CHECK(packager.find("OUT=\"$ROOT/releases\"") != std::string::npos);
 
+	/* Archives are verified before publishing (version, arch, data, hashes). */
+	const std::string verifier = read_bytes(root + "scripts/verify-release.sh");
+	CHECK(!verifier.empty());
+	CHECK(verifier.find("loaded v$VER") != std::string::npos);
+	CHECK(verifier.find("sha256sum") != std::string::npos);
+
 	/* Index of every version, so the folder stays self-documenting. */
 	const std::string index = read_bytes(root + "releases/README.md");
 	CHECK(!index.empty());

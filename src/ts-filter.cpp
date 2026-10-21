@@ -51,18 +51,23 @@ enum ActionBits : uint32_t {
 	A_TOGGLE_HIGHLIGHT = 1u << 13,
 };
 
+struct ParentCursorState {
+	obs_source_t *parent = nullptr; // borrowed for the lifetime of the filter
+	bool captured = false;
+	bool has[2] = {false, false};
+	bool was[2] = {false, false};
+	bool changed[2] = {false, false};
+};
+
 /**
- * Disables the parent source's native cursor (e.g.: Display Capture).
+ * Captures the parent's original cursor values and hides/restores them.
  *
- * Different sources use different names for the same option:
- *   - "capture_cursor": Windows (monitor_capture) and some backends
- *   - "show_cursor":    Linux (xshm_input), macOS (screen_capture)
- *
- * We do this so we can draw our own cursor without duplicating it.
+ * The plugin only restores a key that it actually changed, so a capture that
+ * already had its native cursor disabled is left alone.
  */
-void disable_parent_cursor(obs_source_t *parent)
+void topscreen_sync_parent_cursor(obs_source_t *parent, ParentCursorState *state, bool hide)
 {
-	if (!parent)
+	if (!parent || !state)
 		return;
 
 	obs_properties_t *props = obs_source_properties(parent);
@@ -71,30 +76,61 @@ void disable_parent_cursor(obs_source_t *parent)
 
 	static const char *const kCursorKeys[] = {"capture_cursor", "show_cursor"};
 
-	bool found = false;
-	for (const char *key : kCursorKeys) {
-		if (!obs_properties_get(props, key))
-			continue;
+	if (!state->captured || state->parent != parent) {
+		*state = ParentCursorState{};
+		state->parent = parent;
+		state->captured = true;
+		for (int i = 0; i < 2; ++i)
+			state->has[i] = obs_properties_get(props, kCursorKeys[i]) != nullptr;
 
 		obs_data_t *s = obs_source_get_settings(parent);
-		if (!s)
-			continue;
+		if (s) {
+			for (int i = 0; i < 2; ++i) {
+				if (state->has[i])
+					state->was[i] = obs_data_get_bool(s, kCursorKeys[i]);
+			}
+			obs_data_release(s);
+		}
 
-		const bool was = obs_data_get_bool(s, key);
-		obs_data_set_bool(s, key, false);
-		obs_source_update(parent, s);
-		obs_data_release(s);
-
-		blog(LOG_INFO, "[TopScreen] capture native cursor disabled (%s, was %s)", key,
-		     was ? "on" : "off");
-		found = true;
+		if (!state->has[0] && !state->has[1])
+			blog(LOG_INFO, "[TopScreen] parent source does not expose a native cursor option (%s)",
+			     obs_source_get_name(parent) ? obs_source_get_name(parent) : "?");
 	}
-
-	if (!found)
-		blog(LOG_INFO, "[TopScreen] parent source does not expose a native cursor option (%s)",
-		     parent ? obs_source_get_name(parent) : "?");
-
 	obs_properties_destroy(props);
+
+	obs_data_t *s = obs_source_get_settings(parent);
+	if (!s)
+		return;
+
+	bool changed = false;
+	for (int i = 0; i < 2; ++i) {
+		if (!state->has[i])
+			continue;
+		const bool current = obs_data_get_bool(s, kCursorKeys[i]);
+		if (hide) {
+			if (current) {
+				obs_data_set_bool(s, kCursorKeys[i], false);
+				changed = true;
+				if (!state->changed[i]) {
+					state->was[i] = current;
+					state->changed[i] = true;
+					blog(LOG_INFO, "[TopScreen] capture native cursor disabled (%s, was %s)",
+					     kCursorKeys[i], current ? "on" : "off");
+				}
+			}
+		} else if (state->changed[i]) {
+			if (current != state->was[i]) {
+				obs_data_set_bool(s, kCursorKeys[i], state->was[i]);
+				changed = true;
+			}
+			state->changed[i] = false;
+			blog(LOG_INFO, "[TopScreen] capture native cursor restored (%s, %s)",
+			     kCursorKeys[i], state->was[i] ? "on" : "off");
+		}
+	}
+	if (changed)
+		obs_source_update(parent, s);
+	obs_data_release(s);
 }
 
 /**
@@ -127,8 +163,10 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 	double time_ms = 0.0;
 	bool loaded = false;
 	bool parent_cursor_checked = false;
+	bool parent_cursor_hidden = false;
 	bool prev_left = false;
-	bool hotkey_highlight_active_ = false;
+	std::atomic<bool> hotkey_highlight_active_{false};
+	ParentCursorState parent_cursor_;
 
 	int current_profile_ = 0;
 	int last_profile = -1;
@@ -141,9 +179,9 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 	/* Origin of the captured monitor in GLOBAL desktop coordinates: the input
 	 * reports global positions, so a monitor below/left of the primary one
 	 * needs its offset subtracted before normalizing. */
-	double origin_x_ = 0.0;
-	double origin_y_ = 0.0;
-	bool origin_known_ = false;
+	std::atomic<double> origin_x_{0.0};
+	std::atomic<double> origin_y_{0.0};
+	std::atomic<bool> origin_known_{false};
 	uint32_t origin_target_w_ = 0;
 	uint32_t origin_target_h_ = 0;
 	int origin_age_ticks_ = 0;
@@ -178,6 +216,8 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 	void process_actions();
 	void reload_from_settings();
 	void refresh_monitor_origin(bool force);
+	void sync_parent_cursor(bool hide);
+	void restore_parent_cursor();
 	void start_zoom_spot(double zx0, double zy0, double zx1, double zy1, bool immediate_out,
 			     double hold_override_ms = -1.0);
 
@@ -217,14 +257,14 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 	int input_tier() const override { return input_tier_cache_.load(); }
 	void monitor_origin(double *x, double *y) const override
 	{
-		*x = origin_known_ ? origin_x_ : 0.0;
-		*y = origin_known_ ? origin_y_ : 0.0;
+		*x = origin_known_.load() ? origin_x_.load() : 0.0;
+		*y = origin_known_.load() ? origin_y_.load() : 0.0;
 	}
 
 	/* ---- FilterControl: profiles ---- */
 	int profile_count() const override { return kProfileCount; }
 	int current_profile() const override { return profile_cache_.load(); }
-	bool hotkey_highlight_active() const override { return hotkey_highlight_active_; }
+	bool hotkey_highlight_active() const override { return hotkey_highlight_active_.load(); }
 	std::string loaded_sound_path(bool right) const override
 	{
 		return click_sound.loaded_path(right);
@@ -297,7 +337,7 @@ void ts_filter_ctx::apply_profile(int index)
 	/* Session state: resets the manual zoom and reloads the sound if it changed. */
 	zoom.set_manual(1.0);
 	zoom.spot_stop();
-	hotkey_highlight_active_ = false;
+	hotkey_highlight_active_.store(false);
 	click_sound.load(cfg.click_sound.file_left.c_str(), cfg.click_sound.file_right.c_str());
 }
 
@@ -456,10 +496,11 @@ void ts_filter_ctx::refresh_monitor_origin(bool force)
 	if (cfg.monitor_manual) {
 		const double nx = static_cast<double>(cfg.monitor_x);
 		const double ny = static_cast<double>(cfg.monitor_y);
-		if (force || !origin_known_ || nx != origin_x_ || ny != origin_y_) {
-			origin_x_ = nx;
-			origin_y_ = ny;
-			origin_known_ = true;
+		if (force || !origin_known_.load() || nx != origin_x_.load() ||
+		    ny != origin_y_.load()) {
+			origin_x_.store(nx);
+			origin_y_.store(ny);
+			origin_known_.store(true);
 			blog(LOG_INFO, "[TopScreen] monitor origin: (%.0f,%.0f) [manual]", nx, ny);
 		}
 		origin_age_ticks_ = 0;
@@ -502,13 +543,29 @@ void ts_filter_ctx::refresh_monitor_origin(bool force)
 		}
 	}
 
+	double ox = 0.0;
+	double oy = 0.0;
 	const bool known = ts_resolve_monitor_origin(device.c_str(), hint, trust_hint, target_w,
-						     target_h, &origin_x_, &origin_y_);
-	if (!known) {
-		origin_x_ = 0.0;
-		origin_y_ = 0.0;
-	}
-	origin_known_ = known;
+						     target_h, &ox, &oy);
+	origin_x_.store(known ? ox : 0.0);
+	origin_y_.store(known ? oy : 0.0);
+	origin_known_.store(known);
+}
+
+void ts_filter_ctx::sync_parent_cursor(bool hide)
+{
+	obs_source_t *parent = obs_filter_get_parent(source);
+	if (parent)
+		topscreen_sync_parent_cursor(parent, &parent_cursor_, hide);
+}
+
+void ts_filter_ctx::restore_parent_cursor()
+{
+	if (!parent_cursor_.captured)
+		return;
+	obs_source_t *parent = obs_filter_get_parent(source);
+	if (parent && parent == parent_cursor_.parent)
+		topscreen_sync_parent_cursor(parent, &parent_cursor_, false);
 }
 
 /**
@@ -552,9 +609,9 @@ void ts_filter_ctx::reconfigure_models()
 	clicks.set_right(cfg.click_right);
 	keys.configure(cfg.keys);
 	highlight.configure(cfg.highlight);
-	if (hotkey_highlight_active_ && (!cfg.highlight.enabled || !cfg.highlight.hotkey_enabled)) {
+	if (hotkey_highlight_active_.load() && !cfg.highlight.hotkey_enabled) {
 		zoom.spot_release(time_ms);
-		hotkey_highlight_active_ = false;
+		hotkey_highlight_active_.store(false);
 	}
 }
 
@@ -649,10 +706,11 @@ void ts_filter_ctx::process_actions()
 		zoom.manual_step(0.8);
 	if (act & A_RESET_ZOOM)
 		zoom.set_manual(1.0);
-	/* Only a manual zoom gesture cancels a highlighter zoom; toggling effects
-	 * or switching presets must not interrupt it. */
-	if (act & (A_ZOOM_IN | A_ZOOM_OUT | A_RESET_ZOOM))
+	/* Manual zoom cancels a highlighter zoom, including the hotkey toggle. */
+	if (act & (A_ZOOM_IN | A_ZOOM_OUT | A_RESET_ZOOM)) {
 		zoom.spot_stop();
+		hotkey_highlight_active_.store(false);
+	}
 	if (act & A_NEXT_PRESET)
 		request_preset(presets.next());
 	if (act & A_PREV_PRESET)
@@ -677,24 +735,24 @@ void ts_filter_ctx::process_actions()
 		}
 	}
 	if (act & A_TOGGLE_HIGHLIGHT) {
-		if (!cfg.highlight.enabled || !cfg.highlight.hotkey_enabled) {
-			if (hotkey_highlight_active_) {
+		if (!cfg.highlight.hotkey_enabled) {
+			if (hotkey_highlight_active_.load()) {
 				zoom.spot_release(time_ms);
-				hotkey_highlight_active_ = false;
+				hotkey_highlight_active_.store(false);
 			}
-		} else if (hotkey_highlight_active_) {
+		} else if (hotkey_highlight_active_.load()) {
 			/* Second press: same release/return path as the drag zoom. */
 			zoom.spot_release(time_ms);
-			hotkey_highlight_active_ = false;
+			hotkey_highlight_active_.store(false);
 			blog(LOG_INFO, "[TopScreen] hotkey highlight: release");
 		} else {
 			/* First press: zoom into the current cursor position. */
 			const double cx = frame.cursor.x;
 			const double cy = frame.cursor.y;
 			start_zoom_spot(cx, cy, cx, cy, false, 0.0);
-			hotkey_highlight_active_ = zoom.spot_active();
+			hotkey_highlight_active_.store(zoom.spot_active());
 			blog(LOG_INFO, "[TopScreen] hotkey highlight: %s",
-			     hotkey_highlight_active_ ? "active" : "no-op");
+			     hotkey_highlight_active_.load() ? "active" : "no-op");
 		}
 	}
 	if (act & A_SAVE_PROFILE)
@@ -793,6 +851,7 @@ void ts_filter_destroy(void *data)
 	auto *ctx = static_cast<ts_filter_ctx *>(data);
 
 	ctx->flush_profile_if_dirty();
+	ctx->restore_parent_cursor();
 	registry_remove(ctx);
 	ctx->input.stop();
 	ctx->hotkeys.unregister_all(ctx);
@@ -841,8 +900,8 @@ void ts_filter_tick(void *data, float seconds)
 
 	if (ctx->input.available() && ctx->target_w > 0 && ctx->target_h > 0) {
 		const InputState &st = ctx->input.state();
-		const core::Monitor mon{ctx->origin_known_ ? ctx->origin_x_ : 0.0,
-					ctx->origin_known_ ? ctx->origin_y_ : 0.0,
+		const core::Monitor mon{ctx->origin_known_.load() ? ctx->origin_x_.load() : 0.0,
+					ctx->origin_known_.load() ? ctx->origin_y_.load() : 0.0,
 					static_cast<double>(ctx->target_w),
 					static_cast<double>(ctx->target_h)};
 		const core::Vec2f c = core::screen_to_content(st.x, st.y, mon);
@@ -853,10 +912,13 @@ void ts_filter_tick(void *data, float seconds)
 		ctx->cursor.set_target(cx, cy, ctx->time_ms);
 		ctx->zoom.set_cursor(cx, cy, ctx->time_ms);
 
-		/* Drag highlighter (left button). */
-		if (st.left_pressed)
+		/* Drag highlighter (left button). A drag owns the zoom spot now, so a
+		 * hotkey toggle must not leave a stale "active" state behind. */
+		if (st.left_pressed) {
+			if (ctx->hotkey_highlight_active_.exchange(false))
+				ctx->zoom.spot_release(ctx->time_ms);
 			ctx->highlight.begin(cx, cy, ctx->time_ms);
-		else if (st.left)
+		} else if (st.left)
 			ctx->highlight.move(cx, cy, ctx->time_ms);
 		if (!st.left && ctx->prev_left) {
 			ctx->highlight.end(ctx->time_ms);
@@ -864,18 +926,24 @@ void ts_filter_tick(void *data, float seconds)
 			/* Released before the trigger (or QuickZoom-style tap-drag):
 			 * if the model still holds a request, run the in/out cycle now. */
 			double zx0 = 0.0, zy0 = 0.0, zx1 = 0.0, zy1 = 0.0;
-			if (ctx->highlight.take_zoom_request(&zx0, &zy0, &zx1, &zy1))
+			if (ctx->highlight.take_zoom_request(&zx0, &zy0, &zx1, &zy1)) {
+				ctx->hotkey_highlight_active_.store(false);
 				ctx->start_zoom_spot(zx0, zy0, zx1, zy1, true);
+			}
 		} else if (st.left) {
 			/* While held: fire the zoom as soon as the model asks for it. */
 			double zx0 = 0.0, zy0 = 0.0, zx1 = 0.0, zy1 = 0.0;
-			if (ctx->highlight.take_zoom_request(&zx0, &zy0, &zx1, &zy1))
+			if (ctx->highlight.take_zoom_request(&zx0, &zy0, &zx1, &zy1)) {
+				ctx->hotkey_highlight_active_.store(false);
 				ctx->start_zoom_spot(zx0, zy0, zx1, zy1, false);
+			}
 		}
 
 		/* Let go: glide back with the configured out animation. */
-		if (!st.left && ctx->prev_left)
+		if (!st.left && ctx->prev_left) {
+			ctx->hotkey_highlight_active_.store(false);
 			ctx->zoom.spot_release(ctx->time_ms);
+		}
 
 		ctx->prev_left = st.left;
 
@@ -931,10 +999,12 @@ void ts_filter_render(void *data, gs_effect_t *effect)
 		ctx->target_h = obs_source_get_base_height(target);
 	}
 
-	/* Disables the parent source's native cursor only once (inside render). */
-	if (!ctx->parent_cursor_checked) {
+	/* The capture's native cursor follows the master switch: hidden while the
+	 * TopScreen cursor is drawn, restored when effects are turned off. */
+	if (!ctx->parent_cursor_checked || ctx->parent_cursor_hidden != ctx->cfg.effects_enabled) {
 		ctx->parent_cursor_checked = true;
-		disable_parent_cursor(obs_filter_get_parent(ctx->source));
+		ctx->parent_cursor_hidden = ctx->cfg.effects_enabled;
+		ctx->sync_parent_cursor(ctx->cfg.effects_enabled);
 	}
 
 	ctx->compositor.render(ctx->source, ctx->cfg, ctx->frame);

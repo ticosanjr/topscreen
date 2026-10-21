@@ -109,6 +109,8 @@ TEST(integration_filter_lifecycle)
 	fakeobs::invoke_hotkey(toggle, true);
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
 	CHECK(!ctrl->effects_enabled());
+	ts_filter_source_info.video_render(ctx, nullptr);
+	CHECK(obs_data_get_bool(parent->settings, "capture_cursor"));
 
 	/* Zoom via hotkey must not crash anything. */
 	const int zin = fakeobs::find_hotkey("TopScreen_ZoomIn");
@@ -766,6 +768,28 @@ TEST(integration_hotkey_highlight_toggles_zoom)
 		ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
 	CHECK(ctrl->hotkey_highlight_active());
 
+	/* A manual zoom takes over the same zoom model and clears the toggle. */
+	const int zin = fakeobs::find_hotkey("TopScreen_ZoomIn");
+	REQUIRE(zin >= 0);
+	fakeobs::invoke_hotkey(zin, true);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK(!ctrl->hotkey_highlight_active());
+
+	/* Next press starts the hotkey highlight again, next press releases it. */
+	ctrl->toggle_highlight();
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK(ctrl->hotkey_highlight_active());
+	ctrl->toggle_highlight();
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK(!ctrl->hotkey_highlight_active());
+
+	/* The toggle is independent of the drag master switch. */
+	obs_data_set_bool(filter->settings, core::keys::kHighlightEnabled, false);
+	ts_filter_source_info.update(ctx, filter->settings);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	ctrl->toggle_highlight();
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK(ctrl->hotkey_highlight_active());
 	ctrl->toggle_highlight();
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
 	CHECK(!ctrl->hotkey_highlight_active());
@@ -958,6 +982,36 @@ TEST(integration_render_does_not_crash_without_effect)
 	ts_filter_source_info.destroy(ctx);
 }
 
+TEST(integration_restores_parent_cursor_on_destroy)
+{
+	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
+	obs_source_t *parent = make_parent(1920, 1080);
+	obs_source_t *filter = fakeobs::make_source(&ts_filter_source_info, parent, 0, 0);
+	void *ctx = create_filter(filter);
+	REQUIRE(ctx != nullptr);
+
+	ts_filter_source_info.video_render(ctx, nullptr);
+	CHECK(!obs_data_get_bool(parent->settings, "capture_cursor"));
+
+	ts_filter_source_info.destroy(ctx);
+	CHECK(obs_data_get_bool(parent->settings, "capture_cursor"));
+}
+
+TEST(integration_keeps_parent_cursor_off_if_it_was_off)
+{
+	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
+	obs_source_t *parent = make_parent(1920, 1080);
+	obs_data_set_bool(parent->settings, "capture_cursor", false);
+	obs_source_t *filter = fakeobs::make_source(&ts_filter_source_info, parent, 0, 0);
+	void *ctx = create_filter(filter);
+	REQUIRE(ctx != nullptr);
+
+	ts_filter_source_info.video_render(ctx, nullptr);
+	CHECK(!obs_data_get_bool(parent->settings, "capture_cursor"));
+	ts_filter_source_info.destroy(ctx);
+	CHECK(!obs_data_get_bool(parent->settings, "capture_cursor"));
+}
+
 /* Fake parent source that uses "show_cursor" (like Linux's xshm_input). */
 namespace {
 obs_properties_t *parent_props_show_cursor(void *)
@@ -985,4 +1039,5 @@ TEST(integration_disables_parent_show_cursor)
 	ts_filter_source_info.video_render(ctx, nullptr);
 	CHECK(!obs_data_get_bool(parent->settings, "show_cursor"));
 	ts_filter_source_info.destroy(ctx);
+	CHECK(obs_data_get_bool(parent->settings, "show_cursor"));
 }

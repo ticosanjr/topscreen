@@ -129,13 +129,16 @@ bool highlight_mode_changed(obs_properties_t *props, obs_property_t *property, o
 	(void)property;
 	const long long mode = settings ? obs_data_get_int(settings, kHighlightMode)
 					: static_cast<long long>(HighlightMode::Box);
+	const bool hotkey_zoom = settings
+					 ? obs_data_get_bool(settings, kHighlightHotkeyEnabled)
+					 : true;
 	/* The pure zoom mode draws no mark at all, so its look/timing controls do
 	 * not apply. Every zoom mode (zoom, box+zoom, line+zoom) needs the zoom
-	 * group. */
+	 * group; the independent hotkey also uses it in any drag mode. */
 	const bool draws_mark = mode_draws_mark(static_cast<int>(mode));
 	highlight_group_visible(props, "grp_hl_look", draws_mark);
 	highlight_group_visible(props, "grp_hl_timing", draws_mark);
-	const bool wants_zoom = mode_wants_zoom(static_cast<int>(mode));
+	const bool wants_zoom = mode_wants_zoom(static_cast<int>(mode)) || hotkey_zoom;
 	highlight_group_visible(props, "grp_hl_zoom", wants_zoom);
 
 	/* PressZoom is press-only: it uses its own short delay and the drag delay
@@ -349,8 +352,8 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 	 * The mode list below shows/hides the Look / Timing / Zoom groups. */
 	obs_properties_t *hl = obs_properties_create();
 	obs_properties_add_bool(hl, kHighlightEnabled, obs_module_text("Highlight.Enabled"));
-	obs_properties_add_bool(hl, kHighlightHotkeyEnabled,
-				obs_module_text("Highlight.HotkeyEnabled"));
+	obs_property_t *hkh = obs_properties_add_bool(hl, kHighlightHotkeyEnabled,
+						      obs_module_text("Highlight.HotkeyEnabled"));
 
 	obs_property_t *hmode = obs_properties_add_list(hl, kHighlightMode,
 							obs_module_text("Highlight.Mode"),
@@ -368,6 +371,7 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 	obs_property_list_add_int(hmode, obs_module_text("Highlight.Mode.LineZoom"),
 				  static_cast<int>(HighlightMode::LineZoom));
 	obs_property_set_modified_callback(hmode, highlight_mode_changed);
+	obs_property_set_modified_callback(hkh, highlight_mode_changed);
 
 	/* Look (box + line). */
 	obs_properties_t *hl_look = obs_properties_create();

@@ -35,11 +35,12 @@ Add a **Display Capture** and the **TopScreen FX** filter. Then:
 | 10 | Motion blur | light radial blur during zoom |
 | 11 | Key overlay | keys appear at the bottom and disappear after the TTL |
 | 12 | Spotlight | darkens everything except the circle at the cursor |
-| 13 | Highlighter | dragging with the left button marks the region; `TopScreen_ToggleHighlight` zooms at the cursor on the first press and returns on the second |
+| 13 | Highlighter | dragging with the left button marks the region; `TopScreen_ToggleHighlight` zooms at the cursor on the first press and returns on the second; manual zoom/drag cancels the hotkey toggle |
 | 14 | Presets (hotkey) | next/previous switch the look |
 | 15 | Profiles | switching A–J also reloads the click sounds (test A vs. D with different WAVs) |
 | 16 | Profile import | an older/partial `.json` imports with defaults instead of failing |
-| 17 | Dock | reflects the state and shows the input tier |
+| 17 | Effects off / filter removed | the capture's native cursor comes back (no missing cursor) |
+| 18 | Dock | reflects the state and shows the input tier |
 
 ## 3. Hotkeys
 
@@ -68,7 +69,18 @@ To test the overlay without an input backend: set `TOPSCREEN_DEBUG_KEY=Ctrl`.
 - **No keys on Wayland**: permission on `/dev/input` (udev rule/input group).
 - **Overlay text skewed**: libobs matrix system — report it with a screenshot.
 
-## 6. Reporting
+## 6. Release archives
+
+Before attaching a package to GitHub, run:
+
+```bash
+./scripts/verify-release.sh
+```
+
+It checks the archives, binary version string, architecture, required data,
+locale keys, Windows launchers and byte identity with `build/topscreen.so/.dll`.
+
+## 7. Reporting
 
 Include: OBS version, OS/graphics server, log excerpt (`--verbose`),
 and which table item failed.

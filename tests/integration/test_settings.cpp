@@ -97,6 +97,29 @@ TEST(settings_store_load_roundtrip)
 	obs_data_release(s);
 }
 
+/* Optional fallback: fields absent from a partial profile slot keep the seed
+ * instead of becoming zero/global defaults (used by profile import/export). */
+TEST(settings_load_with_fallback_keeps_seed_fields)
+{
+	core::Config seed;
+	seed.zoom.mode = static_cast<int>(core::ZoomMode::Off);
+	seed.click_left.color = 0xFF00D6FFu;
+	seed.bg.padding_x = 42.0;
+
+	obs_data_t *s = obs_data_create();
+	obs_data_set_int(s, core::keys::kCursorStyle, 60);
+
+	core::Config out = seed;
+	config_load(s, &out, &seed);
+
+	CHECK_EQ(out.cursor.style, 60);
+	CHECK_EQ(out.zoom.mode, seed.zoom.mode);
+	CHECK_EQ(out.click_left.color, seed.click_left.color);
+	CHECK_NEAR(out.bg.padding_x, 42.0, 1e-9);
+
+	obs_data_release(s);
+}
+
 /* Migration of the old bg_padding key. */
 TEST(settings_migrates_old_bg_padding)
 {
@@ -149,16 +172,29 @@ TEST(properties_creates_expected_groups)
  * box/line get Look + Timing, zoom mode gets only the Zoom group. */
 TEST(properties_highlight_groups_follow_the_mode)
 {
-	auto make_props = [](int mode) {
+	auto make_props = [](int mode, bool hotkey = true) {
 		obs_data_t *s = obs_data_create();
 		config_defaults(s);
 		obs_data_set_int(s, core::keys::kHighlightMode, static_cast<long long>(mode));
+		obs_data_set_bool(s, core::keys::kHighlightHotkeyEnabled, hotkey);
 		return std::make_pair(s, properties_create(nullptr, s));
 	};
 
-	/* Default is box: look + timing visible, zoom hidden. */
+	/* Default is box: look + timing visible. The independent hotkey also uses
+	 * the zoom settings, so its group stays visible by default. */
 	{
 		auto [s, p] = make_props(static_cast<int>(core::HighlightMode::Box));
+		CHECK(p != nullptr);
+		CHECK(fakeobs::property_visible(obs_properties_get(p, "grp_hl_look")));
+		CHECK(fakeobs::property_visible(obs_properties_get(p, "grp_hl_timing")));
+		CHECK(fakeobs::property_visible(obs_properties_get(p, "grp_hl_zoom")));
+		obs_properties_destroy(p);
+		obs_data_release(s);
+	}
+
+	/* With the hotkey disabled, a non-zoom drag mode hides the zoom group. */
+	{
+		auto [s, p] = make_props(static_cast<int>(core::HighlightMode::Box), false);
 		CHECK(p != nullptr);
 		CHECK(fakeobs::property_visible(obs_properties_get(p, "grp_hl_look")));
 		CHECK(fakeobs::property_visible(obs_properties_get(p, "grp_hl_timing")));
@@ -208,9 +244,19 @@ TEST(properties_highlight_groups_follow_the_mode)
 		obs_data_release(s);
 	}
 
-	/* Line mode behaves like box (look + timing, no zoom group). */
+	/* Line mode behaves like box: look + timing, zoom group only via hotkey. */
 	{
 		auto [s, p] = make_props(static_cast<int>(core::HighlightMode::Line));
+		CHECK(p != nullptr);
+		CHECK(fakeobs::property_visible(obs_properties_get(p, "grp_hl_look")));
+		CHECK(fakeobs::property_visible(obs_properties_get(p, "grp_hl_timing")));
+		CHECK(fakeobs::property_visible(obs_properties_get(p, "grp_hl_zoom")));
+		obs_properties_destroy(p);
+		obs_data_release(s);
+	}
+
+	{
+		auto [s, p] = make_props(static_cast<int>(core::HighlightMode::Line), false);
 		CHECK(p != nullptr);
 		CHECK(fakeobs::property_visible(obs_properties_get(p, "grp_hl_look")));
 		CHECK(fakeobs::property_visible(obs_properties_get(p, "grp_hl_timing")));

@@ -115,6 +115,7 @@ bool ClickSound::load_slot(Slot *slot, const char *module_file)
 
 bool ClickSound::load(const char *left_module_file, const char *right_module_file)
 {
+	std::lock_guard<std::mutex> lock(mutex_);
 	const bool l = load_slot(&left_, left_module_file);
 	const bool r = load_slot(&right_, right_module_file);
 	loaded_ = l || r;
@@ -138,8 +139,15 @@ bool ClickSound::load(const char *left_module_file, const char *right_module_fil
 	return loaded_;
 }
 
+std::string ClickSound::loaded_path(bool right) const
+{
+	std::lock_guard<std::mutex> lock(mutex_);
+	return right ? right_.path : left_.path;
+}
+
 void ClickSound::release()
 {
+	std::lock_guard<std::mutex> lock(mutex_);
 #if !defined(_WIN32)
 	stop_persistent();
 	reap_children();
@@ -217,20 +225,20 @@ bool ClickSound::start_persistent(double volume)
 
 	player_pid_ = static_cast<int>(pid);
 	player_stdin_ = fds[1];
-	player_volume_ = volume;
 	return true;
 }
 
 bool ClickSound::ensure_persistent(double volume)
 {
+	(void)volume; // the PCM is scaled per click, so volume changes do not restart
 	if (!persistent_checked_)
 		return false;
 	if (!persistent_available_)
 		return false;
-	if (player_stdin_ >= 0 && std::fabs(player_volume_ - volume) < 0.01)
+	if (player_stdin_ >= 0)
 		return true;
 	stop_persistent();
-	return start_persistent(volume);
+	return start_persistent(1.0);
 }
 
 void ClickSound::stop_persistent()
@@ -240,14 +248,15 @@ void ClickSound::stop_persistent()
 		player_stdin_ = -1;
 	}
 	if (player_pid_ > 0) {
+		/* Do not block the video thread waiting for paplay. Closing stdin is
+		 * normally enough; the child is reaped lazily on the next click. */
 		::kill(static_cast<pid_t>(player_pid_), SIGTERM);
-		::waitpid(static_cast<pid_t>(player_pid_), nullptr, 0);
+		children_.push_back(player_pid_);
 		player_pid_ = -1;
 	}
-	player_volume_ = -1.0;
 }
 
-bool ClickSound::write_pcm(const Slot &slot)
+bool ClickSound::write_pcm(const Slot &slot, double volume)
 {
 	if (player_stdin_ < 0 || slot.wav.samples.empty())
 		return false;
@@ -255,7 +264,7 @@ bool ClickSound::write_pcm(const Slot &slot)
 	pcm_scratch_.resize(slot.wav.samples.size());
 	for (size_t i = 0; i < slot.wav.samples.size(); ++i) {
 		const float v = std::max(-1.0f, std::min(1.0f, slot.wav.samples[i]));
-		pcm_scratch_[i] = static_cast<int16_t>(std::lround(v * 32767.0f));
+		pcm_scratch_[i] = static_cast<int16_t>(std::lround(v * volume * 32767.0f));
 	}
 
 	const uint8_t *data = reinterpret_cast<const uint8_t *>(pcm_scratch_.data());
@@ -310,6 +319,8 @@ void ClickSound::spawn_and_play(const Slot &slot, double volume)
 
 void ClickSound::play(bool right, double volume)
 {
+	std::lock_guard<std::mutex> lock(mutex_);
+	reap_children();
 	const Slot &slot = right ? right_ : left_;
 	if (!slot.loaded || slot.path.empty())
 		return;
@@ -328,7 +339,7 @@ void ClickSound::play(bool right, double volume)
 		PlaySoundW(wide.c_str(), nullptr, SND_ASYNC | SND_FILENAME | SND_NODEFAULT);
 	}
 #else
-	if (ensure_persistent(volume) && write_pcm(slot))
+	if (ensure_persistent(volume) && write_pcm(slot, volume))
 		return;
 
 	/* A broken/dead stream falls back to the old one-shot path. */

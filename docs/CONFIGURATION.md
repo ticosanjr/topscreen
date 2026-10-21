@@ -108,6 +108,12 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 > to the active slot (auto-save, debounced by ~0.4 s) and the chosen profile is
 > re-applied when the source loads.
 
+> Highlighter: the hotkey toggle is independent of the drag modes and of the
+> **Enable drag actions** switch. It uses the same Zoom settings above, so the
+> Zoom group stays visible whenever the hotkey is enabled, even in Box/Line
+> mode. With **Zoom direction = out** at 1× there is nothing to zoom out from;
+> use **in** (the default) for the first press.
+
 ### Profiles backup
 
 `Export profiles` writes a `.json` with the 10 slots and the active index:
@@ -116,7 +122,7 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 {
   "topscreen_profiles": 1,
   "plugin": "TopScreen",
-  "version": "0.2.26",
+  "version": "0.3.0",
   "current": 0,
   "profile_slot_0": { "effects_enabled": true },
   "profile_slot_1": { "effects_enabled": true },

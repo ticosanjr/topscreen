@@ -47,6 +47,7 @@ VERSION=$(sed -n 's/^project(TopScreen VERSION \([0-9.]*\).*/\1/p' CMakeLists.tx
 ./scripts/build-install.sh              # Linux .so (with the Qt dock)
 ./scripts/build-windows-cross.sh        # Windows .dll (without the Qt dock)
 ./scripts/package.sh                    # writes both archives into releases/
+./scripts/verify-release.sh             # structure, version, arch, data, SHA-256
 ./tests/run-all.sh                      # core + OBS headers + integration
 
 git add -A
@@ -73,7 +74,12 @@ the archives in `releases/` carry the same bytes.
 | Platform | Build environment |
 |----------|-------------------|
 | Linux | `ubuntu-24.04` + distro `libobs-dev` 30.0.2, `obs-frontend-api` and Qt6 (dock included) |
-| Windows | official OBS **sources** of the same version as the runtime (headers) + import libraries generated from `obs.dll` and `obs-frontend-api.dll`, plus Qt6 from obs-deps: CI-built packages include the **Qt dock** like Linux; local cross-builds (0.2.18–0.2.26) do not |
+| Windows | official OBS **sources** of the same version as the runtime (headers) + import libraries generated from `obs.dll` and `obs-frontend-api.dll`, plus Qt6 from obs-deps: CI-built packages include the **Qt dock** like Linux; local cross-builds (0.2.18–0.3.0) do not |
+
+> The local Linux build uses the distro OBS 30.0.2. The Windows cross-build script
+> pins OBS **31.1.1** (`OBS_VERSION` in `scripts/build-windows-cross.sh`); use the
+> same OBS generation for the runtime when possible, or rebuild against your
+> installed OBS as described above.
 
 You can also run it by hand (**Actions → Release → Run workflow**) to get the
 archives as artifacts without publishing a release.

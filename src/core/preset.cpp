@@ -85,9 +85,32 @@ bool Preset::apply(Config *cfg, std::string *error) const
 
 	/* Background */
 	cfg->bg.enabled = read_bool(o, kBgEnabled, cfg->bg.enabled);
-	cfg->bg.mode = read_int(o, kBgMode, cfg->bg.mode);
+	if (lookup(o, kBgType)) {
+		cfg->bg.mode = read_int(o, kBgType, cfg->bg.mode);
+	} else {
+		const int legacy = read_int(o, kBgMode, cfg->bg.mode);
+		if (legacy == 0)
+			cfg->bg.mode = static_cast<int>(BgMode::Solid);
+		else if (legacy == 3)
+			cfg->bg.mode = static_cast<int>(BgMode::Wallpaper);
+		else
+			cfg->bg.mode = static_cast<int>(BgMode::Gradient);
+		if (!lookup(o, kBgGradientAngle)) {
+			if (legacy == 1)
+				cfg->bg.gradient_angle = 90.0;
+			else if (legacy == 2)
+				cfg->bg.gradient_angle = 45.0;
+		}
+	}
+	if (cfg->bg.mode < 0 || cfg->bg.mode > 2)
+		cfg->bg.mode = static_cast<int>(BgMode::Gradient);
 	cfg->bg.color_a = static_cast<uint32_t>(read_number(o, kBgColorA, cfg->bg.color_a));
 	cfg->bg.color_b = static_cast<uint32_t>(read_number(o, kBgColorB, cfg->bg.color_b));
+	cfg->bg.gradient_angle = read_number(o, kBgGradientAngle, cfg->bg.gradient_angle);
+	cfg->bg.gradient_center_x =
+		read_number(o, kBgGradientCenterX, cfg->bg.gradient_center_x);
+	cfg->bg.gradient_center_y =
+		read_number(o, kBgGradientCenterY, cfg->bg.gradient_center_y);
 	cfg->bg.image = read_string(o, kBgImage, cfg->bg.image);
 	cfg->bg.image_file = read_string(o, kBgImageFile, cfg->bg.image_file);
 	cfg->bg.image_blur = read_number(o, kBgImageBlur, cfg->bg.image_blur);

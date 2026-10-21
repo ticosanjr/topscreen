@@ -24,9 +24,14 @@ struct Vec2f {
 
 enum class BgMode : int {
 	Solid = 0,
-	Vertical = 1,
-	Diagonal = 2,
-	Image = 3,
+	Gradient = 1,
+	Wallpaper = 2,
+
+	/* Legacy aliases: old configs/presets used 1=V vertical, 2=diagonal and
+	 * 3=image. They are migrated to the new types on load. */
+	Vertical = Gradient,
+	Diagonal = Gradient,
+	Image = Wallpaper,
 };
 
 enum class CursorStyle : int {

@@ -14,9 +14,12 @@ namespace topscreen::core {
 
 struct BackgroundConfig {
 	bool enabled = true;
-	int mode = static_cast<int>(BgMode::Diagonal);
+	int mode = static_cast<int>(BgMode::Gradient); // 0 solid, 1 gradient, 2 wallpaper
 	uint32_t color_a = 0xFF20242E; // 0xAABBGGRR
 	uint32_t color_b = 0xFF3A2E5C; // 0xAABBGGRR
+	double gradient_angle = 45.0; // degrees; 0 = left→right
+	double gradient_center_x = 0.5;
+	double gradient_center_y = 0.5;
 	std::string image;             // wallpaper path/relative ("" = none)
 	std::string image_file;        // PC image (takes priority over `image`)
 	double image_blur = 0.0;       // wallpaper blur (px)

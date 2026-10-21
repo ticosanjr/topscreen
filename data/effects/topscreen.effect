@@ -18,7 +18,9 @@ uniform float  zoom;          // >= 1
 uniform float2 zoom_focus;    // 0..1 (zoom center)
 uniform float4 bg_a;
 uniform float4 bg_b;
-uniform float  bg_mode;       // 0 solid, 1 vertical, 2 diagonal, 3 image
+uniform float  bg_mode;       // 0 solid, 1 gradient, 2 wallpaper
+uniform float2 bg_gradient_center; // 0..1, point where the colors meet
+uniform float  bg_gradient_angle;  // degrees
 uniform texture2d bg_tex;     // wallpaper
 uniform float  bg_tex_enabled;
 uniform float  bg_transparent; // 1 = transparent outside the floating screen
@@ -309,12 +311,13 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 	float  radius       = min(corner_radius, min(content_half.x, content_half.y));
 	radius              = max(radius, 0.0);
 
-	// Background: image (if present) takes priority over color/gradient.
+	// Background: wallpaper when selected, otherwise solid/gradient.
 	// Transparent mode ignores both and clears the frame outside the screen.
 	float4 col = bg_a;
 	if (bg_transparent > 0.5) {
 		col = float4(0.0, 0.0, 0.0, 0.0);
-	} else if (bg_tex_enabled > 0.5) {
+	} else if (bg_mode > 1.5) {
+	    if (bg_tex_enabled > 0.5) {
 		float at = target_size.x / max(target_size.y, 1.0);
 		float ai = max(bg_tex_aspect, 0.0001);
 		float2 sc = float2(1.0, 1.0);
@@ -348,10 +351,14 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 		} else {
 			col = bg_tex.Sample(def_sampler, buv);
 		}
-	} else if (bg_mode > 0.5 && bg_mode < 1.5) {
-		col = lerp(bg_a, bg_b, saturate(vert_in.uv.y));
-	} else if (bg_mode >= 1.5) {
-		col = lerp(bg_a, bg_b, saturate((vert_in.uv.x + vert_in.uv.y) * 0.5));
+	    } else {
+		col = bg_a;
+	    }
+	} else if (bg_mode > 0.5) {
+		float a = bg_gradient_angle * 0.0174532925199433;
+		float2 dir = float2(cos(a), sin(a));
+		float t = saturate(dot(vert_in.uv - bg_gradient_center, dir) + 0.5);
+		col = lerp(bg_a, bg_b, t);
 	}
 
 	// Approximate shadow

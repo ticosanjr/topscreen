@@ -24,7 +24,8 @@ Add a **Display Capture** and the **TopScreen FX** filter. Then:
 | # | What to test | Expected |
 |---|--------------|----------|
 | 1 | Passthrough filter (effects off) | image identical to the capture |
-| 2 | Background + corners + padding + shadow | screen "floating" with background and corners |
+| 2 | Background type | solid color uses one color; gradient blends two colors and follows angle/meeting point; wallpaper keeps the existing image/blur controls |
+| 2b | Background corners/padding/shadow | screen "floating" with background, corners and shadow |
 | 3 | Cursor | native cursor disappears; own arrow appears (light with a dark outline) |
 | 4 | Cursor size/smoothing/sway | changes with the sliders |
 | 5 | Left click | ripple/orb effect at the click point |

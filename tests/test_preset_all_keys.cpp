@@ -18,6 +18,10 @@ TEST(preset_covers_all_keys)
             "effects_enabled": false,
             "bg_enabled": false,
             "bg_mode": 1,
+            "bg_type": 1,
+            "bg_gradient_angle": 135,
+            "bg_gradient_center_x": 0.3,
+            "bg_gradient_center_y": 0.7,
             "bg_color_a": 111,
             "bg_color_b": 222,
             "bg_image": "wallpapers/ocean.jpg",
@@ -132,6 +136,9 @@ TEST(preset_covers_all_keys)
 
 	CHECK(!c.bg.enabled);
 	CHECK_EQ(c.bg.mode, 1);
+	CHECK_NEAR(c.bg.gradient_angle, 135.0, 1e-9);
+	CHECK_NEAR(c.bg.gradient_center_x, 0.3, 1e-9);
+	CHECK_NEAR(c.bg.gradient_center_y, 0.7, 1e-9);
 	CHECK_EQ(c.bg.color_a, 111u);
 	CHECK_EQ(c.bg.color_b, 222u);
 	CHECK_EQ(c.bg.image, std::string("wallpapers/ocean.jpg"));

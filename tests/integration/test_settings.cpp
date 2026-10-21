@@ -69,7 +69,10 @@ TEST(settings_store_load_roundtrip)
 	a.zoom.amount = 2.5;
 	a.click_left.color = 0xFF112233u;
 	a.click_right.color = 0xFF445566u;
-	a.bg.mode = static_cast<int>(core::BgMode::Vertical);
+	a.bg.mode = static_cast<int>(core::BgMode::Gradient);
+	a.bg.gradient_angle = 135.0;
+	a.bg.gradient_center_x = 0.3;
+	a.bg.gradient_center_y = 0.7;
 	a.bg.image_file = "wallpapers/ocean.jpg";
 	a.bg.shadow_offset_x = -17.0;
 	a.keys.pos_x = 0.25;
@@ -98,6 +101,9 @@ TEST(settings_store_load_roundtrip)
 	CHECK_EQ(b.click_left.color, a.click_left.color);
 	CHECK_EQ(b.click_right.color, a.click_right.color);
 	CHECK_EQ(b.bg.mode, a.bg.mode);
+	CHECK_NEAR(b.bg.gradient_angle, 135.0, 1e-9);
+	CHECK_NEAR(b.bg.gradient_center_x, 0.3, 1e-9);
+	CHECK_NEAR(b.bg.gradient_center_y, 0.7, 1e-9);
 	CHECK_EQ(b.bg.image_file, a.bg.image_file);
 	CHECK_NEAR(b.bg.shadow_offset_x, -17.0, 1e-9);
 	CHECK_NEAR(b.keys.pos_x, 0.25, 1e-9);
@@ -138,6 +144,49 @@ TEST(settings_load_with_fallback_keeps_seed_fields)
 	CHECK_NEAR(out.bg.padding_x, 42.0, 1e-9);
 
 	obs_data_release(s);
+}
+
+/* Legacy background modes are migrated without changing the visible look:
+ * vertical/diagonal -> gradient (with the corresponding angle), image -> wallpaper.
+ * A new explicit bg_type always wins, even if an old image path remains. */
+TEST(settings_migrates_legacy_background_modes)
+{
+	{
+		obs_data_t *s = obs_data_create();
+		obs_data_set_int(s, core::keys::kBgMode, 1);
+		core::Config c;
+		config_load(s, &c);
+		CHECK_EQ(c.bg.mode, static_cast<int>(core::BgMode::Gradient));
+		CHECK_NEAR(c.bg.gradient_angle, 90.0, 1e-9);
+		obs_data_release(s);
+	}
+	{
+		obs_data_t *s = obs_data_create();
+		obs_data_set_int(s, core::keys::kBgMode, 2);
+		core::Config c;
+		config_load(s, &c);
+		CHECK_EQ(c.bg.mode, static_cast<int>(core::BgMode::Gradient));
+		CHECK_NEAR(c.bg.gradient_angle, 45.0, 1e-9);
+		obs_data_release(s);
+	}
+	{
+		obs_data_t *s = obs_data_create();
+		obs_data_set_int(s, core::keys::kBgMode, 0);
+		obs_data_set_string(s, core::keys::kBgImage, "wallpapers/ocean.jpg");
+		core::Config c;
+		config_load(s, &c);
+		CHECK_EQ(c.bg.mode, static_cast<int>(core::BgMode::Wallpaper));
+		obs_data_release(s);
+	}
+	{
+		obs_data_t *s = obs_data_create();
+		obs_data_set_int(s, core::keys::kBgType, static_cast<int>(core::BgMode::Solid));
+		obs_data_set_string(s, core::keys::kBgImage, "wallpapers/ocean.jpg");
+		core::Config c;
+		config_load(s, &c);
+		CHECK_EQ(c.bg.mode, static_cast<int>(core::BgMode::Solid));
+		obs_data_release(s);
+	}
 }
 
 /* Migration of the old bg_padding key. */
@@ -298,6 +347,47 @@ TEST(properties_highlight_groups_follow_the_mode)
 		CHECK(fakeobs::property_visible(obs_properties_get(p, "grp_hl_look")));
 		CHECK(fakeobs::property_visible(obs_properties_get(p, "grp_hl_timing")));
 		CHECK(fakeobs::property_visible(obs_properties_get(p, "grp_hl_zoom")));
+		obs_properties_destroy(p);
+		obs_data_release(s);
+	}
+}
+
+/* Background type controls which controls are shown: one color, two colors +
+ * meeting point/angle, or the existing wallpaper controls. */
+TEST(properties_background_type_visibility)
+{
+	auto make_props = [](int type) {
+		obs_data_t *s = obs_data_create();
+		config_defaults(s);
+		obs_data_set_int(s, core::keys::kBgType, type);
+		return std::make_pair(s, properties_create(nullptr, s));
+	};
+
+	{
+		auto [s, p] = make_props(static_cast<int>(core::BgMode::Solid));
+		CHECK(fakeobs::property_visible(obs_properties_get(p, core::keys::kBgColorA)));
+		CHECK(!fakeobs::property_visible(obs_properties_get(p, core::keys::kBgColorB)));
+		CHECK(!fakeobs::property_visible(obs_properties_get(p, core::keys::kBgGradientAngle)));
+		CHECK(!fakeobs::property_visible(obs_properties_get(p, "grp_bg_image")));
+		obs_properties_destroy(p);
+		obs_data_release(s);
+	}
+	{
+		auto [s, p] = make_props(static_cast<int>(core::BgMode::Gradient));
+		CHECK(fakeobs::property_visible(obs_properties_get(p, core::keys::kBgColorA)));
+		CHECK(fakeobs::property_visible(obs_properties_get(p, core::keys::kBgColorB)));
+		CHECK(fakeobs::property_visible(obs_properties_get(p, core::keys::kBgGradientAngle)));
+		CHECK(fakeobs::property_visible(obs_properties_get(p, core::keys::kBgGradientCenterX)));
+		CHECK(!fakeobs::property_visible(obs_properties_get(p, "grp_bg_image")));
+		obs_properties_destroy(p);
+		obs_data_release(s);
+	}
+	{
+		auto [s, p] = make_props(static_cast<int>(core::BgMode::Wallpaper));
+		CHECK(!fakeobs::property_visible(obs_properties_get(p, core::keys::kBgColorA)));
+		CHECK(!fakeobs::property_visible(obs_properties_get(p, core::keys::kBgColorB)));
+		CHECK(!fakeobs::property_visible(obs_properties_get(p, core::keys::kBgGradientAngle)));
+		CHECK(fakeobs::property_visible(obs_properties_get(p, "grp_bg_image")));
 		obs_properties_destroy(p);
 		obs_data_release(s);
 	}

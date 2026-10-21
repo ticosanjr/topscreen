@@ -37,6 +37,7 @@ Config make_profile_seed(int index)
 		c.click_right.effect = static_cast<int>(ClickEffect::Glow);
 		c.zoom.amount = 1.4;
 		c.bg.mode = static_cast<int>(BgMode::Vertical);
+		c.bg.gradient_angle = 90.0;
 		break;
 
 	case 3: /* D: yellow + white, zoom off */
@@ -57,6 +58,7 @@ Config make_profile_seed(int index)
 		c.click_right.color = 0xFF00DDAA; // lime
 		c.zoom.amount = 2.5;
 		c.bg.mode = static_cast<int>(BgMode::Vertical);
+		c.bg.gradient_angle = 90.0;
 		break;
 
 	case 6: /* G: white + pink, gentle zoom, green highlighter */

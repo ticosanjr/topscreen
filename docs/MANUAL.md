@@ -82,8 +82,11 @@ Places the screen "floating" over a background, with corners and shadow.
 | Option | What it does |
 |-------|-----------|
 | **Enable background** | Turns on the background + corners + spacing |
-| **Style** | Solid color, vertical or diagonal gradient (used when there is **no** image) |
-| **Color A / Color B** | Background colors (B only shows in gradients) |
+| **Background type** | **Solid color**, **Gradient** or **Wallpaper** |
+| **Color 1** | Background color for solid, or the first gradient color |
+| **Color 2** | Second gradient color (gradient only) |
+| **Gradient angle** | Direction of the gradient (0–360°) |
+| **Gradient meeting point X/Y** | Moves the point where the two colors meet |
 | **Wallpaper** | **Transparent (show the scene below)**, **(none)**, or one of the **42 images** that ship with the plugin. Choosing one applies it |
 | **Image from PC** | Button to choose a **file from your PC** (jpg/png/bmp/tga/gif/webp). Choosing one **clears** the Wallpaper (they are mutually exclusive) |
 | **Wallpaper blur (px)** | Blurs the background image (0 = sharp) |
@@ -98,7 +101,9 @@ Places the screen "floating" over a background, with corners and shadow.
 | ↳ **Horizontal distance** | Moves the shadow left/right |
 | ↳ **Vertical distance** | Moves the shadow up/down (positive = down) |
 
-> The background appears **behind** the screen. Without an image, use the **Style** (color/gradient).
+> The background appears **behind** the screen. **Solid** uses Color 1;
+> **Gradient** blends Color 1 → Color 2 through the meeting point and angle;
+> **Wallpaper** uses the image controls.
 > **Transparent** removes the background/padding and lets the scene below show through; the captured screen, corners, shadow, cursor, clicks and keys stay on top.
 
 ### Cursor

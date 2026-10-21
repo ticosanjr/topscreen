@@ -26,7 +26,7 @@ Status: ✅ done · 🟡 partial · ⬜ pending.
 | T1.1 | `ts-settings` (obs_data ↔ `core::Config`) | ✅ |
 | T1.2 | `ts-properties` (groups General/Background/Cursor/Clicks/Sound/Zoom) | ✅ |
 | T1.3 | `ts-compositor`: load effect + parameter cache | ✅ |
-| T1.4 | Shader: solid/gradient background, SDF corners, padding, approx. shadow | ✅ |
+| T1.4 | Shader: solid color and gradient (angle/meeting point) backgrounds, SDF corners, padding, approx. shadow | ✅ |
 | T1.5 | Zoom/pan via parameters in the shader | ✅ |
 | T1.6 | Initial Qt dock (presets/toggles) | ✅ |
 | T1.7 | Built-in JSON presets + loader (`ts-presets`) | ✅ |
@@ -116,7 +116,7 @@ Status: ✅ done · 🟡 partial · ⬜ pending.
 | TD.1 | Full GPL-2.0 license text (`COPYING`) | ✅ |
 | TD.2 | `CONTRIBUTING.md` and PR template | ✅ |
 | TD.3 | Adjust `buildspec.json`/presets for the official CI | ⬜ |
-| TD.4 | Core sanity tests | ✅ (207 core + 45 integration + 37 OBS header files + ASan/UBSan) |
+| TD.4 | Core sanity tests | ✅ (207 core + 47 integration + 37 OBS header files + ASan/UBSan) |
 
 ---
 

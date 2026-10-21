@@ -97,8 +97,8 @@ That is where all the math and the state logic live — what actually must be ri
 ## Current numbers
 
 ```
-207 tests | 5307 checks | 0 failures   (core)
-45 tests | 576 checks   | 0 failures   (integration with fake libobs)
+207 tests | 5324 checks | 0 failures   (core)
+47 tests | 602 checks   | 0 failures   (integration with fake libobs)
 ```
 
 ## What the integration layer covers
@@ -113,7 +113,7 @@ fake libobs:
 | `test_integration.cpp` hotkeys | `integration_registers_all_hotkeys` covers every hotkey id/name/callback; `integration_hotkeys_shared_between_filters` proves one process-wide set shared across filters; `integration_registry_target_selection` proves selection routing/fallback |
 | `test_uniforms.cpp` | every uniform declared by `topscreen.effect` is uploaded on a plain frame (D3D11 aborts the draw otherwise) |
 | `test_text_render.cpp` | key-overlay text batches all glyphs + shadow quads into one vertex buffer (**1 draw total**, cache hit without rebuild) and falls back to per-glyph sprites if vertex-buffer creation fails |
-| `test_settings.cpp` | defaults match `Config`, legacy source falls back, store/load roundtrip, partial-slot fallback, migrations, properties tree/zoom-group visibility with the hotkey, input without a backend, click sound error handling |
+| `test_settings.cpp` | defaults match `Config`, legacy source falls back, store/load roundtrip, partial-slot fallback, background type migration/visibility, migrations, properties tree/zoom-group visibility with the hotkey, input without a backend, click sound error handling |
 
 ## What is NOT covered (and why)
 

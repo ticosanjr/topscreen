@@ -3,10 +3,21 @@
 #include "core/cursor_catalog.hpp"
 #include "core/keys.hpp"
 
+#include <algorithm>
+
 using namespace topscreen::core;
 using namespace topscreen::core::keys;
 
 namespace topscreen {
+
+namespace {
+
+int legacy_bg_mode(int mode)
+{
+	return mode == static_cast<int>(BgMode::Wallpaper) ? 3 : mode;
+}
+
+} // namespace
 
 void config_defaults(obs_data_t *s)
 {
@@ -15,9 +26,13 @@ void config_defaults(obs_data_t *s)
 	obs_data_set_default_bool(s, kEffectsEnabled, def.effects_enabled);
 
 	obs_data_set_default_bool(s, kBgEnabled, def.bg.enabled);
-	obs_data_set_default_int(s, kBgMode, def.bg.mode);
+	obs_data_set_default_int(s, kBgType, def.bg.mode);
+	obs_data_set_default_int(s, kBgMode, legacy_bg_mode(def.bg.mode));
 	obs_data_set_default_int(s, kBgColorA, static_cast<long long>(def.bg.color_a));
 	obs_data_set_default_int(s, kBgColorB, static_cast<long long>(def.bg.color_b));
+	obs_data_set_default_double(s, kBgGradientAngle, def.bg.gradient_angle);
+	obs_data_set_default_double(s, kBgGradientCenterX, def.bg.gradient_center_x);
+	obs_data_set_default_double(s, kBgGradientCenterY, def.bg.gradient_center_y);
 	obs_data_set_default_string(s, kBgImage, def.bg.image.c_str());
 	obs_data_set_default_string(s, kBgImageFile, def.bg.image_file.c_str());
 	obs_data_set_default_double(s, kBgImageBlur, def.bg.image_blur);
@@ -175,11 +190,38 @@ void config_load(obs_data_t *s, Config *c, const Config *fallback)
 	c->effects_enabled = read_bool(s, kEffectsEnabled, d.effects_enabled);
 
 	c->bg.enabled = read_bool(s, kBgEnabled, d.bg.enabled);
-	c->bg.mode = static_cast<int>(read_int(s, kBgMode, d.bg.mode));
+	const long long legacy_mode = read_int(s, kBgMode, legacy_bg_mode(d.bg.mode));
 	c->bg.color_a = static_cast<uint32_t>(read_int(s, kBgColorA, d.bg.color_a));
 	c->bg.color_b = static_cast<uint32_t>(read_int(s, kBgColorB, d.bg.color_b));
 	c->bg.image = read_string(s, kBgImage, d.bg.image);
 	c->bg.image_file = read_string(s, kBgImageFile, d.bg.image_file);
+
+	const bool has_type = obs_data_has_user_value(s, kBgType);
+	int mode = static_cast<int>(d.bg.mode);
+	if (has_type) {
+		mode = static_cast<int>(read_int(s, kBgType, d.bg.mode));
+	} else {
+		const bool has_wallpaper = !c->bg.image.empty() || !c->bg.image_file.empty();
+		if (has_wallpaper || legacy_mode == 3)
+			mode = static_cast<int>(BgMode::Wallpaper);
+		else if (legacy_mode == 0)
+			mode = static_cast<int>(BgMode::Solid);
+		else
+			mode = static_cast<int>(BgMode::Gradient);
+	}
+	c->bg.mode = std::clamp(mode, static_cast<int>(BgMode::Solid),
+				static_cast<int>(BgMode::Wallpaper));
+
+	c->bg.gradient_angle = read_double(s, kBgGradientAngle, d.bg.gradient_angle);
+	c->bg.gradient_center_x = read_double(s, kBgGradientCenterX, d.bg.gradient_center_x);
+	c->bg.gradient_center_y = read_double(s, kBgGradientCenterY, d.bg.gradient_center_y);
+	if (!has_type && !obs_data_has_user_value(s, kBgGradientAngle)) {
+		if (legacy_mode == 1)
+			c->bg.gradient_angle = 90.0;
+		else if (legacy_mode == 2)
+			c->bg.gradient_angle = 45.0;
+	}
+
 	c->bg.image_blur = read_double(s, kBgImageBlur, d.bg.image_blur);
 	c->bg.image_blur_type = static_cast<int>(read_int(s, kBgImageBlurType, d.bg.image_blur_type));
 	c->bg.padding_x = read_double(s, kBgPaddingX, d.bg.padding_x);
@@ -325,9 +367,13 @@ void config_store(obs_data_t *s, const Config &c)
 	obs_data_set_bool(s, kEffectsEnabled, c.effects_enabled);
 
 	obs_data_set_bool(s, kBgEnabled, c.bg.enabled);
-	obs_data_set_int(s, kBgMode, c.bg.mode);
+	obs_data_set_int(s, kBgType, c.bg.mode);
+	obs_data_set_int(s, kBgMode, legacy_bg_mode(c.bg.mode));
 	obs_data_set_int(s, kBgColorA, static_cast<long long>(c.bg.color_a));
 	obs_data_set_int(s, kBgColorB, static_cast<long long>(c.bg.color_b));
+	obs_data_set_double(s, kBgGradientAngle, c.bg.gradient_angle);
+	obs_data_set_double(s, kBgGradientCenterX, c.bg.gradient_center_x);
+	obs_data_set_double(s, kBgGradientCenterY, c.bg.gradient_center_y);
 	obs_data_set_string(s, kBgImage, c.bg.image.c_str());
 	obs_data_set_string(s, kBgImageFile, c.bg.image_file.c_str());
 	obs_data_set_double(s, kBgImageBlur, c.bg.image_blur);

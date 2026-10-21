@@ -11,9 +11,13 @@ namespace topscreen::core::keys {
 inline constexpr const char *kEffectsEnabled = "effects_enabled";
 
 inline constexpr const char *kBgEnabled = "bg_enabled";
-inline constexpr const char *kBgMode = "bg_mode";
+inline constexpr const char *kBgMode = "bg_mode"; // legacy storage
+inline constexpr const char *kBgType = "bg_type"; // 0 solid, 1 gradient, 2 wallpaper
 inline constexpr const char *kBgColorA = "bg_color_a";
 inline constexpr const char *kBgColorB = "bg_color_b";
+inline constexpr const char *kBgGradientAngle = "bg_gradient_angle";
+inline constexpr const char *kBgGradientCenterX = "bg_gradient_center_x";
+inline constexpr const char *kBgGradientCenterY = "bg_gradient_center_y";
 inline constexpr const char *kBgImage = "bg_image";
 inline constexpr const char *kBgImageFile = "bg_image_file";
 inline constexpr const char *kBgImageBlur = "bg_image_blur";

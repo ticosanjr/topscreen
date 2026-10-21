@@ -14,9 +14,13 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 |------------|------------|-------|------|-------|--------|
 | — | Effects enabled | `effects_enabled` | bool | — | `true` |
 | Background | Enable background | `bg_enabled` | bool | — | `true` |
-| | Style | `bg_mode` | int | 0 solid · 1 vertical · 2 diagonal | `2` |
-| | Color A | `bg_color_a` | color | — | `0xFF20242E` |
-| | Color B | `bg_color_b` | color | — | `0xFF3A2E5C` |
+| | Background type | `bg_type` | int | 0 solid · 1 gradient · 2 wallpaper | `1` |
+| | Legacy style (migrated) | `bg_mode` | int | old 0 solid · 1/2 gradient · 3 wallpaper | — |
+| | Color 1 | `bg_color_a` | color | — | `0xFF20242E` |
+| | Color 2 | `bg_color_b` | color | gradient only | `0xFF3A2E5C` |
+| | Gradient angle | `bg_gradient_angle` | double | 0–360° | `45` |
+| | Gradient meeting point X | `bg_gradient_center_x` | double | 0–1 | `0.5` |
+| | Gradient meeting point Y | `bg_gradient_center_y` | double | 0–1 | `0.5` |
 | | Wallpaper | `bg_image` | string | "" (none), `__transparent__` (show the scene below), or `wallpapers/*.jpg` (42) | `""` |
 | | Image from PC | `bg_image_file` | string | file path (**clears** the Wallpaper) | `""` |
 | | Wallpaper blur (px) | `bg_image_blur` | double | 0–60 | `0` |
@@ -121,6 +125,11 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Export path (Properties fallback) | `profile_export_path` | string | Any `.json` path | `""` |
 | | Import path (Properties fallback) | `profile_import_path` | string | Any `.json` path | `""` |
 
+> Background: `bg_type` selects solid, gradient or wallpaper. The gradient
+> angle is in degrees and the meeting point moves the 50/50 transition. Old
+> sources are migrated from `bg_mode` (vertical/diagonal become gradients;
+> an image becomes wallpaper; explicit `bg_type` always wins).
+
 > Profiles: switching profile applies the whole slot; subsequent edits are written
 > to the active slot (auto-save, debounced by ~0.4 s) and the chosen profile is
 > re-applied when the source loads.
@@ -198,7 +207,10 @@ table above; missing keys keep the current value.
   "settings": {
     "effects_enabled": true,
     "bg_enabled": true,
-    "bg_mode": 2,
+    "bg_type": 1,
+    "bg_gradient_angle": 45,
+    "bg_gradient_center_x": 0.5,
+    "bg_gradient_center_y": 0.5,
     "bg_color_a": 4280296494,
     "bg_color_b": 4282003036,
     "bg_padding_x": 64,

@@ -62,6 +62,8 @@ private:
 	gs_eparam_t *p_bg_a_ = nullptr;
 	gs_eparam_t *p_bg_b_ = nullptr;
 	gs_eparam_t *p_bg_mode_ = nullptr;
+	gs_eparam_t *p_bg_gradient_center_ = nullptr;
+	gs_eparam_t *p_bg_gradient_angle_ = nullptr;
 	gs_eparam_t *p_bg_tex_ = nullptr;
 	gs_eparam_t *p_bg_tex_enabled_ = nullptr;
 	gs_eparam_t *p_bg_tex_aspect_ = nullptr;

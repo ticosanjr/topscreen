@@ -58,6 +58,33 @@ bool bg_file_modified(obs_properties_t *props, obs_property_t *p, obs_data_t *se
 	return true;
 }
 
+bool background_type_changed(obs_properties_t *props, obs_property_t *p, obs_data_t *settings)
+{
+	(void)p;
+	int type = settings ? static_cast<int>(obs_data_get_int(settings, kBgType))
+			    : static_cast<int>(BgMode::Gradient);
+	if (type < static_cast<int>(BgMode::Solid) ||
+	    type > static_cast<int>(BgMode::Wallpaper))
+		type = static_cast<int>(BgMode::Gradient);
+
+	const bool gradient = type == static_cast<int>(BgMode::Gradient);
+	const bool wallpaper = type == static_cast<int>(BgMode::Wallpaper);
+
+	if (obs_property_t *v = obs_properties_get(props, kBgColorA))
+		obs_property_set_visible(v, !wallpaper);
+	if (obs_property_t *v = obs_properties_get(props, kBgColorB))
+		obs_property_set_visible(v, gradient);
+	if (obs_property_t *v = obs_properties_get(props, kBgGradientAngle))
+		obs_property_set_visible(v, gradient);
+	if (obs_property_t *v = obs_properties_get(props, kBgGradientCenterX))
+		obs_property_set_visible(v, gradient);
+	if (obs_property_t *v = obs_properties_get(props, kBgGradientCenterY))
+		obs_property_set_visible(v, gradient);
+	if (obs_property_t *v = obs_properties_get(props, "grp_bg_image"))
+		obs_property_set_visible(v, wallpaper);
+	return true;
+}
+
 /* Profiles backup buttons (Properties fallback; the dock has its own dialogs). */
 bool export_profiles_clicked(obs_properties_t *props, obs_property_t *p, void *data)
 {
@@ -195,17 +222,35 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 	obs_properties_t *bg = obs_properties_create();
 	obs_properties_add_bool(bg, kBgEnabled, obs_module_text("Background.Enabled"));
 
-	obs_property_t *mode = obs_properties_add_list(bg, kBgMode, obs_module_text("Background.Mode"),
+	obs_property_t *mode = obs_properties_add_list(bg, kBgType,
+						       obs_module_text("Background.Type"),
 						       OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
-	obs_property_list_add_int(mode, obs_module_text("Background.Mode.Solid"), static_cast<int>(BgMode::Solid));
-	obs_property_list_add_int(mode, obs_module_text("Background.Mode.Vertical"),
-				  static_cast<int>(BgMode::Vertical));
-	obs_property_list_add_int(mode, obs_module_text("Background.Mode.Diagonal"),
-				  static_cast<int>(BgMode::Diagonal));
+	obs_property_list_add_int(mode, obs_module_text("Background.Type.Solid"),
+				  static_cast<int>(BgMode::Solid));
+	obs_property_list_add_int(mode, obs_module_text("Background.Type.Gradient"),
+				  static_cast<int>(BgMode::Gradient));
+	obs_property_list_add_int(mode, obs_module_text("Background.Type.Wallpaper"),
+				  static_cast<int>(BgMode::Wallpaper));
+	obs_property_set_modified_callback(mode, background_type_changed);
 
+	obs_properties_add_color(bg, kBgColorA, obs_module_text("Background.ColorA"));
+	obs_properties_add_color(bg, kBgColorB, obs_module_text("Background.ColorB"));
+	obs_properties_add_float_slider(bg, kBgGradientAngle,
+					obs_module_text("Background.GradientAngle"), 0.0, 360.0,
+					1.0);
+	obs_properties_add_float_slider(bg, kBgGradientCenterX,
+					obs_module_text("Background.GradientCenterX"), 0.0, 1.0,
+					0.01);
+	obs_properties_add_float_slider(bg, kBgGradientCenterY,
+					obs_module_text("Background.GradientCenterY"), 0.0, 1.0,
+					0.01);
+
+	obs_properties_t *bgimg = obs_properties_create();
 	/* NON-editable list: shows the label, saves the path. */
-	obs_property_t *wp = obs_properties_add_list(bg, kBgImage, obs_module_text("Background.Image"),
-						     OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
+	obs_property_t *wp = obs_properties_add_list(bgimg, kBgImage,
+						     obs_module_text("Background.Image"),
+						     OBS_COMBO_TYPE_LIST,
+						     OBS_COMBO_FORMAT_STRING);
 	obs_property_set_modified_callback(wp, wallpaper_modified);
 	obs_property_list_add_string(wp, obs_module_text("Background.Image.Transparent"),
 				     kTransparentWallpaper);
@@ -213,19 +258,22 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 	for (const auto &entry : kWallpapers)
 		obs_property_list_add_string(wp, entry.name, entry.path);
 
-	obs_property_t *fp = obs_properties_add_path(bg, kBgImageFile, obs_module_text("Background.ImageFile"),
-						     OBS_PATH_FILE, kImageFilter, nullptr);
+	obs_property_t *fp = obs_properties_add_path(
+		bgimg, kBgImageFile, obs_module_text("Background.ImageFile"), OBS_PATH_FILE,
+		kImageFilter, nullptr);
 	obs_property_set_modified_callback(fp, bg_file_modified);
-	obs_properties_add_float_slider(bg, kBgImageBlur, obs_module_text("Background.ImageBlur"), 0.0, 60.0, 1.0);
-	obs_property_t *bt = obs_properties_add_list(bg, kBgImageBlurType, obs_module_text("Background.ImageBlurType"),
-						     OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
+	obs_properties_add_float_slider(bgimg, kBgImageBlur,
+					obs_module_text("Background.ImageBlur"), 0.0, 60.0, 1.0);
+	obs_property_t *bt = obs_properties_add_list(
+		bgimg, kBgImageBlurType, obs_module_text("Background.ImageBlurType"),
+		OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
 	obs_property_list_add_int(bt, obs_module_text("Blur.None"), 0);
 	obs_property_list_add_int(bt, obs_module_text("Blur.Soft"), 1);
 	obs_property_list_add_int(bt, obs_module_text("Blur.Gaussian"), 2);
 	obs_property_list_add_int(bt, obs_module_text("Blur.Creamy"), 3);
+	obs_properties_add_group(bg, "grp_bg_image", obs_module_text("Background.ImageGroup"),
+				 OBS_GROUP_NORMAL, bgimg);
 
-	obs_properties_add_color(bg, kBgColorA, obs_module_text("Background.ColorA"));
-	obs_properties_add_color(bg, kBgColorB, obs_module_text("Background.ColorB"));
 	obs_properties_add_float_slider(bg, kBgPaddingX, obs_module_text("Background.PaddingX"), 0.0, 400.0, 1.0);
 	obs_properties_add_float_slider(bg, kBgPaddingY, obs_module_text("Background.PaddingY"), 0.0, 400.0, 1.0);
 	obs_properties_add_bool(bg, kBgKeepAspect, obs_module_text("Background.KeepAspect"));
@@ -243,6 +291,7 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 					1.0);
 	obs_properties_add_group(bg, "grp_shadow", obs_module_text("Group.Shadow"), OBS_GROUP_NORMAL, sh);
 	obs_properties_add_group(props, "grp_bg", obs_module_text("Group.Background"), OBS_GROUP_NORMAL, bg);
+	background_type_changed(props, nullptr, settings);
 
 	/* ---------------- Cursor ---------------- */
 	obs_properties_t *cur = obs_properties_create();

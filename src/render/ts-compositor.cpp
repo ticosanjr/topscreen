@@ -173,6 +173,8 @@ void Compositor::cache_params()
 	p_bg_a_ = P("bg_a");
 	p_bg_b_ = P("bg_b");
 	p_bg_mode_ = P("bg_mode");
+	p_bg_gradient_center_ = P("bg_gradient_center");
+	p_bg_gradient_angle_ = P("bg_gradient_angle");
 	p_bg_tex_ = P("bg_tex");
 	p_bg_tex_enabled_ = P("bg_tex_enabled");
 	p_bg_tex_aspect_ = P("bg_tex_aspect");
@@ -268,6 +270,8 @@ bool Compositor::validate_params() const
 		"bg_a",
 		"bg_b",
 		"bg_mode",
+		"bg_gradient_center",
+		"bg_gradient_angle",
 		"bg_tex",
 		"bg_tex_enabled",
 		"bg_tex_aspect",
@@ -387,6 +391,7 @@ void Compositor::release()
 	effect_ = nullptr;
 	p_target_size_ = p_pad_ = p_radius_ = p_zoom_ = p_focus_ = nullptr;
 	p_bg_a_ = p_bg_b_ = p_bg_mode_ = nullptr;
+	p_bg_gradient_center_ = p_bg_gradient_angle_ = nullptr;
 	p_bg_tex_ = p_bg_tex_enabled_ = p_bg_tex_aspect_ = p_bg_transparent_ = nullptr;
 	p_bg_keep_aspect_ = nullptr;
 	p_bg_blur_ = nullptr;
@@ -462,17 +467,21 @@ void Compositor::render(obs_source_t *filter, const core::Config &cfg, const Fra
 	       bg ? static_cast<float>(cfg.bg.padding_y) : 0.0f);
 	set_f(p_radius_, bg ? static_cast<float>(cfg.bg.corner_radius) : 0.0f);
 	set_f(p_bg_mode_, bg ? static_cast<float>(cfg.bg.mode) : 0.0f);
+	set_v2(p_bg_gradient_center_, static_cast<float>(cfg.bg.gradient_center_x),
+	       static_cast<float>(cfg.bg.gradient_center_y));
+	set_f(p_bg_gradient_angle_, static_cast<float>(cfg.bg.gradient_angle));
 	set_f(p_bg_keep_aspect_, cfg.bg.keep_aspect ? 1.0f : 0.0f);
 	set_c(p_bg_a_, cfg.bg.color_a);
 	set_c(p_bg_b_, cfg.bg.color_b);
 
-	/* Wallpaper: if there is an image (from the PC or built-in), it is used.
-	 * The path is passed as a C string so the hot path does not allocate. */
-	const bool bg_transparent = bg && wallpaper_is_transparent(cfg.bg.image.c_str());
-	load_bg_image(active && !bg_transparent
+	/* Wallpaper is only sampled in wallpaper mode. The path is passed as a C
+	 * string so the hot path does not allocate. */
+	const bool wallpaper = bg && cfg.bg.mode == static_cast<int>(core::BgMode::Wallpaper);
+	const bool bg_transparent = wallpaper && wallpaper_is_transparent(cfg.bg.image.c_str());
+	load_bg_image(wallpaper && !bg_transparent
 			      ? core::resolve_bg_path(cfg.bg.image.c_str(), cfg.bg.image_file.c_str())
 			      : "");
-	const bool bgimg = bg && !bg_transparent && bg_tex_ != nullptr;
+	const bool bgimg = wallpaper && !bg_transparent && bg_tex_ != nullptr;
 	set_f(p_bg_transparent_, bg_transparent ? 1.0f : 0.0f);
 	/* D3D11 aborts the draw ("Not all shader parameters were set") when any
 	 * scalar uniform was never uploaded, leaving the frame empty, so every

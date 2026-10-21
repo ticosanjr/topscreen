@@ -82,7 +82,7 @@ Status: ✅ done · 🟡 partial · ⬜ pending.
 | T5.2 | Text rendering (glyph sprites, outline) | ✅ |
 | T5.3 | Key capture (Windows / X11; evdev in F7) | ✅ |
 | T5.4 | Key overlay | ✅ |
-| T5.5 | Spotlight/dim following the cursor | ✅ |
+| T5.5 | Spotlight/dim following the cursor (round/square, hotkey, drop/zoom, border, halo shadow, outside blur) | ✅ |
 | T5.6 | Webcam bubble | ⬜ (needs its own source - F6) |
 | T5.7 | Drag highlighter (box, line, zoom to selection, zoom on mouse press) | ✅ |
 
@@ -116,7 +116,7 @@ Status: ✅ done · 🟡 partial · ⬜ pending.
 | TD.1 | Full GPL-2.0 license text (`COPYING`) | ✅ |
 | TD.2 | `CONTRIBUTING.md` and PR template | ✅ |
 | TD.3 | Adjust `buildspec.json`/presets for the official CI | ⬜ |
-| TD.4 | Core sanity tests | ✅ (202 core + 44 integration + 37 OBS header files + ASan/UBSan) |
+| TD.4 | Core sanity tests | ✅ (207 core + 45 integration + 37 OBS header files + ASan/UBSan) |
 
 ---
 

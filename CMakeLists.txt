@@ -37,6 +37,7 @@ set(TOPSCREEN_CORE_SOURCES
     src/core/stb_truetype_impl.cpp
     src/core/evdev.cpp
     src/core/highlighter.cpp
+    src/core/spotlight.cpp
     src/core/cursor_atlas.cpp
     src/core/profiles.cpp
     src/core/profiles_io.cpp

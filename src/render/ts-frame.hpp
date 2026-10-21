@@ -3,6 +3,7 @@
 #include "core/click_fx.hpp"
 #include "core/cursor.hpp"
 #include "core/highlighter.hpp"
+#include "core/spotlight.hpp"
 #include "core/zoom.hpp"
 
 namespace topscreen {
@@ -19,6 +20,7 @@ struct FrameState {
 	int key_count = 0;
 	double zoom_blur = 0.0; // 0..1 (zoom motion blur)
 	core::HighlightRender highlight;
+	core::SpotlightRender spotlight;
 };
 
 /** Maximum number of clicks sent to the shader (uniform limit). */

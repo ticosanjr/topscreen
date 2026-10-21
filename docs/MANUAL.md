@@ -209,9 +209,23 @@ Each button has its own independent effect.
 ### Spotlight
 | Option | What it does |
 |-------|-----------|
-| **Enable spotlight** | Darkens everything except a circle that follows the cursor |
-| **Radius** | Size of the circle |
-| **Dimming** | How much it darkens outside the circle |
+| **Enable spotlight** | Darkens everything except a shape that follows the cursor |
+| **Shape** | **Round** or **Square** |
+| **Radius** | Size of the spotlight (fraction of the shorter screen side) |
+| **Square corner radius** | Rounded corners for the square shape |
+| **Dim outside** | How much the outside area is darkened |
+| **Border** | Enables a colored ring around the spotlight, with color and width |
+| **Outer halo shadow** | Soft halo around the spotlight, with color, opacity, blur and X/Y offset |
+| **Blur outside** | Blurs only the captured image outside the spotlight |
+| **Zoom when active** | Extra multiplicative zoom while the spotlight is on |
+| **Drop/zoom in/out** | Durations of the activation/deactivation animation |
+| **Drop distance** | Vertical distance the spotlight drops in/out |
+
+Assign `TopScreen_ToggleSpotlight` in **Settings → Hotkeys** to toggle it
+instantly. Activating it drops the shape in, zooms in around the cursor and fades
+the border/shadow/dim in; deactivating reverses the animation. The spotlight
+mask and zoom focus keep following the mouse while it is active. The global
+**Effects enabled** master still applies.
 
 ### Keys
 | Option | What it does |
@@ -300,7 +314,7 @@ are ignored and only normal characters remain.
 
 ## 6. Hotkeys
 
-In **Settings → Hotkeys**, search for `TopScreen`: all 19 actions are labelled
+In **Settings → Hotkeys**, search for `TopScreen`: all 20 actions are labelled
 **`TopScreen_...`** (for example `TopScreen_ProfileA — Activate profile A`), so
 they are easy to spot. They are global hotkeys, so they
 act on the **target filter selected in the dock** (or the first active one
@@ -315,6 +329,7 @@ when nothing is selected):
 | **Activate profile A … J** | Applies the profile (all of its settings) |
 | **Save to current profile** | Writes the adjustments to the active profile |
 | **Toggle highlight** | Independent zoom toggle: first press zooms at the cursor, second press releases/returns (enable it under Highlighter) |
+| **Toggle spotlight** | Drops/zooms the spotlight in or out at the cursor |
 
 **Linux/Wayland:** global OBS hotkeys may not work outside X11;
 use the hotkeys with OBS focused, or **obs-websocket** to trigger actions.
@@ -511,7 +526,7 @@ TOPSCREEN_DEBUG_KEY=Ctrl obs
   for `TopScreen` or `Activate profile`.
 - With several filters, the hotkey acts on the dock's **Target filter**
   (or the first active one when nothing is selected).
-- The log confirms registration: `[TopScreen] hotkeys registered: 19/19`.
+- The log confirms registration: `[TopScreen] hotkeys registered: 20/20`.
 
 **Zoom "jumps" or shakes**
 - Increase **Speed (ms)** and reduce **Intensity**.

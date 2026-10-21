@@ -8,6 +8,7 @@
 #include "core/geometry.hpp"
 #include "core/profiles.hpp"
 #include "core/profiles_io.hpp"
+#include "core/spotlight.hpp"
 #include "hotkeys/ts-hotkeys.hpp"
 #include "input/ts-input.hpp"
 #include "input/ts-monitor.hpp"
@@ -50,6 +51,7 @@ enum ActionBits : uint32_t {
 	A_EXPORT_PROFILES = 1u << 11,
 	A_IMPORT_PROFILES = 1u << 12,
 	A_TOGGLE_HIGHLIGHT = 1u << 13,
+	A_TOGGLE_SPOTLIGHT = 1u << 14,
 };
 
 /* Native cursor ownership is shared by every TopScreen filter attached to the
@@ -183,6 +185,7 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 	core::ClickFxModel clicks;
 	core::KeyOverlayModel keys;
 	core::HighlighterModel highlight;
+	core::SpotlightModel spotlight;
 	FrameState frame;
 
 	uint32_t target_w = 0;
@@ -263,6 +266,7 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 	}
 	void save_profile() override { actions_.fetch_or(A_SAVE_PROFILE); }
 	void toggle_highlight() override { actions_.fetch_or(A_TOGGLE_HIGHLIGHT); }
+	void toggle_spotlight() override { actions_.fetch_or(A_TOGGLE_SPOTLIGHT); }
 	FilterControl *filter_control() override { return this; }
 
 	/* ---- FilterControl (UI thread: only queues / reads atomic) ---- */
@@ -655,6 +659,8 @@ void ts_filter_ctx::reconfigure_models()
 	clicks.set_right(cfg.click_right);
 	keys.configure(cfg.keys);
 	highlight.configure(cfg.highlight);
+	spotlight.configure(cfg.spotlight);
+	spotlight.set_active(cfg.spotlight.enabled, time_ms);
 	if (hotkey_highlight_active_.load() &&
 	    (!cfg.effects_enabled || !cfg.highlight.hotkey_enabled)) {
 		zoom.spot_release(time_ms);
@@ -801,6 +807,13 @@ void ts_filter_ctx::process_actions()
 			blog(LOG_INFO, "[TopScreen] hotkey highlight: %s",
 			     hotkey_highlight_active_.load() ? "active" : "no-op");
 		}
+	}
+	if (act & A_TOGGLE_SPOTLIGHT) {
+		cfg.spotlight.enabled = !cfg.spotlight.enabled;
+		spotlight.set_active(cfg.spotlight.enabled, time_ms);
+		push_settings();
+		mark_profile_dirty();
+		blog(LOG_INFO, "[TopScreen] spotlight: %s", cfg.spotlight.enabled ? "on" : "off");
 	}
 	if (act & A_SAVE_PROFILE)
 		do_save_profile();
@@ -1013,6 +1026,8 @@ void ts_filter_tick(void *data, float seconds)
 	ctx->highlight.update(ctx->time_ms);
 
 	ctx->frame.cursor = ctx->cursor.render();
+	ctx->spotlight.update(ctx->time_ms, ctx->frame.cursor.x, ctx->frame.cursor.y);
+	ctx->frame.spotlight = ctx->spotlight.render();
 	ctx->frame.zoom = ctx->zoom.render();
 	ctx->frame.click_count = ctx->clicks.collect(ctx->time_ms, ctx->frame.clicks, kShaderClickSlots);
 	ctx->frame.key_count =

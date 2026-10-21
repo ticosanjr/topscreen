@@ -66,8 +66,25 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | Movement | Motion blur | `motion_blur_enabled` | bool | — | `true` |
 | | Intensity | `motion_blur_amount` | double | 0–1 | `0.35` |
 | Spotlight | Enable spotlight | `spotlight_enabled` | bool | — | `false` |
+| | Shape | `spotlight_shape` | int | 0 round, 1 square | `0` |
 | | Radius | `spotlight_radius` | double | 0.05–1 | `0.30` |
-| | Dimming | `spotlight_dim` | double | 0–1 | `0.60` |
+| | Square corner radius | `spotlight_corner_radius` | double | px | `0` |
+| | Dimming outside | `spotlight_dim` | double | 0–1 | `0.60` |
+| | Enable border | `spotlight_border_enabled` | bool | — | `false` |
+| | Border color | `spotlight_border_color` | color | — | `0xFFFFFFFF` |
+| | Border width | `spotlight_border_width` | double | px | `4` |
+| | Enable outer halo shadow | `spotlight_shadow_enabled` | bool | — | `false` |
+| | Shadow color | `spotlight_shadow_color` | color | — | `0xFF000000` |
+| | Shadow opacity | `spotlight_shadow_alpha` | double | 0–1 | `0.55` |
+| | Shadow blur | `spotlight_shadow_blur` | double | px | `30` |
+| | Shadow offset X | `spotlight_shadow_offset_x` | double | px | `0` |
+| | Shadow offset Y | `spotlight_shadow_offset_y` | double | px | `12` |
+| | Enable blur outside | `spotlight_blur_enabled` | bool | — | `false` |
+| | Blur amount | `spotlight_blur_amount` | double | px | `16` |
+| | Zoom when active | `spotlight_zoom_amount` | double | 1–4 | `1.35` |
+| | Drop/zoom in duration | `spotlight_in_ms` | double | ms | `250` |
+| | Drop/zoom out duration | `spotlight_out_ms` | double | ms | `300` |
+| | Drop distance | `spotlight_drop_px` | double | px | `24` |
 | Keys | Show typed keys | `keys_enabled` | bool | — | `true` |
 | | Modifiers only | `keys_modifiers_only` | bool | — | `false` |
 | | Show special keys as icons | `keys_show_special` | bool | — | `true` (off = ignore Space/Enter/arrows/modifiers) |
@@ -167,6 +184,7 @@ they act on the filter selected in the dock, or the first active one):
 | `TopScreen_ProfileJ` | `TopScreen_ProfileJ — Activate profile J` |
 | `TopScreen_ProfileSave` | `TopScreen_ProfileSave — Save to current profile` |
 | `TopScreen_ToggleHighlight` | `TopScreen_ToggleHighlight — Toggle highlight zoom` |
+| `TopScreen_ToggleSpotlight` | `TopScreen_ToggleSpotlight — Toggle spotlight` |
 
 ## Preset format
 

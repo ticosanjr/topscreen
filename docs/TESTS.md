@@ -84,6 +84,7 @@ That is where all the math and the state logic live — what actually must be ri
 | `test_font_atlas.cpp` | `core/font_atlas.*` | atlas generated from the **real TTF**, per-glyph metrics, alpha, invalid cases, ASCII fast index equivalent to the ordered lookup |
 | `test_evdev.cpp` | `core/evdev.*` | `input_event` decoding, labels, shifted punctuation (`!@#$%^&*()` and symbols), modifiers, partial records |
 | `test_highlighter.cpp` | `core/highlighter.*` | drag, normalized rectangle, hold/fade, small drag, disabled |
+| `test_spotlight.cpp` | `core/spotlight.*` | initial state, drop/zoom in and out, easing, mid-transition reversal, cursor focus, clamp |
 | `test_highlight_modes.cpp` | `core/highlighter.*`, `core/zoom.*` | trail dedupe/cap, line decimation into the shader slots (first/last kept, monotonic), a pinned predicate matrix for all 6 drag modes (box/line/zoom/press-zoom/box+zoom/line+zoom), zoom request timing, press-only zoom (delay, ignore drag, quick click does nothing), hold-to-release glide, stroke bounding box as the zoom selection for the line modes, box+zoom and line+zoom draw *and* zoom |
 | `test_docs.cpp` | `docs/` × code | every key in `keys.hpp` is documented; hotkeys from the code are in the reference; `CMakeLists.txt` and `buildspec.json` versions agree |
 | `test_cursor_catalog.cpp` | `core/cursor_catalog.hpp` + `data/locale/en-US.ini` | one entry per `CursorStyle` (37 built-in + 69 custom), families contiguous and ordered, unique label keys present in the locale, no forbidden source words, style clamping |
@@ -96,8 +97,8 @@ That is where all the math and the state logic live — what actually must be ri
 ## Current numbers
 
 ```
-202 tests | 5172 checks | 0 failures   (core)
-44 tests | 521 checks   | 0 failures   (integration with fake libobs)
+207 tests | 5307 checks | 0 failures   (core)
+45 tests | 576 checks   | 0 failures   (integration with fake libobs)
 ```
 
 ## What the integration layer covers
@@ -108,7 +109,7 @@ fake libobs:
 
 | File | Coverage |
 |------|----------|
-| `test_integration.cpp` | filter lifecycle (create/tick/render/destroy), preset apply, background toggle, all 19 hotkeys, native-cursor shutdown/restore on the parent (including effects/cursor-off and shared refcount), profiles (save/switch/seeds/list/auto-save/restart/export-import round-trip, **click-sound reload on switch**, **partial import fills missing fields/slots**), **independent hotkey highlight toggle (manual zoom/drag ownership)**, **Properties refresh after profile/preset changes**, **dock target selection (hotkeys follow it)** and **debounced auto-save with flush** |
+| `test_integration.cpp` | filter lifecycle (create/tick/render/destroy), preset apply, background toggle, all 20 hotkeys, native-cursor shutdown/restore on the parent (including effects/cursor-off and shared refcount), profiles (save/switch/seeds/list/auto-save/restart/export-import round-trip, **click-sound reload on switch**, **partial import fills missing fields/slots**), **independent hotkey highlight toggle (manual zoom/drag ownership)**, **spotlight hotkey**, **Properties refresh after profile/preset changes**, **dock target selection (hotkeys follow it)** and **debounced auto-save with flush** |
 | `test_integration.cpp` hotkeys | `integration_registers_all_hotkeys` covers every hotkey id/name/callback; `integration_hotkeys_shared_between_filters` proves one process-wide set shared across filters; `integration_registry_target_selection` proves selection routing/fallback |
 | `test_uniforms.cpp` | every uniform declared by `topscreen.effect` is uploaded on a plain frame (D3D11 aborts the draw otherwise) |
 | `test_text_render.cpp` | key-overlay text batches all glyphs + shadow quads into one vertex buffer (**1 draw total**, cache hit without rebuild) and falls back to per-glyph sprites if vertex-buffer creation fails |

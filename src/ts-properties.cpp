@@ -320,9 +320,70 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 	/* ---------------- Spotlight ---------------- */
 	obs_properties_t *spot = obs_properties_create();
 	obs_properties_add_bool(spot, kSpotlightEnabled, obs_module_text("Spotlight.Enabled"));
-	obs_properties_add_float_slider(spot, kSpotlightRadius, obs_module_text("Spotlight.Radius"), 0.05, 1.0,
+
+	obs_property_t *sshape = obs_properties_add_list(
+		spot, kSpotlightShape, obs_module_text("Spotlight.Shape"), OBS_COMBO_TYPE_LIST,
+		OBS_COMBO_FORMAT_INT);
+	obs_property_list_add_int(sshape, obs_module_text("Spotlight.Shape.Circle"),
+				  static_cast<int>(core::SpotlightShape::Circle));
+	obs_property_list_add_int(sshape, obs_module_text("Spotlight.Shape.Square"),
+				  static_cast<int>(core::SpotlightShape::Square));
+
+	obs_properties_add_float_slider(spot, kSpotlightRadius, obs_module_text("Spotlight.Radius"),
+					0.05, 1.0, 0.01);
+	obs_properties_add_float_slider(spot, kSpotlightCornerRadius,
+					obs_module_text("Spotlight.CornerRadius"), 0.0, 200.0, 1.0);
+	obs_properties_add_float_slider(spot, kSpotlightDim, obs_module_text("Spotlight.Dim"), 0.0, 1.0,
 					0.01);
-	obs_properties_add_float_slider(spot, kSpotlightDim, obs_module_text("Spotlight.Dim"), 0.0, 1.0, 0.01);
+
+	obs_properties_t *sborder = obs_properties_create();
+	obs_properties_add_bool(sborder, kSpotlightBorderEnabled,
+				obs_module_text("Spotlight.BorderEnabled"));
+	obs_properties_add_color(sborder, kSpotlightBorderColor,
+				 obs_module_text("Spotlight.BorderColor"));
+	obs_properties_add_float_slider(sborder, kSpotlightBorderWidth,
+					obs_module_text("Spotlight.BorderWidth"), 0.5, 40.0, 0.5);
+	obs_properties_add_group(spot, "grp_spotlight_border", obs_module_text("Spotlight.BorderGroup"),
+				 OBS_GROUP_NORMAL, sborder);
+
+	obs_properties_t *sshadow = obs_properties_create();
+	obs_properties_add_bool(sshadow, kSpotlightShadowEnabled,
+				obs_module_text("Spotlight.ShadowEnabled"));
+	obs_properties_add_color(sshadow, kSpotlightShadowColor,
+				 obs_module_text("Spotlight.ShadowColor"));
+	obs_properties_add_float_slider(sshadow, kSpotlightShadowAlpha,
+					obs_module_text("Spotlight.ShadowAlpha"), 0.0, 1.0, 0.01);
+	obs_properties_add_float_slider(sshadow, kSpotlightShadowBlur,
+					obs_module_text("Spotlight.ShadowBlur"), 0.0, 200.0, 1.0);
+	obs_properties_add_float_slider(sshadow, kSpotlightShadowOffsetX,
+					obs_module_text("Spotlight.ShadowOffsetX"), -100.0, 100.0,
+					1.0);
+	obs_properties_add_float_slider(sshadow, kSpotlightShadowOffsetY,
+					obs_module_text("Spotlight.ShadowOffsetY"), -100.0, 100.0,
+					1.0);
+	obs_properties_add_group(spot, "grp_spotlight_shadow", obs_module_text("Spotlight.ShadowGroup"),
+				 OBS_GROUP_NORMAL, sshadow);
+
+	obs_properties_t *sblur = obs_properties_create();
+	obs_properties_add_bool(sblur, kSpotlightBlurEnabled, obs_module_text("Spotlight.BlurEnabled"));
+	obs_properties_add_float_slider(sblur, kSpotlightBlurAmount,
+					obs_module_text("Spotlight.BlurAmount"), 0.0, 60.0, 1.0);
+	obs_properties_add_group(spot, "grp_spotlight_blur", obs_module_text("Spotlight.BlurGroup"),
+				 OBS_GROUP_NORMAL, sblur);
+
+	obs_properties_t *sanim = obs_properties_create();
+	obs_properties_add_float_slider(sanim, kSpotlightZoomAmount,
+					obs_module_text("Spotlight.ZoomAmount"), 1.0, 4.0, 0.05);
+	obs_properties_add_float_slider(sanim, kSpotlightInMs, obs_module_text("Spotlight.InMs"),
+					0.0, 2000.0, 10.0);
+	obs_properties_add_float_slider(sanim, kSpotlightOutMs, obs_module_text("Spotlight.OutMs"),
+					0.0, 2000.0, 10.0);
+	obs_properties_add_float_slider(sanim, kSpotlightDropPx,
+					obs_module_text("Spotlight.DropPx"), 0.0, 200.0, 1.0);
+	obs_properties_add_group(spot, "grp_spotlight_animation",
+				 obs_module_text("Spotlight.AnimationGroup"), OBS_GROUP_NORMAL,
+				 sanim);
+
 	obs_properties_add_group(props, "grp_spotlight", obs_module_text("Group.Spotlight"), OBS_GROUP_NORMAL,
 				 spot);
 

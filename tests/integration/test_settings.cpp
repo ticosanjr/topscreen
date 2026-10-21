@@ -75,6 +75,16 @@ TEST(settings_store_load_roundtrip)
 	a.keys.pos_x = 0.25;
 	a.highlight.color = 0x6600E0FFu;
 	a.cursor.size = 1.5;
+	a.spotlight.shape = static_cast<int>(core::SpotlightShape::Square);
+	a.spotlight.border_enabled = true;
+	a.spotlight.border_color = 0xFF112233u;
+	a.spotlight.shadow_enabled = true;
+	a.spotlight.shadow_blur = 42.0;
+	a.spotlight.blur_enabled = true;
+	a.spotlight.blur_amount = 21.0;
+	a.spotlight.zoom_amount = 1.7;
+	a.spotlight.in_ms = 120.0;
+	a.spotlight.drop_px = 18.0;
 
 	obs_data_t *s = obs_data_create();
 	config_store(s, a);
@@ -93,6 +103,16 @@ TEST(settings_store_load_roundtrip)
 	CHECK_NEAR(b.keys.pos_x, 0.25, 1e-9);
 	CHECK_EQ(b.highlight.color, a.highlight.color);
 	CHECK_NEAR(b.cursor.size, 1.5, 1e-9);
+	CHECK_EQ(b.spotlight.shape, a.spotlight.shape);
+	CHECK(b.spotlight.border_enabled);
+	CHECK_EQ(b.spotlight.border_color, a.spotlight.border_color);
+	CHECK(b.spotlight.shadow_enabled);
+	CHECK_NEAR(b.spotlight.shadow_blur, 42.0, 1e-9);
+	CHECK(b.spotlight.blur_enabled);
+	CHECK_NEAR(b.spotlight.blur_amount, 21.0, 1e-9);
+	CHECK_NEAR(b.spotlight.zoom_amount, 1.7, 1e-9);
+	CHECK_NEAR(b.spotlight.in_ms, 120.0, 1e-9);
+	CHECK_NEAR(b.spotlight.drop_px, 18.0, 1e-9);
 
 	obs_data_release(s);
 }
@@ -165,6 +185,12 @@ TEST(properties_creates_expected_groups)
 	CHECK(obs_properties_get(p, "grp_zoom") != nullptr);
 	CHECK(obs_properties_get(p, "grp_keys") != nullptr);
 	CHECK(obs_properties_get(p, "grp_highlight") != nullptr);
+	CHECK(obs_properties_get(p, "grp_spotlight") != nullptr);
+	CHECK(obs_properties_get(p, core::keys::kSpotlightShape) != nullptr);
+	CHECK(obs_properties_get(p, core::keys::kSpotlightBorderColor) != nullptr);
+	CHECK(obs_properties_get(p, core::keys::kSpotlightShadowBlur) != nullptr);
+	CHECK(obs_properties_get(p, core::keys::kSpotlightBlurAmount) != nullptr);
+	CHECK(obs_properties_get(p, core::keys::kSpotlightZoomAmount) != nullptr);
 	obs_properties_destroy(p);
 }
 

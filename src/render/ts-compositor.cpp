@@ -199,8 +199,24 @@ void Compositor::cache_params()
 
 	p_zoom_blur_ = P("zoom_blur");
 	p_spotlight_enabled_ = P("spotlight_enabled");
+	p_spotlight_amount_ = P("spotlight_amount");
+	p_spotlight_shape_ = P("spotlight_shape");
 	p_spotlight_radius_ = P("spotlight_radius");
+	p_spotlight_corner_ = P("spotlight_corner");
 	p_spotlight_dim_ = P("spotlight_dim");
+	p_spotlight_border_enabled_ = P("spotlight_border_enabled");
+	p_spotlight_border_color_ = P("spotlight_border_color");
+	p_spotlight_border_width_ = P("spotlight_border_width");
+	p_spotlight_shadow_enabled_ = P("spotlight_shadow_enabled");
+	p_spotlight_shadow_color_ = P("spotlight_shadow_color");
+	p_spotlight_shadow_alpha_ = P("spotlight_shadow_alpha");
+	p_spotlight_shadow_blur_ = P("spotlight_shadow_blur");
+	p_spotlight_shadow_offset_ = P("spotlight_shadow_offset");
+	p_spotlight_blur_enabled_ = P("spotlight_blur_enabled");
+	p_spotlight_blur_ = P("spotlight_blur");
+	p_spotlight_zoom_ = P("spotlight_zoom");
+	p_spotlight_focus_ = P("spotlight_focus");
+	p_spotlight_drop_ = P("spotlight_drop");
 
 	p_highlight_active_ = P("highlight_active");
 	p_highlight_rect_ = P("highlight_rect");
@@ -274,8 +290,24 @@ bool Compositor::validate_params() const
 		"cursor_hotspot",
 		"zoom_blur",
 		"spotlight_enabled",
+		"spotlight_amount",
+		"spotlight_shape",
 		"spotlight_radius",
+		"spotlight_corner",
 		"spotlight_dim",
+		"spotlight_border_enabled",
+		"spotlight_border_color",
+		"spotlight_border_width",
+		"spotlight_shadow_enabled",
+		"spotlight_shadow_color",
+		"spotlight_shadow_alpha",
+		"spotlight_shadow_blur",
+		"spotlight_shadow_offset",
+		"spotlight_blur_enabled",
+		"spotlight_blur",
+		"spotlight_zoom",
+		"spotlight_focus",
+		"spotlight_drop",
 		"highlight_active",
 		"highlight_rect",
 		"highlight_color",
@@ -362,7 +394,15 @@ void Compositor::release()
 	p_shadow_alpha_ = p_shadow_blur_ = p_shadow_offset_ = nullptr;
 	p_cursor_enabled_ = p_cursor_pos_ = p_cursor_scale_ = nullptr;
 	p_cursor_opacity_ = p_cursor_rotation_ = p_cursor_shadow_ = nullptr;
-	p_zoom_blur_ = p_spotlight_enabled_ = p_spotlight_radius_ = p_spotlight_dim_ = nullptr;
+	p_zoom_blur_ = p_spotlight_enabled_ = p_spotlight_amount_ = nullptr;
+	p_spotlight_shape_ = p_spotlight_radius_ = p_spotlight_corner_ = p_spotlight_dim_ = nullptr;
+	p_spotlight_border_enabled_ = p_spotlight_border_color_ = nullptr;
+	p_spotlight_border_width_ = nullptr;
+	p_spotlight_shadow_enabled_ = p_spotlight_shadow_color_ = nullptr;
+	p_spotlight_shadow_alpha_ = p_spotlight_shadow_blur_ = nullptr;
+	p_spotlight_shadow_offset_ = nullptr;
+	p_spotlight_blur_enabled_ = p_spotlight_blur_ = nullptr;
+	p_spotlight_zoom_ = p_spotlight_focus_ = p_spotlight_drop_ = nullptr;
 	p_highlight_active_ = p_highlight_rect_ = p_highlight_color_ = p_highlight_alpha_ = nullptr;
 	p_click_count_ = nullptr;
 	for (auto &c : click_)
@@ -497,11 +537,30 @@ void Compositor::render(obs_source_t *filter, const core::Config &cfg, const Fra
 	/* Zoom motion blur */
 	set_f(p_zoom_blur_, active ? static_cast<float>(st.zoom_blur) : 0.0f);
 
-	/* Spotlight */
-	const bool spot = active && cfg.spotlight.enabled;
+	/* Spotlight. All uniforms are uploaded every frame for D3D11; the shader
+	 * fades/drops/zooms based on st.spotlight.amount. */
+	const bool spot = active && st.spotlight.amount > 0.001;
 	set_f(p_spotlight_enabled_, spot ? 1.0f : 0.0f);
+	set_f(p_spotlight_amount_, static_cast<float>(st.spotlight.amount));
+	set_f(p_spotlight_shape_, static_cast<float>(cfg.spotlight.shape));
 	set_f(p_spotlight_radius_, static_cast<float>(cfg.spotlight.radius));
+	set_f(p_spotlight_corner_, static_cast<float>(cfg.spotlight.corner_radius));
 	set_f(p_spotlight_dim_, static_cast<float>(cfg.spotlight.dim));
+	set_f(p_spotlight_border_enabled_, cfg.spotlight.border_enabled ? 1.0f : 0.0f);
+	set_c(p_spotlight_border_color_, cfg.spotlight.border_color);
+	set_f(p_spotlight_border_width_, static_cast<float>(cfg.spotlight.border_width));
+	set_f(p_spotlight_shadow_enabled_, cfg.spotlight.shadow_enabled ? 1.0f : 0.0f);
+	set_c(p_spotlight_shadow_color_, cfg.spotlight.shadow_color);
+	set_f(p_spotlight_shadow_alpha_, static_cast<float>(cfg.spotlight.shadow_alpha));
+	set_f(p_spotlight_shadow_blur_, static_cast<float>(cfg.spotlight.shadow_blur));
+	set_v2(p_spotlight_shadow_offset_, static_cast<float>(cfg.spotlight.shadow_offset_x),
+	       static_cast<float>(cfg.spotlight.shadow_offset_y));
+	set_f(p_spotlight_blur_enabled_, cfg.spotlight.blur_enabled ? 1.0f : 0.0f);
+	set_f(p_spotlight_blur_, static_cast<float>(cfg.spotlight.blur_amount));
+	set_f(p_spotlight_zoom_, static_cast<float>(st.spotlight.zoom));
+	set_v2(p_spotlight_focus_, static_cast<float>(st.spotlight.focus_x),
+	       static_cast<float>(st.spotlight.focus_y));
+	set_f(p_spotlight_drop_, static_cast<float>(st.spotlight.drop));
 
 	/* Drag highlighter: only the box mode paints the rectangle. The line is
 	 * drawn by its own overlay and the zoom gesture draws nothing. */

@@ -75,6 +75,25 @@ void config_defaults(obs_data_t *s)
 	obs_data_set_default_bool(s, kSpotlightEnabled, def.spotlight.enabled);
 	obs_data_set_default_double(s, kSpotlightRadius, def.spotlight.radius);
 	obs_data_set_default_double(s, kSpotlightDim, def.spotlight.dim);
+	obs_data_set_default_int(s, kSpotlightShape, def.spotlight.shape);
+	obs_data_set_default_double(s, kSpotlightCornerRadius, def.spotlight.corner_radius);
+	obs_data_set_default_bool(s, kSpotlightBorderEnabled, def.spotlight.border_enabled);
+	obs_data_set_default_int(s, kSpotlightBorderColor,
+				 static_cast<long long>(def.spotlight.border_color));
+	obs_data_set_default_double(s, kSpotlightBorderWidth, def.spotlight.border_width);
+	obs_data_set_default_bool(s, kSpotlightShadowEnabled, def.spotlight.shadow_enabled);
+	obs_data_set_default_int(s, kSpotlightShadowColor,
+				 static_cast<long long>(def.spotlight.shadow_color));
+	obs_data_set_default_double(s, kSpotlightShadowAlpha, def.spotlight.shadow_alpha);
+	obs_data_set_default_double(s, kSpotlightShadowBlur, def.spotlight.shadow_blur);
+	obs_data_set_default_double(s, kSpotlightShadowOffsetX, def.spotlight.shadow_offset_x);
+	obs_data_set_default_double(s, kSpotlightShadowOffsetY, def.spotlight.shadow_offset_y);
+	obs_data_set_default_bool(s, kSpotlightBlurEnabled, def.spotlight.blur_enabled);
+	obs_data_set_default_double(s, kSpotlightBlurAmount, def.spotlight.blur_amount);
+	obs_data_set_default_double(s, kSpotlightZoomAmount, def.spotlight.zoom_amount);
+	obs_data_set_default_double(s, kSpotlightInMs, def.spotlight.in_ms);
+	obs_data_set_default_double(s, kSpotlightOutMs, def.spotlight.out_ms);
+	obs_data_set_default_double(s, kSpotlightDropPx, def.spotlight.drop_px);
 
 	obs_data_set_default_bool(s, kKeysEnabled, def.keys.enabled);
 	obs_data_set_default_bool(s, kKeysModifiersOnly, def.keys.modifiers_only);
@@ -234,6 +253,36 @@ void config_load(obs_data_t *s, Config *c, const Config *fallback)
 	c->spotlight.enabled = read_bool(s, kSpotlightEnabled, d.spotlight.enabled);
 	c->spotlight.radius = read_double(s, kSpotlightRadius, d.spotlight.radius);
 	c->spotlight.dim = read_double(s, kSpotlightDim, d.spotlight.dim);
+	c->spotlight.shape = static_cast<int>(read_int(s, kSpotlightShape, d.spotlight.shape));
+	c->spotlight.corner_radius =
+		read_double(s, kSpotlightCornerRadius, d.spotlight.corner_radius);
+	c->spotlight.border_enabled =
+		read_bool(s, kSpotlightBorderEnabled, d.spotlight.border_enabled);
+	c->spotlight.border_color =
+		static_cast<uint32_t>(read_int(s, kSpotlightBorderColor, d.spotlight.border_color));
+	c->spotlight.border_width =
+		read_double(s, kSpotlightBorderWidth, d.spotlight.border_width);
+	c->spotlight.shadow_enabled =
+		read_bool(s, kSpotlightShadowEnabled, d.spotlight.shadow_enabled);
+	c->spotlight.shadow_color =
+		static_cast<uint32_t>(read_int(s, kSpotlightShadowColor, d.spotlight.shadow_color));
+	c->spotlight.shadow_alpha =
+		read_double(s, kSpotlightShadowAlpha, d.spotlight.shadow_alpha);
+	c->spotlight.shadow_blur =
+		read_double(s, kSpotlightShadowBlur, d.spotlight.shadow_blur);
+	c->spotlight.shadow_offset_x =
+		read_double(s, kSpotlightShadowOffsetX, d.spotlight.shadow_offset_x);
+	c->spotlight.shadow_offset_y =
+		read_double(s, kSpotlightShadowOffsetY, d.spotlight.shadow_offset_y);
+	c->spotlight.blur_enabled =
+		read_bool(s, kSpotlightBlurEnabled, d.spotlight.blur_enabled);
+	c->spotlight.blur_amount =
+		read_double(s, kSpotlightBlurAmount, d.spotlight.blur_amount);
+	c->spotlight.zoom_amount =
+		read_double(s, kSpotlightZoomAmount, d.spotlight.zoom_amount);
+	c->spotlight.in_ms = read_double(s, kSpotlightInMs, d.spotlight.in_ms);
+	c->spotlight.out_ms = read_double(s, kSpotlightOutMs, d.spotlight.out_ms);
+	c->spotlight.drop_px = read_double(s, kSpotlightDropPx, d.spotlight.drop_px);
 
 	c->keys.enabled = read_bool(s, kKeysEnabled, d.keys.enabled);
 	c->keys.modifiers_only = read_bool(s, kKeysModifiersOnly, d.keys.modifiers_only);
@@ -336,6 +385,23 @@ void config_store(obs_data_t *s, const Config &c)
 	obs_data_set_bool(s, kSpotlightEnabled, c.spotlight.enabled);
 	obs_data_set_double(s, kSpotlightRadius, c.spotlight.radius);
 	obs_data_set_double(s, kSpotlightDim, c.spotlight.dim);
+	obs_data_set_int(s, kSpotlightShape, c.spotlight.shape);
+	obs_data_set_double(s, kSpotlightCornerRadius, c.spotlight.corner_radius);
+	obs_data_set_bool(s, kSpotlightBorderEnabled, c.spotlight.border_enabled);
+	obs_data_set_int(s, kSpotlightBorderColor, static_cast<long long>(c.spotlight.border_color));
+	obs_data_set_double(s, kSpotlightBorderWidth, c.spotlight.border_width);
+	obs_data_set_bool(s, kSpotlightShadowEnabled, c.spotlight.shadow_enabled);
+	obs_data_set_int(s, kSpotlightShadowColor, static_cast<long long>(c.spotlight.shadow_color));
+	obs_data_set_double(s, kSpotlightShadowAlpha, c.spotlight.shadow_alpha);
+	obs_data_set_double(s, kSpotlightShadowBlur, c.spotlight.shadow_blur);
+	obs_data_set_double(s, kSpotlightShadowOffsetX, c.spotlight.shadow_offset_x);
+	obs_data_set_double(s, kSpotlightShadowOffsetY, c.spotlight.shadow_offset_y);
+	obs_data_set_bool(s, kSpotlightBlurEnabled, c.spotlight.blur_enabled);
+	obs_data_set_double(s, kSpotlightBlurAmount, c.spotlight.blur_amount);
+	obs_data_set_double(s, kSpotlightZoomAmount, c.spotlight.zoom_amount);
+	obs_data_set_double(s, kSpotlightInMs, c.spotlight.in_ms);
+	obs_data_set_double(s, kSpotlightOutMs, c.spotlight.out_ms);
+	obs_data_set_double(s, kSpotlightDropPx, c.spotlight.drop_px);
 
 	obs_data_set_bool(s, kKeysEnabled, c.keys.enabled);
 	obs_data_set_bool(s, kKeysModifiersOnly, c.keys.modifiers_only);

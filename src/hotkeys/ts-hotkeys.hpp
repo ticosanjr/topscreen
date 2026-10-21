@@ -24,6 +24,7 @@ struct HotkeyContext {
 	virtual void select_profile(int index) = 0;
 	virtual void save_profile() = 0;
 	virtual void toggle_highlight() = 0;
+	virtual void toggle_spotlight() = 0;
 
 	/**
 	 * The FilterControl implemented by the same object, when available.

@@ -185,7 +185,8 @@ TEST(integration_hotkeys_all_actions)
 			       "TopScreen_ProfileF",	      "TopScreen_ProfileG",
 			       "TopScreen_ProfileH",	      "TopScreen_ProfileI",
 			       "TopScreen_ProfileJ",	      "TopScreen_ProfileSave",
-			       "TopScreen_ToggleHighlight"};
+			       "TopScreen_ToggleHighlight",
+			       "TopScreen_ToggleSpotlight"};
 	for (const char *n : names)
 		REQUIRE(fakeobs::find_hotkey(n) >= 0);
 
@@ -590,7 +591,8 @@ TEST(integration_registers_all_hotkeys)
 			       "TopScreen_ProfileF",	      "TopScreen_ProfileG",
 			       "TopScreen_ProfileH",	      "TopScreen_ProfileI",
 			       "TopScreen_ProfileJ",	      "TopScreen_ProfileSave",
-			       "TopScreen_ToggleHighlight"};
+			       "TopScreen_ToggleHighlight",
+			       "TopScreen_ToggleSpotlight"};
 	const int expected = static_cast<int>(sizeof(names) / sizeof(names[0]));
 
 	/* The harness keeps earlier registrations, so measure this filter's delta. */
@@ -607,7 +609,7 @@ TEST(integration_registers_all_hotkeys)
 }
 
 /* Frontend hotkeys are process-wide: a second filter must NOT register a
- * second set of 19, and destroying one filter must keep them alive. */
+ * second set of 20, and destroying one filter must keep them alive. */
 TEST(integration_hotkeys_shared_between_filters)
 {
 	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
@@ -622,7 +624,7 @@ TEST(integration_hotkeys_shared_between_filters)
 	REQUIRE(ctx1 != nullptr);
 	REQUIRE(ctx2 != nullptr);
 
-	CHECK_EQ(fakeobs::hotkey_count() - before, 19);
+	CHECK_EQ(fakeobs::hotkey_count() - before, 20);
 	CHECK(fakeobs::hotkeys_active_from(before));
 
 	/* Destroying one filter keeps the shared hotkeys working. */
@@ -802,6 +804,30 @@ TEST(integration_hotkey_highlight_toggles_zoom)
 	ts_filter_source_info.update(ctx, filter->settings);
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
 	CHECK(!ctrl->hotkey_highlight_active());
+
+	ts_filter_source_info.destroy(ctx);
+}
+
+TEST(integration_hotkey_toggles_spotlight)
+{
+	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
+	obs_source_t *parent = make_parent(1920, 1080);
+	obs_source_t *filter = fakeobs::make_source(&ts_filter_source_info, parent, 0, 0);
+	void *ctx = create_filter(filter);
+	REQUIRE(ctx != nullptr);
+	ts_filter_source_info.video_render(ctx, nullptr);
+
+	const int toggle = fakeobs::find_hotkey("TopScreen_ToggleSpotlight");
+	REQUIRE(toggle >= 0);
+	CHECK(!obs_data_get_bool(filter->settings, core::keys::kSpotlightEnabled));
+
+	fakeobs::invoke_hotkey(toggle, true);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK(obs_data_get_bool(filter->settings, core::keys::kSpotlightEnabled));
+
+	fakeobs::invoke_hotkey(toggle, true);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK(!obs_data_get_bool(filter->settings, core::keys::kSpotlightEnabled));
 
 	ts_filter_source_info.destroy(ctx);
 }

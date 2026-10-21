@@ -163,6 +163,36 @@ bool Preset::apply(Config *cfg, std::string *error) const
 	cfg->spotlight.enabled = read_bool(o, kSpotlightEnabled, cfg->spotlight.enabled);
 	cfg->spotlight.radius = read_number(o, kSpotlightRadius, cfg->spotlight.radius);
 	cfg->spotlight.dim = read_number(o, kSpotlightDim, cfg->spotlight.dim);
+	cfg->spotlight.shape = static_cast<int>(read_number(o, kSpotlightShape, cfg->spotlight.shape));
+	cfg->spotlight.corner_radius =
+		read_number(o, kSpotlightCornerRadius, cfg->spotlight.corner_radius);
+	cfg->spotlight.border_enabled =
+		read_bool(o, kSpotlightBorderEnabled, cfg->spotlight.border_enabled);
+	cfg->spotlight.border_color = static_cast<uint32_t>(
+		read_number(o, kSpotlightBorderColor, cfg->spotlight.border_color));
+	cfg->spotlight.border_width =
+		read_number(o, kSpotlightBorderWidth, cfg->spotlight.border_width);
+	cfg->spotlight.shadow_enabled =
+		read_bool(o, kSpotlightShadowEnabled, cfg->spotlight.shadow_enabled);
+	cfg->spotlight.shadow_color = static_cast<uint32_t>(
+		read_number(o, kSpotlightShadowColor, cfg->spotlight.shadow_color));
+	cfg->spotlight.shadow_alpha =
+		read_number(o, kSpotlightShadowAlpha, cfg->spotlight.shadow_alpha);
+	cfg->spotlight.shadow_blur =
+		read_number(o, kSpotlightShadowBlur, cfg->spotlight.shadow_blur);
+	cfg->spotlight.shadow_offset_x =
+		read_number(o, kSpotlightShadowOffsetX, cfg->spotlight.shadow_offset_x);
+	cfg->spotlight.shadow_offset_y =
+		read_number(o, kSpotlightShadowOffsetY, cfg->spotlight.shadow_offset_y);
+	cfg->spotlight.blur_enabled =
+		read_bool(o, kSpotlightBlurEnabled, cfg->spotlight.blur_enabled);
+	cfg->spotlight.blur_amount =
+		read_number(o, kSpotlightBlurAmount, cfg->spotlight.blur_amount);
+	cfg->spotlight.zoom_amount =
+		read_number(o, kSpotlightZoomAmount, cfg->spotlight.zoom_amount);
+	cfg->spotlight.in_ms = read_number(o, kSpotlightInMs, cfg->spotlight.in_ms);
+	cfg->spotlight.out_ms = read_number(o, kSpotlightOutMs, cfg->spotlight.out_ms);
+	cfg->spotlight.drop_px = read_number(o, kSpotlightDropPx, cfg->spotlight.drop_px);
 
 	/* Keys */
 	cfg->keys.enabled = read_bool(o, kKeysEnabled, cfg->keys.enabled);

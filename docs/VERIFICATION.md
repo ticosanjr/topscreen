@@ -34,7 +34,7 @@ Add a **Display Capture** and the **TopScreen FX** filter. Then:
 | 9 | Manual zoom (hotkeys) | in/out/reset work |
 | 10 | Motion blur | light radial blur during zoom |
 | 11 | Key overlay | keys appear at the bottom and disappear after the TTL |
-| 12 | Spotlight | darkens everything except the circle at the cursor |
+| 12 | Spotlight | `TopScreen_ToggleSpotlight` drops/zooms in/out at the cursor; round/square; border, halo shadow, outside blur; follows the mouse |
 | 13 | Highlighter | dragging with the left button marks the region; `TopScreen_ToggleHighlight` zooms at the cursor on the first press and returns on the second; manual zoom/drag cancels the hotkey toggle |
 | 14 | Presets (hotkey) | next/previous switch the look |
 | 15 | Profiles | switching A–J also reloads the click sounds (test A vs. D with different WAVs) |
@@ -44,7 +44,7 @@ Add a **Display Capture** and the **TopScreen FX** filter. Then:
 
 ## 3. Hotkeys
 
-**Settings → Hotkeys → TopScreen** must list the 19 actions
+**Settings → Hotkeys → TopScreen** must list the 20 actions
 (`ToggleEffects`, `ToggleBackground`, `ZoomIn`, `ZoomOut`, `ResetZoom`,
 `NextPreset`, `PrevPreset`, `ProfileA` … `ProfileJ`, `ProfileSave`,
 `ToggleHighlight`).

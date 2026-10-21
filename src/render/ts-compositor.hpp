@@ -88,8 +88,24 @@ private:
 
 	gs_eparam_t *p_zoom_blur_ = nullptr;
 	gs_eparam_t *p_spotlight_enabled_ = nullptr;
+	gs_eparam_t *p_spotlight_amount_ = nullptr;
+	gs_eparam_t *p_spotlight_shape_ = nullptr;
 	gs_eparam_t *p_spotlight_radius_ = nullptr;
+	gs_eparam_t *p_spotlight_corner_ = nullptr;
 	gs_eparam_t *p_spotlight_dim_ = nullptr;
+	gs_eparam_t *p_spotlight_border_enabled_ = nullptr;
+	gs_eparam_t *p_spotlight_border_color_ = nullptr;
+	gs_eparam_t *p_spotlight_border_width_ = nullptr;
+	gs_eparam_t *p_spotlight_shadow_enabled_ = nullptr;
+	gs_eparam_t *p_spotlight_shadow_color_ = nullptr;
+	gs_eparam_t *p_spotlight_shadow_alpha_ = nullptr;
+	gs_eparam_t *p_spotlight_shadow_blur_ = nullptr;
+	gs_eparam_t *p_spotlight_shadow_offset_ = nullptr;
+	gs_eparam_t *p_spotlight_blur_enabled_ = nullptr;
+	gs_eparam_t *p_spotlight_blur_ = nullptr;
+	gs_eparam_t *p_spotlight_zoom_ = nullptr;
+	gs_eparam_t *p_spotlight_focus_ = nullptr;
+	gs_eparam_t *p_spotlight_drop_ = nullptr;
 
 	gs_eparam_t *p_highlight_active_ = nullptr;
 	gs_eparam_t *p_highlight_rect_ = nullptr;

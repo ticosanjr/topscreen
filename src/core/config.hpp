@@ -47,11 +47,37 @@ struct MotionBlurConfig {
 	double amount = 0.35; // 0..1
 };
 
-/** Spotlight: darkens outside a circle that follows the cursor. */
+/** Spotlight: darkens outside a shape that follows the cursor. */
+enum class SpotlightShape : int {
+	Circle = 0,
+	Square = 1,
+};
+
 struct SpotlightConfig {
 	bool enabled = false;
+	int shape = static_cast<int>(SpotlightShape::Circle);
 	double radius = 0.30; // fraction of the shorter side
-	double dim = 0.60;    // 0..1 (how much it darkens outside)
+	double corner_radius = 0.0; // square only, px
+	double dim = 0.60;          // 0..1 (how much it darkens outside)
+
+	bool border_enabled = false;
+	uint32_t border_color = 0xFFFFFFFFu;
+	double border_width = 4.0; // px
+
+	bool shadow_enabled = false;
+	uint32_t shadow_color = 0xFF000000u;
+	double shadow_alpha = 0.55;
+	double shadow_blur = 30.0; // px
+	double shadow_offset_x = 0.0;
+	double shadow_offset_y = 12.0;
+
+	bool blur_enabled = false;
+	double blur_amount = 16.0; // px
+
+	double zoom_amount = 1.35; // multiplicative over the current zoom
+	double in_ms = 250.0;
+	double out_ms = 300.0;
+	double drop_px = 24.0;
 };
 
 /** Complete TopScreen configuration (independent of OBS). */

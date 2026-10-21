@@ -46,8 +46,24 @@ uniform float2 cursor_hotspot;    // 0..1 (hotspot inside the icon)
 
 uniform float  zoom_blur;        // 0..1 (zoom motion blur)
 uniform float  spotlight_enabled;
+uniform float  spotlight_amount; // 0..1 activation animation
+uniform float  spotlight_shape;  // 0 circle, 1 square
 uniform float  spotlight_radius; // fraction of the shorter side
+uniform float  spotlight_corner; // square corner radius (px)
 uniform float  spotlight_dim;    // 0..1
+uniform float  spotlight_border_enabled;
+uniform float4 spotlight_border_color;
+uniform float  spotlight_border_width; // px
+uniform float  spotlight_shadow_enabled;
+uniform float4 spotlight_shadow_color;
+uniform float  spotlight_shadow_alpha;
+uniform float  spotlight_shadow_blur; // px
+uniform float2 spotlight_shadow_offset;
+uniform float  spotlight_blur_enabled;
+uniform float  spotlight_blur;   // px
+uniform float  spotlight_zoom;   // multiplicative scene zoom
+uniform float2 spotlight_focus;  // source uv under the cursor
+uniform float  spotlight_drop;   // vertical drop offset (px)
 
 uniform float  highlight_active;
 uniform float4 highlight_rect;   // x0,y0,x1,y1 (content 0..1)
@@ -195,6 +211,18 @@ float2 content_origin()
 	return (target_size - content_size()) * 0.5;
 }
 
+// Effective scene zoom/focus: the spotlight adds its own multiplicative zoom
+// and moves the focus to the cursor while it is active.
+float scene_zoom_value()
+{
+	return max(zoom, 1.0) * max(spotlight_zoom, 1.0);
+}
+
+float2 scene_focus_value()
+{
+	return lerp(zoom_focus, spotlight_focus, saturate(spotlight_amount));
+}
+
 // DISPLAYED position, in pixels, of a SOURCE point (content uv).
 //
 // The screen is sampled with u = f + (c - f)/zoom; so a source point s
@@ -203,8 +231,21 @@ float2 content_origin()
 float2 content_to_pixel(float2 cu)
 {
 	float2 cs = content_size();
-	float2 su = zoom_focus + (cu - zoom_focus) * max(zoom, 1.0);
+	float2 f  = scene_focus_value();
+	float2 su = f + (cu - f) * scene_zoom_value();
 	return su * cs + content_origin();
+}
+
+// Signed distance to the spotlight shape, in pixels. Positive = outside.
+float spotlight_sd(float2 px)
+{
+	float2 cpx = content_to_pixel(cursor_pos) + float2(0.0, spotlight_drop);
+	float  rad = max(spotlight_radius, 0.001) * min(target_size.x, target_size.y);
+	if (spotlight_shape > 0.5) {
+		float cr = clamp(spotlight_corner, 0.0, rad);
+		return sd_round_box(px - cpx, float2(rad, rad), cr);
+	}
+	return len2(px - cpx) - rad;
 }
 
 // Composes a click effect over the current color.
@@ -331,18 +372,40 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 	if (mask > 0.0) {
 		float2 cs         = content_size();
 		float2 content_uv = (px - content_origin()) / cs;
-		float2 uv_screen  = zoom_focus + (content_uv - zoom_focus) / max(zoom, 0.0001);
+		float2 focus      = scene_focus_value();
+		float  scene_zoom = scene_zoom_value();
+		float2 uv_screen  = focus + (content_uv - focus) / max(scene_zoom, 0.0001);
 
 		float4 screen;
 		if (zoom_blur > 0.001) {
 			// Radial motion blur (approx. of the zoom movement)
-			float2 d = (uv_screen - zoom_focus) * zoom_blur * 0.03;
+			float2 d = (uv_screen - focus) * zoom_blur * 0.03;
 			screen = image.Sample(def_sampler, uv_screen - d);
 			screen += image.Sample(def_sampler, uv_screen);
 			screen += image.Sample(def_sampler, uv_screen + d);
 			screen *= (1.0 / 3.0);
 		} else {
 			screen = image.Sample(def_sampler, uv_screen);
+		}
+
+		float spot_amount = saturate(spotlight_amount);
+		float spot_sd = spotlight_sd(px);
+		float spot_outside = smoothstep(-1.0, 1.0, spot_sd);
+		if (spotlight_enabled > 0.5 && spot_amount > 0.001 &&
+		    spotlight_blur_enabled > 0.5 && spotlight_blur > 0.01 &&
+		    spot_outside > 0.001) {
+			// Blur only the captured image outside the spotlight (9 taps).
+			float2 o = spotlight_blur / max(target_size, float2(1.0, 1.0));
+			float4 blurred = image.Sample(def_sampler, uv_screen) * 0.25;
+			blurred += image.Sample(def_sampler, uv_screen + float2(o.x, 0.0)) * 0.125;
+			blurred += image.Sample(def_sampler, uv_screen - float2(o.x, 0.0)) * 0.125;
+			blurred += image.Sample(def_sampler, uv_screen + float2(0.0, o.y)) * 0.125;
+			blurred += image.Sample(def_sampler, uv_screen - float2(0.0, o.y)) * 0.125;
+			blurred += image.Sample(def_sampler, uv_screen + o) * 0.0625;
+			blurred += image.Sample(def_sampler, uv_screen - o) * 0.0625;
+			blurred += image.Sample(def_sampler, uv_screen + float2(o.x, -o.y)) * 0.0625;
+			blurred += image.Sample(def_sampler, uv_screen - float2(o.x, -o.y)) * 0.0625;
+			screen = lerp(screen, blurred, spot_outside * spot_amount);
 		}
 
 		if (bg_transparent > 0.5)
@@ -476,13 +539,29 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 			col.rgb = lerp(col.rgb, highlight_color.rgb, saturate(line_a));
 		}
 
-		// Spotlight: darkens outside a circle that follows the cursor
-		if (spotlight_enabled > 0.5) {
-			float2 cpx = content_to_pixel(cursor_pos);
-			float  rad = spotlight_radius * min(target_size.x, target_size.y);
-			float  dd  = len2(px - cpx);
-			float  k   = smoothstep(rad * 0.6, rad, dd) * spotlight_dim;
-			col.rgb    = col.rgb * (1.0 - k * 0.85);
+		// Spotlight: dim, halo shadow, border, drop and zoom animation.
+		if (spotlight_enabled > 0.5 && spot_amount > 0.001) {
+			float aa = max(1.0, target_size.y * 0.0015);
+			float outside = smoothstep(-aa, aa, spot_sd);
+
+			if (spotlight_shadow_enabled > 0.5 && spotlight_shadow_alpha > 0.001) {
+				float2 sp = px - spotlight_shadow_offset;
+				float  sd = spotlight_sd(sp);
+				float  halo = (1.0 - smoothstep(0.0, max(spotlight_shadow_blur, aa),
+							 abs(sd))) *
+					     outside;
+				halo *= spotlight_shadow_alpha * spot_amount;
+				col.rgb = lerp(col.rgb, spotlight_shadow_color.rgb, saturate(halo));
+			}
+
+			col.rgb *= (1.0 - spotlight_dim * outside * 0.85 * spot_amount);
+
+			if (spotlight_border_enabled > 0.5) {
+				float hw = max(spotlight_border_width, 0.5) * 0.5;
+				float border = 1.0 - smoothstep(hw - aa, hw + aa, abs(spot_sd));
+				border *= spotlight_border_color.a * spot_amount;
+				col.rgb = lerp(col.rgb, spotlight_border_color.rgb, saturate(border));
+			}
 		}
 
 		// Cursor

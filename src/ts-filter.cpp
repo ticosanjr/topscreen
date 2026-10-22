@@ -978,7 +978,7 @@ void ts_filter_tick(void *data, float seconds)
 	/* Keys feed the overlay even without a cursor available. */
 	for (int i = 0; i < ctx->input.state().key_count; ++i)
 		ctx->keys.press(ctx->input.state().key_labels[i], ctx->input.state().key_modifier[i],
-				ctx->time_ms);
+				ctx->time_ms, ctx->input.state().modifiers);
 
 	if (ctx->input.available() && ctx->target_w > 0 && ctx->target_h > 0) {
 		const InputState &st = ctx->input.state();

@@ -253,6 +253,8 @@ bool Preset::apply(Config *cfg, std::string *error) const
 	cfg->keys.enabled = read_bool(o, kKeysEnabled, cfg->keys.enabled);
 	cfg->keys.modifiers_only = read_bool(o, kKeysModifiersOnly, cfg->keys.modifiers_only);
 	cfg->keys.show_special = read_bool(o, kKeysShowSpecial, cfg->keys.show_special);
+	cfg->keys.show_shortcuts =
+		read_bool(o, kKeysShowShortcuts, cfg->keys.show_shortcuts);
 	cfg->keys.ttl_ms = read_number(o, kKeysTtlMs, cfg->keys.ttl_ms);
 	cfg->keys.max_keys = read_int(o, kKeysMax, cfg->keys.max_keys);
 	cfg->keys.pos_x = read_number(o, kKeysPosX, cfg->keys.pos_x);

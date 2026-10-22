@@ -7,13 +7,17 @@
 #include <string_view>
 #include <vector>
 
+#include "key_modifiers.hpp"
+
 namespace topscreen::core {
 
 struct KeyOverlayConfig {
 	bool enabled = true;
 	bool modifiers_only = false;
-	/** Keep named keys (Space/Enter/arrows/modifiers) in the overlay. */
-	bool show_special = true;
+	/** Keep named keys (Enter/arrows/modifiers) in the overlay. Space is always shown. */
+	bool show_special = false;
+	/** Combine a key with the modifiers held at that moment (Ctrl + C). */
+	bool show_shortcuts = true;
 	double ttl_ms = 2000.0;
 	int max_keys = 6;
 	double pos_x = 0.5;  // 0..1 (horizontal center of the band)
@@ -63,7 +67,7 @@ struct KeyRender {
 /** Formats a combo: {"Ctrl","Shift"} + "K" => "Ctrl + Shift + K". */
 std::string format_combo(const std::vector<std::string> &modifiers, const std::string &key);
 
-/** Named keys that are displayed as icons (or ignored) by the overlay. */
+/** Named keys that are displayed by name (or ignored) by the overlay. */
 bool is_special_key_label(std::string_view label);
 
 /**
@@ -78,7 +82,8 @@ public:
 	void configure(const KeyOverlayConfig &cfg);
 
 	/** Registers a key. Repeating the same key resets the timer. */
-	void press(std::string_view label, bool is_modifier, double now_ms);
+	void press(std::string_view label, bool is_modifier, double now_ms,
+		   uint32_t modifiers = 0);
 
 	void clear();
 

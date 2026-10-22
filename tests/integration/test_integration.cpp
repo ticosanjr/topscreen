@@ -994,7 +994,8 @@ TEST(integration_profile_import_fills_missing_fields)
 	CHECK_EQ(obs_data_get_string(filter->settings, core::keys::kBgImage),
 		 std::string("wallpapers/glacier.jpg"));
 	CHECK_NEAR(obs_data_get_double(filter->settings, core::keys::kBgPaddingX), 64.0, 1e-9);
-	CHECK(obs_data_get_bool(filter->settings, core::keys::kKeysShowSpecial));
+	CHECK(!obs_data_get_bool(filter->settings, core::keys::kKeysShowSpecial));
+	CHECK(obs_data_get_bool(filter->settings, core::keys::kKeysShowShortcuts));
 	CHECK_EQ(obs_data_get_string(filter->settings, core::keys::kClickSoundFileLeft),
 		 std::string("sounds/click-soft.wav"));
 	/* Fields absent from the partial slot keep profile D's seed, not zeros. */

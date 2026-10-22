@@ -643,6 +643,7 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 	obs_properties_add_bool(keys, kKeysEnabled, obs_module_text("Keys.Enabled"));
 	obs_properties_add_bool(keys, kKeysModifiersOnly, obs_module_text("Keys.ModifiersOnly"));
 	obs_properties_add_bool(keys, kKeysShowSpecial, obs_module_text("Keys.ShowSpecial"));
+	obs_properties_add_bool(keys, kKeysShowShortcuts, obs_module_text("Keys.ShowShortcuts"));
 	obs_properties_add_float_slider(keys, kKeysTtlMs, obs_module_text("Keys.TtlMs"), 500.0, 8000.0, 50.0);
 	obs_properties_add_int_slider(keys, kKeysMax, obs_module_text("Keys.Max"), 1, 12, 1);
 	obs_properties_add_float_slider(keys, kKeysPosX, obs_module_text("Keys.PosX"), 0.0, 1.0, 0.01);
@@ -752,7 +753,89 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 	obs_properties_add_group(props, "grp_monitor", obs_module_text("Group.Monitor"), OBS_GROUP_NORMAL,
 				 mon);
 
-	/* ---------------- Profiles ---------------- */
+
+	/* Simple English explanations shown as the OBS "?" tooltip. */
+	auto tip = [&](const char *name, const char *text) {
+		if (obs_property_t *p = obs_properties_get(props, name))
+			set_tip(p, text);
+	};
+	tip("grp_profiles", obs_module_text("Tooltip.GroupProfiles"));
+	tip("grp_profile_backup", obs_module_text("Tooltip.GroupProfileBackup"));
+	tip("grp_bg", obs_module_text("Tooltip.GroupBackground"));
+	tip("grp_bg_image", obs_module_text("Tooltip.GroupWallpaper"));
+	tip("grp_shadow", obs_module_text("Tooltip.GroupShadow"));
+	tip("grp_cursor", obs_module_text("Tooltip.GroupCursor"));
+	tip("grp_click_left", obs_module_text("Tooltip.GroupClickLeft"));
+	tip("grp_click_right", obs_module_text("Tooltip.GroupClickRight"));
+	tip("grp_sound", obs_module_text("Tooltip.GroupClickSound"));
+	tip("grp_zoom", obs_module_text("Tooltip.GroupZoom"));
+	tip("grp_motionblur", obs_module_text("Tooltip.GroupMotionBlur"));
+	tip("grp_spotlight", obs_module_text("Tooltip.GroupSpotlight"));
+	tip("grp_spotlight_border", obs_module_text("Tooltip.GroupSpotlightBorder"));
+	tip("grp_spotlight_shadow", obs_module_text("Tooltip.GroupSpotlightShadow"));
+	tip("grp_spotlight_blur", obs_module_text("Tooltip.GroupSpotlightBlur"));
+	tip("grp_spotlight_animation", obs_module_text("Tooltip.GroupSpotlightAnimation"));
+	tip("grp_magnifier", obs_module_text("Tooltip.GroupMagnifier"));
+	tip("grp_magnifier_border", obs_module_text("Tooltip.GroupMagnifierBorder"));
+	tip("grp_magnifier_shadow", obs_module_text("Tooltip.GroupMagnifierShadow"));
+	tip("grp_keys", obs_module_text("Tooltip.GroupKeys"));
+	tip("grp_highlight", obs_module_text("Tooltip.GroupHighlight"));
+	tip("grp_hl_look", obs_module_text("Tooltip.GroupHighlightLook"));
+	tip("grp_hl_timing", obs_module_text("Tooltip.GroupHighlightTiming"));
+	tip("grp_hl_zoom", obs_module_text("Tooltip.GroupHighlightZoom"));
+	tip("grp_monitor", obs_module_text("Tooltip.GroupMonitor"));
+	tip(kEffectsEnabled, obs_module_text("Tooltip.EffectsEnabled"));
+	tip(kBgType, obs_module_text("Tooltip.BgType"));
+	tip(kBgPaddingX, obs_module_text("Tooltip.BgPaddingX"));
+	tip(kBgPaddingY, obs_module_text("Tooltip.BgPaddingY"));
+	tip(kBgKeepAspect, obs_module_text("Tooltip.BgKeepAspect"));
+	tip(kBgCornerRadius, obs_module_text("Tooltip.BgCornerRadius"));
+	tip(kCursorStyle, obs_module_text("Tooltip.CursorStyle"));
+	tip(kCursorSecondaryStyle, obs_module_text("Tooltip.CursorSecondary"));
+	tip(kCursorLinkDetection, obs_module_text("Tooltip.CursorLinkDetection"));
+	tip(kCursorFollowMode, obs_module_text("Tooltip.CursorFollowMode"));
+	tip(kCursorGlideMs, obs_module_text("Tooltip.CursorGlideMs"));
+	tip(kCursorGlideSampleMs, obs_module_text("Tooltip.CursorGlideSampleMs"));
+	tip(kCursorSize, obs_module_text("Tooltip.CursorSize"));
+	tip(kCursorSmooth, obs_module_text("Tooltip.CursorSmooth"));
+	tip(kCursorSway, obs_module_text("Tooltip.CursorSway"));
+	tip(kCursorHideIdle, obs_module_text("Tooltip.CursorHideIdle"));
+	tip(kCursorLoop, obs_module_text("Tooltip.CursorLoop"));
+	tip(kClickLeftEffect, obs_module_text("Tooltip.ClickEffect"));
+	tip(kClickLeftSize, obs_module_text("Tooltip.ClickSize"));
+	tip(kClickLeftDurationMs, obs_module_text("Tooltip.ClickDuration"));
+	tip(kClickSoundVolume, obs_module_text("Tooltip.ClickSoundVolume"));
+	tip(kZoomMode, obs_module_text("Tooltip.ZoomMode"));
+	tip(kZoomAmount, obs_module_text("Tooltip.ZoomAmount"));
+	tip(kZoomIdleTimeoutMs, obs_module_text("Tooltip.ZoomIdleTimeout"));
+	tip(kMotionBlurAmount, obs_module_text("Tooltip.MotionBlurAmount"));
+	tip(kSpotlightEnabled, obs_module_text("Tooltip.SpotlightEnabled"));
+	tip(kSpotlightShape, obs_module_text("Tooltip.SpotlightShape"));
+	tip(kSpotlightRadius, obs_module_text("Tooltip.SpotlightRadius"));
+	tip(kSpotlightDim, obs_module_text("Tooltip.SpotlightDim"));
+	tip(kSpotlightZoomAmount, obs_module_text("Tooltip.SpotlightZoom"));
+	tip(kMagnifierEnabled, obs_module_text("Tooltip.MagnifierEnabled"));
+	tip(kMagnifierShape, obs_module_text("Tooltip.MagnifierShape"));
+	tip(kMagnifierRadius, obs_module_text("Tooltip.MagnifierRadius"));
+	tip(kMagnifierZoom, obs_module_text("Tooltip.MagnifierZoom"));
+	tip(kMagnifierFollowCursor, obs_module_text("Tooltip.MagnifierFollow"));
+	tip(kMagnifierInMs, obs_module_text("Tooltip.MagnifierIn"));
+	tip(kMagnifierOutMs, obs_module_text("Tooltip.MagnifierOut"));
+	tip(kKeysEnabled, obs_module_text("Tooltip.KeysEnabled"));
+	tip(kKeysModifiersOnly, obs_module_text("Tooltip.KeysModifiersOnly"));
+	tip(kKeysShowSpecial, obs_module_text("Tooltip.KeysShowSpecial"));
+	tip(kKeysShowShortcuts, obs_module_text("Tooltip.KeysShowShortcuts"));
+	tip(kKeysTtlMs, obs_module_text("Tooltip.KeysTtl"));
+	tip(kKeysMax, obs_module_text("Tooltip.KeysMax"));
+	tip(kKeysPosX, obs_module_text("Tooltip.KeysPosX"));
+	tip(kKeysPosY, obs_module_text("Tooltip.KeysPosY"));
+	tip(kKeysSize, obs_module_text("Tooltip.KeysSize"));
+	tip(kKeysBand, obs_module_text("Tooltip.KeysBand"));
+	tip(kHighlightMode, obs_module_text("Tooltip.HighlightMode"));
+	tip(kHighlightOpacity, obs_module_text("Tooltip.HighlightOpacity"));
+	tip(kHighlightHoldMs, obs_module_text("Tooltip.HighlightHold"));
+	tip(kHighlightFadeMs, obs_module_text("Tooltip.HighlightFade"));
+	tip(kMonitorManual, obs_module_text("Tooltip.MonitorManual"));
 	return props;
 }
 

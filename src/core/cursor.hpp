@@ -64,7 +64,7 @@ struct CursorRender {
 /**
  * Cursor model: smoothing, sway, idle and loop.
  *
- * Works in content coordinates (0..1). Draws nothing; it only produces
+ * Works in target/frame coordinates (0..1). Draws nothing; it only produces
  * the state that the compositor uses to render.
  */
 class CursorModel {
@@ -99,12 +99,16 @@ private:
 	double last_update_ms_ = 0.0;
 	double start_x_ = 0.5;
 	double start_y_ = 0.5;
+	double pointer_x_ = 0.5;
+	double pointer_y_ = 0.5;
 	double target_x_ = 0.5;
 	double target_y_ = 0.5;
 	double glide_from_x_ = 0.5;
 	double glide_from_y_ = 0.5;
 	double glide_to_x_ = 0.5;
 	double glide_to_y_ = 0.5;
+	double glide_ctrl_x_ = 0.5;
+	double glide_ctrl_y_ = 0.5;
 	double glide_start_ms_ = 0.0;
 	double glide_end_ms_ = 0.0;
 	double next_sample_ms_ = 0.0;

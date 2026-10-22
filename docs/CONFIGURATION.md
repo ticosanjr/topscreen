@@ -118,7 +118,8 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Vertical drop distance (px) | `magnifier_drop_px` | double | 0–200 | `24` |
 | Keys | Show typed keys | `keys_enabled` | bool | — | `true` |
 | | Modifiers only | `keys_modifiers_only` | bool | — | `false` |
-| | Show special keys as icons | `keys_show_special` | bool | — | `true` (off = ignore Space/Enter/arrows/modifiers) |
+| | Show special key names | `keys_show_special` | bool | — | `false` (off = ignore named keys; Space is always shown) |
+| | Show shortcuts | `keys_show_shortcuts` | bool | — | `true` (Ctrl + key as one entry) |
 | | On-screen time per key (ms) | `keys_ttl_ms` | double | 500–8000 | `2000` |
 | | Maximum keys on screen | `keys_max` | int | 1–12 | `6` |
 | | Horizontal position (0 = left, 1 = right) | `keys_pos_x` | double | 0–1 | `0.5` |
@@ -184,7 +185,7 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 {
   "topscreen_profiles": 1,
   "plugin": "TopScreen",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "current": 0,
   "profile_slot_0": { "effects_enabled": true },
   "profile_slot_1": { "effects_enabled": true },

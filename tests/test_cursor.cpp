@@ -1,6 +1,8 @@
 #include "core/cursor.hpp"
 #include "test_framework.hpp"
 
+#include <cmath>
+
 using namespace topscreen::core;
 
 namespace {
@@ -127,7 +129,8 @@ TEST(cursor_glide_ab_is_a_smooth_point_to_point)
 	m.update(0.0);
 	CHECK_NEAR(m.render().x, 0.0, 1e-9);
 	m.update(100.0);
-	CHECK_NEAR(m.render().x, 0.5, 1e-3);
+	/* The path is a subtle quadratic curve, not a straight line. */
+	CHECK(std::fabs(m.render().x - 0.5) > 0.01);
 	m.update(200.0);
 	CHECK_NEAR(m.render().x, 1.0, 1e-9);
 
@@ -190,4 +193,26 @@ TEST(cursor_link_name_classifier)
 	CHECK(!cursor_name_is_link("left_ptr"));
 	CHECK(!cursor_name_is_link("arrow"));
 	CHECK(!cursor_name_is_link(""));
+}
+
+TEST(cursor_loop_does_not_reset_hide_idle)
+{
+	CursorModel m;
+	CursorConfig cfg;
+	cfg.loop = true;
+	cfg.loop_ms = 100.0;
+	cfg.hide_idle = true;
+	cfg.idle_delay_ms = 200.0;
+	m.configure(cfg);
+	m.reset(0.0, 0.0, 0.0);
+	m.set_target(0.9, 0.9, 0.0);
+
+	/* Simulate the input backend reporting the same stationary pointer while
+	 * the loop is returning the cursor to the start. It must not look like
+	 * fresh movement and restart the idle fade. */
+	for (int t = 16; t <= 2000; t += 16) {
+		m.set_target(0.9, 0.9, static_cast<double>(t));
+		m.update(static_cast<double>(t));
+	}
+	CHECK(m.render().opacity < 0.1);
 }

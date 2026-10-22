@@ -123,6 +123,7 @@ inline constexpr const char *kMagnifierDropPx = "magnifier_drop_px";
 inline constexpr const char *kKeysEnabled = "keys_enabled";
 inline constexpr const char *kKeysModifiersOnly = "keys_modifiers_only";
 inline constexpr const char *kKeysShowSpecial = "keys_show_special";
+inline constexpr const char *kKeysShowShortcuts = "keys_show_shortcuts";
 inline constexpr const char *kKeysTtlMs = "keys_ttl_ms";
 inline constexpr const char *kKeysMax = "keys_max";
 inline constexpr const char *kKeysPosX = "keys_pos_x";

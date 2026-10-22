@@ -130,6 +130,7 @@ void config_defaults(obs_data_t *s)
 	obs_data_set_default_bool(s, kKeysEnabled, def.keys.enabled);
 	obs_data_set_default_bool(s, kKeysModifiersOnly, def.keys.modifiers_only);
 	obs_data_set_default_bool(s, kKeysShowSpecial, def.keys.show_special);
+	obs_data_set_default_bool(s, kKeysShowShortcuts, def.keys.show_shortcuts);
 	obs_data_set_default_double(s, kKeysTtlMs, def.keys.ttl_ms);
 	obs_data_set_default_int(s, kKeysMax, def.keys.max_keys);
 	obs_data_set_default_double(s, kKeysPosX, def.keys.pos_x);
@@ -378,6 +379,7 @@ void config_load(obs_data_t *s, Config *c, const Config *fallback)
 	c->keys.enabled = read_bool(s, kKeysEnabled, d.keys.enabled);
 	c->keys.modifiers_only = read_bool(s, kKeysModifiersOnly, d.keys.modifiers_only);
 	c->keys.show_special = read_bool(s, kKeysShowSpecial, d.keys.show_special);
+	c->keys.show_shortcuts = read_bool(s, kKeysShowShortcuts, d.keys.show_shortcuts);
 	c->keys.ttl_ms = read_double(s, kKeysTtlMs, d.keys.ttl_ms);
 	c->keys.max_keys = static_cast<int>(read_int(s, kKeysMax, d.keys.max_keys));
 	c->keys.pos_x = read_double(s, kKeysPosX, d.keys.pos_x);
@@ -529,6 +531,7 @@ void config_store(obs_data_t *s, const Config &c)
 	obs_data_set_bool(s, kKeysEnabled, c.keys.enabled);
 	obs_data_set_bool(s, kKeysModifiersOnly, c.keys.modifiers_only);
 	obs_data_set_bool(s, kKeysShowSpecial, c.keys.show_special);
+	obs_data_set_bool(s, kKeysShowShortcuts, c.keys.show_shortcuts);
 	obs_data_set_double(s, kKeysTtlMs, c.keys.ttl_ms);
 	obs_data_set_int(s, kKeysMax, c.keys.max_keys);
 	obs_data_set_double(s, kKeysPosX, c.keys.pos_x);

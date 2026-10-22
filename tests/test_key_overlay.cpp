@@ -109,17 +109,18 @@ TEST(key_special_keys_can_be_ignored)
 	m.press("Space", false, 0.0);
 	m.press("Left", false, 0.0);
 	m.press("Ctrl", true, 0.0);
-	CHECK_EQ(m.active_count(), 3);
+	CHECK_EQ(m.active_count(), 4);
 
 	m.press("Esc", false, 0.0);
-	CHECK_EQ(m.active_count(), 3);
+	CHECK_EQ(m.active_count(), 4);
 
 	KeyRender out[8];
 	const int n = m.collect(0.0, out, 8);
-	REQUIRE(n == 3);
+	REQUIRE(n == 4);
 	CHECK_EQ(out[0].label.view(), std::string_view("A"));
 	CHECK_EQ(out[1].label.view(), std::string_view("1"));
 	CHECK_EQ(out[2].label.view(), std::string_view("@"));
+	CHECK_EQ(out[3].label.view(), std::string_view(" "));
 }
 
 TEST(key_modifiers_only_wins_over_special_filter)
@@ -138,7 +139,7 @@ TEST(key_modifiers_only_wins_over_special_filter)
 
 TEST(key_special_label_classifier)
 {
-	CHECK(is_special_key_label("Space"));
+	CHECK(!is_special_key_label("Space"));
 	CHECK(is_special_key_label("Backspace"));
 	CHECK(is_special_key_label("Enter"));
 	CHECK(is_special_key_label("Tab"));
@@ -219,4 +220,42 @@ TEST(key_collect_preserves_long_labels_up_to_limit)
 	REQUIRE(n == 1);
 	CHECK_EQ(out[0].label.view().size(), KeyLabel::kCapacity - 1);
 	CHECK_EQ(out[0].label.view(), std::string_view(long_label.substr(0, KeyLabel::kCapacity - 1)));
+}
+
+TEST(key_shortcuts_combine_modifiers)
+{
+	KeyOverlayModel m;
+	KeyOverlayConfig cfg;
+	cfg.show_shortcuts = true;
+	m.configure(cfg);
+
+	m.press("Ctrl", true, 0.0, KeyModCtrl);
+	m.press("C", false, 1.0, KeyModCtrl | KeyModShift);
+	m.press("V", false, 2.0, KeyModCtrl);
+
+	KeyRender out[8];
+	const int n = m.collect(2.0, out, 8);
+	REQUIRE(n == 2);
+	CHECK_EQ(out[0].label.view(), std::string_view("Ctrl + Shift + C"));
+	CHECK_EQ(out[1].label.view(), std::string_view("Ctrl + V"));
+}
+
+TEST(key_special_names_are_text_and_space_is_blank)
+{
+	KeyOverlayModel m;
+	KeyOverlayConfig cfg;
+	cfg.show_special = true;
+	cfg.show_shortcuts = false;
+	m.configure(cfg);
+
+	m.press("Shift", true, 0.0);
+	m.press("Space", false, 1.0);
+	m.press("Left", false, 2.0);
+
+	KeyRender out[8];
+	const int n = m.collect(2.0, out, 8);
+	REQUIRE(n == 3);
+	CHECK_EQ(out[0].label.view(), std::string_view("Shift"));
+	CHECK_EQ(out[1].label.view(), std::string_view(" "));
+	CHECK_EQ(out[2].label.view(), std::string_view("Left"));
 }

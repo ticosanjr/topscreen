@@ -2,6 +2,7 @@
 
 #include <obs-module.h>
 
+#include <cstdint>
 #include <string>
 
 namespace topscreen {
@@ -17,6 +18,7 @@ struct InputState {
 	bool left_pressed = false;  /* rising edge this tick */
 	bool right_pressed = false; /* rising edge this tick */
 	bool link = false;          /* native pointer is over a link (Win/X11) */
+	uint32_t modifiers = 0;     /* core::KeyModifier bitmask */
 	bool available = false;
 
 	/* Keys with a rising edge this tick (for the overlay). */

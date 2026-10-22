@@ -9,11 +9,11 @@ GitHub Release attachments are the canonical downloadable copies.
 
 | Version | Linux | Windows | Highlights |
 |---------|-------|---------|------------|
+| **0.6.1** | [`topscreen-0.6.1-linux.tar.gz`](https://github.com/ticosanjr/topscreen/releases/download/v0.6.1/topscreen-0.6.1-linux.tar.gz) | [`topscreen-0.6.1-windows.zip`](https://github.com/ticosanjr/topscreen/releases/download/v0.6.1/topscreen-0.6.1-windows.zip) \* | **Full-frame focus + input polish:** Spotlight dim, blur, border, halo and zoom now cover the wallpaper too; the magnifier lens magnifies wallpaper and screen while clicks, highlights, keys and cursor stay crisp on top. Fixes cursor-loop blinking, adds curved eased glides, named special keys, literal Space, Ctrl+key shortcuts and more tooltips |
 | **0.6.0** | [`topscreen-0.6.0-linux.tar.gz`](https://github.com/ticosanjr/topscreen/releases/download/v0.6.0/topscreen-0.6.0-linux.tar.gz) | [`topscreen-0.6.0-windows.zip`](https://github.com/ticosanjr/topscreen/releases/download/v0.6.0/topscreen-0.6.0-windows.zip) \* | **Cursor, click and lens release:** automatic primary→secondary cursor over links (Windows/X11), exact/spring/sampled/A→B movement, quiet-circle and water-ripple click effects, and an independent magnifier lens with its own hotkey and Spotlight exclusion |
 | **0.5.1** | [`topscreen-0.5.1-linux.tar.gz`](https://github.com/ticosanjr/topscreen/releases/download/v0.5.1/topscreen-0.5.1-linux.tar.gz) | [`topscreen-0.5.1-windows.zip`](https://github.com/ticosanjr/topscreen/releases/download/v0.5.1/topscreen-0.5.1-windows.zip) \* | **Key overlay fixed + asset cleanup:** text is visible again on OBS/libobs 30.x (vertex colors are now uploaded correctly). Removes 24 wallpapers, 15 click sounds and 27 cursor styles while keeping retired cursor IDs stable for existing profiles |
-| **0.5.0** | [`topscreen-0.5.0-linux.tar.gz`](https://github.com/ticosanjr/topscreen/releases/download/v0.5.0/topscreen-0.5.0-linux.tar.gz) | [`topscreen-0.5.0-windows.zip`](https://github.com/ticosanjr/topscreen/releases/download/v0.5.0/topscreen-0.5.0-windows.zip) \* | **Smooth wallpaper diffusion:** choose **Soft**, **Gaussian**, **Creamy** or the new **Frosted glass** mode; the 5×5 Gaussian removes the repeated-pixel grid at large radii. Also adds centralized config sanitization (NaN/out-of-range imports), cached gradient math, faster dock refresh, and clearer labels/tooltips |
 
-> \* **Windows packages 0.2.18–0.6.0** are cross-built from Linux, so they do
+> \* **Windows packages 0.2.18–0.6.1** are cross-built from Linux, so they do
 > **not** include the Qt dock. They are the full filter (Properties, hotkeys,
 > presets, profiles, multi-screen fix). The Linux package includes the dock.
 

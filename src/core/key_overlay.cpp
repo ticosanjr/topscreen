@@ -25,8 +25,8 @@ std::string format_combo(const std::vector<std::string> &modifiers, const std::s
 bool is_special_key_label(std::string_view label)
 {
 	static constexpr std::string_view kSpecial[] = {
-		"Space", "Backspace", "Enter", "Tab", "Esc", "Del", "Delete",
-		"Left",  "Right",     "Up",    "Down", "Shift", "Ctrl", "Alt", "Win",
+		"Backspace", "Enter", "Tab", "Esc", "Del", "Delete",
+		"Left",      "Right", "Up",  "Down", "Shift", "Ctrl", "Alt", "Win",
 	};
 	for (std::string_view s : kSpecial) {
 		if (label == s)
@@ -48,7 +48,8 @@ void KeyOverlayModel::configure(const KeyOverlayConfig &cfg)
 	entries_.reserve(static_cast<size_t>(std::min(cfg_.max_keys, 64)));
 }
 
-void KeyOverlayModel::press(std::string_view label, bool is_modifier, double now_ms)
+void KeyOverlayModel::press(std::string_view label, bool is_modifier, double now_ms,
+			    uint32_t modifiers)
 {
 	if (!cfg_.enabled || label.empty())
 		return;
@@ -59,13 +60,44 @@ void KeyOverlayModel::press(std::string_view label, bool is_modifier, double now
 		return;
 	}
 
-	/* Every keystroke is appended as its own entry (repeats included), so
-	 * what you typed is what you see. Each letter expires on its own TTL. */
-	Entry entry;
-	entry.label.assign(label);
-	entry.born_ms = now_ms;
-	entry.modifier = is_modifier;
-	entries_.push_back(entry);
+	/* A space is a literal blank, not a named key or icon. */
+	const std::string_view shown = label == "Space" ? std::string_view(" ") : label;
+
+	/* With shortcuts on, modifiers are folded into the non-modifier key that
+	 * follows them. Modifier-only mode still shows each modifier by name. */
+	if (cfg_.show_shortcuts && !cfg_.modifiers_only && !is_modifier && modifiers) {
+		/* Replace any standalone modifier labels just pressed with the
+		 * combined shortcut, so Ctrl then C reads as Ctrl + C once. */
+		while (!entries_.empty() && entries_.back().modifier)
+			entries_.pop_back();
+		std::vector<std::string> mods;
+		if (modifiers & KeyModCtrl)
+			mods.emplace_back("Ctrl");
+		if (modifiers & KeyModShift)
+			mods.emplace_back("Shift");
+		if (modifiers & KeyModAlt)
+			mods.emplace_back("Alt");
+		if (modifiers & KeyModWin)
+			mods.emplace_back("Win");
+		const std::string combo = format_combo(mods, std::string(shown));
+		Entry entry;
+		entry.label.assign(combo);
+		entry.born_ms = now_ms;
+		entry.modifier = false;
+		entries_.push_back(entry);
+	} else if (cfg_.show_shortcuts && !cfg_.modifiers_only && is_modifier &&
+		   !cfg_.show_special) {
+		/* Shortcut mode only: wait for the key that completes the combo. */
+		return;
+	} else {
+		/* Every keystroke is appended as its own entry (repeats included),
+		 * so what you typed is what you see. */
+		Entry entry;
+		entry.label.assign(shown);
+		entry.born_ms = now_ms;
+		entry.modifier = is_modifier;
+		entries_.push_back(entry);
+	}
 
 	/* Respects the limit, discarding the oldest ones. */
 	while (static_cast<int>(entries_.size()) > cfg_.max_keys)

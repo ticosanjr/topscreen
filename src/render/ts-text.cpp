@@ -25,28 +25,6 @@ bool read_module_bytes(const char *module_file, std::vector<uint8_t> *out)
 	return ok;
 }
 
-/* Special keys are shown as icons (one symbol each, UTF-8). */
-const char *icon_for_label(std::string_view label)
-{
-	static const char *const kLabels[] = {
-		"Space", "Backspace", "Enter", "Tab", "Left", "Up",   "Right",
-		"Down",  "Shift",     "Ctrl",  "Alt", "Win",  "Del",  "Delete",
-	};
-	/* U+2423, U+232B, U+23CE, U+21E5, U+2190, U+2191, U+2192,
-	 * U+2193, U+21E7, U+2303, U+2325, U+229E, U+2326, U+2326.
-	 * ("Esc" stays as text: the bundled font has no escape symbol.) */
-	static const char *const kIcons[] = {
-		"\xE2\x90\xA3", "\xE2\x8C\xAB", "\xE2\x8E\x8E", "\xE2\x87\xA5",
-		"\xE2\x86\x90", "\xE2\x86\x91", "\xE2\x86\x92", "\xE2\x86\x93", "\xE2\x87\xA7",
-		"\xE2\x8C\x83", "\xE2\x8C\xA5", "\xE2\x8A\x9E", "\xE2\x8C\xA6", "\xE2\x8C\xA6",
-	};
-	for (size_t i = 0; i < sizeof(kLabels) / sizeof(kLabels[0]); ++i) {
-		if (label == kLabels[i])
-			return kIcons[i];
-	}
-	return nullptr;
-}
-
 /* Decodes one UTF-8 codepoint; always consumes at least one byte. */
 size_t utf8_next(const char *s, size_t n, int *code)
 {
@@ -208,12 +186,6 @@ bool TextRenderer::build_layout(const core::KeyRender *items, int count)
 		std::string_view view = items[i].label.view();
 		if (view.size() > kMaxLabelBytes)
 			view = view.substr(0, kMaxLabelBytes);
-		if (const char *icon = icon_for_label(view)) {
-			int cp = 0;
-			const size_t n = utf8_next(icon, 3, &cp);
-			if (atlas_.glyph(cp))
-				view = std::string_view(icon, n);
-		}
 		views[i] = view;
 	}
 

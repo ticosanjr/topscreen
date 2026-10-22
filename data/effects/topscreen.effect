@@ -237,9 +237,16 @@ float scene_zoom_value()
 	return max(zoom, 1.0) * max(spotlight_zoom, 1.0);
 }
 
+float2 target_to_content_uv(float2 target_uv)
+{
+	float2 cs = max(content_size(), float2(1.0, 1.0));
+	return (target_uv * target_size - content_origin()) / cs;
+}
+
 float2 scene_focus_value()
 {
-	return lerp(zoom_focus, spotlight_focus, saturate(spotlight_amount));
+	return lerp(zoom_focus, target_to_content_uv(spotlight_focus),
+		    saturate(spotlight_amount));
 }
 
 // DISPLAYED position, in pixels, of a SOURCE point (content uv).
@@ -258,7 +265,7 @@ float2 content_to_pixel(float2 cu)
 // Signed distance to the spotlight shape, in pixels. Positive = outside.
 float spotlight_sd(float2 px)
 {
-	float2 cpx = content_to_pixel(cursor_pos) + float2(0.0, spotlight_drop);
+	float2 cpx = cursor_pos * target_size + float2(0.0, spotlight_drop);
 	float  rad = max(spotlight_radius, 0.001) * min(target_size.x, target_size.y);
 	if (spotlight_shape > 0.5) {
 		float cr = clamp(spotlight_corner, 0.0, rad);
@@ -270,7 +277,7 @@ float spotlight_sd(float2 px)
 // Signed distance to the magnifier lens, in pixels. Positive = outside.
 float magnifier_sd(float2 px)
 {
-	float2 cpx = content_to_pixel(magnifier_focus) + float2(0.0, magnifier_drop);
+	float2 cpx = magnifier_focus * target_size + float2(0.0, magnifier_drop);
 	float  rad = max(magnifier_radius, 0.001) * min(target_size.x, target_size.y);
 	if (magnifier_shape > 0.5) {
 		float cr = clamp(magnifier_corner, 0.0, rad);
@@ -424,6 +431,115 @@ float4 blur25(float2 uv, float2 step)
 	return c;
 }
 
+// Background for an arbitrary target pixel. The spotlight zoom is applied
+// here too, so the wallpaper and the captured screen magnify together.
+float4 sample_background(float2 screen_px)
+{
+	float2 uv = screen_px / max(target_size, float2(1.0, 1.0));
+	float2 bg_uv = uv;
+	if (spotlight_enabled > 0.5 && spotlight_amount > 0.001) {
+		float z = 1.0 + (max(spotlight_zoom, 1.0) - 1.0) * saturate(spotlight_amount);
+		bg_uv = cursor_pos + (uv - cursor_pos) / max(z, 0.0001);
+	}
+
+	if (bg_transparent > 0.5)
+		return float4(0.0, 0.0, 0.0, 0.0);
+	if (bg_mode > 1.5) {
+		if (bg_tex_enabled <= 0.5)
+			return bg_a;
+
+		float at = target_size.x / max(target_size.y, 1.0);
+		float ai = max(bg_tex_aspect, 0.0001);
+		float2 sc = float2(1.0, 1.0);
+		if (at > ai)
+			sc.y = ai / at;
+		else
+			sc.x = at / ai;
+		float2 buv = (bg_uv - 0.5) * sc + 0.5;
+
+		if (bg_blur > 0.01 && bg_blur_type > 0.5) {
+			float2 texel = 1.0 / max(target_size, float2(1.0, 1.0));
+			if (bg_blur_type < 1.5) {
+				float2 o = texel * bg_blur * 0.70;
+				return blur9(buv, o);
+			}
+
+			float spread = 0.50;
+			if (bg_blur_type >= 2.5)
+				spread = 0.62;
+			if (bg_blur_type >= 3.5) {
+				spread = 0.66;
+				float2 jitter = float2(
+					frac(screen_px.x * 0.7548777 + screen_px.y * 0.5698403),
+					frac(screen_px.x * 0.4385791 + screen_px.y * 0.9172837)) - 0.5;
+				buv += jitter * texel * bg_blur * spread * 0.35;
+			}
+			return blur25(buv, texel * bg_blur * spread);
+		}
+		return bg_tex.Sample(def_sampler, buv);
+	}
+	if (bg_mode > 0.5) {
+		float t = saturate(dot(bg_uv - bg_gradient_center, bg_gradient_dir) + 0.5);
+		return lerp(bg_a, bg_b, t);
+	}
+	return bg_a;
+}
+
+float4 apply_shadow(float4 col, float2 screen_px)
+{
+	if (shadow_alpha <= 0.001)
+		return col;
+	float2 center = target_size * 0.5;
+	float2 content_half = content_size() * 0.5;
+	float radius = min(corner_radius, min(content_half.x, content_half.y));
+	radius = max(radius, 0.0);
+	float2 sp = (screen_px - center) - shadow_offset;
+	float ds = sd_round_box(sp, content_half + shadow_blur, radius + shadow_blur);
+	float s = 1.0 - smoothstep(-shadow_blur, shadow_blur, ds);
+	if (bg_transparent > 0.5)
+		return float4(0.0, 0.0, 0.0, max(col.a, s * shadow_alpha));
+	col.rgb = lerp(col.rgb, float3(0.0, 0.0, 0.0), s * shadow_alpha);
+	return col;
+}
+
+// Captured screen at an arbitrary target pixel (base/scene zoom only).
+float4 sample_content_at(float2 screen_px, out float mask)
+{
+	float2 center = target_size * 0.5;
+	float2 content_half = content_size() * 0.5;
+	float radius = min(corner_radius, min(content_half.x, content_half.y));
+	radius = max(radius, 0.0);
+	mask = 1.0 - smoothstep(-1.0, 1.0,
+				 sd_round_box(screen_px - center, content_half, radius));
+	if (mask <= 0.0)
+		return float4(0.0, 0.0, 0.0, 0.0);
+
+	float2 cs = content_size();
+	float2 content_uv = (screen_px - content_origin()) / cs;
+	content_uv += ripple_offset(content_uv);
+	float2 focus = scene_focus_value();
+	float scene_zoom = scene_zoom_value();
+	float2 uv_screen = focus + (content_uv - focus) / max(scene_zoom, 0.0001);
+	return image.Sample(def_sampler, uv_screen);
+}
+
+// Background + frame shadow + captured screen at any target pixel. Used by
+// the full-frame spotlight blur; overlays are deliberately excluded so click
+// effects and highlights stay crisp.
+float4 sample_scene_at(float2 screen_px)
+{
+	float4 c = apply_shadow(sample_background(screen_px), screen_px);
+	float m;
+	float4 screen = sample_content_at(screen_px, m);
+	if (m > 0.0) {
+		if (bg_transparent > 0.5)
+			c = float4(screen.rgb, m * screen.a);
+		else
+			c = lerp(c, screen, m);
+	}
+	return c;
+}
+
 float4 PSCompose(VertInOut vert_in) : TARGET
 {
 	float2 px     = vert_in.uv * target_size;
@@ -434,85 +550,10 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 	float  radius       = min(corner_radius, min(content_half.x, content_half.y));
 	radius              = max(radius, 0.0);
 
-	// Background: wallpaper when selected, otherwise solid/gradient.
-	// Transparent mode ignores both and clears the frame outside the screen.
-	float4 col = bg_a;
-	if (bg_transparent > 0.5) {
-		col = float4(0.0, 0.0, 0.0, 0.0);
-	} else if (bg_mode > 1.5) {
-	    if (bg_tex_enabled > 0.5) {
-		float at = target_size.x / max(target_size.y, 1.0);
-		float ai = max(bg_tex_aspect, 0.0001);
-		float2 sc = float2(1.0, 1.0);
-		if (at > ai)
-			sc.y = ai / at;
-		else
-			sc.x = at / ai;
-		float2 buv = (vert_in.uv - 0.5) * sc + 0.5;
-
-		if (bg_blur > 0.01 && bg_blur_type > 0.5) {
-			float2 texel = 1.0 / max(target_size, float2(1.0, 1.0));
-
-			if (bg_blur_type < 1.5) {
-				// Soft: fast 3x3 diffusion (9 taps).
-				float2 o = texel * bg_blur * 0.70;
-				col = blur9(buv, o);
-			} else {
-				// Gaussian / Creamy / Frosted: real 5x5 Gaussian (25 taps).
-				// Sampling a 3x3 kernel with a very wide spread used to
-				// leave visible gaps at large radii (the "repeated pixel"
-				// look). A 5x5 kernel keeps the taps dense enough to read as
-				// frosted glass instead of a grid of ghosts.
-				float spread = 0.50; // Gaussian
-				if (bg_blur_type >= 2.5)
-					spread = 0.62; // Creamy
-				if (bg_blur_type >= 3.5)
-					spread = 0.66; // Frosted glass
-
-				float2 step = texel * bg_blur * spread;
-
-				if (bg_blur_type >= 3.5) {
-					// Sub-pixel rotation of the 5x5 grid breaks the
-					// alignment between neighbouring pixels, which removes
-					// the faint cross/plus pattern of a fixed kernel.
-					float2 jitter = float2(
-						frac(px.x * 0.7548777 + px.y * 0.5698403),
-						frac(px.x * 0.4385791 + px.y * 0.9172837)) - 0.5;
-					buv += jitter * step * 0.35;
-				}
-
-				col = blur25(buv, step);
-			}
-		} else {
-			col = bg_tex.Sample(def_sampler, buv);
-		}
-	    } else {
-		col = bg_a;
-	    }
-	} else if (bg_mode > 0.5) {
-		float t = saturate(dot(vert_in.uv - bg_gradient_center, bg_gradient_dir) + 0.5);
-		col = lerp(bg_a, bg_b, t);
-	}
-
-	// Approximate shadow
-	if (shadow_alpha > 0.001) {
-		float2 sp = p - shadow_offset;
-		float  ds = sd_round_box(sp, content_half + shadow_blur, radius + shadow_blur);
-		float  s  = 1.0 - smoothstep(-shadow_blur, shadow_blur, ds);
-		if (bg_transparent > 0.5)
-			col = float4(0.0, 0.0, 0.0, max(col.a, s * shadow_alpha));
-		else
-			col.rgb = lerp(col.rgb, float3(0.0, 0.0, 0.0), s * shadow_alpha);
-	}
-
-	// Magnifier outer shadow (behind the lens border/content).
-	if (magnifier_enabled > 0.5 && magnifier_amount > 0.001 &&
-	    magnifier_shadow_enabled > 0.5 && magnifier_shadow_alpha > 0.001) {
-		float sd = magnifier_sd(px - magnifier_shadow_offset);
-		float s = 1.0 - smoothstep(-magnifier_shadow_blur, magnifier_shadow_blur, sd);
-		col.rgb = lerp(col.rgb, magnifier_shadow_color.rgb,
-			       s * magnifier_shadow_alpha * magnifier_amount);
-	}
+	// Background + shadow. Both are sampled through sample_background() so the
+	// spotlight can magnify the wallpaper together with the captured screen.
+	float4 col = sample_background(px);
+	col = apply_shadow(col, px);
 
 	// Content: corner mask with anti-aliasing
 	float dc   = sd_round_box(p, content_half, radius);
@@ -539,58 +580,81 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 			screen = image.Sample(def_sampler, uv_screen);
 		}
 
-		// Magnifier: blend a locally zoomed sample inside the lens. The
-		// spotlight zoom is global; this one changes only the lens area.
-		if (magnifier_enabled > 0.5 && magnifier_amount > 0.001) {
-			float lens_sd = magnifier_sd(px);
-			float lens_mask = (1.0 - smoothstep(-1.0, 1.0, lens_sd)) * magnifier_amount;
-			if (lens_mask > 0.001) {
-				float2 base_focus = scene_focus_value();
-				float base_zoom = scene_zoom_value();
-				float2 lens_src = base_focus + (magnifier_focus - base_focus) /
-							   max(base_zoom, 0.0001);
-				float2 uv_lens = lens_src + (uv_screen - lens_src) /
-							 max(magnifier_zoom, 1.0001);
-				float4 magnified = image.Sample(def_sampler, uv_lens);
-				screen = lerp(screen, magnified, lens_mask);
+		if (bg_transparent > 0.5)
+			col = float4(screen.rgb, mask * screen.a);
+		else
+			col = lerp(col, screen, mask);
+
+
+	}
+
+	// Whole-frame magnifier. It samples the background and the captured
+	// screen at the lens-warped position, so wallpaper + content magnify.
+	if (magnifier_enabled > 0.5 && magnifier_amount > 0.001) {
+		float lens_sd = magnifier_sd(px);
+		float lens_mask = (1.0 - smoothstep(-1.0, 1.0, lens_sd)) * magnifier_amount;
+		if (lens_mask > 0.001) {
+			float2 lens_center = magnifier_focus * target_size +
+					     float2(0.0, magnifier_drop);
+			float2 lens_px = lens_center +
+					 (px - lens_center) / max(magnifier_zoom, 1.0001);
+			float4 lens_col = apply_shadow(sample_background(lens_px), lens_px);
+			float lens_content;
+			float4 lens_screen = sample_content_at(lens_px, lens_content);
+			if (lens_content > 0.0) {
+				if (bg_transparent > 0.5)
+					lens_col = float4(lens_screen.rgb,
+							  lens_content * lens_screen.a);
+				else
+					lens_col = lerp(lens_col, lens_screen, lens_content);
 			}
+			col = lerp(col, lens_col, lens_mask);
 		}
 
+		if (magnifier_border_enabled > 0.5 && magnifier_border_width > 0.01) {
+			float edge = 1.0 - smoothstep(-1.0, 1.0,
+						      abs(lens_sd) - magnifier_border_width * 0.5);
+			col.rgb = lerp(col.rgb, magnifier_border_color.rgb,
+				       edge * magnifier_border_color.a * magnifier_amount);
+		}
+	}
+
+	// Full-frame spotlight blur. The content and the wallpaper are blurred
+	// outside the spotlight, but click effects and highlights are applied
+	// afterwards so they stay crisp and readable. Wallpaper blur is already
+	// expensive; use the cheaper 5-tap path when it is active.
+	{
 		float spot_amount = saturate(spotlight_amount);
 		float spot_sd = spotlight_sd(px);
 		float spot_outside = smoothstep(-1.0, 1.0, spot_sd);
 		if (spotlight_enabled > 0.5 && spot_amount > 0.001 &&
 		    spotlight_blur_enabled > 0.5 && spotlight_blur > 0.01 &&
 		    spot_outside > 0.001) {
-			// Blur only the captured image outside the spotlight (9 taps).
 			float2 o = spotlight_blur / max(target_size, float2(1.0, 1.0));
-			float4 blurred = image.Sample(def_sampler, uv_screen) * 0.25;
-			blurred += image.Sample(def_sampler, uv_screen + float2(o.x, 0.0)) * 0.125;
-			blurred += image.Sample(def_sampler, uv_screen - float2(o.x, 0.0)) * 0.125;
-			blurred += image.Sample(def_sampler, uv_screen + float2(0.0, o.y)) * 0.125;
-			blurred += image.Sample(def_sampler, uv_screen - float2(0.0, o.y)) * 0.125;
-			blurred += image.Sample(def_sampler, uv_screen + o) * 0.0625;
-			blurred += image.Sample(def_sampler, uv_screen - o) * 0.0625;
-			blurred += image.Sample(def_sampler, uv_screen + float2(o.x, -o.y)) * 0.0625;
-			blurred += image.Sample(def_sampler, uv_screen - float2(o.x, -o.y)) * 0.0625;
-			screen = lerp(screen, blurred, spot_outside * spot_amount);
+			float4 blurred;
+			if (bg_blur > 0.01 && bg_blur_type > 0.5) {
+				blurred = sample_scene_at(px) * 0.40;
+				blurred += sample_scene_at(px + float2(o.x, 0.0)) * 0.15;
+				blurred += sample_scene_at(px - float2(o.x, 0.0)) * 0.15;
+				blurred += sample_scene_at(px + float2(0.0, o.y)) * 0.15;
+				blurred += sample_scene_at(px - float2(0.0, o.y)) * 0.15;
+			} else {
+				blurred = sample_scene_at(px) * 0.25;
+				blurred += sample_scene_at(px + float2(o.x, 0.0)) * 0.125;
+				blurred += sample_scene_at(px - float2(o.x, 0.0)) * 0.125;
+				blurred += sample_scene_at(px + float2(0.0, o.y)) * 0.125;
+				blurred += sample_scene_at(px - float2(0.0, o.y)) * 0.125;
+				blurred += sample_scene_at(px + o) * 0.0625;
+				blurred += sample_scene_at(px - o) * 0.0625;
+				blurred += sample_scene_at(px + float2(o.x, -o.y)) * 0.0625;
+				blurred += sample_scene_at(px - float2(o.x, -o.y)) * 0.0625;
+			}
+			col = lerp(col, blurred, spot_outside * spot_amount);
 		}
+	}
 
-		if (bg_transparent > 0.5)
-			col = float4(screen.rgb, mask * screen.a);
-		else
-			col = lerp(col, screen, mask);
-
-		// Magnifier border, drawn on top of the lens content.
-		if (magnifier_enabled > 0.5 && magnifier_amount > 0.001 &&
-		    magnifier_border_enabled > 0.5 && magnifier_border_width > 0.01) {
-			float sd = magnifier_sd(px);
-			float edge = 1.0 - smoothstep(-1.0, 1.0,
-						      abs(sd) - magnifier_border_width * 0.5);
-			col.rgb = lerp(col.rgb, magnifier_border_color.rgb,
-				       edge * magnifier_border_color.a * magnifier_amount);
-		}
-
+	// Click and highlight overlays stay sharp above the lens and the blur.
+	if (mask > 0.0) {
 		// Click effects (4 explicit slots)
 		if (click_count > 0.5)
 			col = apply_click(col, px, mask, click0_pos, click0_prog, click0_size, click0_color,
@@ -717,7 +781,14 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 			col.rgb = lerp(col.rgb, highlight_color.rgb, saturate(line_a));
 		}
 
-		// Spotlight: dim, halo shadow, border, drop and zoom animation.
+
+	}
+
+	// Spotlight: dim, halo shadow, border, drop and zoom animation. It is
+	// applied after the whole frame (wallpaper included), not only content.
+	{
+		float spot_amount = saturate(spotlight_amount);
+		float spot_sd = spotlight_sd(px);
 		if (spotlight_enabled > 0.5 && spot_amount > 0.001) {
 			float aa = max(1.0, target_size.y * 0.0015);
 			float outside = smoothstep(-aa, aa, spot_sd);
@@ -726,8 +797,7 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 				float2 sp = px - spotlight_shadow_offset;
 				float  sd = spotlight_sd(sp);
 				float  halo = (1.0 - smoothstep(0.0, max(spotlight_shadow_blur, aa),
-							 abs(sd))) *
-					     outside;
+							 abs(sd))) * outside;
 				halo *= spotlight_shadow_alpha * spot_amount;
 				col.rgb = lerp(col.rgb, spotlight_shadow_color.rgb, saturate(halo));
 			}
@@ -741,57 +811,56 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 				col.rgb = lerp(col.rgb, spotlight_border_color.rgb, saturate(border));
 			}
 		}
+	}
 
-		// Cursor
-		if (cursor_enabled > 0.5) {
-			float2 cpx   = content_to_pixel(cursor_pos);
-			float2 local = rotate2(px - cpx, -cursor_rotation);
-			float  icon  = max(target_size.y * 0.030 * cursor_scale, 8.0);
+	// Cursor: target coordinates, on top of the whole composition. It can
+	// overhang the floating screen and remains over the wallpaper.
+	if (cursor_enabled > 0.5) {
+		float2 cpx   = cursor_pos * target_size;
+		float2 local = rotate2(px - cpx, -cursor_rotation);
+		float  icon  = max(target_size.y * 0.030 * cursor_scale, 8.0);
 
-			if (cursor_tex_enabled > 0.5) {
-				// anchor = icon center so the hotspot lands on the pointer
-				float2 anchor = (float2(0.5, 0.5) - cursor_hotspot) * icon;
-				float2 cuv    = (local - anchor) / icon + 0.5;
+		if (cursor_tex_enabled > 0.5) {
+			float2 anchor = (float2(0.5, 0.5) - cursor_hotspot) * icon;
+			float2 cuv    = (local - anchor) / icon + 0.5;
 
-				if (cursor_shadow > 0.5) {
-					float2 scuv = cuv - float2(0.07, 0.10);
-					if (scuv.x >= 0.0 && scuv.x <= 1.0 && scuv.y >= 0.0 && scuv.y <= 1.0) {
-						float2 sauv = cursor_cell_off + scuv * cursor_cell_scale;
-						float  sa   = cursor_tex.Sample(def_sampler, sauv).a;
-						col.rgb = lerp(col.rgb, float3(0.0, 0.0, 0.0),
-							       saturate(sa * 0.35 * cursor_opacity * mask));
-					}
+			if (cursor_shadow > 0.5) {
+				float2 scuv = cuv - float2(0.07, 0.10);
+				if (scuv.x >= 0.0 && scuv.x <= 1.0 && scuv.y >= 0.0 && scuv.y <= 1.0) {
+					float2 sauv = cursor_cell_off + scuv * cursor_cell_scale;
+					float  sa   = cursor_tex.Sample(def_sampler, sauv).a;
+					col.rgb = lerp(col.rgb, float3(0.0, 0.0, 0.0),
+						       saturate(sa * 0.35 * cursor_opacity));
 				}
-
-				if (cuv.x >= 0.0 && cuv.x <= 1.0 && cuv.y >= 0.0 && cuv.y <= 1.0) {
-					float2 auv = cursor_cell_off + cuv * cursor_cell_scale;
-					float4 ic  = cursor_tex.Sample(def_sampler, auv);
-					col.rgb = lerp(col.rgb, ic.rgb, saturate(ic.a * cursor_opacity * mask));
-				}
-			} else {
-				// Procedural fallback (light arrow with dark border)
-				float  u     = max(target_size.y * 0.001 * cursor_scale, 0.5);
-				float  corta = max(1.0, u * 0.12);
-				float2 a0    = float2(0.0, 0.0) * u;
-				float2 a1    = float2(0.0, 20.0) * u;
-				float2 a2    = float2(14.0, 14.0) * u;
-
-				if (cursor_shadow > 0.5) {
-					float2 sp = local - float2(2.0, 3.0) * u;
-					float  ds = sd_triangle(sp, a0, a1, a2);
-					float  sa = (1.0 - smoothstep(-corta, corta, ds)) * 0.35 * cursor_opacity * mask;
-					col.rgb   = lerp(col.rgb, float3(0.0, 0.0, 0.0), saturate(sa));
-				}
-
-				float d      = sd_triangle(local, a0, a1, a2);
-				float fill   = 1.0 - smoothstep(-corta, corta, d);
-				float border = 1.0 - smoothstep(corta, corta * 3.0, abs(d));
-
-				col.rgb = lerp(col.rgb, float3(0.0, 0.0, 0.0),
-					       saturate(max(fill, border) * cursor_opacity * mask));
-				col.rgb = lerp(col.rgb, float3(1.0, 1.0, 1.0),
-					       saturate(fill * cursor_opacity * mask));
 			}
+
+			if (cuv.x >= 0.0 && cuv.x <= 1.0 && cuv.y >= 0.0 && cuv.y <= 1.0) {
+				float2 auv = cursor_cell_off + cuv * cursor_cell_scale;
+				float4 ic  = cursor_tex.Sample(def_sampler, auv);
+				col.rgb = lerp(col.rgb, ic.rgb, saturate(ic.a * cursor_opacity));
+			}
+		} else {
+			float  u     = max(target_size.y * 0.001 * cursor_scale, 0.5);
+			float  corta = max(1.0, u * 0.12);
+			float2 a0    = float2(0.0, 0.0) * u;
+			float2 a1    = float2(0.0, 20.0) * u;
+			float2 a2    = float2(14.0, 14.0) * u;
+
+			if (cursor_shadow > 0.5) {
+				float2 sp = local - float2(2.0, 3.0) * u;
+				float  ds = sd_triangle(sp, a0, a1, a2);
+				float  sa = (1.0 - smoothstep(-corta, corta, ds)) * 0.35 * cursor_opacity;
+				col.rgb   = lerp(col.rgb, float3(0.0, 0.0, 0.0), saturate(sa));
+			}
+
+			float d      = sd_triangle(local, a0, a1, a2);
+			float fill   = 1.0 - smoothstep(-corta, corta, d);
+			float border = 1.0 - smoothstep(corta, corta * 3.0, abs(d));
+
+			col.rgb = lerp(col.rgb, float3(0.0, 0.0, 0.0),
+				       saturate(max(fill, border) * cursor_opacity));
+			col.rgb = lerp(col.rgb, float3(1.0, 1.0, 1.0),
+				       saturate(fill * cursor_opacity));
 		}
 	}
 

@@ -219,12 +219,13 @@ Each button has its own independent effect.
 | **Darken outside (0 = off, 1 = black)** | How much the outside area is darkened |
 | **Border** | Enables a colored ring around the spotlight, with color and width |
 | **Outer halo shadow** | Soft halo around the spotlight, with halo color, opacity, blur and X/Y offset |
-| **Blur outside** | Blurs only the captured image outside the spotlight |
+| **Blur outside** | Blurs the whole frame, including the wallpaper, outside the spotlight |
 | **Zoom when active (x)** | Extra multiplicative zoom while the spotlight is on |
 | **Drop/zoom in / out (ms)** | Durations of the activation/deactivation animation |
 | **Vertical drop distance (px)** | Vertical distance the spotlight drops in/out |
 
-Assign `TopScreen_ToggleSpotlight` in **Settings → Hotkeys** to toggle it
+The spotlight mask, blur, dim, border, halo and zoom affect the whole frame,
+including the wallpaper. Click effects and highlights stay crisp on top. Assign `TopScreen_ToggleSpotlight` in **Settings → Hotkeys** to toggle it
 instantly. Activating it drops the shape in, zooms in around the cursor and fades
 the border/shadow/dim in; deactivating reverses the animation. The spotlight
 mask and zoom focus keep following the mouse while it is active. The global
@@ -242,8 +243,10 @@ mask and zoom focus keep following the mouse while it is active. The global
 | **Zoom in / out (ms)** | Activation/deactivation transition |
 | **Vertical drop distance (px)** | Drop-in/out animation distance |
 
-Assign `TopScreen_ToggleMagnifier` in **Settings → Hotkeys** to toggle it. The
-magnifier and the spotlight are mutually exclusive: enabling one disables the
+The lens magnifies both the wallpaper and the captured screen inside its shape.
+Click effects, highlights, the key overlay and the cursor stay crisp on top and
+are not magnified. Assign `TopScreen_ToggleMagnifier` in
+**Settings → Hotkeys** to toggle it. The magnifier and the spotlight are mutually exclusive: enabling one disables the
 other. The global **Effects enabled** master still applies.
 
 ### Keys
@@ -251,15 +254,17 @@ other. The global **Effects enabled** master still applies.
 |-------|-----------|
 | **Show typed keys** | Shows what you type on screen |
 | **Modifiers only** | Shows only Ctrl/Shift/Alt/Win |
-| **Show special keys as icons** | On: Space/Enter/arrows/modifiers appear as icons. Off: those keys are ignored and only normal characters (letters, digits, `@#!?` etc.) are shown |
+| **Show special key names** | On: Enter/arrows/modifiers appear as text names. Off: those keys are ignored; Space is always shown as a blank space |
+| **Show shortcuts** | On: held modifiers appear as one combo (`Ctrl + C`). Off: keys are shown individually |
 | **On-screen time per key (ms)** | How long each key stays |
 | **Maximum keys on screen** | How many simultaneous keys to show |
 
 Every keystroke appears as its own character (repeats included) exactly as typed,
 then fades out after the on-screen time. Letters, digits and punctuation such as
-`@#!?` are shown as text. With **Show special keys as icons** on, Space/Backspace/
-Enter/Tab/arrows/modifiers are icons (`Esc` stays as text); off, those named keys
-are ignored and only normal characters remain.
+`@#!?` are shown as text. Special keys are shown by name (`Shift`, `Ctrl`, `Alt`,
+`Win`, `Enter`, `Left`, …), and Space is a literal blank space. With **Show
+shortcuts** on, modifiers held with the next key become one entry such as
+`Ctrl + Shift + C`; with it off, keys are shown individually.
 | **Horizontal position (0 = left, 1 = right)** | Where the band sits horizontally |
 | **Vertical position (0 = top, 1 = bottom)** | Where the band sits vertically |
 | **Text size (1 = default)** | Text scale |

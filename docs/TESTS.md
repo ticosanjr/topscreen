@@ -79,7 +79,7 @@ That is where all the math and the state logic live — what actually must be ri
 | `test_profiles.cpp` | `core/profiles.*` | distinct A–J seeds (colors + zoom), labels, index wrap |
 | `test_profiles_io.cpp` | `core/profiles_io.*` | backup format validation: full bundle, marker/plugin, missing `current` defaults to 0, missing/empty slots accepted, slot object type, malformed JSON, extra keys accepted |
 | `test_wallpapers.cpp` | `src/ts-wallpapers.*` | label/path/stem resolution, case-insensitivity, all 18 built-ins, transparent sentinel, invalid input |
-| `test_key_overlay.cpp` | `core/key_overlay.*` | key queue, TTL, repeat, modifier filter, special-key ignore mode, limit, combo formatting, inline `KeyLabel` truncation at the renderer's 63-byte limit |
+| `test_key_overlay.cpp` | `core/key_overlay.*` | key queue, TTL, repeat, modifier filter, special-key names, literal Space, Ctrl+key combos, limit, combo formatting, inline `KeyLabel` truncation at the renderer's 63-byte limit |
 | `test_wav.cpp` | `core/wav.*` | PCM 8/16/24/32 and float, stereo, errors, and **real files** `data/sounds/*.wav`; the three real mouse recordings must be short (<150 ms) with the transient in the first 25 ms |
 | `test_sound_catalog.cpp` | `core/sound_catalog.hpp` + `data/sounds/` | 26 bundled entries, unique labels/paths, no forbidden source words, every WAV parses as mono 44.1 kHz |
 | `test_font_atlas.cpp` | `core/font_atlas.*` | atlas generated from the **real TTF**, per-glyph metrics, alpha, invalid cases, ASCII fast index equivalent to the ordered lookup |
@@ -99,8 +99,8 @@ That is where all the math and the state logic live — what actually must be ri
 ## Current numbers
 
 ```
-226 tests | 6183 checks | 0 failures   (core)
-49 tests | 669 checks   | 0 failures   (integration with fake libobs)
+229 tests | 6564 checks | 0 failures   (core)
+49 tests | 670 checks   | 0 failures   (integration with fake libobs)
 ```
 
 ## What the integration layer covers

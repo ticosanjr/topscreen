@@ -16,6 +16,8 @@
 
 #include <string>
 
+#include "core/key_modifiers.hpp"
+
 namespace topscreen {
 
 namespace {
@@ -165,6 +167,16 @@ void ts_input_platform_poll(void *state, InputState *out)
 	GetKeyboardState(keyboard);
 	const bool shift = (keyboard[VK_SHIFT] & 0x80) != 0 || (keyboard[VK_LSHIFT] & 0x80) != 0 ||
 			   (keyboard[VK_RSHIFT] & 0x80) != 0;
+	if ((keyboard[VK_CONTROL] & 0x80) || (keyboard[VK_LCONTROL] & 0x80) ||
+	    (keyboard[VK_RCONTROL] & 0x80))
+		out->modifiers |= core::KeyModCtrl;
+	if (shift)
+		out->modifiers |= core::KeyModShift;
+	if ((keyboard[VK_MENU] & 0x80) || (keyboard[VK_LMENU] & 0x80) ||
+	    (keyboard[VK_RMENU] & 0x80))
+		out->modifiers |= core::KeyModAlt;
+	if ((keyboard[VK_LWIN] & 0x80) || (keyboard[VK_RWIN] & 0x80))
+		out->modifiers |= core::KeyModWin;
 
 	/* Only the keys win_key_label() understands (buttons handled above). */
 	static const int kWatched[] = {
@@ -206,6 +218,7 @@ void ts_input_platform_poll(void *state, InputState *out)
 
 #include "core/cursor.hpp"
 #include "core/evdev.hpp"
+#include "core/key_modifiers.hpp"
 
 #if defined(TOPSCREEN_HAVE_X11)
 #include <X11/XKBlib.h>
@@ -242,6 +255,9 @@ struct LinuxInput {
 	size_t buflen = 0;
 	bool shift = false;
 	bool altgr = false;
+	bool ctrl = false;
+	bool alt = false;
+	bool meta = false;
 #endif
 };
 
@@ -347,6 +363,31 @@ bool x11_cursor_is_link(Display *dpy)
 	return link;
 }
 #endif
+
+uint32_t x11_modifiers(Display *dpy)
+{
+	if (!dpy)
+		return 0;
+	char keys[32] = {};
+	XQueryKeymap(dpy, keys);
+	auto down = [&](KeySym sym) {
+		const KeyCode kc = XKeysymToKeycode(dpy, sym);
+		if (!kc)
+			return false;
+		const unsigned char bit = static_cast<unsigned char>(1u << (kc & 7));
+		return (keys[kc >> 3] & bit) != 0;
+	};
+	uint32_t mods = 0;
+	if (down(XK_Shift_L) || down(XK_Shift_R))
+		mods |= core::KeyModShift;
+	if (down(XK_Control_L) || down(XK_Control_R))
+		mods |= core::KeyModCtrl;
+	if (down(XK_Alt_L) || down(XK_Alt_R))
+		mods |= core::KeyModAlt;
+	if (down(XK_Super_L) || down(XK_Super_R) || down(XK_Meta_L) || down(XK_Meta_R))
+		mods |= core::KeyModWin;
+	return mods;
+}
 #endif
 
 #if defined(TOPSCREEN_HAVE_EVDEV)
@@ -468,6 +509,7 @@ void ts_input_platform_poll(void *state, InputState *out)
 			out->left = (mask & Button1Mask) != 0;
 			out->right = (mask & Button3Mask) != 0;
 		}
+		out->modifiers = x11_modifiers(s->dpy);
 
 #if defined(TOPSCREEN_HAVE_XFIXES)
 		/* Cursor-shape lookup allocates; poll it at ~10 Hz instead of 60 Hz. */
@@ -506,8 +548,18 @@ void ts_input_platform_poll(void *state, InputState *out)
 					s->shift = k.pressed;
 					continue;
 				}
-				if (k.code == KEY_RIGHTALT) {
-					s->altgr = k.pressed;
+				if (k.code == KEY_LEFTCTRL || k.code == KEY_RIGHTCTRL) {
+					s->ctrl = k.pressed;
+					continue;
+				}
+				if (k.code == KEY_LEFTALT || k.code == KEY_RIGHTALT) {
+					s->alt = k.pressed;
+					if (k.code == KEY_RIGHTALT)
+						s->altgr = k.pressed;
+					continue;
+				}
+				if (k.code == KEY_LEFTMETA || k.code == KEY_RIGHTMETA) {
+					s->meta = k.pressed;
 					continue;
 				}
 				if (!k.pressed)
@@ -528,6 +580,15 @@ void ts_input_platform_poll(void *state, InputState *out)
 				}
 			}
 		}
+		out->modifiers = 0;
+		if (s->shift)
+			out->modifiers |= core::KeyModShift;
+		if (s->ctrl)
+			out->modifiers |= core::KeyModCtrl;
+		if (s->alt)
+			out->modifiers |= core::KeyModAlt;
+		if (s->meta)
+			out->modifiers |= core::KeyModWin;
 		keys_done = true;
 	}
 #endif

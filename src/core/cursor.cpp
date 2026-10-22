@@ -46,6 +46,8 @@ void CursorModel::reset(double x, double y, double now_ms)
 {
 	sx_.reset(x);
 	sy_.reset(y);
+	pointer_x_ = x;
+	pointer_y_ = y;
 	target_x_ = x;
 	target_y_ = y;
 	start_x_ = x;
@@ -68,7 +70,9 @@ void CursorModel::set_target(double x, double y, double now_ms)
 	if (!started_)
 		reset(x, y, now_ms);
 
-	if (std::fabs(x - target_x_) > 1e-6 || std::fabs(y - target_y_) > 1e-6) {
+	if (std::fabs(x - pointer_x_) > 1e-6 || std::fabs(y - pointer_y_) > 1e-6) {
+		pointer_x_ = x;
+		pointer_y_ = y;
 		target_x_ = x;
 		target_y_ = y;
 		target_dirty_ = true;
@@ -82,6 +86,17 @@ void CursorModel::start_glide(double now_ms)
 	glide_from_y_ = sy_.value();
 	glide_to_x_ = target_x_;
 	glide_to_y_ = target_y_;
+	const double dx = glide_to_x_ - glide_from_x_;
+	const double dy = glide_to_y_ - glide_from_y_;
+	const double dist = std::sqrt(dx * dx + dy * dy);
+	if (dist > 1e-6) {
+		const double curve = dist * 0.06;
+		glide_ctrl_x_ = (glide_from_x_ + glide_to_x_) * 0.5 - dy / dist * curve;
+		glide_ctrl_y_ = (glide_from_y_ + glide_to_y_) * 0.5 + dx / dist * curve;
+	} else {
+		glide_ctrl_x_ = glide_to_x_;
+		glide_ctrl_y_ = glide_to_y_;
+	}
 	glide_start_ms_ = now_ms;
 	glide_end_ms_ = now_ms + glide_duration(cfg_.glide_ms);
 	glide_active_ = true;
@@ -95,8 +110,11 @@ void CursorModel::step_glide(double now_ms)
 	const double span = std::max(1.0, glide_end_ms_ - glide_start_ms_);
 	const double t = std::clamp((now_ms - glide_start_ms_) / span, 0.0, 1.0);
 	const double e = ease_in_out_cubic(t);
-	const double x = glide_from_x_ + (glide_to_x_ - glide_from_x_) * e;
-	const double y = glide_from_y_ + (glide_to_y_ - glide_from_y_) * e;
+	const double u = 1.0 - e;
+	const double x = u * u * glide_from_x_ + 2.0 * u * e * glide_ctrl_x_ +
+			 e * e * glide_to_x_;
+	const double y = u * u * glide_from_y_ + 2.0 * u * e * glide_ctrl_y_ +
+			 e * e * glide_to_y_;
 	sx_.reset(x);
 	sy_.reset(y);
 

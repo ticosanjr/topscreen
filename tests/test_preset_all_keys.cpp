@@ -120,6 +120,7 @@ TEST(preset_covers_all_keys)
             "keys_enabled": false,
             "keys_modifiers_only": true,
             "keys_show_special": false,
+            "keys_show_shortcuts": false,
             "keys_ttl_ms": 1234,
             "keys_max": 9,
             "keys_pos_x": 0.25,
@@ -270,6 +271,7 @@ TEST(preset_covers_all_keys)
 	CHECK(!c.keys.enabled);
 	CHECK(c.keys.modifiers_only);
 	CHECK(!c.keys.show_special);
+	CHECK(!c.keys.show_shortcuts);
 	CHECK_NEAR(c.keys.ttl_ms, 1234.0, 1e-9);
 	CHECK_EQ(c.keys.max_keys, 9);
 	CHECK_NEAR(c.keys.pos_x, 0.25, 1e-9);

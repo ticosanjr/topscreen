@@ -1,4 +1,5 @@
 #include "core/cursor_atlas.hpp"
+#include "core/cursor_catalog.hpp"
 #include "test_framework.hpp"
 
 #include <cstdint>
@@ -165,6 +166,8 @@ TEST(cursor_atlas_custom_cells_are_populated)
 	const int area = static_cast<int>(atlas.cell) * static_cast<int>(atlas.cell);
 	std::vector<uint8_t> cell(static_cast<size_t>(area) * 4);
 	for (int style = first; style < static_cast<int>(CursorStyle::Count); ++style) {
+		if (cursor_style_is_retired(style))
+			continue;
 		REQUIRE(atlas.copy_cell(static_cast<uint32_t>(style), cell.data()));
 		int opaque = 0;
 		for (int i = 0; i < area; ++i)
@@ -174,5 +177,34 @@ TEST(cursor_atlas_custom_cells_are_populated)
 		if (opaque < area / 100)
 			tst::fail(__FILE__, __LINE__,
 				  "custom cursor cell looks empty: style " + std::to_string(style));
+	}
+}
+
+/* Removed styles stay in the atlas (stable IDs) but must be transparent. */
+TEST(cursor_atlas_retired_cells_are_empty)
+{
+	const auto bytes = read_bytes(cursors_dir() + "/atlas.rgba");
+	REQUIRE(!bytes.empty());
+	CursorAtlas atlas;
+	std::string err;
+	REQUIRE(cursor_atlas_parse(bytes.data(), bytes.size(), &atlas, &err));
+	REQUIRE(atlas.count == static_cast<uint32_t>(CursorStyle::Count));
+
+	const int area = static_cast<int>(atlas.cell) * static_cast<int>(atlas.cell);
+	std::vector<uint8_t> cell(static_cast<size_t>(area) * 4);
+	for (int style : kRetiredCursorStyles) {
+		REQUIRE(atlas.copy_cell(static_cast<uint32_t>(style), cell.data()));
+		bool nonempty = false;
+		for (int i = 0; i < area; ++i) {
+			if (cell[static_cast<size_t>(i) * 4 + 3] > 16) {
+				nonempty = true;
+				break;
+			}
+		}
+		++tst::checks();
+		if (nonempty)
+			tst::fail(__FILE__, __LINE__,
+				  "retired cursor cell is not empty: style " +
+					  std::to_string(style));
 	}
 }

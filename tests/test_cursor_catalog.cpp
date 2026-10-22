@@ -27,23 +27,27 @@ std::string read_text(const std::string &path)
 
 } // namespace
 
-TEST(cursor_catalog_covers_every_style_exactly_once)
+TEST(cursor_catalog_covers_every_active_style_exactly_once)
 {
-	REQUIRE(kCursorCatalogCount == static_cast<int>(CursorStyle::Count));
+	CHECK_EQ(kCursorCatalogCount, 79);
 
 	bool seen[static_cast<int>(CursorStyle::Count)] = {};
 	for (const auto &entry : kCursorCatalog) {
 		REQUIRE(entry.style >= 0);
 		REQUIRE(entry.style < static_cast<int>(CursorStyle::Count));
 		++tst::checks();
+		if (cursor_style_is_retired(entry.style))
+			tst::fail(__FILE__, __LINE__, "retired cursor style is still in the menu");
 		if (seen[entry.style])
 			tst::fail(__FILE__, __LINE__, "duplicate cursor style in the catalog");
 		seen[entry.style] = true;
 	}
 	for (int i = 0; i < static_cast<int>(CursorStyle::Count); ++i) {
+		if (cursor_style_is_retired(i))
+			continue;
 		++tst::checks();
 		if (!seen[i])
-			tst::fail(__FILE__, __LINE__, "cursor style missing from the catalog");
+			tst::fail(__FILE__, __LINE__, "active cursor style missing from the catalog");
 	}
 }
 
@@ -139,4 +143,20 @@ TEST(cursor_style_clamp_handles_invalid_values)
 	CHECK_EQ(cursor_style_clamp(static_cast<int>(CursorStyle::Count)),
 		 static_cast<int>(CursorStyle::Count) - 1);
 	CHECK_EQ(cursor_style_clamp(999), static_cast<int>(CursorStyle::Count) - 1);
+}
+
+TEST(cursor_style_resolve_retires_old_profiles_safely)
+{
+	CHECK(cursor_style_is_retired(static_cast<int>(CursorStyle::BreezeIBeam)));
+	CHECK(cursor_style_is_retired(static_cast<int>(CursorStyle::CustomRibbonLink)));
+	CHECK(!cursor_style_is_retired(static_cast<int>(CursorStyle::CustomStroke)));
+	CHECK_EQ(cursor_style_resolve(static_cast<int>(CursorStyle::BreezeIBeam)),
+		 static_cast<int>(CursorStyle::Breeze));
+	CHECK_EQ(cursor_style_resolve(static_cast<int>(CursorStyle::YaruIBeam)),
+		 static_cast<int>(CursorStyle::Yaru));
+	CHECK_EQ(cursor_style_resolve(static_cast<int>(CursorStyle::Cross)),
+		 static_cast<int>(CursorStyle::Dot));
+	CHECK_EQ(cursor_style_resolve(static_cast<int>(CursorStyle::CustomRibbonLink)),
+		 static_cast<int>(CursorStyle::CustomPurpleIris));
+	CHECK_EQ(cursor_style_resolve(999), static_cast<int>(CursorStyle::CustomPurpleIris));
 }

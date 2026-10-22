@@ -11,7 +11,7 @@ Mode: `auto` reacts on its own · `hotkey` only by hotkey · `always` always on.
 | Feature | Mode | Status | Notes |
 |---------|------|--------|-------------|
 | Replace the pointer (turns off the native one) | auto | ✅ | turns off `capture_cursor`/`show_cursor` on the parent source |
-| **106 cursor styles** | auto | ✅ | 37 built-ins + 69 custom PNG styles grouped under `Custom`; see [`CURSORS.md`](CURSORS.md) |
+| **79 cursor styles** | auto | ✅ | 29 built-ins + 50 custom PNG styles grouped under `Custom`; see [`CURSORS.md`](CURSORS.md) |
 | Size | auto | ✅ | 0.5–4× |
 | Shadow | auto | ✅ | |
 | Motion smoothing | auto | ✅ | critically damped spring |
@@ -32,7 +32,7 @@ Mode: `auto` reacts on its own · `hotkey` only by hotkey · `always` always on.
 | Feature | Mode | Status | Notes |
 |---------|------|--------|-------------|
 | Background | always | ✅ | solid color or two-color gradient with adjustable meeting point/angle |
-| Wallpaper background | always | ✅ | 42 built-in wallpapers, an image from your PC, or **Transparent** (show the scene below) |
+| Wallpaper background | always | ✅ | 18 built-in wallpapers, an image from your PC, or **Transparent** (show the scene below) |
 | Text overlay | auto | ✅ | one draw for text + shadow/outline via vertex colors |
 | Rounded corners | always | ✅ | |
 | Spacing (padding X and Y) | always | ✅ | separate axes |

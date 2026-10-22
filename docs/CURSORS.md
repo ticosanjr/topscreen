@@ -1,46 +1,38 @@
 # Cursor styles
 
-TopScreen ships 37 built-in cursors and 69 custom cursors. IDs are stable and are stored in profiles.
+TopScreen ships **79 visible cursor styles**. IDs are stable and are stored in profiles. Removed styles keep their IDs reserved (and transparent atlas cells) so older profiles do not shift to a different cursor.
 
 | ID | Family | Label |
 |---:|---|---|
+| 3 | Bibata | Bibata — Arrow |
+| 27 | Bibata | Bibata — Link hand |
+| 10 | Bibata | Bibata Ice — Arrow |
+| 32 | Bibata | Bibata Ice — Link hand |
+| 11 | Bibata | Bibata Original — Arrow |
+| 33 | Bibata | Bibata Original — Link hand |
+| 22 | Bibata | Bibata Ice Original — Arrow |
+| 36 | Bibata | Bibata Ice Original — Link hand |
+| 2 | Breeze | Breeze — Arrow |
+| 26 | Breeze | Breeze — Link hand |
+| 21 | Breeze | Breeze Snow — Arrow |
+| 35 | Breeze | Breeze Snow — Link hand |
+| 4 | Adwaita | Adwaita — Arrow |
+| 28 | Adwaita | Adwaita — Link hand |
+| 8 | Yaru | Yaru — Arrow |
+| 30 | Yaru | Yaru — Link hand |
+| 7 | Dmz | DMZ (white) — Arrow |
+| 29 | Dmz | DMZ (white) — Link hand |
+| 19 | Dmz | DMZ (black) — Arrow |
+| 34 | Dmz | DMZ (black) — Link hand |
+| 5 | GoogleDot | Google Dot (white) — Arrow |
+| 20 | GoogleDot | Google Dot (black) — Arrow |
+| 9 | XCursorPro | XCursor Pro — Arrow |
+| 31 | XCursorPro | XCursor Pro — Link hand |
 | 0 | MacOs | macOS — Classic arrow |
 | 1 | Windows | Windows — Classic arrow |
-| 2 | Breeze | Breeze — Arrow |
-| 3 | Bibata | Bibata — Arrow |
-| 4 | Adwaita | Adwaita — Arrow |
-| 5 | GoogleDot | Google Dot (white) — Arrow |
-| 6 | Adwaita | Adwaita — Hand |
-| 7 | Dmz | DMZ (white) — Arrow |
-| 8 | Yaru | Yaru — Arrow |
-| 9 | XCursorPro | XCursor Pro — Arrow |
-| 10 | Bibata | Bibata Ice — Arrow |
-| 11 | Bibata | Bibata Original — Arrow |
 | 12 | Effects | Effects — Neon (cyan arrow) |
-| 13 | Effects | Effects — Dot (touch) |
-| 14 | Effects | Effects — Crosshair |
 | 15 | Effects | Effects — Onyx (navy + gold) |
-| 16 | Adwaita | Adwaita — Grab hand (open) |
-| 17 | Adwaita | Adwaita — Grab hand (closed) |
-| 18 | Adwaita | Adwaita — I-beam |
-| 19 | Dmz | DMZ (black) — Arrow |
-| 20 | GoogleDot | Google Dot (black) — Arrow |
-| 21 | Breeze | Breeze Snow — Arrow |
-| 22 | Bibata | Bibata Ice Original — Arrow |
-| 23 | Yaru | Yaru — Grab hand |
-| 24 | Yaru | Yaru — I-beam |
-| 25 | Breeze | Breeze — I-beam |
-| 26 | Breeze | Breeze — Link hand |
-| 27 | Bibata | Bibata — Link hand |
-| 28 | Adwaita | Adwaita — Link hand |
-| 29 | Dmz | DMZ (white) — Link hand |
-| 30 | Yaru | Yaru — Link hand |
-| 31 | XCursorPro | XCursor Pro — Link hand |
-| 32 | Bibata | Bibata Ice — Link hand |
-| 33 | Bibata | Bibata Original — Link hand |
-| 34 | Dmz | DMZ (black) — Link hand |
-| 35 | Breeze | Breeze Snow — Link hand |
-| 36 | Bibata | Bibata Ice Original — Link hand |
+| 13 | Effects | Effects — Dot (touch) |
 | 37 | Custom | Custom — Purple Iris |
 | 38 | Custom | Custom — Purple Iris Link |
 | 39 | Custom | Custom — Strawberry Milk |
@@ -69,8 +61,6 @@ TopScreen ships 37 built-in cursors and 69 custom cursors. IDs are stable and ar
 | 62 | Custom | Custom — Jester |
 | 63 | Custom | Custom — Witch Hat |
 | 64 | Custom | Custom — Enchanted Sword |
-| 65 | Custom | Custom — Paper Boat |
-| 66 | Custom | Custom — Paper Plane |
 | 67 | Custom | Custom — Pixel 3D |
 | 68 | Custom | Custom — Pixel 3D Link |
 | 69 | Custom | Custom — Prism Link 1237 |
@@ -83,30 +73,19 @@ TopScreen ships 37 built-in cursors and 69 custom cursors. IDs are stable and ar
 | 76 | Custom | Custom — Pastel 1718 |
 | 77 | Custom | Custom — Mint Link 1823 |
 | 78 | Custom | Custom — Lavender 1824 |
-| 79 | Custom | Custom — Bow 41 |
-| 80 | Custom | Custom — Dagger 42 |
-| 81 | Custom | Custom — Victory Link 57 |
 | 82 | Custom | Custom — Cartoon Link 58 |
 | 83 | Custom | Custom — Neon 3D |
 | 84 | Custom | Custom — Neon 3D Link |
 | 85 | Custom | Custom — Octopus |
 | 86 | Custom | Custom — Octopus Link |
 | 87 | Custom | Custom — Constellation |
-| 88 | Custom | Custom — Constellation Link |
 | 89 | Custom | Custom — Comic |
-| 90 | Custom | Custom — Comic Link |
-| 91 | Custom | Custom — Sketch |
-| 92 | Custom | Custom — Sketch Link |
-| 93 | Custom | Custom — Diamond |
-| 94 | Custom | Custom — Fire |
-| 95 | Custom | Custom — Fire Link |
-| 96 | Custom | Custom — Glitch |
-| 97 | Custom | Custom — Glitch Link |
-| 98 | Custom | Custom — Projection |
-| 99 | Custom | Custom — Projection Link |
 | 100 | Custom | Custom — Stroke |
 | 101 | Custom | Custom — Stroke Link |
 | 102 | Custom | Custom — Cartoon |
-| 103 | Custom | Custom — Thumbs Up |
-| 104 | Custom | Custom — Ribbon |
-| 105 | Custom | Custom — Ribbon Link |
+
+## Retired IDs
+
+These styles are no longer in the dropdown. Their IDs are reserved; an old profile that points at one is mapped to a sensible replacement (same theme arrow, or Custom — Purple Iris).
+
+`6`,`14`,`16`,`17`,`18`,`23`,`24`,`25`,`65`,`66`,`79`,`80`,`81`,`88`,`90`,`91`,`92`,`93`,`94`,`95`,`96`,`97`,`98`,`99`,`103`,`104`,`105`

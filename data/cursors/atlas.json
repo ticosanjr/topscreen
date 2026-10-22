@@ -48,8 +48,8 @@
     {
       "name": "pointer",
       "hotspot": [
-        0.3125,
-        0.1667
+        0.05,
+        0.05
       ]
     },
     {
@@ -104,8 +104,8 @@
     {
       "name": "cross",
       "hotspot": [
-        0.5,
-        0.5
+        0.05,
+        0.05
       ]
     },
     {
@@ -118,22 +118,22 @@
     {
       "name": "handgrab",
       "hotspot": [
-        0.4375,
-        0.0521
+        0.05,
+        0.05
       ]
     },
     {
       "name": "handgrabbing",
       "hotspot": [
-        0.4375,
-        0.1771
+        0.05,
+        0.05
       ]
     },
     {
       "name": "ibeam",
       "hotspot": [
-        0.4375,
-        0.4688
+        0.05,
+        0.05
       ]
     },
     {
@@ -167,22 +167,22 @@
     {
       "name": "yarugrab",
       "hotspot": [
-        0.4375,
-        0.2604
+        0.05,
+        0.05
       ]
     },
     {
       "name": "yaruibeam",
       "hotspot": [
-        0.4375,
-        0.4688
+        0.05,
+        0.05
       ]
     },
     {
       "name": "breezeibeam",
       "hotspot": [
-        0.5,
-        0.5
+        0.05,
+        0.05
       ]
     },
     {
@@ -459,17 +459,17 @@
       ]
     },
     {
-      "name": "paper-boat",
+      "name": "retired-65",
       "hotspot": [
-        0.0117,
-        0.0039
+        0.05,
+        0.05
       ]
     },
     {
-      "name": "paper-plane",
+      "name": "retired-66",
       "hotspot": [
-        0.0117,
-        0.0039
+        0.05,
+        0.05
       ]
     },
     {
@@ -557,24 +557,24 @@
       ]
     },
     {
-      "name": "bow-41",
+      "name": "retired-79",
       "hotspot": [
-        0.082,
-        0.0117
+        0.05,
+        0.05
       ]
     },
     {
-      "name": "dagger-42",
+      "name": "retired-80",
       "hotspot": [
-        0.0117,
-        0.0117
+        0.05,
+        0.05
       ]
     },
     {
-      "name": "victory-link-57",
+      "name": "retired-81",
       "hotspot": [
-        0.4023,
-        0.0039
+        0.05,
+        0.05
       ]
     },
     {
@@ -620,10 +620,10 @@
       ]
     },
     {
-      "name": "constellation-link",
+      "name": "retired-88",
       "hotspot": [
-        0.3008,
-        0.0273
+        0.05,
+        0.05
       ]
     },
     {
@@ -634,73 +634,73 @@
       ]
     },
     {
-      "name": "comic-link",
+      "name": "retired-90",
       "hotspot": [
-        0.2383,
-        0.0117
+        0.05,
+        0.05
       ]
     },
     {
-      "name": "sketch",
+      "name": "retired-91",
       "hotspot": [
-        0.0039,
-        0.0039
+        0.05,
+        0.05
       ]
     },
     {
-      "name": "sketch-link",
+      "name": "retired-92",
       "hotspot": [
-        0.2695,
-        0.0039
+        0.05,
+        0.05
       ]
     },
     {
-      "name": "diamond",
+      "name": "retired-93",
       "hotspot": [
-        0.0039,
-        0.0039
+        0.05,
+        0.05
       ]
     },
     {
-      "name": "fire",
+      "name": "retired-94",
       "hotspot": [
-        0.0273,
-        0.0039
+        0.05,
+        0.05
       ]
     },
     {
-      "name": "fire-link",
+      "name": "retired-95",
       "hotspot": [
-        0.207,
-        0.0039
+        0.05,
+        0.05
       ]
     },
     {
-      "name": "glitch",
+      "name": "retired-96",
       "hotspot": [
-        0.0664,
-        0.0039
+        0.05,
+        0.05
       ]
     },
     {
-      "name": "glitch-link",
+      "name": "retired-97",
       "hotspot": [
-        0.3242,
-        0.0039
+        0.05,
+        0.05
       ]
     },
     {
-      "name": "projection",
+      "name": "retired-98",
       "hotspot": [
-        0.0195,
-        0.0039
+        0.05,
+        0.05
       ]
     },
     {
-      "name": "projection-link",
+      "name": "retired-99",
       "hotspot": [
-        0.0586,
-        0.0039
+        0.05,
+        0.05
       ]
     },
     {
@@ -725,24 +725,24 @@
       ]
     },
     {
-      "name": "thumbs-up",
+      "name": "retired-103",
       "hotspot": [
-        0.2148,
-        0.0039
+        0.05,
+        0.05
       ]
     },
     {
-      "name": "ribbon",
+      "name": "retired-104",
       "hotspot": [
-        0.3789,
-        0.0039
+        0.05,
+        0.05
       ]
     },
     {
-      "name": "ribbon-link",
+      "name": "retired-105",
       "hotspot": [
-        0.2695,
-        0.0039
+        0.05,
+        0.05
       ]
     }
   ]

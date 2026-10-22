@@ -36,7 +36,7 @@ std::string lower(std::string s)
 
 TEST(sound_catalog_has_all_bundled_files)
 {
-	CHECK_EQ(kSoundCount, 41);
+	CHECK_EQ(kSoundCount, 26);
 
 	std::set<std::string> labels;
 	std::set<std::string> paths;

@@ -75,7 +75,7 @@ void sanitize_config(Config *cfg)
 		bounded(cfg->bg.shadow_offset, -100.0, 100.0, def.bg.shadow_offset);
 
 	/* Cursor */
-	cfg->cursor.style = cursor_style_clamp(cfg->cursor.style);
+	cfg->cursor.style = cursor_style_resolve(cfg->cursor.style);
 	cfg->cursor.size = bounded(cfg->cursor.size, 0.5, 4.0, def.cursor.size);
 	cfg->cursor.smooth = bounded(cfg->cursor.smooth, 0.0, 1.0, def.cursor.smooth);
 	cfg->cursor.sway = bounded(cfg->cursor.sway, 0.0, 1.0, def.cursor.sway);

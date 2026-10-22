@@ -92,6 +92,8 @@ void reset_graphics_counters();
 int graphics_draw_calls();
 int graphics_sprite_draw_calls();
 int graphics_render_starts();
+int graphics_vertex_calls();
+int graphics_color_calls();
 /** Makes gs_render_save() fail, exercising the per-glyph fallback. */
 void set_fail_vertex_buffers(bool fail);
 

@@ -24,7 +24,7 @@ TEST(preset_covers_all_keys)
             "bg_gradient_center_y": 0.7,
             "bg_color_a": 111,
             "bg_color_b": 222,
-            "bg_image": "wallpapers/ocean.jpg",
+            "bg_image": "wallpapers/fiber.jpg",
             "bg_image_file": "/tmp/my-image.jpg",
             "bg_image_blur": 9,
             "bg_image_blur_type": 3,
@@ -141,7 +141,7 @@ TEST(preset_covers_all_keys)
 	CHECK_NEAR(c.bg.gradient_center_y, 0.7, 1e-9);
 	CHECK_EQ(c.bg.color_a, 111u);
 	CHECK_EQ(c.bg.color_b, 222u);
-	CHECK_EQ(c.bg.image, std::string("wallpapers/ocean.jpg"));
+	CHECK_EQ(c.bg.image, std::string("wallpapers/fiber.jpg"));
 	CHECK_EQ(c.bg.image_file, std::string("/tmp/my-image.jpg"));
 	CHECK_NEAR(c.bg.image_blur, 9.0, 1e-9);
 	CHECK_EQ(c.bg.image_blur_type, 3);

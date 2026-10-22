@@ -21,7 +21,7 @@ bool iequals(const char *a, const char *b)
 	return *a == '\0' && *b == '\0';
 }
 
-/* "wallpapers/aurora.jpg" -> "aurora" */
+/* "wallpapers/silk.jpg" -> "silk" */
 std::string stem_of(const char *path)
 {
 	const char *base = std::strrchr(path, '/');

@@ -8,7 +8,7 @@ Start with the **user manual**.
 |-----------|----------|
 | [`MANUAL.md`](MANUAL.md) | **User manual**: install, use each feature, hotkeys, recipes, FAQ |
 | [`CONFIGURATION.md`](CONFIGURATION.md) | Reference for every option, preset and hotkey |
-| [`CURSORS.md`](CURSORS.md) | All 106 cursor styles and their stable IDs |
+| [`CURSORS.md`](CURSORS.md) | All 79 visible cursor styles and their stable IDs |
 | [`EFFECTS.md`](EFFECTS.md) | Effect catalog and what is implemented |
 | [`INPUT-AND-PLATFORMS.md`](INPUT-AND-PLATFORMS.md) | Cursor/keys per OS; permission on Linux; Wayland parity |
 | [`BUILD.md`](BUILD.md) | Build and install (Linux/Windows) |

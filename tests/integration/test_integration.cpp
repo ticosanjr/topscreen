@@ -878,7 +878,7 @@ TEST(integration_profile_switch_reloads_click_sounds)
 	obs_data_set_string(slot, core::keys::kClickSoundFileLeft,
 			    "sounds/click-hard.wav");
 	obs_data_set_string(slot, core::keys::kClickSoundFileRight,
-			    "sounds/click-glass.wav");
+			    "sounds/click-bubble.wav");
 	obs_data_release(slot);
 
 	fakeobs::reset_property_update_calls();
@@ -886,7 +886,7 @@ TEST(integration_profile_switch_reloads_click_sounds)
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
 	CHECK(fakeobs::property_update_calls() > 0);
 	CHECK(ctrl->loaded_sound_path(false).ends_with("sounds/click-hard.wav"));
-	CHECK(ctrl->loaded_sound_path(true).ends_with("sounds/click-glass.wav"));
+	CHECK(ctrl->loaded_sound_path(true).ends_with("sounds/click-bubble.wav"));
 
 	/* Switch away and back: the reload must not be cached across profiles. */
 	ctrl->select_profile(0);
@@ -896,7 +896,7 @@ TEST(integration_profile_switch_reloads_click_sounds)
 	ctrl->select_profile(3);
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
 	CHECK(ctrl->loaded_sound_path(false).ends_with("sounds/click-hard.wav"));
-	CHECK(ctrl->loaded_sound_path(true).ends_with("sounds/click-glass.wav"));
+	CHECK(ctrl->loaded_sound_path(true).ends_with("sounds/click-bubble.wav"));
 
 	ts_filter_source_info.destroy(ctx);
 }

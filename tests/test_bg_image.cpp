@@ -11,10 +11,10 @@ using namespace topscreen::core;
  */
 TEST(bg_resolve_path)
 {
-	CHECK_EQ(std::string(resolve_bg_path("wallpapers/aurora.jpg", "")),
-		 std::string("wallpapers/aurora.jpg"));
+	CHECK_EQ(std::string(resolve_bg_path("wallpapers/silk.jpg", "")),
+		 std::string("wallpapers/silk.jpg"));
 
-	CHECK_EQ(std::string(resolve_bg_path("wallpapers/aurora.jpg", "/tmp/my-image.png")),
+	CHECK_EQ(std::string(resolve_bg_path("wallpapers/silk.jpg", "/tmp/my-image.png")),
 		 std::string("/tmp/my-image.png"));
 
 	CHECK_EQ(std::string(resolve_bg_path("", "/tmp/my-image.png")), std::string("/tmp/my-image.png"));

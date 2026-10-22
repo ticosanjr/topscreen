@@ -197,20 +197,6 @@
       "file": "cursors/enchanted-sword.png"
     },
     {
-      "id": 65,
-      "slug": "paper-boat",
-      "label": "Paper Boat",
-      "role": "arrow",
-      "file": "cursors/paper-boat.png"
-    },
-    {
-      "id": 66,
-      "slug": "paper-plane",
-      "label": "Paper Plane",
-      "role": "arrow",
-      "file": "cursors/paper-plane.png"
-    },
-    {
       "id": 67,
       "slug": "pixel-3d",
       "label": "Pixel 3D",
@@ -295,27 +281,6 @@
       "file": "cursors/lavender-1824.png"
     },
     {
-      "id": 79,
-      "slug": "bow-41",
-      "label": "Bow 41",
-      "role": "arrow",
-      "file": "cursors/bow-41.png"
-    },
-    {
-      "id": 80,
-      "slug": "dagger-42",
-      "label": "Dagger 42",
-      "role": "arrow",
-      "file": "cursors/dagger-42.png"
-    },
-    {
-      "id": 81,
-      "slug": "victory-link-57",
-      "label": "Victory Link 57",
-      "role": "link",
-      "file": "cursors/victory-link-57.png"
-    },
-    {
       "id": 82,
       "slug": "cartoon-link-58",
       "label": "Cartoon Link 58",
@@ -358,88 +323,11 @@
       "file": "cursors/constellation.png"
     },
     {
-      "id": 88,
-      "slug": "constellation-link",
-      "label": "Constellation Link",
-      "role": "link",
-      "file": "cursors/constellation-link.png"
-    },
-    {
       "id": 89,
       "slug": "comic",
       "label": "Comic",
       "role": "arrow",
       "file": "cursors/comic.png"
-    },
-    {
-      "id": 90,
-      "slug": "comic-link",
-      "label": "Comic Link",
-      "role": "link",
-      "file": "cursors/comic-link.png"
-    },
-    {
-      "id": 91,
-      "slug": "sketch",
-      "label": "Sketch",
-      "role": "arrow",
-      "file": "cursors/sketch.png"
-    },
-    {
-      "id": 92,
-      "slug": "sketch-link",
-      "label": "Sketch Link",
-      "role": "link",
-      "file": "cursors/sketch-link.png"
-    },
-    {
-      "id": 93,
-      "slug": "diamond",
-      "label": "Diamond",
-      "role": "arrow",
-      "file": "cursors/diamond.png"
-    },
-    {
-      "id": 94,
-      "slug": "fire",
-      "label": "Fire",
-      "role": "arrow",
-      "file": "cursors/fire.png"
-    },
-    {
-      "id": 95,
-      "slug": "fire-link",
-      "label": "Fire Link",
-      "role": "link",
-      "file": "cursors/fire-link.png"
-    },
-    {
-      "id": 96,
-      "slug": "glitch",
-      "label": "Glitch",
-      "role": "arrow",
-      "file": "cursors/glitch.png"
-    },
-    {
-      "id": 97,
-      "slug": "glitch-link",
-      "label": "Glitch Link",
-      "role": "link",
-      "file": "cursors/glitch-link.png"
-    },
-    {
-      "id": 98,
-      "slug": "projection",
-      "label": "Projection",
-      "role": "arrow",
-      "file": "cursors/projection.png"
-    },
-    {
-      "id": 99,
-      "slug": "projection-link",
-      "label": "Projection Link",
-      "role": "link",
-      "file": "cursors/projection-link.png"
     },
     {
       "id": 100,
@@ -461,27 +349,6 @@
       "label": "Cartoon",
       "role": "arrow",
       "file": "cursors/cartoon.png"
-    },
-    {
-      "id": 103,
-      "slug": "thumbs-up",
-      "label": "Thumbs Up",
-      "role": "link",
-      "file": "cursors/thumbs-up.png"
-    },
-    {
-      "id": 104,
-      "slug": "ribbon",
-      "label": "Ribbon",
-      "role": "arrow",
-      "file": "cursors/ribbon.png"
-    },
-    {
-      "id": 105,
-      "slug": "ribbon-link",
-      "label": "Ribbon Link",
-      "role": "link",
-      "file": "cursors/ribbon-link.png"
     }
   ]
 }

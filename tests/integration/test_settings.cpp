@@ -73,7 +73,7 @@ TEST(settings_store_load_roundtrip)
 	a.bg.gradient_angle = 135.0;
 	a.bg.gradient_center_x = 0.3;
 	a.bg.gradient_center_y = 0.7;
-	a.bg.image_file = "wallpapers/ocean.jpg";
+	a.bg.image_file = "wallpapers/fiber.jpg";
 	a.bg.shadow_offset_x = -17.0;
 	a.keys.pos_x = 0.25;
 	a.highlight.color = 0x6600E0FFu;
@@ -172,7 +172,7 @@ TEST(settings_migrates_legacy_background_modes)
 	{
 		obs_data_t *s = obs_data_create();
 		obs_data_set_int(s, core::keys::kBgMode, 0);
-		obs_data_set_string(s, core::keys::kBgImage, "wallpapers/ocean.jpg");
+		obs_data_set_string(s, core::keys::kBgImage, "wallpapers/fiber.jpg");
 		core::Config c;
 		config_load(s, &c);
 		CHECK_EQ(c.bg.mode, static_cast<int>(core::BgMode::Wallpaper));
@@ -181,7 +181,7 @@ TEST(settings_migrates_legacy_background_modes)
 	{
 		obs_data_t *s = obs_data_create();
 		obs_data_set_int(s, core::keys::kBgType, static_cast<int>(core::BgMode::Solid));
-		obs_data_set_string(s, core::keys::kBgImage, "wallpapers/ocean.jpg");
+		obs_data_set_string(s, core::keys::kBgImage, "wallpapers/fiber.jpg");
 		core::Config c;
 		config_load(s, &c);
 		CHECK_EQ(c.bg.mode, static_cast<int>(core::BgMode::Solid));
@@ -455,23 +455,23 @@ TEST(clicksound_fails_gracefully)
 	snd.play(true, 0.0);
 	CHECK(!snd.loaded());
 
-	CHECK(snd.load("sounds/click-soft.wav", "sounds/click-pop.wav"));
+	CHECK(snd.load("sounds/click-soft.wav", "sounds/click-mouse-right.wav"));
 	CHECK(snd.loaded());
 	CHECK(snd.wav().sample_rate > 0);
 	CHECK(snd.loaded_path(false).find("click-soft.wav") != std::string::npos);
-	CHECK(snd.loaded_path(true).find("click-pop.wav") != std::string::npos);
+	CHECK(snd.loaded_path(true).find("click-mouse-right.wav") != std::string::npos);
 
 	/* Changing only the left file reloads just that side. */
-	CHECK(snd.load("sounds/click-glass.wav", "sounds/click-pop.wav"));
-	CHECK(snd.loaded_path(false).find("click-glass.wav") != std::string::npos);
-	CHECK(snd.loaded_path(true).find("click-pop.wav") != std::string::npos);
+	CHECK(snd.load("sounds/click-bubble.wav", "sounds/click-mouse-right.wav"));
+	CHECK(snd.loaded_path(false).find("click-bubble.wav") != std::string::npos);
+	CHECK(snd.loaded_path(true).find("click-mouse-right.wav") != std::string::npos);
 	/* Does not actually play in the test (avoids fork/exec in the suite). */
 	snd.release();
 	CHECK(!snd.loaded());
 }
 
 /* Persisted styles outside the atlas range must never reach the renderer. */
-TEST(settings_cursor_style_is_clamped)
+TEST(settings_cursor_style_is_clamped_and_retired_resolved)
 {
 	obs_data_t *s = obs_data_create();
 	config_defaults(s);
@@ -483,7 +483,12 @@ TEST(settings_cursor_style_is_clamped)
 
 	obs_data_set_int(s, core::keys::kCursorStyle, 999);
 	config_load(s, &c);
-	CHECK_EQ(c.cursor.style, static_cast<int>(core::CursorStyle::Count) - 1);
+	CHECK_EQ(c.cursor.style, static_cast<int>(core::CursorStyle::CustomPurpleIris));
+
+	obs_data_set_int(s, core::keys::kCursorStyle,
+			 static_cast<int>(core::CursorStyle::BreezeIBeam));
+	config_load(s, &c);
+	CHECK_EQ(c.cursor.style, static_cast<int>(core::CursorStyle::Breeze));
 	obs_data_release(s);
 }
 

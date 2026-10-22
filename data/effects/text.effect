@@ -19,12 +19,27 @@ struct VertInOut {
 	float4 vcol  : COLOR;
 };
 
+/* The band is drawn with OBS' sprite buffer (position + UV only), so it must
+ * not require the COLOR input used by the batched glyph vertices. */
+struct VertBand {
+	float4 pos : POSITION;
+	float2 uv  : TEXCOORD0;
+};
+
 VertInOut VSText(VertInOut vert_in)
 {
 	VertInOut vert_out;
 	vert_out.pos  = mul(float4(vert_in.pos.xyz, 1.0), ViewProj);
 	vert_out.uv   = vert_in.uv;
 	vert_out.vcol = vert_in.vcol;
+	return vert_out;
+}
+
+VertBand VSBand(VertBand vert_in)
+{
+	VertBand vert_out;
+	vert_out.pos = mul(float4(vert_in.pos.xyz, 1.0), ViewProj);
+	vert_out.uv  = vert_in.uv;
 	return vert_out;
 }
 
@@ -42,7 +57,7 @@ float sdBand(float2 p, float2 b, float r)
 	return min(max(q.x, q.y), 0.0) + length(max(q, 0.0)) - r;
 }
 
-float4 PSBand(VertInOut vert_in) : TARGET
+float4 PSBand(VertBand vert_in) : TARGET
 {
 	float2 p = (vert_in.uv - 0.5) * band_size;
 	float2 h = band_size * 0.5;
@@ -64,7 +79,7 @@ technique Band
 {
 	pass
 	{
-		vertex_shader = VSText(vert_in);
+		vertex_shader = VSBand(vert_in);
 		pixel_shader  = PSBand(vert_in);
 	}
 }

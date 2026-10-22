@@ -46,7 +46,7 @@ SOURCES = [
     ("bibata", f"{ICONS}/Bibata-Modern-Classic/cursors/left_ptr"),
     ("adwaita", f"{ICONS}/Adwaita/cursors/left_ptr"),
     ("googledot", f"{ICONS}/GoogleDot-White/cursors/left_ptr"),
-    ("pointer", f"{ICONS}/Adwaita/cursors/pointer"),
+    ("pointer", "__retired__"),
     ("dmz", f"{ICONS}/DMZ-White/cursors/left_ptr"),
     ("yaru", f"{ICONS}/Yaru/cursors/left_ptr"),
     ("xcursorpro", f"{ICONS}/XCursor-Pro-Light/cursors/left_ptr"),
@@ -54,19 +54,19 @@ SOURCES = [
     ("bibataoriginal", f"{ICONS}/Bibata-Original-Classic/cursors/left_ptr"),
     ("neon", "__procedural_neon__"),
     ("dot", "__procedural_dot__"),
-    ("cross", "__procedural_cross__"),
+    ("cross", "__retired__"),
     ("onyx", "__procedural_onyx__"),
     # Hands, text and extra styles (real themes when installed).
-    ("handgrab", f"{ICONS}/Adwaita/cursors/grab"),
-    ("handgrabbing", f"{ICONS}/Adwaita/cursors/grabbing"),
-    ("ibeam", f"{ICONS}/Adwaita/cursors/xterm"),
+    ("handgrab", "__retired__"),
+    ("handgrabbing", "__retired__"),
+    ("ibeam", "__retired__"),
     ("dmzblack", f"{ICONS}/DMZ-Black/cursors/left_ptr"),
     ("googledotblack", f"{ICONS}/GoogleDot-Black/cursors/left_ptr"),
     ("breezesnow", f"{ICONS}/Breeze_Snow/cursors/left_ptr"),
     ("bibataiceorig", f"{ICONS}/Bibata-Original-Ice/cursors/left_ptr"),
-    ("yarugrab", f"{ICONS}/Yaru/cursors/grab"),
-    ("yaruibeam", f"{ICONS}/Yaru/cursors/xterm"),
-    ("breezeibeam", f"{ICONS}/breeze_cursors/cursors/xterm"),
+    ("yarugrab", "__retired__"),
+    ("yaruibeam", "__retired__"),
+    ("breezeibeam", "__retired__"),
     # Hover / link hands: the REAL `pointer` cursor of the very same themes
     # (nothing is drawn here, the theme files are used as shipped).
     # GoogleDot-White/Black are excluded: that theme ships no hand at all
@@ -249,6 +249,12 @@ def main():
     meta = []
 
     for name, src in SOURCES:
+        if src == "__retired__":
+            # Keep the CursorStyle index stable with a transparent cell.
+            cells.append(bytearray(CELL * CELL * 4))
+            meta.append({"name": name, "hotspot": [0.05, 0.05]})
+            print(f"[atlas] {name}: retired (empty cell)")
+            continue
         if src == "__procedural_mac__":
             cells.append(procedural("mac"))
             meta.append({"name": name, "hotspot": [round(1.2 / 24, 4), round(1.0 / 24, 4)]})
@@ -295,34 +301,41 @@ def main():
         meta.append({"name": name, "hotspot": [round(hx, 4), round(hy, 4)]})
         print(f"[atlas] {name}: {im['w']}x{im['h']} hotspot=({hx:.3f},{hy:.3f}) from {src}")
 
-    # User-supplied PNGs (already 128x128, straight RGBA). The manifest order
-    # is the CursorStyle order; IDs start at 37 (after the 37 built-ins).
+    # User-supplied PNGs (already 128x128, straight RGBA). IDs in the manifest
+    # are the CursorStyle values; missing IDs are retired (transparent cell).
     with open(CUSTOM_MANIFEST, "r", encoding="utf-8") as f:
-        custom = json.load(f)["cursors"]
-    for expected, entry in enumerate(custom, start=37):
-        if entry["id"] != expected:
-            raise SystemExit(f"custom cursor id {entry['id']} != {expected}")
-        path = os.path.join(ROOT, "Resources", entry["file"])
-        if not os.path.exists(path):
-            raise SystemExit(f"cursor not found: {path}")
-        im = Image.open(path).convert("RGBA")
-        if im.size != (CELL, CELL):
-            im = im.resize((CELL, CELL), Image.Resampling.LANCZOS)
-        rgba = bytearray(im.tobytes())
-        alpha = im.getchannel("A")
-        hx = hy = 0.05
-        for y in range(CELL):
-            for x in range(CELL):
-                if alpha.getpixel((x, y)) > 32:
-                    hx = (x + 0.5) / CELL
-                    hy = (y + 0.5) / CELL
-                    break
-            else:
-                continue
-            break
-        cells.append(rgba)
-        meta.append({"name": entry["slug"], "hotspot": [round(hx, 4), round(hy, 4)]})
-        print(f"[atlas] {entry['slug']}: PNG hotspot=({hx:.3f},{hy:.3f})")
+        custom = {entry["id"]: entry for entry in json.load(f)["cursors"]}
+    # Custom IDs start at 37 (after the 37 built-ins). Gaps are retired cursors:
+    # they stay as transparent cells so old profiles keep the same ID indices.
+    for expected in range(37, 106):
+        entry = custom.get(expected)
+        if entry is None:
+            cells.append(bytearray(CELL * CELL * 4))
+        else:
+            path = os.path.join(ROOT, "Resources", entry["file"])
+            if not os.path.exists(path):
+                raise SystemExit(f"cursor not found: {path}")
+            im = Image.open(path).convert("RGBA")
+            if im.size != (CELL, CELL):
+                im = im.resize((CELL, CELL), Image.Resampling.LANCZOS)
+            rgba = bytearray(im.tobytes())
+            alpha = im.getchannel("A")
+            hx = hy = 0.05
+            for y in range(CELL):
+                for x in range(CELL):
+                    if alpha.getpixel((x, y)) > 32:
+                        hx = (x + 0.5) / CELL
+                        hy = (y + 0.5) / CELL
+                        break
+                else:
+                    continue
+                break
+            cells.append(rgba)
+            meta.append({"name": entry["slug"], "hotspot": [round(hx, 4), round(hy, 4)]})
+            print(f"[atlas] {entry['slug']}: PNG hotspot=({hx:.3f},{hy:.3f})")
+            continue
+        meta.append({"name": f"retired-{expected}", "hotspot": [0.05, 0.05]})
+        print(f"[atlas] retired-{expected}: empty cell")
 
     count = len(cells)
     rows = (count + COLUMNS - 1) // COLUMNS

@@ -5,7 +5,6 @@
 #include <string_view>
 
 #include <graphics/vec2.h>
-#include <graphics/vec4.h>
 #include <obs-module.h>
 
 #include "core/color.hpp"
@@ -304,23 +303,25 @@ void TextRenderer::rebuild_geometry()
 				const float u1 = static_cast<float>(g->x + g->w) / atlas_w;
 				const float v1 = static_cast<float>(g->y + g->h) / atlas_h;
 
+				auto vertex = [&](float vx, float vy, float u, float v,
+						  uint32_t color) {
+					/* gs_color4v() is a no-op in libobs 30.x; gs_color()
+					 * is what actually adds the COLOR input the text
+					 * shader requires. One call per vertex. */
+					gs_color(color);
+					gs_vertex2f(vx, vy);
+					gs_texcoord(u, v, 0);
+				};
+
 				auto quad = [&](float ox, float oy, bool shadow) {
-					struct vec4 color;
-					vec4_set(&color, shadow ? 0.0f : 1.0f, shadow ? 0.0f : 1.0f,
-						 shadow ? 0.0f : 1.0f, 1.0f);
-					gs_color4v(&color);
-					gs_vertex2f(gx0 + ox, gy0 + oy);
-					gs_texcoord(u0, v0, 0);
-					gs_vertex2f(gx1 + ox, gy0 + oy);
-					gs_texcoord(u1, v0, 0);
-					gs_vertex2f(gx0 + ox, gy1 + oy);
-					gs_texcoord(u0, v1, 0);
-					gs_vertex2f(gx1 + ox, gy0 + oy);
-					gs_texcoord(u1, v0, 0);
-					gs_vertex2f(gx1 + ox, gy1 + oy);
-					gs_texcoord(u1, v1, 0);
-					gs_vertex2f(gx0 + ox, gy1 + oy);
-					gs_texcoord(u0, v1, 0);
+					const uint32_t color =
+						shadow ? 0xFF000000u : 0xFFFFFFFFu;
+					vertex(gx0 + ox, gy0 + oy, u0, v0, color);
+					vertex(gx1 + ox, gy0 + oy, u1, v0, color);
+					vertex(gx0 + ox, gy1 + oy, u0, v1, color);
+					vertex(gx1 + ox, gy0 + oy, u1, v0, color);
+					vertex(gx1 + ox, gy1 + oy, u1, v1, color);
+					vertex(gx0 + ox, gy1 + oy, u0, v1, color);
 				};
 
 				/* Shadow offsets are in font units, so they scale with the

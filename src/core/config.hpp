@@ -23,7 +23,7 @@ struct BackgroundConfig {
 	std::string image;             // wallpaper path/relative ("" = none)
 	std::string image_file;        // PC image (takes priority over `image`)
 	double image_blur = 0.0;       // wallpaper blur (px)
-	int image_blur_type = 2;       // 0 none, 1 soft, 2 gaussian, 3 creamy
+	int image_blur_type = 2;       // 0 none, 1 soft, 2 gaussian, 3 creamy, 4 frosted
 	double padding_x = 64.0;
 	double padding_y = 64.0;
 	double corner_radius = 18.0;
@@ -38,7 +38,7 @@ struct BackgroundConfig {
 struct ClickSoundConfig {
 	bool enabled = true;
 	std::string file_left = "sounds/click-soft.wav";
-	std::string file_right = "sounds/click-pop.wav";
+	std::string file_right = "sounds/click-mouse-right.wav";
 	double volume = 0.6;
 	bool left = true;
 	bool right = false;

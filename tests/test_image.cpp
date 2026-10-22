@@ -22,7 +22,7 @@ std::vector<uint8_t> read_bytes(const std::string &path)
 
 TEST(image_decodes_real_wallpaper)
 {
-	const auto bytes = read_bytes(std::string(TOPSCREEN_TEST_DATA_DIR) + "/wallpapers/ocean.jpg");
+	const auto bytes = read_bytes(std::string(TOPSCREEN_TEST_DATA_DIR) + "/wallpapers/silk.jpg");
 	REQUIRE(!bytes.empty());
 
 	Image img;

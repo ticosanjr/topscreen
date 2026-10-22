@@ -33,6 +33,8 @@ int g_draw_calls = 0;
 int g_property_updates = 0;
 int g_sprite_draw_calls = 0;
 int g_render_starts = 0;
+int g_vertex_calls = 0;
+int g_color_calls = 0;
 bool g_fail_vertex_buffers = false;
 
 obs_property_t *add_prop(obs_properties_t *props, const char *name)
@@ -130,6 +132,8 @@ void reset_graphics_counters()
 	g_draw_calls = 0;
 	g_sprite_draw_calls = 0;
 	g_render_starts = 0;
+	g_vertex_calls = 0;
+	g_color_calls = 0;
 }
 
 int graphics_draw_calls()
@@ -145,6 +149,16 @@ int graphics_sprite_draw_calls()
 int graphics_render_starts()
 {
 	return g_render_starts;
+}
+
+int graphics_vertex_calls()
+{
+	return g_vertex_calls;
+}
+
+int graphics_color_calls()
+{
+	return g_color_calls;
 }
 
 void reset_property_update_calls()
@@ -796,8 +810,11 @@ void gs_draw_sprite_subregion(gs_texture_t *, uint32_t, uint32_t, uint32_t, uint
 }
 
 void gs_render_start(bool) { ++g_render_starts; }
-void gs_vertex2f(float, float) {}
+void gs_vertex2f(float, float) { ++g_vertex_calls; }
 void gs_texcoord(float, float, int) {}
+void gs_color(uint32_t) { ++g_color_calls; }
+/* Deliberately a no-op, matching libobs 30.x: this is the regression the
+ * text-batching test guards against. */
 void gs_color4v(const struct vec4 *) {}
 
 gs_vertbuffer_t *gs_render_save()

@@ -29,7 +29,7 @@ click-mouse-right.wav
 All are mono 16-bit PCM at 44100 Hz, the same format as the other bundled
 clicks.
 
-Custom click pack (24 files)
+Custom click pack (15 files)
   Source: Resources/sounds (renamed originals and manifest.json).
   The project owner supplied this pack and confirmed authorization to modify,
   normalize, and redistribute it with TopScreen.

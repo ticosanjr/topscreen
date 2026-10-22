@@ -11,24 +11,16 @@ struct WallpaperEntry {
 
 /** Built-in wallpapers (data/wallpapers). */
 inline constexpr WallpaperEntry kWallpapers[] = {
-	{"Aurora", "wallpapers/aurora.jpg"},     {"Sunset", "wallpapers/sunset.jpg"},
-	{"Monterey", "wallpapers/monterey.jpg"}, {"Ventura", "wallpapers/ventura.jpg"},
-	{"Sonoma", "wallpapers/sonoma.jpg"},     {"Sequoia", "wallpapers/sequoia.jpg"},
-	{"Graphite", "wallpapers/graphite.jpg"}, {"Ocean", "wallpapers/ocean.jpg"},
-	{"Forest", "wallpapers/forest.jpg"},     {"Lavender", "wallpapers/lavender.jpg"},
-	{"Ember", "wallpapers/ember.jpg"},       {"Midnight", "wallpapers/midnight.jpg"},
-	{"Neon", "wallpapers/neon.jpg"},         {"Cyberpunk", "wallpapers/cyberpunk.jpg"},
-	{"Tropical", "wallpapers/tropical.jpg"}, {"Coral", "wallpapers/coral.jpg"},
-	{"Galaxy", "wallpapers/galaxy.jpg"},     {"Rainbow", "wallpapers/rainbow.jpg"},
-	{"Porcelain", "wallpapers/porcelain.jpg"}, {"Sand", "wallpapers/sand.jpg"},
-	{"Sage", "wallpapers/sage.jpg"},         {"Onyx", "wallpapers/onyx.jpg"},
-	{"Rose", "wallpapers/rose.jpg"},         {"Azure", "wallpapers/azure.jpg"},
-	/* Unsplash photography (see data/wallpapers/SOURCES.txt). */
-	{"Silk", "wallpapers/silk.jpg"},         {"Pastel", "wallpapers/pastel.jpg"},
-	{"Helix", "wallpapers/helix.jpg"},       {"Fiber", "wallpapers/fiber.jpg"},
-	{"Prism", "wallpapers/prism.jpg"},       {"Twilight", "wallpapers/twilight.jpg"},
-	{"Ink", "wallpapers/ink.jpg"},           {"Spark", "wallpapers/spark.jpg"},
-	{"Cobalt", "wallpapers/cobalt.jpg"},     {"Dusk", "wallpapers/dusk.jpg"},
+	{"Silk", "wallpapers/silk.jpg"},
+	{"Pastel", "wallpapers/pastel.jpg"},
+	{"Helix", "wallpapers/helix.jpg"},
+	{"Fiber", "wallpapers/fiber.jpg"},
+	{"Prism", "wallpapers/prism.jpg"},
+	{"Twilight", "wallpapers/twilight.jpg"},
+	{"Ink", "wallpapers/ink.jpg"},
+	{"Spark", "wallpapers/spark.jpg"},
+	{"Cobalt", "wallpapers/cobalt.jpg"},
+	{"Dusk", "wallpapers/dusk.jpg"},
 	{"Violet Wave", "wallpapers/violet-wave.jpg"},
 	{"Wood Arch", "wallpapers/wood-arch.jpg"},
 	{"Color Melt", "wallpapers/color-melt.jpg"},
@@ -50,8 +42,8 @@ inline bool wallpaper_is_transparent(const char *value)
 }
 
 /**
- * If `value` is the label/base of a built-in wallpaper (e.g.: "Aurora" or
- * "aurora"), returns the relative path ("wallpapers/aurora.jpg").
+ * If `value` is the label/base of a built-in wallpaper (e.g.: "Silk" or
+ * "silk"), returns the relative path ("wallpapers/silk.jpg").
  * Otherwise returns nullptr (treats it as a normal path).
  */
 const char *wallpaper_path_for(const char *value);

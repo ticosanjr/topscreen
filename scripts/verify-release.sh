@@ -82,7 +82,7 @@ check_binary "$WIN/bin/64bit/topscreen.dll" Windows
 
 for tree in "$LIN" "$WIN"; do
 	for rel in effects/topscreen.effect effects/text.effect locale/en-US.ini \
-		sounds/click-soft.wav sounds/click-pop.wav; do
+		sounds/click-soft.wav sounds/click-mouse-right.wav; do
 		[ -s "$tree/data/$rel" ] && ok "data: $rel" ||
 			fail "missing/empty data file: $tree/data/$rel"
 	done

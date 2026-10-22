@@ -40,6 +40,10 @@ TEST(integration_text_batches_glyph_draws)
 	CHECK_EQ(fakeobs::graphics_render_starts(), 1);
 	CHECK_EQ(fakeobs::graphics_draw_calls(), 1); /* shadow + text in one buffer */
 	CHECK_EQ(fakeobs::graphics_sprite_draw_calls(), 0);
+	/* Every vertex must carry a color: libobs' gs_color4v() is a no-op and
+	 * leaves the text vertex buffer without the COLOR input. */
+	CHECK(fakeobs::graphics_vertex_calls() > 0);
+	CHECK_EQ(fakeobs::graphics_color_calls(), fakeobs::graphics_vertex_calls());
 
 	/* Same labels: the cached layout/vertex buffer is reused. */
 	fakeobs::reset_graphics_counters();

@@ -51,7 +51,7 @@ Windows continues to use the asynchronous `PlaySoundW` path.
 
 ## Cursor atlas
 
-The 106-cursor atlas is a 2048×896 RGBA texture (~7.3 MB). That is small
+The 106-cell cursor atlas (79 visible styles + 27 reserved/transparent IDs) is a 2048×896 RGBA texture (~7.3 MB). That is small
 compared with a 4K frame buffer, so the release does **not** use BC3/BC7 or a
 destructive 64 px downsample; those would add format/quality risk for little
 gain. The grid layout already avoids the 8192 px texture-height limit.

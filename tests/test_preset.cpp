@@ -141,7 +141,7 @@ TEST(preset_legacy_click_sound_file_applies_to_both_sides)
         "name": "Legacy",
         "description": "legacy single sound file",
         "settings": {
-            "click_sound_file": "sounds/click-wood.wav"
+            "click_sound_file": "sounds/click-tick.wav"
         }
     })";
 
@@ -151,8 +151,8 @@ TEST(preset_legacy_click_sound_file_applies_to_both_sides)
 
 	Config cfg;
 	REQUIRE(p.apply(&cfg, &err));
-	CHECK_EQ(cfg.click_sound.file_left, std::string("sounds/click-wood.wav"));
-	CHECK_EQ(cfg.click_sound.file_right, std::string("sounds/click-wood.wav"));
+	CHECK_EQ(cfg.click_sound.file_left, std::string("sounds/click-tick.wav"));
+	CHECK_EQ(cfg.click_sound.file_right, std::string("sounds/click-tick.wav"));
 }
 
 TEST(preset_real_files_parse)

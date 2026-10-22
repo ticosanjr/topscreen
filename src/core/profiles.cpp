@@ -83,11 +83,11 @@ Config make_profile_seed(int index)
 		c.zoom.amount = 1.6;
 		break;
 
-	case 9: /* J: green + black, wallpaper background, crosshair cursor */
+	case 9: /* J: green + black, wallpaper background, dot cursor */
 		c.click_left.color = 0xFF66CC22;  // green
 		c.click_right.color = 0xFF111111; // near black
-		c.cursor.style = static_cast<int>(CursorStyle::Cross);
-		c.bg.image = "wallpapers/onyx.jpg";
+		c.cursor.style = static_cast<int>(CursorStyle::Dot);
+		c.bg.image = "wallpapers/fiber.jpg";
 		c.bg.mode = static_cast<int>(BgMode::Wallpaper);
 		break;
 

@@ -531,7 +531,7 @@ void Compositor::render(obs_source_t *filter, obs_source_t *target, uint32_t wid
 	{
 		const uint32_t idx =
 			has_atlas ? std::min<uint32_t>(
-					    static_cast<uint32_t>(core::cursor_style_clamp(cfg.cursor.style)),
+					    static_cast<uint32_t>(core::cursor_style_resolve(cfg.cursor.style)),
 					    cursor_atlas_.count - 1)
 				  : 0u;
 		const uint32_t columns = has_atlas ? std::max<uint32_t>(cursor_atlas_.columns, 1u) : 1u;

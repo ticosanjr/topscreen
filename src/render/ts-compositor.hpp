@@ -7,6 +7,7 @@
 
 #include "core/config.hpp"
 #include "core/cursor_atlas.hpp"
+#include "core/image.hpp"
 #include "render/ts-frame.hpp"
 #include "render/ts-text.hpp"
 
@@ -42,7 +43,8 @@ private:
 	bool validate_params() const;
 	void load_cursor_atlas();
 	void release_cursor_atlas();
-	void load_bg_image(const char *path);
+	void load_bg_image(const char *path, uint32_t target_w, uint32_t target_h, double blur,
+			   int blur_type);
 	void release_bg_image();
 
 	gs_effect_t *effect_ = nullptr;
@@ -70,8 +72,6 @@ private:
 	gs_eparam_t *p_bg_tex_aspect_ = nullptr;
 	gs_eparam_t *p_bg_transparent_ = nullptr;
 	gs_eparam_t *p_bg_keep_aspect_ = nullptr;
-	gs_eparam_t *p_bg_blur_ = nullptr;
-	gs_eparam_t *p_bg_blur_type_ = nullptr;
 	gs_eparam_t *p_shadow_alpha_ = nullptr;
 	gs_eparam_t *p_shadow_blur_ = nullptr;
 	gs_eparam_t *p_shadow_offset_ = nullptr;
@@ -160,11 +160,19 @@ private:
 	core::CursorAtlas cursor_atlas_;
 	std::vector<core::Vec2f> cursor_hotspots_;
 
-	/* Background wallpaper. */
+	/* Background wallpaper. The decoded image is kept so blur changes can
+	 * rebuild the texture without decoding or reading the file again. */
 	gs_texture_t *bg_tex_ = nullptr;
+	core::Image bg_image_;
 	std::string bg_loaded_;
 	std::string bg_requested_;
 	float bg_aspect_ = 1.0f;
+	uint32_t bg_width_ = 0;
+	uint32_t bg_height_ = 0;
+	double bg_tex_blur_ = -1.0;
+	int bg_tex_blur_type_ = -1;
+	uint32_t bg_tex_target_w_ = 0;
+	uint32_t bg_tex_target_h_ = 0;
 
 	/* Gradient direction is only recomputed when the angle changes. The
 	 * uniform itself is still uploaded every frame (D3D11 requirement). */

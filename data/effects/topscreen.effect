@@ -26,8 +26,6 @@ uniform float  bg_tex_enabled;
 uniform float  bg_transparent; // 1 = transparent outside the floating screen
 uniform float  bg_tex_aspect; // image w/h
 uniform float  bg_keep_aspect;
-uniform float  bg_blur;       // wallpaper blur (px)
-uniform float  bg_blur_type;  // 0 none, 1 soft(box), 2 gaussian, 3 creamy
 uniform float  shadow_alpha;
 uniform float  shadow_blur;
 uniform float2 shadow_offset;
@@ -381,56 +379,6 @@ float2 ripple_offset(float2 cu)
 	return o;
 }
 
-/* Fast 3x3 diffusion: 9 taps. Used by the "Soft" mode. */
-float4 blur9(float2 uv, float2 o)
-{
-	float4 c = bg_tex.Sample(def_sampler, uv) * 0.25;
-	c += bg_tex.Sample(def_sampler, uv + float2(o.x, 0.0)) * 0.125;
-	c += bg_tex.Sample(def_sampler, uv - float2(o.x, 0.0)) * 0.125;
-	c += bg_tex.Sample(def_sampler, uv + float2(0.0, o.y)) * 0.125;
-	c += bg_tex.Sample(def_sampler, uv - float2(0.0, o.y)) * 0.125;
-	c += bg_tex.Sample(def_sampler, uv + o) * 0.0625;
-	c += bg_tex.Sample(def_sampler, uv - o) * 0.0625;
-	c += bg_tex.Sample(def_sampler, uv + float2(o.x, -o.y)) * 0.0625;
-	c += bg_tex.Sample(def_sampler, uv - float2(o.x, -o.y)) * 0.0625;
-	return c;
-}
-
-/* 5x5 Gaussian (sigma = 1 grid unit, 25 taps). The weights are the outer
- * product of the 1D Gaussian [0.0545, 0.2442, 0.4026, 0.2442, 0.0545].
- * At larger radii this avoids the discrete "repeated pixel" look of a
- * stretched 3x3 kernel. */
-float4 blur25(float2 uv, float2 step)
-{
-	float4 c = float4(0.0, 0.0, 0.0, 0.0);
-	c += bg_tex.Sample(def_sampler, uv + step * float2(-2.0, -2.0)) * 0.002969;
-	c += bg_tex.Sample(def_sampler, uv + step * float2(-1.0, -2.0)) * 0.013306;
-	c += bg_tex.Sample(def_sampler, uv + step * float2( 0.0, -2.0)) * 0.021938;
-	c += bg_tex.Sample(def_sampler, uv + step * float2( 1.0, -2.0)) * 0.013306;
-	c += bg_tex.Sample(def_sampler, uv + step * float2( 2.0, -2.0)) * 0.002969;
-	c += bg_tex.Sample(def_sampler, uv + step * float2(-2.0, -1.0)) * 0.013306;
-	c += bg_tex.Sample(def_sampler, uv + step * float2(-1.0, -1.0)) * 0.059634;
-	c += bg_tex.Sample(def_sampler, uv + step * float2( 0.0, -1.0)) * 0.098320;
-	c += bg_tex.Sample(def_sampler, uv + step * float2( 1.0, -1.0)) * 0.059634;
-	c += bg_tex.Sample(def_sampler, uv + step * float2( 2.0, -1.0)) * 0.013306;
-	c += bg_tex.Sample(def_sampler, uv + step * float2(-2.0,  0.0)) * 0.021938;
-	c += bg_tex.Sample(def_sampler, uv + step * float2(-1.0,  0.0)) * 0.098320;
-	c += bg_tex.Sample(def_sampler, uv) * 0.162103;
-	c += bg_tex.Sample(def_sampler, uv + step * float2( 1.0,  0.0)) * 0.098320;
-	c += bg_tex.Sample(def_sampler, uv + step * float2( 2.0,  0.0)) * 0.021938;
-	c += bg_tex.Sample(def_sampler, uv + step * float2(-2.0,  1.0)) * 0.013306;
-	c += bg_tex.Sample(def_sampler, uv + step * float2(-1.0,  1.0)) * 0.059634;
-	c += bg_tex.Sample(def_sampler, uv + step * float2( 0.0,  1.0)) * 0.098320;
-	c += bg_tex.Sample(def_sampler, uv + step * float2( 1.0,  1.0)) * 0.059634;
-	c += bg_tex.Sample(def_sampler, uv + step * float2( 2.0,  1.0)) * 0.013306;
-	c += bg_tex.Sample(def_sampler, uv + step * float2(-2.0,  2.0)) * 0.002969;
-	c += bg_tex.Sample(def_sampler, uv + step * float2(-1.0,  2.0)) * 0.013306;
-	c += bg_tex.Sample(def_sampler, uv + step * float2( 0.0,  2.0)) * 0.021938;
-	c += bg_tex.Sample(def_sampler, uv + step * float2( 1.0,  2.0)) * 0.013306;
-	c += bg_tex.Sample(def_sampler, uv + step * float2( 2.0,  2.0)) * 0.002969;
-	return c;
-}
-
 // Background for an arbitrary target pixel. The spotlight zoom is applied
 // here too, so the wallpaper and the captured screen magnify together.
 float4 sample_background(float2 screen_px)
@@ -457,25 +405,8 @@ float4 sample_background(float2 screen_px)
 			sc.x = at / ai;
 		float2 buv = (bg_uv - 0.5) * sc + 0.5;
 
-		if (bg_blur > 0.01 && bg_blur_type > 0.5) {
-			float2 texel = 1.0 / max(target_size, float2(1.0, 1.0));
-			if (bg_blur_type < 1.5) {
-				float2 o = texel * bg_blur * 0.70;
-				return blur9(buv, o);
-			}
-
-			float spread = 0.50;
-			if (bg_blur_type >= 2.5)
-				spread = 0.62;
-			if (bg_blur_type >= 3.5) {
-				spread = 0.66;
-				float2 jitter = float2(
-					frac(screen_px.x * 0.7548777 + screen_px.y * 0.5698403),
-					frac(screen_px.x * 0.4385791 + screen_px.y * 0.9172837)) - 0.5;
-				buv += jitter * texel * bg_blur * spread * 0.35;
-			}
-			return blur25(buv, texel * bg_blur * spread);
-		}
+		// The wallpaper texture is prefiltered on the CPU when blur settings
+		// change, so the expensive multi-tap blur is one sample here.
 		return bg_tex.Sample(def_sampler, buv);
 	}
 	if (bg_mode > 0.5) {
@@ -619,36 +550,32 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 		}
 	}
 
+	float spot_amount = saturate(spotlight_amount);
+	float spot_sd = 0.0;
+	float spot_outside = 1.0;
+	if (spotlight_enabled > 0.5 && spot_amount > 0.001) {
+		spot_sd = spotlight_sd(px);
+		spot_outside = smoothstep(-1.0, 1.0, spot_sd);
+	}
+
 	// Full-frame spotlight blur. The content and the wallpaper are blurred
 	// outside the spotlight, but click effects and highlights are applied
-	// afterwards so they stay crisp and readable. Wallpaper blur is already
-	// expensive; use the cheaper 5-tap path when it is active.
+	// afterwards so they stay crisp and readable. The wallpaper texture is
+	// prefiltered on the CPU, so each scene tap is cheap.
 	{
-		float spot_amount = saturate(spotlight_amount);
-		float spot_sd = spotlight_sd(px);
-		float spot_outside = smoothstep(-1.0, 1.0, spot_sd);
 		if (spotlight_enabled > 0.5 && spot_amount > 0.001 &&
 		    spotlight_blur_enabled > 0.5 && spotlight_blur > 0.01 &&
 		    spot_outside > 0.001) {
 			float2 o = spotlight_blur / max(target_size, float2(1.0, 1.0));
-			float4 blurred;
-			if (bg_blur > 0.01 && bg_blur_type > 0.5) {
-				blurred = sample_scene_at(px) * 0.40;
-				blurred += sample_scene_at(px + float2(o.x, 0.0)) * 0.15;
-				blurred += sample_scene_at(px - float2(o.x, 0.0)) * 0.15;
-				blurred += sample_scene_at(px + float2(0.0, o.y)) * 0.15;
-				blurred += sample_scene_at(px - float2(0.0, o.y)) * 0.15;
-			} else {
-				blurred = sample_scene_at(px) * 0.25;
-				blurred += sample_scene_at(px + float2(o.x, 0.0)) * 0.125;
-				blurred += sample_scene_at(px - float2(o.x, 0.0)) * 0.125;
-				blurred += sample_scene_at(px + float2(0.0, o.y)) * 0.125;
-				blurred += sample_scene_at(px - float2(0.0, o.y)) * 0.125;
-				blurred += sample_scene_at(px + o) * 0.0625;
-				blurred += sample_scene_at(px - o) * 0.0625;
-				blurred += sample_scene_at(px + float2(o.x, -o.y)) * 0.0625;
-				blurred += sample_scene_at(px - float2(o.x, -o.y)) * 0.0625;
-			}
+			float4 blurred = sample_scene_at(px) * 0.25;
+			blurred += sample_scene_at(px + float2(o.x, 0.0)) * 0.125;
+			blurred += sample_scene_at(px - float2(o.x, 0.0)) * 0.125;
+			blurred += sample_scene_at(px + float2(0.0, o.y)) * 0.125;
+			blurred += sample_scene_at(px - float2(0.0, o.y)) * 0.125;
+			blurred += sample_scene_at(px + o) * 0.0625;
+			blurred += sample_scene_at(px - o) * 0.0625;
+			blurred += sample_scene_at(px + float2(o.x, -o.y)) * 0.0625;
+			blurred += sample_scene_at(px - float2(o.x, -o.y)) * 0.0625;
 			col = lerp(col, blurred, spot_outside * spot_amount);
 		}
 	}
@@ -787,8 +714,6 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 	// Spotlight: dim, halo shadow, border, drop and zoom animation. It is
 	// applied after the whole frame (wallpaper included), not only content.
 	{
-		float spot_amount = saturate(spotlight_amount);
-		float spot_sd = spotlight_sd(px);
 		if (spotlight_enabled > 0.5 && spot_amount > 0.001) {
 			float aa = max(1.0, target_size.y * 0.0015);
 			float outside = smoothstep(-aa, aa, spot_sd);

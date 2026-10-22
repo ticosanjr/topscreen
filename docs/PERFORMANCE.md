@@ -10,22 +10,24 @@ shader combines them in **one draw**. The integration test
 
 ## Wallpaper blur / diffusion
 
-The wallpaper shader used to apply a **stretched 3×3 kernel** (9 taps). At large
-radii the taps were so far apart that individual source pixels were still
-visible, which read as a grid of repeated pixels instead of frosted glass.
+The wallpaper is decoded once and kept in memory. When the image, blur amount,
+diffusion mode or target size changes, the CPU builds a prefiltered texture:
+large radii are downscaled first, then a separable box blur is applied once.
+The shader now takes **one filtered sample** per pixel instead of the old 9/25
+taps, so the cost is paid on settings changes rather than every frame.
 
-The diffusion selector now maps to real kernels:
+The diffusion selector still changes the effective spread:
 
-| Mode | Taps | Kernel |
-|------|------|--------|
-| Soft | 9 | 3×3, fast path |
-| Gaussian | 25 | 5×5 Gaussian (σ = 1 grid unit) |
-| Creamy | 25 | 5×5 Gaussian, wider spread |
-| Frosted glass | 25 | 5×5 Gaussian, wider spread + sub-pixel grid jitter |
+| Mode | Prefilter |
+|------|-----------|
+| Soft | narrower box kernel |
+| Gaussian | balanced kernel |
+| Creamy | wider kernel |
+| Frosted glass | widest kernel, with a softer upscale |
 
-Soft is the low-cost option; the 25-tap modes trade texture samples for a smooth
-result. The shader still uses no loops or uniform arrays, so it stays compatible
-with the D3D11 and OpenGL backends.
+All modes use the same one-sample shader path, including the magnifier lens and
+the full-frame spotlight blur. The prefilter runs on the video thread, but only
+when a relevant setting or the target size changes; normal playback is unaffected.
 
 ## Background gradient
 
@@ -70,7 +72,10 @@ compared with a 4K frame buffer, so the release does **not** use BC3/BC7 or a
 destructive 64 px downsample; those would add format/quality risk for little
 gain. The grid layout already avoids the 8192 px texture-height limit.
 
-## OBS benchmark
+## OBS benchmark (historical)
+
+The numbers below are from the old per-pixel wallpaper blur and are kept for
+context only. They are not a current 0.6.x benchmark.
 
 Environment: Linux, OBS Studio 30.0.2.1, **llvmpipe software rendering** (no GPU
 available in the test VM), Xvfb at 1920×1080 and 3840×2160, 60 FPS. Scene:

@@ -90,7 +90,7 @@ Places the screen "floating" over a background, with corners and shadow.
 | **Wallpaper preset** | **Transparent (use the scene below)**, **No wallpaper**, or one of the **18 images** that ship with the plugin. Choosing one applies it |
 | **Custom wallpaper file** | Button to choose a **file from your PC** (jpg/png/bmp/tga/gif/webp). Choosing one **clears** the wallpaper preset (they are mutually exclusive) |
 | **Wallpaper blur radius (px)** | How far the background image spreads (0 = sharp) |
-| **Wallpaper diffusion** | No blur · Soft (fast) · **Gaussian (balanced)** · Creamy (wide) · Frosted glass (smoothest). Soft uses 9 samples; the other modes use a 25-tap 5×5 Gaussian, so large radii look smooth instead of showing a grid of repeated pixels |
+| **Wallpaper diffusion** | No blur · Soft (fast) · **Gaussian (balanced)** · Creamy (wide) · Frosted glass (smoothest). The wallpaper is prefiltered once when the image or blur settings change, then sampled once per pixel |
 | **Horizontal / vertical screen margin (px)** | Margin between the screen and the edge (separate X and Y) |
 | **Keep screen aspect ratio** | Avoids stretching the screen: it is scaled down proportionally (leave it on) |
 | **Screen corner radius (px)** | Radius of the captured screen corners |
@@ -476,8 +476,10 @@ TOPSCREEN_DEBUG_KEY=Ctrl obs
 ## 11. Performance
 
 - The effects run on the **GPU**, in the OBS process (no recording, no copy).
-- Higher cost: **shadow** (blur) and **motion blur**. If the PC is weak:
-  reduce the **Shadow blur** or turn off **Movement**.
+- Higher cost: **shadow** (blur), **motion blur** and the full-frame spotlight
+  blur. If the PC is weak: reduce the **Shadow blur**, turn off **Movement**,
+  or reduce the spotlight **Blur outside**. Wallpaper diffusion is prefiltered
+  once, so it is much cheaper than the old per-pixel kernels.
 - High resolutions + a 60 Hz monitor are fine; 120/144 Hz monitors cost more.
 - In software rendering (no GPU, e.g. `llvmpipe`), everything works, but slower.
 

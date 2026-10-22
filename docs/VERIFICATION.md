@@ -26,7 +26,7 @@ Add a **Display Capture** and the **TopScreen FX** filter. Then:
 | 1 | Passthrough filter (effects off) | image identical to the capture |
 | 2 | Background type | solid color uses one color; gradient blends two colors and follows angle/meeting point; wallpaper keeps the existing image/blur controls |
 | 2b | Background screen corner radius/margin/shadow | screen "floating" with background, rounded corners and shadow |
-| 2c | Wallpaper diffusion | Soft is the fastest; Gaussian/Creamy/Frosted glass have no visible 3×3 sample grid at large radii; Frosted is the smoothest |
+| 2c | Wallpaper diffusion | The wallpaper is prefiltered once when the image, blur amount, mode or target size changes; all modes use one shader sample. Gaussian/Creamy/Frosted stay smooth at large radii |
 | 3 | Cursor | native cursor disappears; own arrow appears (light with a dark outline) |
 | 4 | Cursor size/smoothing/sway | changes with the sliders |
 | 5 | Left click | ripple/orb effect at the click point |

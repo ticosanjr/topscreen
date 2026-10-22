@@ -88,7 +88,7 @@ TEST(shader_has_expected_uniforms)
 		"corner_radius",  "zoom",           "zoom_focus",    "bg_a",
 		"bg_b",           "bg_mode",        "bg_tex",        "bg_tex_enabled",
 		"bg_gradient_center", "bg_gradient_dir",
-		"bg_transparent", "bg_tex_aspect",  "bg_blur",       "bg_blur_type",  "bg_keep_aspect",        "shadow_alpha",  "shadow_blur",
+		"bg_transparent", "bg_tex_aspect",  "bg_keep_aspect",        "shadow_alpha",  "shadow_blur",
 		"shadow_offset",  "cursor_enabled", "cursor_pos",    "cursor_scale",
 		"cursor_opacity", "cursor_rotation", "cursor_shadow", "click_count",
 		"cursor_tex",     "cursor_tex_enabled", "cursor_cell_off", "cursor_cell_scale",

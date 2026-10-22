@@ -393,6 +393,34 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 	obs_properties_add_group(props, "grp_bg", obs_module_text("Group.Background"), OBS_GROUP_NORMAL, bg);
 	background_type_changed(props, nullptr, settings);
 
+	/* ---------------- Zoom ---------------- */
+	obs_properties_t *zoom = obs_properties_create();
+	obs_property_t *zmode = obs_properties_add_list(zoom, kZoomMode, obs_module_text("Zoom.Mode"),
+							OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
+	obs_property_list_add_int(zmode, obs_module_text("Zoom.Mode.Off"), static_cast<int>(ZoomMode::Off));
+	obs_property_list_add_int(zmode, obs_module_text("Zoom.Mode.Auto"), static_cast<int>(ZoomMode::Auto));
+	obs_property_list_add_int(zmode, obs_module_text("Zoom.Mode.Manual"), static_cast<int>(ZoomMode::Manual));
+
+	obs_properties_add_float_slider(zoom, kZoomAmount, obs_module_text("Zoom.Amount"), 1.0, 4.0, 0.05);
+	obs_properties_add_float_slider(zoom, kZoomDurationMs, obs_module_text("Zoom.DurationMs"), 100.0, 2000.0,
+					10.0);
+	obs_properties_add_float_slider(zoom, kZoomIdleTimeoutMs, obs_module_text("Zoom.IdleTimeoutMs"), 200.0,
+					10000.0, 50.0);
+	obs_property_t *pan = obs_properties_add_float_slider(
+		zoom, kZoomPanAmount, obs_module_text("Zoom.PanAmount"), 0.0, 1.0, 0.01);
+	set_tip(pan, obs_module_text("Tooltip.ZoomPan"));
+	obs_property_t *center = obs_properties_add_float_slider(
+		zoom, kZoomCenterAmount, obs_module_text("Zoom.CenterAmount"), 0.0, 1.0, 0.01);
+	set_tip(center, obs_module_text("Tooltip.ZoomCentering"));
+	obs_properties_add_group(props, "grp_zoom", obs_module_text("Group.Zoom"), OBS_GROUP_NORMAL, zoom);
+
+	/* ---------------- Motion blur ---------------- */
+	obs_properties_t *mb = obs_properties_create();
+	obs_properties_add_bool(mb, kMotionBlurEnabled, obs_module_text("MotionBlur.Enabled"));
+	obs_properties_add_float_slider(mb, kMotionBlurAmount, obs_module_text("MotionBlur.Amount"), 0.0, 1.0,
+					0.01);
+	obs_properties_add_group(props, "grp_motionblur", obs_module_text("Group.MotionBlur"), OBS_GROUP_NORMAL, mb);
+
 	/* ---------------- Cursor ---------------- */
 	obs_properties_t *cur = obs_properties_create();
 	obs_properties_add_bool(cur, kCursorEnabled, obs_module_text("Cursor.Enabled"));
@@ -458,9 +486,11 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 	/* ---------------- Click sound ---------------- */
 	obs_properties_t *snd = obs_properties_create();
 	obs_properties_add_bool(snd, kClickSoundEnabled, obs_module_text("ClickSound.Enabled"));
+	obs_properties_add_bool(snd, kClickSoundLeft, obs_module_text("ClickSound.Left"));
 	obs_property_t *sndleft = obs_properties_add_list(snd, kClickSoundFileLeft,
 							 obs_module_text("ClickSound.LeftSound"),
 							 OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
+	obs_properties_add_bool(snd, kClickSoundRight, obs_module_text("ClickSound.Right"));
 	obs_property_t *sndright = obs_properties_add_list(snd, kClickSoundFileRight,
 							   obs_module_text("ClickSound.RightSound"),
 							   OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
@@ -470,37 +500,7 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 	}
 	obs_properties_add_float_slider(snd, kClickSoundVolume, obs_module_text("ClickSound.Volume"), 0.0, 1.0,
 					0.01);
-	obs_properties_add_bool(snd, kClickSoundLeft, obs_module_text("ClickSound.Left"));
-	obs_properties_add_bool(snd, kClickSoundRight, obs_module_text("ClickSound.Right"));
 	obs_properties_add_group(props, "grp_sound", obs_module_text("Group.ClickSound"), OBS_GROUP_NORMAL, snd);
-
-	/* ---------------- Zoom ---------------- */
-	obs_properties_t *zoom = obs_properties_create();
-	obs_property_t *zmode = obs_properties_add_list(zoom, kZoomMode, obs_module_text("Zoom.Mode"),
-							OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
-	obs_property_list_add_int(zmode, obs_module_text("Zoom.Mode.Off"), static_cast<int>(ZoomMode::Off));
-	obs_property_list_add_int(zmode, obs_module_text("Zoom.Mode.Auto"), static_cast<int>(ZoomMode::Auto));
-	obs_property_list_add_int(zmode, obs_module_text("Zoom.Mode.Manual"), static_cast<int>(ZoomMode::Manual));
-
-	obs_properties_add_float_slider(zoom, kZoomAmount, obs_module_text("Zoom.Amount"), 1.0, 4.0, 0.05);
-	obs_properties_add_float_slider(zoom, kZoomDurationMs, obs_module_text("Zoom.DurationMs"), 100.0, 2000.0,
-					10.0);
-	obs_properties_add_float_slider(zoom, kZoomIdleTimeoutMs, obs_module_text("Zoom.IdleTimeoutMs"), 200.0,
-					10000.0, 50.0);
-	obs_property_t *pan = obs_properties_add_float_slider(
-		zoom, kZoomPanAmount, obs_module_text("Zoom.PanAmount"), 0.0, 1.0, 0.01);
-	set_tip(pan, obs_module_text("Tooltip.ZoomPan"));
-	obs_property_t *center = obs_properties_add_float_slider(
-		zoom, kZoomCenterAmount, obs_module_text("Zoom.CenterAmount"), 0.0, 1.0, 0.01);
-	set_tip(center, obs_module_text("Tooltip.ZoomCentering"));
-	obs_properties_add_group(props, "grp_zoom", obs_module_text("Group.Zoom"), OBS_GROUP_NORMAL, zoom);
-
-	/* ---------------- Motion blur ---------------- */
-	obs_properties_t *mb = obs_properties_create();
-	obs_properties_add_bool(mb, kMotionBlurEnabled, obs_module_text("MotionBlur.Enabled"));
-	obs_properties_add_float_slider(mb, kMotionBlurAmount, obs_module_text("MotionBlur.Amount"), 0.0, 1.0,
-					0.01);
-	obs_properties_add_group(props, "grp_motionblur", obs_module_text("Group.MotionBlur"), OBS_GROUP_NORMAL, mb);
 
 	/* ---------------- Spotlight ---------------- */
 	obs_properties_t *spot = obs_properties_create();
@@ -836,6 +836,84 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 	tip(kHighlightHoldMs, obs_module_text("Tooltip.HighlightHold"));
 	tip(kHighlightFadeMs, obs_module_text("Tooltip.HighlightFade"));
 	tip(kMonitorManual, obs_module_text("Tooltip.MonitorManual"));
+	/* Secondary tooltips for the remaining controls. */
+	tip(kBgColorA, obs_module_text("Tooltip.kBgColorA"));
+	tip(kBgColorB, obs_module_text("Tooltip.kBgColorB"));
+	tip(kBgEnabled, obs_module_text("Tooltip.kBgEnabled"));
+	tip(kBgGradientAngle, obs_module_text("Tooltip.kBgGradientAngle"));
+	tip(kBgGradientCenterX, obs_module_text("Tooltip.kBgGradientCenterX"));
+	tip(kBgGradientCenterY, obs_module_text("Tooltip.kBgGradientCenterY"));
+	tip(kBgImage, obs_module_text("Tooltip.kBgImage"));
+	tip(kBgImageBlur, obs_module_text("Tooltip.kBgImageBlur"));
+	tip(kBgImageBlurType, obs_module_text("Tooltip.kBgImageBlurType"));
+	tip(kBgImageFile, obs_module_text("Tooltip.kBgImageFile"));
+	tip(kBgKeepAspect, obs_module_text("Tooltip.kBgKeepAspect"));
+	tip(kBgShadow, obs_module_text("Tooltip.kBgShadow"));
+	tip(kBgShadowAlpha, obs_module_text("Tooltip.kBgShadowAlpha"));
+	tip(kBgShadowBlur, obs_module_text("Tooltip.kBgShadowBlur"));
+	tip(kBgShadowOffset, obs_module_text("Tooltip.kBgShadowOffset"));
+	tip(kBgShadowOffsetX, obs_module_text("Tooltip.kBgShadowOffsetX"));
+	tip(kClickSoundEnabled, obs_module_text("Tooltip.kClickSoundEnabled"));
+	tip(kClickSoundFileLeft, obs_module_text("Tooltip.kClickSoundFileLeft"));
+	tip(kClickSoundFileRight, obs_module_text("Tooltip.kClickSoundFileRight"));
+	tip(kClickSoundLeft, obs_module_text("Tooltip.kClickSoundLeft"));
+	tip(kClickSoundRight, obs_module_text("Tooltip.kClickSoundRight"));
+	tip(kCursorEnabled, obs_module_text("Tooltip.kCursorEnabled"));
+	tip(kCursorIdleDelayMs, obs_module_text("Tooltip.kCursorIdleDelayMs"));
+	tip(kCursorLoopMs, obs_module_text("Tooltip.kCursorLoopMs"));
+	tip(kCursorShadow, obs_module_text("Tooltip.kCursorShadow"));
+	tip(kHighlightColor, obs_module_text("Tooltip.kHighlightColor"));
+	tip(kHighlightEnabled, obs_module_text("Tooltip.kHighlightEnabled"));
+	tip(kHighlightHotkeyEnabled, obs_module_text("Tooltip.kHighlightHotkeyEnabled"));
+	tip(kHighlightPressDelayMs, obs_module_text("Tooltip.kHighlightPressDelayMs"));
+	tip(kHighlightThickness, obs_module_text("Tooltip.kHighlightThickness"));
+	tip(kHighlightZoomDelayMs, obs_module_text("Tooltip.kHighlightZoomDelayMs"));
+	tip(kHighlightZoomDir, obs_module_text("Tooltip.kHighlightZoomDir"));
+	tip(kHighlightZoomHoldMs, obs_module_text("Tooltip.kHighlightZoomHoldMs"));
+	tip(kHighlightZoomInMs, obs_module_text("Tooltip.kHighlightZoomInMs"));
+	tip(kHighlightZoomMax, obs_module_text("Tooltip.kHighlightZoomMax"));
+	tip(kHighlightZoomOutMs, obs_module_text("Tooltip.kHighlightZoomOutMs"));
+	tip(kKeysBandColor, obs_module_text("Tooltip.kKeysBandColor"));
+	tip(kKeysColor, obs_module_text("Tooltip.kKeysColor"));
+	tip(kKeysFont, obs_module_text("Tooltip.kKeysFont"));
+	tip(kKeysShadow, obs_module_text("Tooltip.kKeysShadow"));
+	tip(kMagnifierBorderColor, obs_module_text("Tooltip.kMagnifierBorderColor"));
+	tip(kMagnifierBorderEnabled, obs_module_text("Tooltip.kMagnifierBorderEnabled"));
+	tip(kMagnifierBorderWidth, obs_module_text("Tooltip.kMagnifierBorderWidth"));
+	tip(kMagnifierCenterX, obs_module_text("Tooltip.kMagnifierCenterX"));
+	tip(kMagnifierCenterY, obs_module_text("Tooltip.kMagnifierCenterY"));
+	tip(kMagnifierCornerRadius, obs_module_text("Tooltip.kMagnifierCornerRadius"));
+	tip(kMagnifierDropPx, obs_module_text("Tooltip.kMagnifierDropPx"));
+	tip(kMagnifierShadowAlpha, obs_module_text("Tooltip.kMagnifierShadowAlpha"));
+	tip(kMagnifierShadowBlur, obs_module_text("Tooltip.kMagnifierShadowBlur"));
+	tip(kMagnifierShadowColor, obs_module_text("Tooltip.kMagnifierShadowColor"));
+	tip(kMagnifierShadowEnabled, obs_module_text("Tooltip.kMagnifierShadowEnabled"));
+	tip(kMagnifierShadowOffsetX, obs_module_text("Tooltip.kMagnifierShadowOffsetX"));
+	tip(kMagnifierShadowOffsetY, obs_module_text("Tooltip.kMagnifierShadowOffsetY"));
+	tip(kMonitorX, obs_module_text("Tooltip.kMonitorX"));
+	tip(kMonitorY, obs_module_text("Tooltip.kMonitorY"));
+	tip(kMotionBlurEnabled, obs_module_text("Tooltip.kMotionBlurEnabled"));
+	tip(kProfileCurrent, obs_module_text("Tooltip.kProfileCurrent"));
+	tip(kProfileExportPath, obs_module_text("Tooltip.kProfileExportPath"));
+	tip(kProfileImportPath, obs_module_text("Tooltip.kProfileImportPath"));
+	tip(kSpotlightBlurAmount, obs_module_text("Tooltip.kSpotlightBlurAmount"));
+	tip(kSpotlightBlurEnabled, obs_module_text("Tooltip.kSpotlightBlurEnabled"));
+	tip(kSpotlightBorderColor, obs_module_text("Tooltip.kSpotlightBorderColor"));
+	tip(kSpotlightBorderEnabled, obs_module_text("Tooltip.kSpotlightBorderEnabled"));
+	tip(kSpotlightBorderWidth, obs_module_text("Tooltip.kSpotlightBorderWidth"));
+	tip(kSpotlightCornerRadius, obs_module_text("Tooltip.kSpotlightCornerRadius"));
+	tip(kSpotlightDropPx, obs_module_text("Tooltip.kSpotlightDropPx"));
+	tip(kSpotlightInMs, obs_module_text("Tooltip.kSpotlightInMs"));
+	tip(kSpotlightOutMs, obs_module_text("Tooltip.kSpotlightOutMs"));
+	tip(kSpotlightShadowAlpha, obs_module_text("Tooltip.kSpotlightShadowAlpha"));
+	tip(kSpotlightShadowBlur, obs_module_text("Tooltip.kSpotlightShadowBlur"));
+	tip(kSpotlightShadowColor, obs_module_text("Tooltip.kSpotlightShadowColor"));
+	tip(kSpotlightShadowEnabled, obs_module_text("Tooltip.kSpotlightShadowEnabled"));
+	tip(kSpotlightShadowOffsetX, obs_module_text("Tooltip.kSpotlightShadowOffsetX"));
+	tip(kSpotlightShadowOffsetY, obs_module_text("Tooltip.kSpotlightShadowOffsetY"));
+	tip(kZoomCenterAmount, obs_module_text("Tooltip.kZoomCenterAmount"));
+	tip(kZoomDurationMs, obs_module_text("Tooltip.kZoomDurationMs"));
+	tip(kZoomPanAmount, obs_module_text("Tooltip.kZoomPanAmount"));
 	return props;
 }
 

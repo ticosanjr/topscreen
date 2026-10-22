@@ -222,6 +222,7 @@ void ts_input_platform_poll(void *state, InputState *out)
 
 #if defined(TOPSCREEN_HAVE_X11)
 #include <X11/XKBlib.h>
+#include <X11/XKBlib.h>
 #include <X11/Xlib.h>
 #include <X11/keysym.h>
 #include <cctype>
@@ -368,25 +369,23 @@ uint32_t x11_modifiers(Display *dpy)
 {
 	if (!dpy)
 		return 0;
-	char keys[32] = {};
-	XQueryKeymap(dpy, keys);
-	auto down = [&](KeySym sym) {
-		const KeyCode kc = XKeysymToKeycode(dpy, sym);
-		if (!kc)
-			return false;
-		const unsigned char bit = static_cast<unsigned char>(1u << (kc & 7));
-		return (keys[kc >> 3] & bit) != 0;
-	};
-	uint32_t mods = 0;
-	if (down(XK_Shift_L) || down(XK_Shift_R))
-		mods |= core::KeyModShift;
-	if (down(XK_Control_L) || down(XK_Control_R))
-		mods |= core::KeyModCtrl;
-	if (down(XK_Alt_L) || down(XK_Alt_R))
-		mods |= core::KeyModAlt;
-	if (down(XK_Super_L) || down(XK_Super_R) || down(XK_Meta_L) || down(XK_Meta_R))
-		mods |= core::KeyModWin;
-	return mods;
+
+	/* XKB returns all modifier masks in one call; the old path needed one
+	 * XKeysymToKeycode() per modifier on every poll. */
+	XkbStateRec state;
+	if (XkbGetState(dpy, XkbUseCoreKbd, &state) == Success) {
+		uint32_t mods = 0;
+		if (state.mods & ShiftMask)
+			mods |= core::KeyModShift;
+		if (state.mods & ControlMask)
+			mods |= core::KeyModCtrl;
+		if (state.mods & Mod1Mask)
+			mods |= core::KeyModAlt;
+		if (state.mods & Mod4Mask)
+			mods |= core::KeyModWin;
+		return mods;
+	}
+	return 0;
 }
 #endif
 
@@ -509,7 +508,8 @@ void ts_input_platform_poll(void *state, InputState *out)
 			out->left = (mask & Button1Mask) != 0;
 			out->right = (mask & Button3Mask) != 0;
 		}
-		out->modifiers = x11_modifiers(s->dpy);
+		if (!evdev)
+			out->modifiers = x11_modifiers(s->dpy);
 
 #if defined(TOPSCREEN_HAVE_XFIXES)
 		/* Cursor-shape lookup allocates; poll it at ~10 Hz instead of 60 Hz. */

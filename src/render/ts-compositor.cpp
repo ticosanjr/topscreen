@@ -42,6 +42,143 @@ inline void set_c(gs_eparam_t *p, uint32_t abgr)
 		gs_effect_set_color(p, core::abgr_to_argb(abgr));
 }
 
+inline int clamp_index(int v, int n)
+{
+	return v < 0 ? 0 : (v >= n ? n - 1 : v);
+}
+
+/* Separable box blur for the static wallpaper. The source is already
+ * downscaled by the caller, so this runs once per image/blur setting change
+ * instead of once per screen pixel per frame. */
+void box_blur_pass(const uint8_t *src, uint8_t *dst, int w, int h, int radius, bool horizontal)
+{
+	const int div = radius * 2 + 1;
+	if (horizontal) {
+		for (int y = 0; y < h; ++y) {
+			int s0 = 0, s1 = 0, s2 = 0, s3 = 0;
+			for (int k = -radius; k <= radius; ++k) {
+				const int x = clamp_index(k, w);
+				const int i = (y * w + x) * 4;
+				s0 += src[i];
+				s1 += src[i + 1];
+				s2 += src[i + 2];
+				s3 += src[i + 3];
+			}
+			for (int x = 0; x < w; ++x) {
+				const int o = (y * w + x) * 4;
+				dst[o] = static_cast<uint8_t>(s0 / div);
+				dst[o + 1] = static_cast<uint8_t>(s1 / div);
+				dst[o + 2] = static_cast<uint8_t>(s2 / div);
+				dst[o + 3] = static_cast<uint8_t>(s3 / div);
+
+				const int xo = clamp_index(x - radius, w);
+				const int xi = clamp_index(x + radius + 1, w);
+				const int io = (y * w + xo) * 4;
+				const int ii = (y * w + xi) * 4;
+				s0 += src[ii] - src[io];
+				s1 += src[ii + 1] - src[io + 1];
+				s2 += src[ii + 2] - src[io + 2];
+				s3 += src[ii + 3] - src[io + 3];
+			}
+		}
+		return;
+	}
+
+	for (int x = 0; x < w; ++x) {
+		int s0 = 0, s1 = 0, s2 = 0, s3 = 0;
+		for (int k = -radius; k <= radius; ++k) {
+			const int y = clamp_index(k, h);
+			const int i = (y * w + x) * 4;
+			s0 += src[i];
+			s1 += src[i + 1];
+			s2 += src[i + 2];
+			s3 += src[i + 3];
+		}
+		for (int y = 0; y < h; ++y) {
+			const int o = (y * w + x) * 4;
+			dst[o] = static_cast<uint8_t>(s0 / div);
+			dst[o + 1] = static_cast<uint8_t>(s1 / div);
+			dst[o + 2] = static_cast<uint8_t>(s2 / div);
+			dst[o + 3] = static_cast<uint8_t>(s3 / div);
+
+			const int yo = clamp_index(y - radius, h);
+			const int yi = clamp_index(y + radius + 1, h);
+			const int io = (yo * w + x) * 4;
+			const int ii = (yi * w + x) * 4;
+			s0 += src[ii] - src[io];
+			s1 += src[ii + 1] - src[io + 1];
+			s2 += src[ii + 2] - src[io + 2];
+			s3 += src[ii + 3] - src[io + 3];
+		}
+	}
+}
+
+core::Image resize_rgba(const core::Image &src, int dw, int dh)
+{
+	core::Image out;
+	out.width = dw;
+	out.height = dh;
+	out.pixels.resize(static_cast<size_t>(dw) * static_cast<size_t>(dh) * 4u);
+	if (dw == src.width && dh == src.height) {
+		out.pixels = src.pixels;
+		return out;
+	}
+
+	for (int y = 0; y < dh; ++y) {
+		const float sy = (static_cast<float>(y) + 0.5f) *
+				 static_cast<float>(src.height) / static_cast<float>(dh) - 0.5f;
+		const int y0 = static_cast<int>(std::floor(sy));
+		const int y1 = clamp_index(y0 + 1, src.height);
+		const float fy = sy - static_cast<float>(y0);
+		for (int x = 0; x < dw; ++x) {
+			const float sx = (static_cast<float>(x) + 0.5f) *
+					 static_cast<float>(src.width) / static_cast<float>(dw) - 0.5f;
+			const int x0 = clamp_index(static_cast<int>(std::floor(sx)), src.width);
+			const int x1 = clamp_index(x0 + 1, src.width);
+			const float fx = sx - static_cast<float>(static_cast<int>(std::floor(sx)));
+			const int i00 = (clamp_index(y0, src.height) * src.width + x0) * 4;
+			const int i10 = (clamp_index(y0, src.height) * src.width + x1) * 4;
+			const int i01 = (y1 * src.width + x0) * 4;
+			const int i11 = (y1 * src.width + x1) * 4;
+			const int o = (y * dw + x) * 4;
+			for (int c = 0; c < 4; ++c) {
+				const float a = src.pixels[i00 + c] * (1.0f - fx) + src.pixels[i10 + c] * fx;
+				const float b = src.pixels[i01 + c] * (1.0f - fx) + src.pixels[i11 + c] * fx;
+				out.pixels[o + c] = static_cast<uint8_t>(a * (1.0f - fy) + b * fy + 0.5f);
+			}
+		}
+	}
+	return out;
+}
+
+core::Image prefilter_wallpaper(const core::Image &src, uint32_t target_w, uint32_t target_h,
+				double blur, int blur_type)
+{
+	if (src.empty() || blur <= 0.01 || blur_type <= 0)
+		return src;
+
+	const float spread = blur_type < 1.5 ? 0.70f : (blur_type >= 3.5 ? 0.66f :
+								 (blur_type >= 2.5 ? 0.62f : 0.50f));
+	int bw = src.width;
+	int bh = src.height;
+	if (blur >= 4.0 && bw > 960) {
+		bw = std::max(1, bw / 2);
+		bh = std::max(1, bh / 2);
+	}
+	core::Image out = resize_rgba(src, bw, bh);
+
+	const float scale = std::max(static_cast<float>(bw) / static_cast<float>(std::max(target_w, 1u)),
+				     static_cast<float>(bh) / static_cast<float>(std::max(target_h, 1u)));
+	const int radius = static_cast<int>(std::lround(blur * spread * scale));
+	if (radius <= 0)
+		return out;
+
+	std::vector<uint8_t> tmp(out.pixels.size());
+	box_blur_pass(out.pixels.data(), tmp.data(), bw, bh, radius, true);
+	box_blur_pass(tmp.data(), out.pixels.data(), bw, bh, radius, false);
+	return out;
+}
+
 } // namespace
 
 Compositor::~Compositor()
@@ -181,8 +318,6 @@ void Compositor::cache_params()
 	p_bg_tex_aspect_ = P("bg_tex_aspect");
 	p_bg_transparent_ = P("bg_transparent");
 	p_bg_keep_aspect_ = P("bg_keep_aspect");
-	p_bg_blur_ = P("bg_blur");
-	p_bg_blur_type_ = P("bg_blur_type");
 	p_shadow_alpha_ = P("shadow_alpha");
 	p_shadow_blur_ = P("shadow_blur");
 	p_shadow_offset_ = P("shadow_offset");
@@ -295,8 +430,6 @@ bool Compositor::validate_params() const
 		"bg_transparent",
 		"bg_tex_aspect",
 		"bg_keep_aspect",
-		"bg_blur",
-		"bg_blur_type",
 		"shadow_alpha",
 		"shadow_blur",
 		"shadow_offset",
@@ -429,8 +562,6 @@ void Compositor::release()
 	p_bg_gradient_center_ = p_bg_gradient_dir_ = nullptr;
 	p_bg_tex_ = p_bg_tex_enabled_ = p_bg_tex_aspect_ = p_bg_transparent_ = nullptr;
 	p_bg_keep_aspect_ = nullptr;
-	p_bg_blur_ = nullptr;
-	p_bg_blur_type_ = nullptr;
 	p_shadow_alpha_ = p_shadow_blur_ = p_shadow_offset_ = nullptr;
 	p_cursor_enabled_ = p_cursor_pos_ = p_cursor_scale_ = nullptr;
 	p_cursor_opacity_ = p_cursor_rotation_ = p_cursor_shadow_ = nullptr;
@@ -528,9 +659,14 @@ void Compositor::render(obs_source_t *filter, obs_source_t *target, uint32_t wid
 	 * string so the hot path does not allocate. */
 	const bool wallpaper = bg && cfg.bg.mode == static_cast<int>(core::BgMode::Wallpaper);
 	const bool bg_transparent = wallpaper && wallpaper_is_transparent(cfg.bg.image.c_str());
+	/* Quantize the target size used by the wallpaper prefilter: a one-pixel
+	 * canvas change must not rebuild a multi-megapixel texture. */
+	const uint32_t blur_w = (w + 15u) & ~15u;
+	const uint32_t blur_h = (h + 15u) & ~15u;
 	load_bg_image(wallpaper && !bg_transparent
 			      ? core::resolve_bg_path(cfg.bg.image.c_str(), cfg.bg.image_file.c_str())
-			      : "");
+			      : "",
+		      blur_w, blur_h, cfg.bg.image_blur, cfg.bg.image_blur_type);
 	const bool bgimg = wallpaper && !bg_transparent && bg_tex_ != nullptr;
 	set_f(p_bg_transparent_, bg_transparent ? 1.0f : 0.0f);
 	/* D3D11 aborts the draw ("Not all shader parameters were set") when any
@@ -538,8 +674,6 @@ void Compositor::render(obs_source_t *filter, obs_source_t *target, uint32_t wid
 	 * uniform below is uploaded on EVERY frame, even with the feature off.
 	 * Textures always get a real binding (a 1x1 dummy when unused). */
 	set_f(p_bg_tex_enabled_, bgimg ? 1.0f : 0.0f);
-	set_f(p_bg_blur_, static_cast<float>(cfg.bg.image_blur));
-	set_f(p_bg_blur_type_, static_cast<float>(cfg.bg.image_blur_type));
 	set_f(p_bg_tex_aspect_, bg_aspect_);
 	if (p_bg_tex_)
 		gs_effect_set_texture(p_bg_tex_, bgimg && bg_tex_ ? bg_tex_ : dummy_tex_);
@@ -724,21 +858,83 @@ void Compositor::render(obs_source_t *filter, obs_source_t *target, uint32_t wid
 		text_.draw(st.keys, st.key_count, cfg.keys, w, h);
 }
 
-void Compositor::load_bg_image(const char *raw)
+void Compositor::load_bg_image(const char *raw, uint32_t target_w, uint32_t target_h,
+			       double blur, int blur_type)
 {
 	const char *requested = raw ? raw : "";
-	/* The requested path rarely changes: compare without building strings. */
-	if (bg_requested_ == requested)
-		return;
-	bg_requested_ = requested;
-
 	/* Auto-correction: a built-in wallpaper name from older configs
 	 * (e.g. "Aurora") becomes its path. */
-	std::string path = requested;
-	if (const char *w = wallpaper_path_for(requested))
-		path = w;
+	if (bg_requested_ != requested) {
+		bg_requested_ = requested;
 
-	if (path == bg_loaded_)
+		std::string path = requested;
+		if (const char *w = wallpaper_path_for(requested))
+			path = w;
+
+		if (path != bg_loaded_) {
+			if (bg_tex_) {
+				obs_enter_graphics();
+				gs_texture_destroy(bg_tex_);
+				obs_leave_graphics();
+				bg_tex_ = nullptr;
+			}
+			bg_image_ = core::Image{};
+			bg_loaded_ = path;
+			bg_tex_blur_ = -1.0;
+			bg_tex_blur_type_ = -1;
+			bg_tex_target_w_ = 0;
+			bg_tex_target_h_ = 0;
+			bg_width_ = 0;
+			bg_height_ = 0;
+			bg_aspect_ = 1.0f;
+
+			if (path.empty())
+				return;
+
+			std::vector<uint8_t> bytes;
+			if (!core::read_file_bytes(path.c_str(), &bytes)) {
+				char *m = obs_module_file(path.c_str());
+				if (!m) {
+					blog(LOG_WARNING, "[TopScreen] wallpaper not found: %s",
+					     path.c_str());
+					return;
+				}
+				const bool mok = core::read_file_bytes(m, &bytes);
+				bfree(m);
+				if (!mok)
+					bytes.clear();
+			}
+
+			if (bytes.empty()) {
+				blog(LOG_WARNING, "[TopScreen] empty/unreadable wallpaper: %s",
+				     path.c_str());
+				return;
+			}
+
+			std::string err;
+			if (!core::image_decode(bytes.data(), bytes.size(), &bg_image_, &err)) {
+				blog(LOG_WARNING, "[TopScreen] invalid wallpaper (%s): %s",
+				     path.c_str(), err.c_str());
+				bg_image_ = core::Image{};
+				return;
+			}
+
+			bg_aspect_ = static_cast<float>(bg_image_.width) /
+				     static_cast<float>(bg_image_.height);
+			bg_width_ = static_cast<uint32_t>(bg_image_.width);
+			bg_height_ = static_cast<uint32_t>(bg_image_.height);
+			blog(LOG_INFO, "[TopScreen] wallpaper: %s (%dx%d)", path.c_str(),
+			     bg_image_.width, bg_image_.height);
+		}
+	}
+
+	if (bg_image_.empty())
+		return;
+
+	/* Rebuild only when the source pixels, blur settings or target size change.
+	 * The expensive blur therefore runs once, not once per frame. */
+	if (bg_tex_ && bg_tex_target_w_ == target_w && bg_tex_target_h_ == target_h &&
+	    bg_tex_blur_ == blur && bg_tex_blur_type_ == blur_type)
 		return;
 
 	if (bg_tex_) {
@@ -747,48 +943,27 @@ void Compositor::load_bg_image(const char *raw)
 		obs_leave_graphics();
 		bg_tex_ = nullptr;
 	}
-	bg_loaded_ = path;
 
-	if (path.empty())
+	core::Image filtered = prefilter_wallpaper(bg_image_, target_w, target_h, blur, blur_type);
+	if (filtered.empty())
 		return;
-
-	std::vector<uint8_t> bytes;
-	if (!core::read_file_bytes(path.c_str(), &bytes)) {
-		char *m = obs_module_file(path.c_str());
-		if (!m) {
-			blog(LOG_WARNING, "[TopScreen] wallpaper not found: %s", path.c_str());
-			return;
-		}
-		const bool mok = core::read_file_bytes(m, &bytes);
-		bfree(m);
-		if (!mok)
-			bytes.clear();
-	}
-
-	if (bytes.empty()) {
-		blog(LOG_WARNING, "[TopScreen] empty/unreadable wallpaper: %s", path.c_str());
-		return;
-	}
-
-	core::Image img;
-	std::string err;
-	if (!core::image_decode(bytes.data(), bytes.size(), &img, &err)) {
-		blog(LOG_WARNING, "[TopScreen] invalid wallpaper (%s): %s", path.c_str(), err.c_str());
-		return;
-	}
-
-	bg_aspect_ = static_cast<float>(img.width) / static_cast<float>(img.height);
 
 	obs_enter_graphics();
-	const uint8_t *data[1] = {img.pixels.data()};
-	bg_tex_ = gs_texture_create(static_cast<uint32_t>(img.width), static_cast<uint32_t>(img.height), GS_RGBA, 1,
+	const uint8_t *data[1] = {filtered.pixels.data()};
+	bg_tex_ = gs_texture_create(static_cast<uint32_t>(filtered.width),
+				    static_cast<uint32_t>(filtered.height), GS_RGBA, 1,
 				    data, 0);
 	obs_leave_graphics();
 
-	if (bg_tex_)
-		blog(LOG_INFO, "[TopScreen] wallpaper: %s (%dx%d)", path.c_str(), img.width, img.height);
-	else
-		blog(LOG_WARNING, "[TopScreen] failed to create the wallpaper texture: %s", path.c_str());
+	if (bg_tex_) {
+		bg_tex_blur_ = blur;
+		bg_tex_blur_type_ = blur_type;
+		bg_tex_target_w_ = target_w;
+		bg_tex_target_h_ = target_h;
+	} else {
+		blog(LOG_WARNING, "[TopScreen] failed to create the wallpaper texture: %s",
+		     bg_loaded_.c_str());
+	}
 }
 
 void Compositor::release_bg_image()
@@ -799,8 +974,15 @@ void Compositor::release_bg_image()
 		obs_leave_graphics();
 		bg_tex_ = nullptr;
 	}
+	bg_image_ = core::Image{};
 	bg_loaded_.clear();
 	bg_requested_.clear();
+	bg_width_ = 0;
+	bg_height_ = 0;
+	bg_tex_blur_ = -1.0;
+	bg_tex_blur_type_ = -1;
+	bg_tex_target_w_ = 0;
+	bg_tex_target_h_ = 0;
 }
 
 } // namespace topscreen

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 
-project(TopScreen VERSION 0.5.1 LANGUAGES C CXX)
+project(TopScreen VERSION 0.6.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -39,6 +39,7 @@ set(TOPSCREEN_CORE_SOURCES
     src/core/evdev.cpp
     src/core/highlighter.cpp
     src/core/spotlight.cpp
+    src/core/magnifier.cpp
     src/core/cursor_atlas.cpp
     src/core/profiles.cpp
     src/core/profiles_io.cpp
@@ -179,6 +180,13 @@ if(TOPSCREEN_BUILD_PLUGIN)
             target_compile_definitions(topscreen PRIVATE TOPSCREEN_HAVE_X11)
             target_link_libraries(topscreen PRIVATE X11::X11)
             message(STATUS "TopScreen: X11 input backend enabled")
+            if(X11_Xfixes_FOUND)
+                target_compile_definitions(topscreen PRIVATE TOPSCREEN_HAVE_XFIXES)
+                target_link_libraries(topscreen PRIVATE ${X11_Xfixes_LIB})
+                message(STATUS "TopScreen: XFixes link-cursor detection enabled")
+            else()
+                message(STATUS "TopScreen: XFixes not found, link-cursor detection disabled")
+            endif()
         endif()
         include(CheckIncludeFile)
         check_include_file(linux/input.h TOPSCREEN_HAVE_LINUX_INPUT)

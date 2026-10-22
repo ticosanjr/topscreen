@@ -14,7 +14,8 @@ Mode: `auto` reacts on its own · `hotkey` only by hotkey · `always` always on.
 | **79 cursor styles** | auto | ✅ | 29 built-ins + 50 custom PNG styles grouped under `Custom`; see [`CURSORS.md`](CURSORS.md) |
 | Size | auto | ✅ | 0.5–4× |
 | Shadow | auto | ✅ | |
-| Motion smoothing | auto | ✅ | critically damped spring |
+| Motion smoothing | auto | ✅ | exact, spring, sampled glide, A→B glide |
+| Secondary cursor over links | auto | ✅ | Windows/X11; primary/secondary style pair |
 | Sway (tilts on turns) | auto | ✅ | |
 | Hide when idle | auto | ✅ | with delay |
 | Loop (returns to start) | off | ✅ | |
@@ -23,9 +24,9 @@ Mode: `auto` reacts on its own · `hotkey` only by hotkey · `always` always on.
 
 | Feature | Mode | Status | Notes |
 |---------|------|--------|-------------|
-| Left button effect | auto | ✅ | ripple / orb / ring / force / glow / echo / flare + color/size/duration/curve |
+| Left button effect | auto | ✅ | ripple / orb / ring / force / glow / echo / flare / quiet circle / water ripple + color/size/duration/curve |
 | Right button effect | auto | ✅ | independent of the left |
-| Click sound | auto | ✅ | 14 sounds (6 realistic mouse clicks + 8 FX), one per button, through the system audio |
+| Click sound | auto | ✅ | 26 bundled sounds, one per button, through the system audio |
 
 ## Framing
 
@@ -55,6 +56,7 @@ Mode: `auto` reacts on its own · `hotkey` only by hotkey · `always` always on.
 | Motion blur (from zoom) | auto | ✅ | radial blur with 3 samples |
 | Motion blur (from cursor) | auto | ⬜ | |
 | Spotlight following the cursor | hotkey | ✅ | round/square, drop/zoom, border, halo shadow and outside blur |
+| Magnifier lens | hotkey | ✅ | round/square, local-only zoom, border/shadow, follow or fixed center |
 
 ## Text and highlight
 

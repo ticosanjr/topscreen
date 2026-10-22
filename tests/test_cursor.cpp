@@ -100,3 +100,94 @@ TEST(cursor_disabled_invisible)
 	CHECK(!m.render().visible);
 	CHECK_NEAR(m.render().opacity, 0.0, 1e-9);
 }
+
+TEST(cursor_exact_mode_has_no_lag)
+{
+	CursorModel m;
+	CursorConfig cfg;
+	cfg.follow_mode = static_cast<int>(CursorFollowMode::Exact);
+	m.configure(cfg);
+	m.reset(0.0, 0.0, 0.0);
+	m.set_target(0.8, 0.6, 0.0);
+	m.update(0.0);
+	CHECK_NEAR(m.render().x, 0.8, 1e-9);
+	CHECK_NEAR(m.render().y, 0.6, 1e-9);
+}
+
+TEST(cursor_glide_ab_is_a_smooth_point_to_point)
+{
+	CursorModel m;
+	CursorConfig cfg;
+	cfg.follow_mode = static_cast<int>(CursorFollowMode::GlideAB);
+	cfg.glide_ms = 200.0;
+	m.configure(cfg);
+	m.reset(0.0, 0.0, 0.0);
+	m.set_target(1.0, 1.0, 0.0);
+
+	m.update(0.0);
+	CHECK_NEAR(m.render().x, 0.0, 1e-9);
+	m.update(100.0);
+	CHECK_NEAR(m.render().x, 0.5, 1e-3);
+	m.update(200.0);
+	CHECK_NEAR(m.render().x, 1.0, 1e-9);
+
+	/* A target that arrives while gliding is accepted at the next leg. */
+	m.set_target(0.2, 0.2, 200.0);
+	m.update(200.0);
+	m.update(400.0);
+	CHECK_NEAR(m.render().x, 0.2, 1e-9);
+}
+
+TEST(cursor_glide_sampled_uses_discrete_samples)
+{
+	CursorModel m;
+	CursorConfig cfg;
+	cfg.follow_mode = static_cast<int>(CursorFollowMode::GlideSampled);
+	cfg.glide_ms = 200.0;
+	cfg.glide_sample_ms = 100.0;
+	m.configure(cfg);
+	m.reset(0.0, 0.0, 0.0);
+	m.set_target(1.0, 1.0, 0.0);
+
+	m.update(0.0);
+	m.update(50.0);
+	CHECK(m.render().x < 0.5); /* still gliding towards the first sample */
+	m.update(100.0);
+	CHECK(m.render().x > 0.0);
+	m.update(200.0);
+	CHECK_NEAR(m.render().x, 1.0, 1e-2);
+}
+
+TEST(cursor_link_uses_the_secondary_style)
+{
+	CursorModel m;
+	CursorConfig cfg;
+	cfg.style = static_cast<int>(CursorStyle::Bibata);
+	cfg.secondary_style = static_cast<int>(CursorStyle::BibataHover);
+	m.configure(cfg);
+	m.reset(0.5, 0.5, 0.0);
+
+	CHECK_EQ(m.render().style, static_cast<int>(CursorStyle::Bibata));
+	m.set_link(true);
+	CHECK_EQ(m.render().style, static_cast<int>(CursorStyle::BibataHover));
+	m.set_link(false);
+	CHECK_EQ(m.render().style, static_cast<int>(CursorStyle::Bibata));
+
+	cfg.secondary_style = -1;
+	m.configure(cfg);
+	m.set_link(true);
+	CHECK_EQ(m.render().style, static_cast<int>(CursorStyle::Bibata));
+}
+
+TEST(cursor_link_name_classifier)
+{
+	CHECK(cursor_name_is_link("hand"));
+	CHECK(cursor_name_is_link("hand2"));
+	CHECK(cursor_name_is_link("pointer"));
+	CHECK(cursor_name_is_link("link"));
+	CHECK(cursor_name_is_link("LINK"));
+	CHECK(cursor_name_is_link("my-link-cursor"));
+	CHECK(!cursor_name_is_link("left_ptr"));
+	CHECK(!cursor_name_is_link("arrow"));
+	CHECK(!cursor_name_is_link(""));
+}

@@ -3,6 +3,7 @@
 #include "core/click_fx.hpp"
 #include "core/cursor.hpp"
 #include "core/highlighter.hpp"
+#include "core/magnifier.hpp"
 #include "core/spotlight.hpp"
 #include "core/zoom.hpp"
 
@@ -21,6 +22,7 @@ struct FrameState {
 	double zoom_blur = 0.0; // 0..1 (zoom motion blur)
 	core::HighlightRender highlight;
 	core::SpotlightRender spotlight;
+	core::MagnifierRender magnifier;
 };
 
 /** Maximum number of clicks sent to the shader (uniform limit). */

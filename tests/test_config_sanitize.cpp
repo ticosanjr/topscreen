@@ -48,6 +48,10 @@ TEST(config_sanitize_clamps_ranges_and_keeps_valid_values)
 	cfg.bg.shadow_offset_x = 500.0;
 	cfg.cursor.size = 9.0;
 	cfg.zoom.amount = 0.1;
+	cfg.cursor.follow_mode = 99;
+	cfg.cursor.glide_ms = 0.0;
+	cfg.cursor.glide_sample_ms = 1.0;
+	cfg.click_left.effect = 99;
 	cfg.keys.max_keys = 50;
 	cfg.highlight.thickness = 0.0;
 	cfg.highlight.mode = 99;
@@ -61,6 +65,10 @@ TEST(config_sanitize_clamps_ranges_and_keeps_valid_values)
 	CHECK_NEAR(cfg.bg.shadow_offset_x, 100.0, 1e-9);
 	CHECK_NEAR(cfg.cursor.size, 4.0, 1e-9);
 	CHECK_NEAR(cfg.zoom.amount, 1.0, 1e-9);
+	CHECK_EQ(cfg.cursor.follow_mode, static_cast<int>(CursorFollowMode::GlideAB));
+	CHECK_NEAR(cfg.cursor.glide_ms, 50.0, 1e-9);
+	CHECK_NEAR(cfg.cursor.glide_sample_ms, 20.0, 1e-9);
+	CHECK_EQ(cfg.click_left.effect, static_cast<int>(ClickEffect::WaterRipple));
 	CHECK_EQ(cfg.keys.max_keys, 12);
 	CHECK_NEAR(cfg.highlight.thickness, 0.001, 1e-9);
 	CHECK_EQ(cfg.highlight.mode, static_cast<int>(HighlightMode::PressZoom));
@@ -119,4 +127,29 @@ TEST(preset_apply_sanitizes_imported_values)
 	CHECK_EQ(cfg.bg.image_blur_type, 4);
 	CHECK_NEAR(cfg.cursor.size, 0.5, 1e-9);
 	CHECK_NEAR(cfg.spotlight.radius, 1.0, 1e-9);
+}
+
+TEST(config_sanitize_magnifier_and_spotlight_are_mutually_exclusive)
+{
+	Config cfg;
+	cfg.spotlight.enabled = true;
+	cfg.magnifier.enabled = true;
+	sanitize_config(&cfg);
+	CHECK(!cfg.spotlight.enabled);
+	CHECK(cfg.magnifier.enabled);
+
+	cfg.spotlight.enabled = true;
+	cfg.magnifier.enabled = false;
+	sanitize_config(&cfg);
+	CHECK(cfg.spotlight.enabled);
+	CHECK(!cfg.magnifier.enabled);
+
+	Config raw;
+	raw.magnifier.radius = 9.0;
+	raw.magnifier.zoom_amount = 0.1;
+	raw.magnifier.center_x = -4.0;
+	sanitize_config(&raw);
+	CHECK_NEAR(raw.magnifier.radius, 1.0, 1e-9);
+	CHECK_NEAR(raw.magnifier.zoom_amount, 1.0, 1e-9);
+	CHECK_NEAR(raw.magnifier.center_x, 0.0, 1e-9);
 }

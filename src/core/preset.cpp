@@ -120,9 +120,16 @@ bool Preset::apply(Config *cfg, std::string *error) const
 	/* Cursor */
 	cfg->cursor.enabled = read_bool(o, kCursorEnabled, cfg->cursor.enabled);
 	cfg->cursor.style = cursor_style_clamp(read_int(o, kCursorStyle, cfg->cursor.style));
+	cfg->cursor.secondary_style = read_int(o, kCursorSecondaryStyle, cfg->cursor.secondary_style);
+	cfg->cursor.link_detection =
+		read_bool(o, kCursorLinkDetection, cfg->cursor.link_detection);
 	cfg->cursor.size = read_number(o, kCursorSize, cfg->cursor.size);
 	cfg->cursor.shadow = read_bool(o, kCursorShadow, cfg->cursor.shadow);
+	cfg->cursor.follow_mode = read_int(o, kCursorFollowMode, cfg->cursor.follow_mode);
 	cfg->cursor.smooth = read_number(o, kCursorSmooth, cfg->cursor.smooth);
+	cfg->cursor.glide_ms = read_number(o, kCursorGlideMs, cfg->cursor.glide_ms);
+	cfg->cursor.glide_sample_ms =
+		read_number(o, kCursorGlideSampleMs, cfg->cursor.glide_sample_ms);
 	cfg->cursor.sway = read_number(o, kCursorSway, cfg->cursor.sway);
 	cfg->cursor.hide_idle = read_bool(o, kCursorHideIdle, cfg->cursor.hide_idle);
 	cfg->cursor.idle_delay_ms = read_number(o, kCursorIdleDelayMs, cfg->cursor.idle_delay_ms);
@@ -208,6 +215,39 @@ bool Preset::apply(Config *cfg, std::string *error) const
 	cfg->spotlight.in_ms = read_number(o, kSpotlightInMs, cfg->spotlight.in_ms);
 	cfg->spotlight.out_ms = read_number(o, kSpotlightOutMs, cfg->spotlight.out_ms);
 	cfg->spotlight.drop_px = read_number(o, kSpotlightDropPx, cfg->spotlight.drop_px);
+
+	/* Magnifier */
+	cfg->magnifier.enabled = read_bool(o, kMagnifierEnabled, cfg->magnifier.enabled);
+	cfg->magnifier.shape = read_int(o, kMagnifierShape, cfg->magnifier.shape);
+	cfg->magnifier.radius = read_number(o, kMagnifierRadius, cfg->magnifier.radius);
+	cfg->magnifier.corner_radius =
+		read_number(o, kMagnifierCornerRadius, cfg->magnifier.corner_radius);
+	cfg->magnifier.zoom_amount = read_number(o, kMagnifierZoom, cfg->magnifier.zoom_amount);
+	cfg->magnifier.border_enabled =
+		read_bool(o, kMagnifierBorderEnabled, cfg->magnifier.border_enabled);
+	cfg->magnifier.border_color =
+		static_cast<uint32_t>(read_number(o, kMagnifierBorderColor, cfg->magnifier.border_color));
+	cfg->magnifier.border_width =
+		read_number(o, kMagnifierBorderWidth, cfg->magnifier.border_width);
+	cfg->magnifier.shadow_enabled =
+		read_bool(o, kMagnifierShadowEnabled, cfg->magnifier.shadow_enabled);
+	cfg->magnifier.shadow_color =
+		static_cast<uint32_t>(read_number(o, kMagnifierShadowColor, cfg->magnifier.shadow_color));
+	cfg->magnifier.shadow_alpha =
+		read_number(o, kMagnifierShadowAlpha, cfg->magnifier.shadow_alpha);
+	cfg->magnifier.shadow_blur =
+		read_number(o, kMagnifierShadowBlur, cfg->magnifier.shadow_blur);
+	cfg->magnifier.shadow_offset_x =
+		read_number(o, kMagnifierShadowOffsetX, cfg->magnifier.shadow_offset_x);
+	cfg->magnifier.shadow_offset_y =
+		read_number(o, kMagnifierShadowOffsetY, cfg->magnifier.shadow_offset_y);
+	cfg->magnifier.follow_cursor =
+		read_bool(o, kMagnifierFollowCursor, cfg->magnifier.follow_cursor);
+	cfg->magnifier.center_x = read_number(o, kMagnifierCenterX, cfg->magnifier.center_x);
+	cfg->magnifier.center_y = read_number(o, kMagnifierCenterY, cfg->magnifier.center_y);
+	cfg->magnifier.in_ms = read_number(o, kMagnifierInMs, cfg->magnifier.in_ms);
+	cfg->magnifier.out_ms = read_number(o, kMagnifierOutMs, cfg->magnifier.out_ms);
+	cfg->magnifier.drop_px = read_number(o, kMagnifierDropPx, cfg->magnifier.drop_px);
 
 	/* Keys */
 	cfg->keys.enabled = read_bool(o, kKeysEnabled, cfg->keys.enabled);

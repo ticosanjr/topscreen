@@ -67,6 +67,23 @@ uniform float  spotlight_zoom;   // multiplicative scene zoom
 uniform float2 spotlight_focus;  // source uv under the cursor
 uniform float  spotlight_drop;   // vertical drop offset (px)
 
+uniform float  magnifier_enabled;
+uniform float  magnifier_amount;
+uniform float  magnifier_shape;
+uniform float  magnifier_radius;
+uniform float  magnifier_corner;
+uniform float  magnifier_zoom;
+uniform float2 magnifier_focus;  // content uv under the lens
+uniform float  magnifier_drop;
+uniform float  magnifier_border_enabled;
+uniform float4 magnifier_border_color;
+uniform float  magnifier_border_width;
+uniform float  magnifier_shadow_enabled;
+uniform float4 magnifier_shadow_color;
+uniform float  magnifier_shadow_alpha;
+uniform float  magnifier_shadow_blur;
+uniform float2 magnifier_shadow_offset;
+
 uniform float  highlight_active;
 uniform float4 highlight_rect;   // x0,y0,x1,y1 (content 0..1)
 uniform float4 highlight_color;  // rgba
@@ -250,6 +267,18 @@ float spotlight_sd(float2 px)
 	return len2(px - cpx) - rad;
 }
 
+// Signed distance to the magnifier lens, in pixels. Positive = outside.
+float magnifier_sd(float2 px)
+{
+	float2 cpx = content_to_pixel(magnifier_focus) + float2(0.0, magnifier_drop);
+	float  rad = max(magnifier_radius, 0.001) * min(target_size.x, target_size.y);
+	if (magnifier_shape > 0.5) {
+		float cr = clamp(magnifier_corner, 0.0, rad);
+		return sd_round_box(px - cpx, float2(rad, rad), cr);
+	}
+	return len2(px - cpx) - rad;
+}
+
 // Composes a click effect over the current color.
 float4 apply_click(float4 col, float2 px, float mask, float2 cu, float prog, float csize,
 		   float4 ccol, float type)
@@ -286,7 +315,7 @@ float4 apply_click(float4 col, float2 px, float mask, float2 cu, float prog, flo
 		float e1 = 1.0 - smoothstep(th - aa, th + aa, abs(dist - r));
 		float e2 = (1.0 - smoothstep(th - aa, th + aa, abs(dist - r2))) * 0.7;
 		a        = (e1 + e2) * (1.0 - prog);
-	} else {
+	} else if (type < 6.5) {
 		// flare: 4-point spark over a small disc
 		float dia = abs(local.x) + abs(local.y);
 		float arm = max(base * csize * 0.10, aa);
@@ -294,11 +323,55 @@ float4 apply_click(float4 col, float2 px, float mask, float2 cu, float prog, flo
 		float a2  = (1.0 - smoothstep(arm - aa, arm + aa, dia)) *
 			   (1.0 - smoothstep(-aa, aa, dist - r));
 		a = (a1 + a2) * (1.0 - prog);
+	} else if (type < 7.5) {
+		// quiet circle: soft translucent disc with a very thin edge
+		float disc = 1.0 - smoothstep(r - aa, r + aa, dist);
+		float edge = 1.0 - smoothstep(aa, aa * 3.0, abs(dist - r));
+		a = disc * 0.18 + edge * 0.12;
+		a *= (1.0 - prog);
+	} else {
+		// water ripple: soft expanding ring; the pixel distortion itself is
+		// applied in ripple_offset() while sampling the captured image.
+		float th = max(base * csize * 0.06, aa);
+		a = (1.0 - smoothstep(th - aa, th + aa, abs(dist - r))) * (1.0 - prog) * 0.35;
 	}
 
 	a *= ccol.a * mask;
 	col.rgb = lerp(col.rgb, ccol.rgb, saturate(a));
 	return col;
+}
+
+/* Radial UV displacement for the "Water ripple" click effect.
+ *
+ * The displacement is computed in display pixels, then converted back to
+ * source UV units so it stays glued to the click while the scene is zoomed. */
+float2 ripple_one(float2 cu, float2 center, float prog, float csize)
+{
+	float2 cs = content_size();
+	float2 delta = (cu - center) * cs * scene_zoom_value();
+	float dist = len2(delta);
+	float base = target_size.y * 0.08 * max(csize, 0.2);
+	float radius = base * prog;
+	float width = max(base * 0.22, 1.0);
+	float d = dist - radius;
+	float ring = (1.0 - smoothstep(-width, width, abs(d))) * (1.0 - prog);
+	float2 dir = dist > 0.001 ? delta / dist : float2(0.0, 0.0);
+	float amplitude = target_size.y * 0.012 * max(csize, 0.2) * (1.0 - prog) * ring;
+	return dir * amplitude / max(cs * scene_zoom_value(), float2(1.0, 1.0));
+}
+
+float2 ripple_offset(float2 cu)
+{
+	float2 o = float2(0.0, 0.0);
+	if (click_count > 0.5 && click0_type > 7.5)
+		o += ripple_one(cu, click0_pos, click0_prog, click0_size);
+	if (click_count > 1.5 && click1_type > 7.5)
+		o += ripple_one(cu, click1_pos, click1_prog, click1_size);
+	if (click_count > 2.5 && click2_type > 7.5)
+		o += ripple_one(cu, click2_pos, click2_prog, click2_size);
+	if (click_count > 3.5 && click3_type > 7.5)
+		o += ripple_one(cu, click3_pos, click3_prog, click3_size);
+	return o;
 }
 
 /* Fast 3x3 diffusion: 9 taps. Used by the "Soft" mode. */
@@ -432,6 +505,15 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 			col.rgb = lerp(col.rgb, float3(0.0, 0.0, 0.0), s * shadow_alpha);
 	}
 
+	// Magnifier outer shadow (behind the lens border/content).
+	if (magnifier_enabled > 0.5 && magnifier_amount > 0.001 &&
+	    magnifier_shadow_enabled > 0.5 && magnifier_shadow_alpha > 0.001) {
+		float sd = magnifier_sd(px - magnifier_shadow_offset);
+		float s = 1.0 - smoothstep(-magnifier_shadow_blur, magnifier_shadow_blur, sd);
+		col.rgb = lerp(col.rgb, magnifier_shadow_color.rgb,
+			       s * magnifier_shadow_alpha * magnifier_amount);
+	}
+
 	// Content: corner mask with anti-aliasing
 	float dc   = sd_round_box(p, content_half, radius);
 	float mask = 1.0 - smoothstep(-1.0, 1.0, dc);
@@ -439,6 +521,8 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 	if (mask > 0.0) {
 		float2 cs         = content_size();
 		float2 content_uv = (px - content_origin()) / cs;
+		// Distorts the captured image only; background and overlays stay sharp.
+		content_uv += ripple_offset(content_uv);
 		float2 focus      = scene_focus_value();
 		float  scene_zoom = scene_zoom_value();
 		float2 uv_screen  = focus + (content_uv - focus) / max(scene_zoom, 0.0001);
@@ -453,6 +537,23 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 			screen *= (1.0 / 3.0);
 		} else {
 			screen = image.Sample(def_sampler, uv_screen);
+		}
+
+		// Magnifier: blend a locally zoomed sample inside the lens. The
+		// spotlight zoom is global; this one changes only the lens area.
+		if (magnifier_enabled > 0.5 && magnifier_amount > 0.001) {
+			float lens_sd = magnifier_sd(px);
+			float lens_mask = (1.0 - smoothstep(-1.0, 1.0, lens_sd)) * magnifier_amount;
+			if (lens_mask > 0.001) {
+				float2 base_focus = scene_focus_value();
+				float base_zoom = scene_zoom_value();
+				float2 lens_src = base_focus + (magnifier_focus - base_focus) /
+							   max(base_zoom, 0.0001);
+				float2 uv_lens = lens_src + (uv_screen - lens_src) /
+							 max(magnifier_zoom, 1.0001);
+				float4 magnified = image.Sample(def_sampler, uv_lens);
+				screen = lerp(screen, magnified, lens_mask);
+			}
 		}
 
 		float spot_amount = saturate(spotlight_amount);
@@ -479,6 +580,16 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 			col = float4(screen.rgb, mask * screen.a);
 		else
 			col = lerp(col, screen, mask);
+
+		// Magnifier border, drawn on top of the lens content.
+		if (magnifier_enabled > 0.5 && magnifier_amount > 0.001 &&
+		    magnifier_border_enabled > 0.5 && magnifier_border_width > 0.01) {
+			float sd = magnifier_sd(px);
+			float edge = 1.0 - smoothstep(-1.0, 1.0,
+						      abs(sd) - magnifier_border_width * 0.5);
+			col.rgb = lerp(col.rgb, magnifier_border_color.rgb,
+				       edge * magnifier_border_color.a * magnifier_amount);
+		}
 
 		// Click effects (4 explicit slots)
 		if (click_count > 0.5)

@@ -40,9 +40,14 @@ void config_defaults(obs_data_t *s)
 
 	obs_data_set_default_bool(s, kCursorEnabled, def.cursor.enabled);
 	obs_data_set_default_int(s, kCursorStyle, def.cursor.style);
+	obs_data_set_default_int(s, kCursorSecondaryStyle, def.cursor.secondary_style);
+	obs_data_set_default_bool(s, kCursorLinkDetection, def.cursor.link_detection);
 	obs_data_set_default_double(s, kCursorSize, def.cursor.size);
 	obs_data_set_default_bool(s, kCursorShadow, def.cursor.shadow);
+	obs_data_set_default_int(s, kCursorFollowMode, def.cursor.follow_mode);
 	obs_data_set_default_double(s, kCursorSmooth, def.cursor.smooth);
+	obs_data_set_default_double(s, kCursorGlideMs, def.cursor.glide_ms);
+	obs_data_set_default_double(s, kCursorGlideSampleMs, def.cursor.glide_sample_ms);
 	obs_data_set_default_double(s, kCursorSway, def.cursor.sway);
 	obs_data_set_default_bool(s, kCursorHideIdle, def.cursor.hide_idle);
 	obs_data_set_default_double(s, kCursorIdleDelayMs, def.cursor.idle_delay_ms);
@@ -100,6 +105,27 @@ void config_defaults(obs_data_t *s)
 	obs_data_set_default_double(s, kSpotlightInMs, def.spotlight.in_ms);
 	obs_data_set_default_double(s, kSpotlightOutMs, def.spotlight.out_ms);
 	obs_data_set_default_double(s, kSpotlightDropPx, def.spotlight.drop_px);
+
+	obs_data_set_default_bool(s, kMagnifierEnabled, def.magnifier.enabled);
+	obs_data_set_default_int(s, kMagnifierShape, def.magnifier.shape);
+	obs_data_set_default_double(s, kMagnifierRadius, def.magnifier.radius);
+	obs_data_set_default_double(s, kMagnifierCornerRadius, def.magnifier.corner_radius);
+	obs_data_set_default_double(s, kMagnifierZoom, def.magnifier.zoom_amount);
+	obs_data_set_default_bool(s, kMagnifierBorderEnabled, def.magnifier.border_enabled);
+	obs_data_set_default_int(s, kMagnifierBorderColor, static_cast<long long>(def.magnifier.border_color));
+	obs_data_set_default_double(s, kMagnifierBorderWidth, def.magnifier.border_width);
+	obs_data_set_default_bool(s, kMagnifierShadowEnabled, def.magnifier.shadow_enabled);
+	obs_data_set_default_int(s, kMagnifierShadowColor, static_cast<long long>(def.magnifier.shadow_color));
+	obs_data_set_default_double(s, kMagnifierShadowAlpha, def.magnifier.shadow_alpha);
+	obs_data_set_default_double(s, kMagnifierShadowBlur, def.magnifier.shadow_blur);
+	obs_data_set_default_double(s, kMagnifierShadowOffsetX, def.magnifier.shadow_offset_x);
+	obs_data_set_default_double(s, kMagnifierShadowOffsetY, def.magnifier.shadow_offset_y);
+	obs_data_set_default_bool(s, kMagnifierFollowCursor, def.magnifier.follow_cursor);
+	obs_data_set_default_double(s, kMagnifierCenterX, def.magnifier.center_x);
+	obs_data_set_default_double(s, kMagnifierCenterY, def.magnifier.center_y);
+	obs_data_set_default_double(s, kMagnifierInMs, def.magnifier.in_ms);
+	obs_data_set_default_double(s, kMagnifierOutMs, def.magnifier.out_ms);
+	obs_data_set_default_double(s, kMagnifierDropPx, def.magnifier.drop_px);
 
 	obs_data_set_default_bool(s, kKeysEnabled, def.keys.enabled);
 	obs_data_set_default_bool(s, kKeysModifiersOnly, def.keys.modifiers_only);
@@ -228,9 +254,16 @@ void config_load(obs_data_t *s, Config *c, const Config *fallback)
 
 	c->cursor.enabled = read_bool(s, kCursorEnabled, d.cursor.enabled);
 	c->cursor.style = cursor_style_clamp(static_cast<int>(read_int(s, kCursorStyle, d.cursor.style)));
+	c->cursor.secondary_style =
+		static_cast<int>(read_int(s, kCursorSecondaryStyle, d.cursor.secondary_style));
+	c->cursor.link_detection = read_bool(s, kCursorLinkDetection, d.cursor.link_detection);
 	c->cursor.size = read_double(s, kCursorSize, d.cursor.size);
 	c->cursor.shadow = read_bool(s, kCursorShadow, d.cursor.shadow);
+	c->cursor.follow_mode = static_cast<int>(read_int(s, kCursorFollowMode, d.cursor.follow_mode));
 	c->cursor.smooth = read_double(s, kCursorSmooth, d.cursor.smooth);
+	c->cursor.glide_ms = read_double(s, kCursorGlideMs, d.cursor.glide_ms);
+	c->cursor.glide_sample_ms =
+		read_double(s, kCursorGlideSampleMs, d.cursor.glide_sample_ms);
 	c->cursor.sway = read_double(s, kCursorSway, d.cursor.sway);
 	c->cursor.hide_idle = read_bool(s, kCursorHideIdle, d.cursor.hide_idle);
 	c->cursor.idle_delay_ms = read_double(s, kCursorIdleDelayMs, d.cursor.idle_delay_ms);
@@ -310,6 +343,38 @@ void config_load(obs_data_t *s, Config *c, const Config *fallback)
 	c->spotlight.out_ms = read_double(s, kSpotlightOutMs, d.spotlight.out_ms);
 	c->spotlight.drop_px = read_double(s, kSpotlightDropPx, d.spotlight.drop_px);
 
+	c->magnifier.enabled = read_bool(s, kMagnifierEnabled, d.magnifier.enabled);
+	c->magnifier.shape = static_cast<int>(read_int(s, kMagnifierShape, d.magnifier.shape));
+	c->magnifier.radius = read_double(s, kMagnifierRadius, d.magnifier.radius);
+	c->magnifier.corner_radius =
+		read_double(s, kMagnifierCornerRadius, d.magnifier.corner_radius);
+	c->magnifier.zoom_amount = read_double(s, kMagnifierZoom, d.magnifier.zoom_amount);
+	c->magnifier.border_enabled =
+		read_bool(s, kMagnifierBorderEnabled, d.magnifier.border_enabled);
+	c->magnifier.border_color = static_cast<uint32_t>(
+		read_int(s, kMagnifierBorderColor, d.magnifier.border_color));
+	c->magnifier.border_width =
+		read_double(s, kMagnifierBorderWidth, d.magnifier.border_width);
+	c->magnifier.shadow_enabled =
+		read_bool(s, kMagnifierShadowEnabled, d.magnifier.shadow_enabled);
+	c->magnifier.shadow_color = static_cast<uint32_t>(
+		read_int(s, kMagnifierShadowColor, d.magnifier.shadow_color));
+	c->magnifier.shadow_alpha =
+		read_double(s, kMagnifierShadowAlpha, d.magnifier.shadow_alpha);
+	c->magnifier.shadow_blur =
+		read_double(s, kMagnifierShadowBlur, d.magnifier.shadow_blur);
+	c->magnifier.shadow_offset_x =
+		read_double(s, kMagnifierShadowOffsetX, d.magnifier.shadow_offset_x);
+	c->magnifier.shadow_offset_y =
+		read_double(s, kMagnifierShadowOffsetY, d.magnifier.shadow_offset_y);
+	c->magnifier.follow_cursor =
+		read_bool(s, kMagnifierFollowCursor, d.magnifier.follow_cursor);
+	c->magnifier.center_x = read_double(s, kMagnifierCenterX, d.magnifier.center_x);
+	c->magnifier.center_y = read_double(s, kMagnifierCenterY, d.magnifier.center_y);
+	c->magnifier.in_ms = read_double(s, kMagnifierInMs, d.magnifier.in_ms);
+	c->magnifier.out_ms = read_double(s, kMagnifierOutMs, d.magnifier.out_ms);
+	c->magnifier.drop_px = read_double(s, kMagnifierDropPx, d.magnifier.drop_px);
+
 	c->keys.enabled = read_bool(s, kKeysEnabled, d.keys.enabled);
 	c->keys.modifiers_only = read_bool(s, kKeysModifiersOnly, d.keys.modifiers_only);
 	c->keys.show_special = read_bool(s, kKeysShowSpecial, d.keys.show_special);
@@ -376,9 +441,14 @@ void config_store(obs_data_t *s, const Config &c)
 
 	obs_data_set_bool(s, kCursorEnabled, c.cursor.enabled);
 	obs_data_set_int(s, kCursorStyle, c.cursor.style);
+	obs_data_set_int(s, kCursorSecondaryStyle, c.cursor.secondary_style);
+	obs_data_set_bool(s, kCursorLinkDetection, c.cursor.link_detection);
 	obs_data_set_double(s, kCursorSize, c.cursor.size);
 	obs_data_set_bool(s, kCursorShadow, c.cursor.shadow);
+	obs_data_set_int(s, kCursorFollowMode, c.cursor.follow_mode);
 	obs_data_set_double(s, kCursorSmooth, c.cursor.smooth);
+	obs_data_set_double(s, kCursorGlideMs, c.cursor.glide_ms);
+	obs_data_set_double(s, kCursorGlideSampleMs, c.cursor.glide_sample_ms);
 	obs_data_set_double(s, kCursorSway, c.cursor.sway);
 	obs_data_set_bool(s, kCursorHideIdle, c.cursor.hide_idle);
 	obs_data_set_double(s, kCursorIdleDelayMs, c.cursor.idle_delay_ms);
@@ -434,6 +504,27 @@ void config_store(obs_data_t *s, const Config &c)
 	obs_data_set_double(s, kSpotlightInMs, c.spotlight.in_ms);
 	obs_data_set_double(s, kSpotlightOutMs, c.spotlight.out_ms);
 	obs_data_set_double(s, kSpotlightDropPx, c.spotlight.drop_px);
+
+	obs_data_set_bool(s, kMagnifierEnabled, c.magnifier.enabled);
+	obs_data_set_int(s, kMagnifierShape, c.magnifier.shape);
+	obs_data_set_double(s, kMagnifierRadius, c.magnifier.radius);
+	obs_data_set_double(s, kMagnifierCornerRadius, c.magnifier.corner_radius);
+	obs_data_set_double(s, kMagnifierZoom, c.magnifier.zoom_amount);
+	obs_data_set_bool(s, kMagnifierBorderEnabled, c.magnifier.border_enabled);
+	obs_data_set_int(s, kMagnifierBorderColor, c.magnifier.border_color);
+	obs_data_set_double(s, kMagnifierBorderWidth, c.magnifier.border_width);
+	obs_data_set_bool(s, kMagnifierShadowEnabled, c.magnifier.shadow_enabled);
+	obs_data_set_int(s, kMagnifierShadowColor, c.magnifier.shadow_color);
+	obs_data_set_double(s, kMagnifierShadowAlpha, c.magnifier.shadow_alpha);
+	obs_data_set_double(s, kMagnifierShadowBlur, c.magnifier.shadow_blur);
+	obs_data_set_double(s, kMagnifierShadowOffsetX, c.magnifier.shadow_offset_x);
+	obs_data_set_double(s, kMagnifierShadowOffsetY, c.magnifier.shadow_offset_y);
+	obs_data_set_bool(s, kMagnifierFollowCursor, c.magnifier.follow_cursor);
+	obs_data_set_double(s, kMagnifierCenterX, c.magnifier.center_x);
+	obs_data_set_double(s, kMagnifierCenterY, c.magnifier.center_y);
+	obs_data_set_double(s, kMagnifierInMs, c.magnifier.in_ms);
+	obs_data_set_double(s, kMagnifierOutMs, c.magnifier.out_ms);
+	obs_data_set_double(s, kMagnifierDropPx, c.magnifier.drop_px);
 
 	obs_data_set_bool(s, kKeysEnabled, c.keys.enabled);
 	obs_data_set_bool(s, kKeysModifiersOnly, c.keys.modifiers_only);

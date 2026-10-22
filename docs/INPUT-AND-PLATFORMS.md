@@ -10,6 +10,7 @@ cursor, clicks and keys without capturing them) is where the platforms diverge.
 |---------|---------|-----------|---------------|
 | Screen capture | DXGI / OBS | XShm / OBS | **PipeWire / OBS** ✅ |
 | Cursor position | `GetCursorPos` | `XQueryPointer` | evdev (Tier 3) / derived from the frame |
+| Link-cursor role (arrow ↔ hand) | `GetCursorInfo` + `IDC_HAND` | XFixes cursor name | ❌ no portable client API (primary cursor is used) |
 | Clicks/buttons | `GetAsyncKeyState`/hook | XInput2 raw | evdev (Tier 3) |
 | Keys (overlay) | low-level hook | XRecord/XInput2 | evdev (Tier 3) |
 | Global hotkeys | **OBS native** ✅ | **OBS native (X11 grab)** ✅ | **`GlobalShortcuts` portal** (Tier 2) |

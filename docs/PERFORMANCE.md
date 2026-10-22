@@ -49,6 +49,20 @@ When `paplay` is available, TopScreen now keeps one raw PCM stream open and
 writes the click samples to it. The one-shot spawn remains only as a fallback.
 Windows continues to use the asynchronous `PlaySoundW` path.
 
+## Cursor follow modes
+
+`Exact` and `Spring` keep the previous cost (one spring update per frame).
+`GlideSampled` updates the destination at a configurable interval (default
+90 ms) and `GlideAB` uses one eased segment per accepted target. Both reuse the
+same cursor state and add no GPU work.
+
+## Water ripple and magnifier
+
+The water-ripple click changes the sampling UV for the captured image; it adds
+no texture sample and reuses the four existing click slots. The magnifier adds
+one extra screen sample only inside the lens mask (pixels outside keep the
+normal path). Neither effect adds a render target or a second pass.
+
 ## Cursor atlas
 
 The 106-cell cursor atlas (79 visible styles + 27 reserved/transparent IDs) is a 2048×896 RGBA texture (~7.3 MB). That is small

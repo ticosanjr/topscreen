@@ -39,9 +39,14 @@ TEST(preset_covers_all_keys)
             "bg_keep_aspect": false,
             "cursor_enabled": false,
             "cursor_style": 1,
+            "cursor_secondary_style": 26,
+            "cursor_link_detection": false,
             "cursor_size": 2.5,
             "cursor_shadow": false,
+            "cursor_follow_mode": 2,
             "cursor_smooth": 0.11,
+            "cursor_glide_ms": 240,
+            "cursor_glide_sample_ms": 75,
             "cursor_sway": 0.22,
             "cursor_hide_idle": false,
             "cursor_idle_delay_ms": 333,
@@ -53,12 +58,12 @@ TEST(preset_covers_all_keys)
             "zoom_idle_timeout_ms": 555,
             "zoom_pan_amount": 0.77,
             "zoom_center_amount": 0.5,
-            "click_left_effect": 3,
+            "click_left_effect": 8,
             "click_left_size": 1.7,
             "click_left_color": 999,
             "click_left_duration_ms": 123,
             "click_left_easing": 1,
-            "click_right_effect": 2,
+            "click_right_effect": 7,
             "click_right_size": 0.4,
             "click_right_color": 888,
             "click_right_duration_ms": 321,
@@ -72,7 +77,7 @@ TEST(preset_covers_all_keys)
             "click_sound_right": true,
             "motion_blur_enabled": false,
             "motion_blur_amount": 0.66,
-            "spotlight_enabled": true,
+            "spotlight_enabled": false,
             "spotlight_radius": 0.44,
             "spotlight_dim": 0.33,
             "spotlight_shape": 1,
@@ -92,6 +97,26 @@ TEST(preset_covers_all_keys)
             "spotlight_in_ms": 180,
             "spotlight_out_ms": 230,
             "spotlight_drop_px": 30,
+            "magnifier_enabled": true,
+            "magnifier_shape": 1,
+            "magnifier_radius": 0.35,
+            "magnifier_corner_radius": 12,
+            "magnifier_zoom": 2.5,
+            "magnifier_border_enabled": true,
+            "magnifier_border_color": 4278255360,
+            "magnifier_border_width": 7,
+            "magnifier_shadow_enabled": true,
+            "magnifier_shadow_color": 4278190080,
+            "magnifier_shadow_alpha": 0.61,
+            "magnifier_shadow_blur": 26,
+            "magnifier_shadow_offset_x": 4,
+            "magnifier_shadow_offset_y": 8,
+            "magnifier_follow_cursor": false,
+            "magnifier_center_x": 0.4,
+            "magnifier_center_y": 0.6,
+            "magnifier_in_ms": 190,
+            "magnifier_out_ms": 240,
+            "magnifier_drop_px": 31,
             "keys_enabled": false,
             "keys_modifiers_only": true,
             "keys_show_special": false,
@@ -157,9 +182,14 @@ TEST(preset_covers_all_keys)
 
 	CHECK(!c.cursor.enabled);
 	CHECK_EQ(c.cursor.style, 1);
+	CHECK_EQ(c.cursor.secondary_style, 26);
+	CHECK(!c.cursor.link_detection);
 	CHECK_NEAR(c.cursor.size, 2.5, 1e-9);
 	CHECK(!c.cursor.shadow);
+	CHECK_EQ(c.cursor.follow_mode, 2);
 	CHECK_NEAR(c.cursor.smooth, 0.11, 1e-9);
+	CHECK_NEAR(c.cursor.glide_ms, 240.0, 1e-9);
+	CHECK_NEAR(c.cursor.glide_sample_ms, 75.0, 1e-9);
 	CHECK_NEAR(c.cursor.sway, 0.22, 1e-9);
 	CHECK(!c.cursor.hide_idle);
 	CHECK_NEAR(c.cursor.idle_delay_ms, 333.0, 1e-9);
@@ -173,13 +203,13 @@ TEST(preset_covers_all_keys)
 	CHECK_NEAR(c.zoom.pan_amount, 0.77, 1e-9);
 	CHECK_NEAR(c.zoom.center_amount, 0.5, 1e-9);
 
-	CHECK_EQ(c.click_left.effect, 3);
+	CHECK_EQ(c.click_left.effect, 8);
 	CHECK_NEAR(c.click_left.size, 1.7, 1e-9);
 	CHECK_EQ(c.click_left.color, 999u);
 	CHECK_NEAR(c.click_left.duration_ms, 123.0, 1e-9);
 	CHECK_EQ(c.click_left.easing, 1);
 
-	CHECK_EQ(c.click_right.effect, 2);
+	CHECK_EQ(c.click_right.effect, 7);
 	CHECK_NEAR(c.click_right.size, 0.4, 1e-9);
 	CHECK_EQ(c.click_right.color, 888u);
 	CHECK_NEAR(c.click_right.duration_ms, 321.0, 1e-9);
@@ -195,7 +225,7 @@ TEST(preset_covers_all_keys)
 	CHECK(!c.motion_blur.enabled);
 	CHECK_NEAR(c.motion_blur.amount, 0.66, 1e-9);
 
-	CHECK(c.spotlight.enabled);
+	CHECK(!c.spotlight.enabled); /* magnifier wins in the mutual-exclusion pass */
 	CHECK_NEAR(c.spotlight.radius, 0.44, 1e-9);
 	CHECK_NEAR(c.spotlight.dim, 0.33, 1e-9);
 	CHECK_EQ(c.spotlight.shape, 1);
@@ -215,6 +245,27 @@ TEST(preset_covers_all_keys)
 	CHECK_NEAR(c.spotlight.in_ms, 180.0, 1e-9);
 	CHECK_NEAR(c.spotlight.out_ms, 230.0, 1e-9);
 	CHECK_NEAR(c.spotlight.drop_px, 30.0, 1e-9);
+
+	CHECK(c.magnifier.enabled);
+	CHECK_EQ(c.magnifier.shape, 1);
+	CHECK_NEAR(c.magnifier.radius, 0.35, 1e-9);
+	CHECK_NEAR(c.magnifier.corner_radius, 12.0, 1e-9);
+	CHECK_NEAR(c.magnifier.zoom_amount, 2.5, 1e-9);
+	CHECK(c.magnifier.border_enabled);
+	CHECK_EQ(c.magnifier.border_color, 4278255360u);
+	CHECK_NEAR(c.magnifier.border_width, 7.0, 1e-9);
+	CHECK(c.magnifier.shadow_enabled);
+	CHECK_EQ(c.magnifier.shadow_color, 4278190080u);
+	CHECK_NEAR(c.magnifier.shadow_alpha, 0.61, 1e-9);
+	CHECK_NEAR(c.magnifier.shadow_blur, 26.0, 1e-9);
+	CHECK_NEAR(c.magnifier.shadow_offset_x, 4.0, 1e-9);
+	CHECK_NEAR(c.magnifier.shadow_offset_y, 8.0, 1e-9);
+	CHECK(!c.magnifier.follow_cursor);
+	CHECK_NEAR(c.magnifier.center_x, 0.4, 1e-9);
+	CHECK_NEAR(c.magnifier.center_y, 0.6, 1e-9);
+	CHECK_NEAR(c.magnifier.in_ms, 190.0, 1e-9);
+	CHECK_NEAR(c.magnifier.out_ms, 240.0, 1e-9);
+	CHECK_NEAR(c.magnifier.drop_px, 31.0, 1e-9);
 
 	CHECK(!c.keys.enabled);
 	CHECK(c.keys.modifiers_only);

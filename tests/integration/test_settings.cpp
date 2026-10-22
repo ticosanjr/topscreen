@@ -78,6 +78,11 @@ TEST(settings_store_load_roundtrip)
 	a.keys.pos_x = 0.25;
 	a.highlight.color = 0x6600E0FFu;
 	a.cursor.size = 1.5;
+	a.cursor.secondary_style = static_cast<int>(core::CursorStyle::BibataHover);
+	a.cursor.link_detection = false;
+	a.cursor.follow_mode = static_cast<int>(core::CursorFollowMode::GlideSampled);
+	a.cursor.glide_ms = 210.0;
+	a.cursor.glide_sample_ms = 70.0;
 	a.spotlight.shape = static_cast<int>(core::SpotlightShape::Square);
 	a.spotlight.border_enabled = true;
 	a.spotlight.border_color = 0xFF112233u;
@@ -88,6 +93,12 @@ TEST(settings_store_load_roundtrip)
 	a.spotlight.zoom_amount = 1.7;
 	a.spotlight.in_ms = 120.0;
 	a.spotlight.drop_px = 18.0;
+	a.magnifier.radius = 0.33;
+	a.magnifier.zoom_amount = 2.2;
+	a.magnifier.follow_cursor = false;
+	a.magnifier.center_x = 0.25;
+	a.magnifier.center_y = 0.75;
+	a.magnifier.in_ms = 111.0;
 
 	obs_data_t *s = obs_data_create();
 	config_store(s, a);
@@ -109,6 +120,11 @@ TEST(settings_store_load_roundtrip)
 	CHECK_NEAR(b.keys.pos_x, 0.25, 1e-9);
 	CHECK_EQ(b.highlight.color, a.highlight.color);
 	CHECK_NEAR(b.cursor.size, 1.5, 1e-9);
+	CHECK_EQ(b.cursor.secondary_style, a.cursor.secondary_style);
+	CHECK(!b.cursor.link_detection);
+	CHECK_EQ(b.cursor.follow_mode, a.cursor.follow_mode);
+	CHECK_NEAR(b.cursor.glide_ms, 210.0, 1e-9);
+	CHECK_NEAR(b.cursor.glide_sample_ms, 70.0, 1e-9);
 	CHECK_EQ(b.spotlight.shape, a.spotlight.shape);
 	CHECK(b.spotlight.border_enabled);
 	CHECK_EQ(b.spotlight.border_color, a.spotlight.border_color);
@@ -119,6 +135,12 @@ TEST(settings_store_load_roundtrip)
 	CHECK_NEAR(b.spotlight.zoom_amount, 1.7, 1e-9);
 	CHECK_NEAR(b.spotlight.in_ms, 120.0, 1e-9);
 	CHECK_NEAR(b.spotlight.drop_px, 18.0, 1e-9);
+	CHECK_NEAR(b.magnifier.radius, 0.33, 1e-9);
+	CHECK_NEAR(b.magnifier.zoom_amount, 2.2, 1e-9);
+	CHECK(!b.magnifier.follow_cursor);
+	CHECK_NEAR(b.magnifier.center_x, 0.25, 1e-9);
+	CHECK_NEAR(b.magnifier.center_y, 0.75, 1e-9);
+	CHECK_NEAR(b.magnifier.in_ms, 111.0, 1e-9);
 
 	obs_data_release(s);
 }

@@ -108,6 +108,19 @@ bool cursor_options_changed(obs_properties_t *props, obs_property_t *p, obs_data
 	(void)p;
 	const bool hide = setting_bool(settings, kCursorHideIdle, true);
 	const bool loop = setting_bool(settings, kCursorLoop, false);
+	const long long mode =
+		setting_int(settings, kCursorFollowMode,
+			    static_cast<long long>(CursorFollowMode::Spring));
+	const bool spring = mode == static_cast<long long>(CursorFollowMode::Spring);
+	const bool glide = mode == static_cast<long long>(CursorFollowMode::GlideSampled) ||
+			   mode == static_cast<long long>(CursorFollowMode::GlideAB);
+	const bool sampled = mode == static_cast<long long>(CursorFollowMode::GlideSampled);
+	if (obs_property_t *v = obs_properties_get(props, kCursorSmooth))
+		obs_property_set_visible(v, spring);
+	if (obs_property_t *v = obs_properties_get(props, kCursorGlideMs))
+		obs_property_set_visible(v, glide);
+	if (obs_property_t *v = obs_properties_get(props, kCursorGlideSampleMs))
+		obs_property_set_visible(v, sampled);
 	if (obs_property_t *v = obs_properties_get(props, kCursorIdleDelayMs))
 		obs_property_set_visible(v, hide);
 	if (obs_property_t *v = obs_properties_get(props, kCursorLoopMs))
@@ -123,6 +136,28 @@ bool spotlight_options_changed(obs_properties_t *props, obs_property_t *p, obs_d
 		setting_int(settings, kSpotlightShape, static_cast<long long>(SpotlightShape::Circle));
 	if (obs_property_t *v = obs_properties_get(props, kSpotlightCornerRadius))
 		obs_property_set_visible(v, shape == static_cast<long long>(SpotlightShape::Square));
+	if (setting_bool(settings, kSpotlightEnabled, false) &&
+	    setting_bool(settings, kMagnifierEnabled, false))
+		obs_data_set_bool(settings, kMagnifierEnabled, false);
+	return true;
+}
+
+/* Magnifier: same shape controls as spotlight, plus fixed-center visibility. */
+bool magnifier_options_changed(obs_properties_t *props, obs_property_t *p, obs_data_t *settings)
+{
+	(void)p;
+	const long long shape =
+		setting_int(settings, kMagnifierShape, static_cast<long long>(SpotlightShape::Circle));
+	const bool follow = setting_bool(settings, kMagnifierFollowCursor, true);
+	if (obs_property_t *v = obs_properties_get(props, kMagnifierCornerRadius))
+		obs_property_set_visible(v, shape == static_cast<long long>(SpotlightShape::Square));
+	if (obs_property_t *v = obs_properties_get(props, kMagnifierCenterX))
+		obs_property_set_visible(v, !follow);
+	if (obs_property_t *v = obs_properties_get(props, kMagnifierCenterY))
+		obs_property_set_visible(v, !follow);
+	if (setting_bool(settings, kMagnifierEnabled, false) &&
+	    setting_bool(settings, kSpotlightEnabled, false))
+		obs_data_set_bool(settings, kSpotlightEnabled, false);
 	return true;
 }
 
@@ -173,6 +208,10 @@ void add_click_group(obs_properties_t *props, const char *group_key, const char 
 				  static_cast<int>(ClickEffect::Echo));
 	obs_property_list_add_int(effect, obs_module_text("Click.Effect.Flare"),
 				  static_cast<int>(ClickEffect::Flare));
+	obs_property_list_add_int(effect, obs_module_text("Click.Effect.QuietCircle"),
+				  static_cast<int>(ClickEffect::QuietCircle));
+	obs_property_list_add_int(effect, obs_module_text("Click.Effect.WaterRipple"),
+				  static_cast<int>(ClickEffect::WaterRipple));
 
 	obs_properties_add_float_slider(g, size_key, obs_module_text("Click.Size"), 0.1, 4.0, 0.05);
 	obs_properties_add_color(g, color_key, obs_module_text("Click.Color"));
@@ -365,8 +404,34 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 	for (const auto &entry : kCursorCatalog)
 		obs_property_list_add_int(style, obs_module_text(entry.label_key), entry.style);
 
+	obs_property_t *secondary = obs_properties_add_list(
+		cur, kCursorSecondaryStyle, obs_module_text("Cursor.SecondaryStyle"),
+		OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
+	obs_property_list_add_int(secondary, obs_module_text("Cursor.SecondarySame"), -1);
+	for (const auto &entry : kCursorCatalog)
+		obs_property_list_add_int(secondary, obs_module_text(entry.label_key), entry.style);
+	set_tip(secondary, obs_module_text("Tooltip.CursorSecondary"));
+	obs_property_t *link_detection =
+		obs_properties_add_bool(cur, kCursorLinkDetection, obs_module_text("Cursor.LinkDetection"));
+	set_tip(link_detection, obs_module_text("Tooltip.CursorLinkDetection"));
+
 	obs_properties_add_float_slider(cur, kCursorSize, obs_module_text("Cursor.Size"), 0.5, 4.0, 0.05);
+	obs_property_t *follow = obs_properties_add_list(
+		cur, kCursorFollowMode, obs_module_text("Cursor.FollowMode"), OBS_COMBO_TYPE_LIST,
+		OBS_COMBO_FORMAT_INT);
+	obs_property_list_add_int(follow, obs_module_text("Cursor.Follow.Exact"),
+				  static_cast<int>(CursorFollowMode::Exact));
+	obs_property_list_add_int(follow, obs_module_text("Cursor.Follow.Spring"),
+				  static_cast<int>(CursorFollowMode::Spring));
+	obs_property_list_add_int(follow, obs_module_text("Cursor.Follow.GlideSampled"),
+				  static_cast<int>(CursorFollowMode::GlideSampled));
+	obs_property_list_add_int(follow, obs_module_text("Cursor.Follow.GlideAB"),
+				  static_cast<int>(CursorFollowMode::GlideAB));
+	obs_property_set_modified_callback(follow, cursor_options_changed);
 	obs_properties_add_float_slider(cur, kCursorSmooth, obs_module_text("Cursor.Smooth"), 0.0, 1.0, 0.01);
+	obs_properties_add_float_slider(cur, kCursorGlideMs, obs_module_text("Cursor.GlideMs"), 50.0, 1200.0, 10.0);
+	obs_properties_add_float_slider(cur, kCursorGlideSampleMs,
+					obs_module_text("Cursor.GlideSampleMs"), 20.0, 500.0, 5.0);
 	obs_properties_add_float_slider(cur, kCursorSway, obs_module_text("Cursor.Sway"), 0.0, 1.0, 0.01);
 	obs_properties_add_bool(cur, kCursorShadow, obs_module_text("Cursor.Shadow"));
 	obs_property_t *hide_idle =
@@ -439,7 +504,9 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 
 	/* ---------------- Spotlight ---------------- */
 	obs_properties_t *spot = obs_properties_create();
-	obs_properties_add_bool(spot, kSpotlightEnabled, obs_module_text("Spotlight.Enabled"));
+	obs_property_t *spot_enabled =
+		obs_properties_add_bool(spot, kSpotlightEnabled, obs_module_text("Spotlight.Enabled"));
+	obs_property_set_modified_callback(spot_enabled, spotlight_options_changed);
 
 	obs_property_t *sshape = obs_properties_add_list(
 		spot, kSpotlightShape, obs_module_text("Spotlight.Shape"), OBS_COMBO_TYPE_LIST,
@@ -510,6 +577,66 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 	obs_properties_add_group(props, "grp_spotlight", obs_module_text("Group.Spotlight"), OBS_GROUP_NORMAL,
 				 spot);
 	spotlight_options_changed(props, nullptr, settings);
+
+	/* ---------------- Magnifier ---------------- */
+	obs_properties_t *mag = obs_properties_create();
+	obs_property_t *mag_enabled =
+		obs_properties_add_bool(mag, kMagnifierEnabled, obs_module_text("Magnifier.Enabled"));
+	obs_property_t *mshape = obs_properties_add_list(
+		mag, kMagnifierShape, obs_module_text("Magnifier.Shape"), OBS_COMBO_TYPE_LIST,
+		OBS_COMBO_FORMAT_INT);
+	obs_property_list_add_int(mshape, obs_module_text("Magnifier.Shape.Circle"),
+				  static_cast<int>(SpotlightShape::Circle));
+	obs_property_list_add_int(mshape, obs_module_text("Magnifier.Shape.Square"),
+				  static_cast<int>(SpotlightShape::Square));
+	obs_property_set_modified_callback(mshape, magnifier_options_changed);
+	obs_properties_add_float_slider(mag, kMagnifierRadius, obs_module_text("Magnifier.Radius"),
+					0.05, 1.0, 0.01);
+	obs_properties_add_float_slider(mag, kMagnifierZoom, obs_module_text("Magnifier.Zoom"),
+					1.0, 4.0, 0.05);
+	obs_properties_add_float_slider(mag, kMagnifierCornerRadius,
+					obs_module_text("Magnifier.CornerRadius"), 0.0, 200.0, 1.0);
+	obs_property_t *magnifier_follow =
+		obs_properties_add_bool(mag, kMagnifierFollowCursor, obs_module_text("Magnifier.FollowCursor"));
+	obs_property_set_modified_callback(magnifier_follow, magnifier_options_changed);
+	obs_properties_add_float_slider(mag, kMagnifierCenterX, obs_module_text("Magnifier.CenterX"),
+					0.0, 1.0, 0.01);
+	obs_properties_add_float_slider(mag, kMagnifierCenterY, obs_module_text("Magnifier.CenterY"),
+					0.0, 1.0, 0.01);
+	obs_properties_t *mborder = obs_properties_create();
+	obs_properties_add_bool(mborder, kMagnifierBorderEnabled,
+				obs_module_text("Magnifier.BorderEnabled"));
+	obs_properties_add_color(mborder, kMagnifierBorderColor,
+				 obs_module_text("Magnifier.BorderColor"));
+	obs_properties_add_float_slider(mborder, kMagnifierBorderWidth,
+					obs_module_text("Magnifier.BorderWidth"), 0.5, 40.0, 0.5);
+	obs_properties_add_group(mag, "grp_magnifier_border", obs_module_text("Magnifier.BorderGroup"),
+				 OBS_GROUP_NORMAL, mborder);
+	obs_properties_t *mshadow = obs_properties_create();
+	obs_properties_add_bool(mshadow, kMagnifierShadowEnabled,
+				obs_module_text("Magnifier.ShadowEnabled"));
+	obs_properties_add_color(mshadow, kMagnifierShadowColor,
+				 obs_module_text("Magnifier.ShadowColor"));
+	obs_properties_add_float_slider(mshadow, kMagnifierShadowAlpha,
+					obs_module_text("Magnifier.ShadowAlpha"), 0.0, 1.0, 0.01);
+	obs_properties_add_float_slider(mshadow, kMagnifierShadowBlur,
+					obs_module_text("Magnifier.ShadowBlur"), 0.0, 200.0, 1.0);
+	obs_properties_add_float_slider(mshadow, kMagnifierShadowOffsetX,
+					obs_module_text("Magnifier.ShadowOffsetX"), -100.0, 100.0, 1.0);
+	obs_properties_add_float_slider(mshadow, kMagnifierShadowOffsetY,
+					obs_module_text("Magnifier.ShadowOffsetY"), -100.0, 100.0, 1.0);
+	obs_properties_add_group(mag, "grp_magnifier_shadow", obs_module_text("Magnifier.ShadowGroup"),
+				 OBS_GROUP_NORMAL, mshadow);
+	obs_properties_add_float_slider(mag, kMagnifierInMs, obs_module_text("Magnifier.InMs"),
+					0.0, 2000.0, 10.0);
+	obs_properties_add_float_slider(mag, kMagnifierOutMs, obs_module_text("Magnifier.OutMs"),
+					0.0, 2000.0, 10.0);
+	obs_properties_add_float_slider(mag, kMagnifierDropPx, obs_module_text("Magnifier.DropPx"),
+					0.0, 200.0, 1.0);
+	obs_properties_add_group(props, "grp_magnifier", obs_module_text("Group.Magnifier"),
+				 OBS_GROUP_NORMAL, mag);
+	obs_property_set_modified_callback(mag_enabled, magnifier_options_changed);
+	magnifier_options_changed(props, nullptr, settings);
 
 	/* ---------------- Keys ---------------- */
 	obs_properties_t *keys = obs_properties_create();

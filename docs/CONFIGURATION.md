@@ -40,19 +40,24 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Cursor style (grouped by theme) | `cursor_style` | int | **Bibata** 3 · 27 · 10 · 32 · 11 · 33 · 22 · 36; **Breeze** 2 · 26 · 21 · 35; **Adwaita** 4 · 28; **Yaru** 8 · 30; **DMZ** 7 · 29 · 19 · 34; **Google Dot** 5 · 20; **XCursor Pro** 9 · 31; **macOS** 0; **Windows** 1; **Effects** 12 Neon · 15 Onyx · 13 Dot; **Custom** 50 styles (see [`CURSORS.md`](CURSORS.md)) | `0` |
 | | Cursor size (1 = default) | `cursor_size` | double | 0.5–4 | `1.4` |
 | | Cursor shadow | `cursor_shadow` | bool | — | `true` |
-| | Smoothing (0 = exact tracking) | `cursor_smooth` | double | 0–1 | `0.7` |
-| | Curve tilt (sway) | `cursor_sway` | double | 0–1 | `0.3` |
+| | Smoothing (0 = exact tracking) | `cursor_smooth` | double | 0–1 | `0` |
+| | Curve tilt (sway) | `cursor_sway` | double | 0–1 | `0` |
 | | Hide cursor when idle | `cursor_hide_idle` | bool | — | `true` |
 | | Idle delay before hiding (ms) | `cursor_idle_delay_ms` | double | 0–5000 | `1200` |
 | | Return cursor to start when idle | `cursor_loop` | bool | — | `false` |
 | | Idle time before returning (ms) | `cursor_loop_ms` | double | 1000–20000 | `4000` |
+| | Secondary cursor (links) | `cursor_secondary_style` | int | -1 = same as primary; otherwise a cursor style ID | `-1` |
+| | Change cursor over links | `cursor_link_detection` | bool | Windows/X11 only | `true` |
+| | Cursor movement | `cursor_follow_mode` | int | 0 exact · 1 spring · 2 glide sampled · 3 glide A→B | `1` |
+| | Glide duration (ms) | `cursor_glide_ms` | double | 50–1200 | `180` |
+| | Glide sample interval (ms) | `cursor_glide_sample_ms` | double | 20–500 | `90` |
 | Zoom | Zoom mode | `zoom_mode` | int | 0 off, 1 auto, 2 manual | `1` |
 | | Zoom intensity (1 = no zoom) | `zoom_amount` | double | 1–4 | `1.6` |
 | | Zoom transition time (ms) | `zoom_duration_ms` | double | 100–2000 | `450` |
 | | Return to normal after idle (ms) | `zoom_idle_timeout_ms` | double | 200–10000 | `1500` |
 | | Pan intensity (0 = off) | `zoom_pan_amount` | double | 0–1 | `1.0` |
 | | Centering (0 = follows mouse, 1 = centered) | `zoom_center_amount` | double | 0–1 | `1.0` |
-| Left click | Click effect | `click_left_effect` | int | 0 ripple, 1 orb, 2 ring, 3 force, 4 glow, 5 echo, 6 flare | `0` |
+| Left click | Click effect | `click_left_effect` | int | 0 ripple, 1 orb, 2 ring, 3 force, 4 glow, 5 echo, 6 flare, 7 quiet circle, 8 water ripple | `0` |
 | | Effect size (1 = default) | `click_left_size` | double | 0.1–4 | `1.0` |
 | | Effect color | `click_left_color` | color | — | `0xFFFFFFFF` |
 | | Effect duration (ms) | `click_left_duration_ms` | double | 100–2000 | `650` |
@@ -91,6 +96,26 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Drop/zoom in (ms) | `spotlight_in_ms` | double | ms | `250` |
 | | Drop/zoom out (ms) | `spotlight_out_ms` | double | ms | `300` |
 | | Vertical drop distance (px) | `spotlight_drop_px` | double | px | `24` |
+| Magnifier | Enable magnifier lens | `magnifier_enabled` | bool | — | `false` |
+| | Lens shape | `magnifier_shape` | int | 0 circle · 1 square | `0` |
+| | Lens radius | `magnifier_radius` | double | 0.05–1 (fraction of the shorter side) | `0.28` |
+| | Lens corner radius (px) | `magnifier_corner_radius` | double | 0–200 | `0` |
+| | Magnification (x) | `magnifier_zoom` | double | 1–4 | `2.0` |
+| | Follow cursor | `magnifier_follow_cursor` | bool | — | `true` |
+| | Fixed center X | `magnifier_center_x` | double | 0–1 | `0.5` |
+| | Fixed center Y | `magnifier_center_y` | double | 0–1 | `0.5` |
+| | Lens border | `magnifier_border_enabled` | bool | — | `false` |
+| | Lens border color | `magnifier_border_color` | color | — | `0xFFFFFFFF` |
+| | Lens border width (px) | `magnifier_border_width` | double | 0.5–40 | `4` |
+| | Lens shadow | `magnifier_shadow_enabled` | bool | — | `false` |
+| | Lens shadow color | `magnifier_shadow_color` | color | — | `0xFF000000` |
+| | Lens shadow opacity | `magnifier_shadow_alpha` | double | 0–1 | `0.55` |
+| | Lens shadow blur (px) | `magnifier_shadow_blur` | double | 0–200 | `30` |
+| | Lens shadow offset X (px) | `magnifier_shadow_offset_x` | double | -100–100 | `0` |
+| | Lens shadow offset Y (px) | `magnifier_shadow_offset_y` | double | -100–100 | `12` |
+| | Zoom in (ms) | `magnifier_in_ms` | double | 0–2000 | `250` |
+| | Zoom out (ms) | `magnifier_out_ms` | double | 0–2000 | `300` |
+| | Vertical drop distance (px) | `magnifier_drop_px` | double | 0–200 | `24` |
 | Keys | Show typed keys | `keys_enabled` | bool | — | `true` |
 | | Modifiers only | `keys_modifiers_only` | bool | — | `false` |
 | | Show special keys as icons | `keys_show_special` | bool | — | `true` (off = ignore Space/Enter/arrows/modifiers) |
@@ -136,6 +161,8 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 > to the active slot (auto-save, debounced by ~0.4 s) and the chosen profile is
 > re-applied when the source loads.
 
+> Spotlight and Magnifier are mutually exclusive: enabling one disables the other. Both are full-screen focus effects and share the same transition/hotkey model.
+
 > Highlighter: the hotkey toggle is independent of the drag modes and of the
 > **Enable drag actions** switch. It uses the same Zoom settings above, so the
 > Zoom group stays visible whenever the hotkey is enabled, even in Box/Line
@@ -157,7 +184,7 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 {
   "topscreen_profiles": 1,
   "plugin": "TopScreen",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "current": 0,
   "profile_slot_0": { "effects_enabled": true },
   "profile_slot_1": { "effects_enabled": true },
@@ -201,6 +228,7 @@ they act on the filter selected in the dock, or the first active one):
 | `TopScreen_ProfileSave` | `TopScreen_ProfileSave — Save to current profile` |
 | `TopScreen_ToggleHighlight` | `TopScreen_ToggleHighlight — Toggle hotkey highlight (zoom)` |
 | `TopScreen_ToggleSpotlight` | `TopScreen_ToggleSpotlight — Toggle spotlight` |
+| `TopScreen_ToggleMagnifier` | `TopScreen_ToggleMagnifier — Toggle magnifier lens` |
 
 ## Preset format
 

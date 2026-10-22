@@ -34,6 +34,7 @@ enum HotkeyAction {
 	HK_ProfileSave,
 	HK_ToggleHighlight,
 	HK_ToggleSpotlight,
+	HK_ToggleMagnifier,
 	HK_Count,
 };
 
@@ -50,6 +51,7 @@ inline constexpr const char *kHotkeyNames[HK_Count] = {
 	"TopScreen_ProfileI",       "TopScreen_ProfileJ",         "TopScreen_ProfileSave",
 	"TopScreen_ToggleHighlight",
 	"TopScreen_ToggleSpotlight",
+	"TopScreen_ToggleMagnifier",
 };
 
 inline constexpr int kHotkeyCount = HK_Count;

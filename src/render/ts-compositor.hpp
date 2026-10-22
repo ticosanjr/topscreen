@@ -110,6 +110,23 @@ private:
 	gs_eparam_t *p_spotlight_focus_ = nullptr;
 	gs_eparam_t *p_spotlight_drop_ = nullptr;
 
+	gs_eparam_t *p_magnifier_enabled_ = nullptr;
+	gs_eparam_t *p_magnifier_amount_ = nullptr;
+	gs_eparam_t *p_magnifier_shape_ = nullptr;
+	gs_eparam_t *p_magnifier_radius_ = nullptr;
+	gs_eparam_t *p_magnifier_corner_ = nullptr;
+	gs_eparam_t *p_magnifier_zoom_ = nullptr;
+	gs_eparam_t *p_magnifier_focus_ = nullptr;
+	gs_eparam_t *p_magnifier_drop_ = nullptr;
+	gs_eparam_t *p_magnifier_border_enabled_ = nullptr;
+	gs_eparam_t *p_magnifier_border_color_ = nullptr;
+	gs_eparam_t *p_magnifier_border_width_ = nullptr;
+	gs_eparam_t *p_magnifier_shadow_enabled_ = nullptr;
+	gs_eparam_t *p_magnifier_shadow_color_ = nullptr;
+	gs_eparam_t *p_magnifier_shadow_alpha_ = nullptr;
+	gs_eparam_t *p_magnifier_shadow_blur_ = nullptr;
+	gs_eparam_t *p_magnifier_shadow_offset_ = nullptr;
+
 	gs_eparam_t *p_highlight_active_ = nullptr;
 	gs_eparam_t *p_highlight_rect_ = nullptr;
 	gs_eparam_t *p_highlight_color_ = nullptr;

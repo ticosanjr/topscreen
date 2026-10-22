@@ -152,6 +152,15 @@ void ts_input_platform_poll(void *state, InputState *out)
 	out->left = (GetAsyncKeyState(VK_LBUTTON) & 0x8000) != 0;
 	out->right = (GetAsyncKeyState(VK_RBUTTON) & 0x8000) != 0;
 
+	/* Native cursor role: the standard link hand is IDC_HAND. Custom cursor
+	 * themes still map their link cursor to this system handle. */
+	CURSORINFO ci{};
+	ci.cbSize = sizeof(ci);
+	if (GetCursorInfo(&ci)) {
+		static const HCURSOR hand = LoadCursor(nullptr, IDC_HAND);
+		out->link = (ci.hCursor == hand);
+	}
+
 	BYTE keyboard[256] = {};
 	GetKeyboardState(keyboard);
 	const bool shift = (keyboard[VK_SHIFT] & 0x80) != 0 || (keyboard[VK_LSHIFT] & 0x80) != 0 ||
@@ -195,6 +204,7 @@ void ts_input_platform_poll(void *state, InputState *out)
 #include <string>
 #include <vector>
 
+#include "core/cursor.hpp"
 #include "core/evdev.hpp"
 
 #if defined(TOPSCREEN_HAVE_X11)
@@ -202,6 +212,9 @@ void ts_input_platform_poll(void *state, InputState *out)
 #include <X11/Xlib.h>
 #include <X11/keysym.h>
 #include <cctype>
+#if defined(TOPSCREEN_HAVE_XFIXES)
+#include <X11/extensions/Xfixes.h>
+#endif
 #endif
 
 #if defined(TOPSCREEN_HAVE_EVDEV)
@@ -219,6 +232,9 @@ struct LinuxInput {
 #if defined(TOPSCREEN_HAVE_X11)
 	Display *dpy = nullptr;
 	unsigned char prev[32] = {};
+	bool xfixes = false;
+	int link_poll = 0;
+	bool link = false;
 #endif
 #if defined(TOPSCREEN_HAVE_EVDEV)
 	int fd = -1;
@@ -316,6 +332,21 @@ std::string x11_label_from_keycode(Display *dpy, int evdev_code, bool shift, boo
 	bool is_mod = false;
 	return x11_label(ks, &is_mod);
 }
+
+#if defined(TOPSCREEN_HAVE_XFIXES)
+bool x11_cursor_is_link(Display *dpy)
+{
+	if (!dpy)
+		return false;
+	XFixesCursorImage *img = XFixesGetCursorImage(dpy);
+	if (!img)
+		return false;
+
+	const bool link = img->name && core::cursor_name_is_link(img->name);
+	XFree(img);
+	return link;
+}
+#endif
 #endif
 
 #if defined(TOPSCREEN_HAVE_EVDEV)
@@ -364,8 +395,18 @@ void *ts_input_platform_start(obs_source_t *source)
 
 #if defined(TOPSCREEN_HAVE_X11)
 	s->dpy = XOpenDisplay(nullptr);
-	if (!s->dpy)
+	if (!s->dpy) {
 		blog(LOG_INFO, "[TopScreen] X11 unavailable (X11 cursor/rotation disabled)");
+	}
+#if defined(TOPSCREEN_HAVE_XFIXES)
+	else {
+		int event_base = 0;
+		int error_base = 0;
+		s->xfixes = XFixesQueryExtension(s->dpy, &event_base, &error_base);
+		if (!s->xfixes)
+			blog(LOG_INFO, "[TopScreen] XFixes unavailable (link-cursor detection disabled)");
+	}
+#endif
 #endif
 
 #if defined(TOPSCREEN_HAVE_EVDEV)
@@ -427,6 +468,13 @@ void ts_input_platform_poll(void *state, InputState *out)
 			out->left = (mask & Button1Mask) != 0;
 			out->right = (mask & Button3Mask) != 0;
 		}
+
+#if defined(TOPSCREEN_HAVE_XFIXES)
+		/* Cursor-shape lookup allocates; poll it at ~10 Hz instead of 60 Hz. */
+		if (s->xfixes && (s->link_poll++ % 6) == 0)
+			s->link = x11_cursor_is_link(s->dpy);
+		out->link = s->link;
+#endif
 	}
 #endif
 

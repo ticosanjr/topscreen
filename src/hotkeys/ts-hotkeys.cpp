@@ -52,6 +52,8 @@ const char *hotkey_description(int action)
 		return hotkey_label_or_id(obs_module_text("Hotkey.ToggleHighlight"), kHotkeyNames[action]);
 	case HK_ToggleSpotlight:
 		return hotkey_label_or_id(obs_module_text("Hotkey.ToggleSpotlight"), kHotkeyNames[action]);
+	case HK_ToggleMagnifier:
+		return hotkey_label_or_id(obs_module_text("Hotkey.ToggleMagnifier"), kHotkeyNames[action]);
 	default:
 		return "";
 	}
@@ -182,6 +184,9 @@ void ts_hotkey_callback(void *data, obs_hotkey_id id, obs_hotkey_t *key, bool pr
 		break;
 	case HK_ToggleSpotlight:
 		target->toggle_spotlight();
+		break;
+	case HK_ToggleMagnifier:
+		target->toggle_magnifier();
 		break;
 	default:
 		break;

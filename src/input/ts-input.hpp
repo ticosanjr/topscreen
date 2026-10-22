@@ -16,6 +16,7 @@ struct InputState {
 	bool right = false;
 	bool left_pressed = false;  /* rising edge this tick */
 	bool right_pressed = false; /* rising edge this tick */
+	bool link = false;          /* native pointer is over a link (Win/X11) */
 	bool available = false;
 
 	/* Keys with a rising edge this tick (for the overlay). */

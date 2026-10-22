@@ -110,9 +110,13 @@ Places the screen "floating" over a background, with corners and shadow.
 | Option | What it does |
 |-------|-----------|
 | **Show custom cursor** | Draws the own cursor (turns off the native one) |
-| **Cursor style** | One of the 79 cursors (see below) |
+| **Cursor style** | Primary cursor: one of the 79 cursors (see below) |
+| **Secondary cursor (links)** | Cursor used while the native pointer is over a link; "Same as primary" disables the swap |
+| **Change cursor over links** | Automatic on **Windows and X11**. Wayland has no portable link-cursor signal, so the primary stays active |
+| **Cursor movement** | **Exact**, **Spring smoothing**, **Glide (sampled)** or **Glide (A to B)** |
 | **Cursor size (1 = default)** | Cursor scale (1.0 = default) |
-| **Smoothing (0 = exact tracking)** | 0 = **follows the mouse exactly**; above that, it glides ("screen recorder" style) |
+| **Smoothing (0 = exact tracking)** | Spring mode: 0 = follows exactly; above that, it glides |
+| **Glide duration / sample interval** | A→B duration and how often the sampled glide takes a new destination |
 | **Curve tilt (sway)** | The cursor tilts slightly when turning |
 | **Cursor shadow** | Shadow to make it stand out from the background |
 | **Hide cursor when idle** | Disappears when you stop moving |
@@ -173,7 +177,7 @@ Each button has its own independent effect.
 
 | Option | What it does |
 |-------|-----------|
-| **Click effect** | Ripple, Orb, Ring, Force, Glow, Echo (double ring) or Flare (spark) |
+| **Click effect** | Ripple, Orb, Ring, Force, Glow, Echo (double ring), Flare (spark), **Quiet circle** or **Water ripple** (pixel distortion) |
 | **Effect size / color / duration / animation curve** | Appearance and timing of the effect |
 
 ### Click sound
@@ -225,6 +229,22 @@ instantly. Activating it drops the shape in, zooms in around the cursor and fade
 the border/shadow/dim in; deactivating reverses the animation. The spotlight
 mask and zoom focus keep following the mouse while it is active. The global
 **Effects enabled** master still applies.
+
+### Magnifier
+| Option | What it does |
+|-------|-----------|
+| **Enable magnifier lens** | Zooms only inside a circle/square; the area outside stays normal |
+| **Lens shape** | **Circle** or **Square** |
+| **Radius (fraction of screen)** | Size of the lens |
+| **Magnification (x)** | Zoom inside the lens |
+| **Follow cursor / fixed center** | Lens follows the pointer or stays at a fixed X/Y position |
+| **Border / shadow** | Optional ring and soft halo around the lens |
+| **Zoom in / out (ms)** | Activation/deactivation transition |
+| **Vertical drop distance (px)** | Drop-in/out animation distance |
+
+Assign `TopScreen_ToggleMagnifier` in **Settings → Hotkeys** to toggle it. The
+magnifier and the spotlight are mutually exclusive: enabling one disables the
+other. The global **Effects enabled** master still applies.
 
 ### Keys
 | Option | What it does |
@@ -314,7 +334,7 @@ are ignored and only normal characters remain.
 
 ## 6. Hotkeys
 
-In **Settings → Hotkeys**, search for `TopScreen`: all 20 actions are labelled
+In **Settings → Hotkeys**, search for `TopScreen`: all 21 actions are labelled
 **`TopScreen_...`** (for example `TopScreen_ProfileA — Activate profile A`), so
 they are easy to spot. They are global hotkeys, so they
 act on the **target filter selected in the dock** (or the first active one

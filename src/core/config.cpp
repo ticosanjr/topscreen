@@ -38,7 +38,7 @@ double wrapped_angle(double value, double fallback)
 void sanitize_click(ClickConfig *c, const ClickConfig &def)
 {
 	c->effect = bounded_int(c->effect, static_cast<int>(ClickEffect::Ripple),
-				static_cast<int>(ClickEffect::Flare));
+				static_cast<int>(ClickEffect::WaterRipple));
 	c->size = bounded(c->size, 0.1, 4.0, def.size);
 	c->duration_ms = bounded(c->duration_ms, 100.0, 2000.0, def.duration_ms);
 	c->easing = bounded_int(c->easing, EASE_LINEAR, EASE_IN_OUT_CUBIC);
@@ -76,8 +76,18 @@ void sanitize_config(Config *cfg)
 
 	/* Cursor */
 	cfg->cursor.style = cursor_style_resolve(cfg->cursor.style);
+	if (cfg->cursor.secondary_style < -1)
+		cfg->cursor.secondary_style = -1;
+	else if (cfg->cursor.secondary_style >= 0)
+		cfg->cursor.secondary_style = cursor_style_resolve(cfg->cursor.secondary_style);
+	cfg->cursor.follow_mode = bounded_int(cfg->cursor.follow_mode,
+					      static_cast<int>(CursorFollowMode::Exact),
+					      static_cast<int>(CursorFollowMode::GlideAB));
 	cfg->cursor.size = bounded(cfg->cursor.size, 0.5, 4.0, def.cursor.size);
 	cfg->cursor.smooth = bounded(cfg->cursor.smooth, 0.0, 1.0, def.cursor.smooth);
+	cfg->cursor.glide_ms = bounded(cfg->cursor.glide_ms, 50.0, 1200.0, def.cursor.glide_ms);
+	cfg->cursor.glide_sample_ms =
+		bounded(cfg->cursor.glide_sample_ms, 20.0, 500.0, def.cursor.glide_sample_ms);
 	cfg->cursor.sway = bounded(cfg->cursor.sway, 0.0, 1.0, def.cursor.sway);
 	cfg->cursor.idle_delay_ms =
 		bounded(cfg->cursor.idle_delay_ms, 0.0, 5000.0, def.cursor.idle_delay_ms);
@@ -131,6 +141,43 @@ void sanitize_config(Config *cfg)
 	cfg->spotlight.in_ms = bounded(cfg->spotlight.in_ms, 0.0, 2000.0, def.spotlight.in_ms);
 	cfg->spotlight.out_ms = bounded(cfg->spotlight.out_ms, 0.0, 2000.0, def.spotlight.out_ms);
 	cfg->spotlight.drop_px = bounded(cfg->spotlight.drop_px, 0.0, 200.0, def.spotlight.drop_px);
+
+	/* Magnifier */
+	cfg->magnifier.shape = bounded_int(cfg->magnifier.shape,
+					   static_cast<int>(SpotlightShape::Circle),
+					   static_cast<int>(SpotlightShape::Square));
+	cfg->magnifier.radius =
+		bounded(cfg->magnifier.radius, 0.05, 1.0, def.magnifier.radius);
+	cfg->magnifier.corner_radius =
+		bounded(cfg->magnifier.corner_radius, 0.0, 200.0, def.magnifier.corner_radius);
+	cfg->magnifier.zoom_amount =
+		bounded(cfg->magnifier.zoom_amount, 1.0, 4.0, def.magnifier.zoom_amount);
+	cfg->magnifier.center_x =
+		bounded(cfg->magnifier.center_x, 0.0, 1.0, def.magnifier.center_x);
+	cfg->magnifier.center_y =
+		bounded(cfg->magnifier.center_y, 0.0, 1.0, def.magnifier.center_y);
+	cfg->magnifier.border_width =
+		bounded(cfg->magnifier.border_width, 0.5, 40.0, def.magnifier.border_width);
+	cfg->magnifier.shadow_alpha =
+		bounded(cfg->magnifier.shadow_alpha, 0.0, 1.0, def.magnifier.shadow_alpha);
+	cfg->magnifier.shadow_blur =
+		bounded(cfg->magnifier.shadow_blur, 0.0, 200.0, def.magnifier.shadow_blur);
+	cfg->magnifier.shadow_offset_x =
+		bounded(cfg->magnifier.shadow_offset_x, -100.0, 100.0,
+			def.magnifier.shadow_offset_x);
+	cfg->magnifier.shadow_offset_y =
+		bounded(cfg->magnifier.shadow_offset_y, -100.0, 100.0,
+			def.magnifier.shadow_offset_y);
+	cfg->magnifier.in_ms =
+		bounded(cfg->magnifier.in_ms, 0.0, 2000.0, def.magnifier.in_ms);
+	cfg->magnifier.out_ms =
+		bounded(cfg->magnifier.out_ms, 0.0, 2000.0, def.magnifier.out_ms);
+	cfg->magnifier.drop_px =
+		bounded(cfg->magnifier.drop_px, 0.0, 200.0, def.magnifier.drop_px);
+
+	/* The two full-screen focus effects are mutually exclusive by design. */
+	if (cfg->magnifier.enabled)
+		cfg->spotlight.enabled = false;
 
 	/* Key overlay */
 	cfg->keys.ttl_ms = bounded(cfg->keys.ttl_ms, 500.0, 8000.0, def.keys.ttl_ms);

@@ -221,6 +221,23 @@ void Compositor::cache_params()
 	p_spotlight_focus_ = P("spotlight_focus");
 	p_spotlight_drop_ = P("spotlight_drop");
 
+	p_magnifier_enabled_ = P("magnifier_enabled");
+	p_magnifier_amount_ = P("magnifier_amount");
+	p_magnifier_shape_ = P("magnifier_shape");
+	p_magnifier_radius_ = P("magnifier_radius");
+	p_magnifier_corner_ = P("magnifier_corner");
+	p_magnifier_zoom_ = P("magnifier_zoom");
+	p_magnifier_focus_ = P("magnifier_focus");
+	p_magnifier_drop_ = P("magnifier_drop");
+	p_magnifier_border_enabled_ = P("magnifier_border_enabled");
+	p_magnifier_border_color_ = P("magnifier_border_color");
+	p_magnifier_border_width_ = P("magnifier_border_width");
+	p_magnifier_shadow_enabled_ = P("magnifier_shadow_enabled");
+	p_magnifier_shadow_color_ = P("magnifier_shadow_color");
+	p_magnifier_shadow_alpha_ = P("magnifier_shadow_alpha");
+	p_magnifier_shadow_blur_ = P("magnifier_shadow_blur");
+	p_magnifier_shadow_offset_ = P("magnifier_shadow_offset");
+
 	p_highlight_active_ = P("highlight_active");
 	p_highlight_rect_ = P("highlight_rect");
 	p_highlight_color_ = P("highlight_color");
@@ -314,6 +331,22 @@ bool Compositor::validate_params() const
 		"spotlight_zoom",
 		"spotlight_focus",
 		"spotlight_drop",
+		"magnifier_enabled",
+		"magnifier_amount",
+		"magnifier_shape",
+		"magnifier_radius",
+		"magnifier_corner",
+		"magnifier_zoom",
+		"magnifier_focus",
+		"magnifier_drop",
+		"magnifier_border_enabled",
+		"magnifier_border_color",
+		"magnifier_border_width",
+		"magnifier_shadow_enabled",
+		"magnifier_shadow_color",
+		"magnifier_shadow_alpha",
+		"magnifier_shadow_blur",
+		"magnifier_shadow_offset",
 		"highlight_active",
 		"highlight_rect",
 		"highlight_color",
@@ -410,6 +443,14 @@ void Compositor::release()
 	p_spotlight_shadow_offset_ = nullptr;
 	p_spotlight_blur_enabled_ = p_spotlight_blur_ = nullptr;
 	p_spotlight_zoom_ = p_spotlight_focus_ = p_spotlight_drop_ = nullptr;
+	p_magnifier_enabled_ = p_magnifier_amount_ = p_magnifier_shape_ = nullptr;
+	p_magnifier_radius_ = p_magnifier_corner_ = p_magnifier_zoom_ = nullptr;
+	p_magnifier_focus_ = p_magnifier_drop_ = nullptr;
+	p_magnifier_border_enabled_ = p_magnifier_border_color_ = nullptr;
+	p_magnifier_border_width_ = nullptr;
+	p_magnifier_shadow_enabled_ = p_magnifier_shadow_color_ = nullptr;
+	p_magnifier_shadow_alpha_ = p_magnifier_shadow_blur_ = nullptr;
+	p_magnifier_shadow_offset_ = nullptr;
 	p_highlight_active_ = p_highlight_rect_ = p_highlight_color_ = p_highlight_alpha_ = nullptr;
 	p_click_count_ = nullptr;
 	for (auto &c : click_)
@@ -529,9 +570,10 @@ void Compositor::render(obs_source_t *filter, obs_source_t *target, uint32_t wid
 	const bool has_atlas = (cursor_tex_ != nullptr && cursor_atlas_.count > 0);
 	set_f(p_cursor_tex_enabled_, has_atlas ? 1.0f : 0.0f);
 	{
+		const int cursor_style = st.cursor.style >= 0 ? st.cursor.style : cfg.cursor.style;
 		const uint32_t idx =
 			has_atlas ? std::min<uint32_t>(
-					    static_cast<uint32_t>(core::cursor_style_resolve(cfg.cursor.style)),
+					    static_cast<uint32_t>(core::cursor_style_resolve(cursor_style)),
 					    cursor_atlas_.count - 1)
 				  : 0u;
 		const uint32_t columns = has_atlas ? std::max<uint32_t>(cursor_atlas_.columns, 1u) : 1u;
@@ -579,6 +621,27 @@ void Compositor::render(obs_source_t *filter, obs_source_t *target, uint32_t wid
 	set_v2(p_spotlight_focus_, static_cast<float>(st.spotlight.focus_x),
 	       static_cast<float>(st.spotlight.focus_y));
 	set_f(p_spotlight_drop_, static_cast<float>(st.spotlight.drop));
+
+	/* Magnifier. Same all-uniforms-every-frame rule as Spotlight. */
+	const bool mag = active && st.magnifier.amount > 0.001;
+	set_f(p_magnifier_enabled_, mag ? 1.0f : 0.0f);
+	set_f(p_magnifier_amount_, static_cast<float>(st.magnifier.amount));
+	set_f(p_magnifier_shape_, static_cast<float>(cfg.magnifier.shape));
+	set_f(p_magnifier_radius_, static_cast<float>(cfg.magnifier.radius));
+	set_f(p_magnifier_corner_, static_cast<float>(cfg.magnifier.corner_radius));
+	set_f(p_magnifier_zoom_, static_cast<float>(st.magnifier.zoom));
+	set_v2(p_magnifier_focus_, static_cast<float>(st.magnifier.focus_x),
+	       static_cast<float>(st.magnifier.focus_y));
+	set_f(p_magnifier_drop_, static_cast<float>(st.magnifier.drop));
+	set_f(p_magnifier_border_enabled_, cfg.magnifier.border_enabled ? 1.0f : 0.0f);
+	set_c(p_magnifier_border_color_, cfg.magnifier.border_color);
+	set_f(p_magnifier_border_width_, static_cast<float>(cfg.magnifier.border_width));
+	set_f(p_magnifier_shadow_enabled_, cfg.magnifier.shadow_enabled ? 1.0f : 0.0f);
+	set_c(p_magnifier_shadow_color_, cfg.magnifier.shadow_color);
+	set_f(p_magnifier_shadow_alpha_, static_cast<float>(cfg.magnifier.shadow_alpha));
+	set_f(p_magnifier_shadow_blur_, static_cast<float>(cfg.magnifier.shadow_blur));
+	set_v2(p_magnifier_shadow_offset_, static_cast<float>(cfg.magnifier.shadow_offset_x),
+	       static_cast<float>(cfg.magnifier.shadow_offset_y));
 
 	/* Drag highlighter: only the box mode paints the rectangle. The line is
 	 * drawn by its own overlay and the zoom gesture draws nothing. */

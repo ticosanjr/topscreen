@@ -8,6 +8,7 @@
 #include "core/geometry.hpp"
 #include "core/profiles.hpp"
 #include "core/profiles_io.hpp"
+#include "core/magnifier.hpp"
 #include "core/spotlight.hpp"
 #include "hotkeys/ts-hotkeys.hpp"
 #include "input/ts-input.hpp"
@@ -52,6 +53,7 @@ enum ActionBits : uint32_t {
 	A_IMPORT_PROFILES = 1u << 12,
 	A_TOGGLE_HIGHLIGHT = 1u << 13,
 	A_TOGGLE_SPOTLIGHT = 1u << 14,
+	A_TOGGLE_MAGNIFIER = 1u << 15,
 };
 
 /* Native cursor ownership is shared by every TopScreen filter attached to the
@@ -186,6 +188,7 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 	core::KeyOverlayModel keys;
 	core::HighlighterModel highlight;
 	core::SpotlightModel spotlight;
+	core::MagnifierModel magnifier;
 	FrameState frame;
 
 	uint32_t target_w = 0;
@@ -267,6 +270,7 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 	void save_profile() override { actions_.fetch_or(A_SAVE_PROFILE); }
 	void toggle_highlight() override { actions_.fetch_or(A_TOGGLE_HIGHLIGHT); }
 	void toggle_spotlight() override { actions_.fetch_or(A_TOGGLE_SPOTLIGHT); }
+	void toggle_magnifier() override { actions_.fetch_or(A_TOGGLE_MAGNIFIER); }
 	FilterControl *filter_control() override { return this; }
 
 	/* ---- FilterControl (UI thread: only queues / reads atomic) ---- */
@@ -661,6 +665,8 @@ void ts_filter_ctx::reconfigure_models()
 	highlight.configure(cfg.highlight);
 	spotlight.configure(cfg.spotlight);
 	spotlight.set_active(cfg.spotlight.enabled, time_ms);
+	magnifier.configure(cfg.magnifier);
+	magnifier.set_active(cfg.magnifier.enabled, time_ms);
 	if (hotkey_highlight_active_.load() &&
 	    (!cfg.effects_enabled || !cfg.highlight.hotkey_enabled)) {
 		zoom.spot_release(time_ms);
@@ -810,10 +816,25 @@ void ts_filter_ctx::process_actions()
 	}
 	if (act & A_TOGGLE_SPOTLIGHT) {
 		cfg.spotlight.enabled = !cfg.spotlight.enabled;
+		if (cfg.spotlight.enabled) {
+			cfg.magnifier.enabled = false;
+			magnifier.set_active(false, time_ms);
+		}
 		spotlight.set_active(cfg.spotlight.enabled, time_ms);
 		push_settings();
 		mark_profile_dirty();
 		blog(LOG_INFO, "[TopScreen] spotlight: %s", cfg.spotlight.enabled ? "on" : "off");
+	}
+	if (act & A_TOGGLE_MAGNIFIER) {
+		cfg.magnifier.enabled = !cfg.magnifier.enabled;
+		if (cfg.magnifier.enabled) {
+			cfg.spotlight.enabled = false;
+			spotlight.set_active(false, time_ms);
+		}
+		magnifier.set_active(cfg.magnifier.enabled, time_ms);
+		push_settings();
+		mark_profile_dirty();
+		blog(LOG_INFO, "[TopScreen] magnifier: %s", cfg.magnifier.enabled ? "on" : "off");
 	}
 	if (act & A_SAVE_PROFILE)
 		do_save_profile();
@@ -952,6 +973,7 @@ void ts_filter_tick(void *data, float seconds)
 	}
 
 	ctx->input.poll();
+	ctx->cursor.set_link(ctx->input.state().link);
 
 	/* Keys feed the overlay even without a cursor available. */
 	for (int i = 0; i < ctx->input.state().key_count; ++i)
@@ -1028,6 +1050,8 @@ void ts_filter_tick(void *data, float seconds)
 	ctx->frame.cursor = ctx->cursor.render();
 	ctx->spotlight.update(ctx->time_ms, ctx->frame.cursor.x, ctx->frame.cursor.y);
 	ctx->frame.spotlight = ctx->spotlight.render();
+	ctx->magnifier.update(ctx->time_ms, ctx->frame.cursor.x, ctx->frame.cursor.y);
+	ctx->frame.magnifier = ctx->magnifier.render();
 	ctx->frame.zoom = ctx->zoom.render();
 	ctx->frame.click_count = ctx->clicks.collect(ctx->time_ms, ctx->frame.clicks, kShaderClickSlots);
 	ctx->frame.key_count =

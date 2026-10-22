@@ -66,13 +66,13 @@ That is where all the math and the state logic live — what actually must be ri
 | `test_spring.cpp` | `core/spring.*` | convergence, no overshoot, reset, stability with large dt |
 | `test_geometry.cpp` | `core/geometry.*` | rounded-rectangle SDF, AA mask, zoom transform, pixel→content, focus clamp |
 | `test_coord.cpp` | `core/coord.*` | screen↔content mapping, monitor bounds, invalid cases |
-| `test_cursor.cpp` | `core/cursor.*` | initial position, target pursuit, idle/fade, loop, disabled |
+| `test_cursor.cpp` | `core/cursor.*` | initial position, target pursuit, idle/fade, loop, disabled, exact/spring/sampled glide/A→B glide, primary→secondary link style |
 | `test_click_fx.cpp` | `core/click_fx.*` | spawn, progress, expiry, distinct L/R, slot recycling, saturation |
 | `test_zoom.cpp` | `core/zoom.*` | manual step and limits, auto with recent focus, return on idle, off mode, focus clamp |
 | `test_json.cpp` | `core/json.*` | object/array/nested, numbers, escapes (`\uXXXX`), errors, **depth and size limits** (user-provided profile files) |
 | `test_file.cpp` | `core/file.hpp` | reading a file with a **UTF-8 name** (accents) through the native path helper and enforcing a caller-provided size cap |
 | `test_preset.cpp` | `core/preset.*` | parse + apply, missing fields kept, errors, **legacy `bg_mode` 1/2/3 migration** and `bg_type` precedence, **real files** `data/presets/*.json` use the modern background key |
-| `test_config_sanitize.cpp` | `core/config.*` | NaN/infinity fallback, out-of-range clamping (including the new frosted type `4`), angle wrapping, valid values untouched, preset apply sanitizes imported data |
+| `test_config_sanitize.cpp` | `core/config.*` | NaN/infinity fallback, out-of-range clamping (including the frosted type `4`, cursor modes, click effects and magnifier), angle wrapping, spotlight/magnifier exclusivity, valid values untouched, preset apply sanitizes imported data |
 | `test_shader_params.cpp` | `data/effects/topscreen.effect` | presence of the uniforms the compositor looks up by name + `Draw` technique (catches silent divergence); **line slots**: every consecutive `line_p` pair has its own segment and `line_count`/`line_width` are declared (the CPU decimates to those 16 points) |
 | `test_preset_all_keys.cpp` | `core/preset.*` | all config keys are mapped (guarantees a complete preset) |
 | `test_locale_keys.cpp` | `data/locale/*.ini` | every key used in `obs_module_text()` exists in `en-US.ini`; no orphan keys; labels are non-empty, not raw keys and have no stray whitespace |
@@ -86,6 +86,7 @@ That is where all the math and the state logic live — what actually must be ri
 | `test_evdev.cpp` | `core/evdev.*` | `input_event` decoding, labels, shifted punctuation (`!@#$%^&*()` and symbols), modifiers, partial records |
 | `test_highlighter.cpp` | `core/highlighter.*` | drag, normalized rectangle, hold/fade, small drag, disabled |
 | `test_spotlight.cpp` | `core/spotlight.*` | initial state, drop/zoom in and out, easing, mid-transition reversal, cursor focus, clamp |
+| `test_magnifier.cpp` | `core/magnifier.*` | activation/deactivation transitions, local zoom, drop, follow cursor and fixed center |
 | `test_highlight_modes.cpp` | `core/highlighter.*`, `core/zoom.*` | trail dedupe/cap, line decimation into the shader slots (first/last kept, monotonic), a pinned predicate matrix for all 6 drag modes (box/line/zoom/press-zoom/box+zoom/line+zoom), zoom request timing, press-only zoom (delay, ignore drag, quick click does nothing), hold-to-release glide, stroke bounding box as the zoom selection for the line modes, box+zoom and line+zoom draw *and* zoom |
 | `test_docs.cpp` | `docs/` × code | every key in `keys.hpp` is documented; hotkeys from the code are in the reference; `CMakeLists.txt` and `buildspec.json` versions agree |
 | `test_cursor_catalog.cpp` | `core/cursor_catalog.hpp` + `data/locale/en-US.ini` | one entry per active `CursorStyle` (29 built-in + 50 custom), retired IDs excluded from the menu, families contiguous and ordered, unique label keys present in the locale, no forbidden source words, style clamping and safe retired fallbacks |
@@ -98,8 +99,8 @@ That is where all the math and the state logic live — what actually must be ri
 ## Current numbers
 
 ```
-217 tests | 5874 checks | 0 failures   (core)
-48 tests | 616 checks   | 0 failures   (integration with fake libobs)
+226 tests | 6183 checks | 0 failures   (core)
+49 tests | 669 checks   | 0 failures   (integration with fake libobs)
 ```
 
 ## What the integration layer covers
@@ -110,7 +111,7 @@ fake libobs:
 
 | File | Coverage |
 |------|----------|
-| `test_integration.cpp` | filter lifecycle (create/tick/render/destroy), preset apply, background toggle, all 20 hotkeys, native-cursor shutdown/restore on the parent (including effects/cursor-off and shared refcount), profiles (save/switch/seeds/list/auto-save/restart/export-import round-trip, **click-sound reload on switch**, **partial import fills missing fields/slots**), **independent hotkey highlight toggle (manual zoom/drag ownership)**, **spotlight hotkey**, **Properties refresh after profile/preset changes**, **dock target selection (hotkeys follow it)** and **debounced auto-save with flush** |
+| `test_integration.cpp` | filter lifecycle (create/tick/render/destroy), preset apply, background toggle, all 21 hotkeys, native-cursor shutdown/restore on the parent (including effects/cursor-off and shared refcount), profiles (save/switch/seeds/list/auto-save/restart/export-import round-trip, **click-sound reload on switch**, **partial import fills missing fields/slots**), **independent hotkey highlight toggle (manual zoom/drag ownership)**, **spotlight hotkey**, **magnifier hotkey + Spotlight/Magnifier exclusion**, **Properties refresh after profile/preset changes**, **dock target selection (hotkeys follow it)** and **debounced auto-save with flush** |
 | `test_integration.cpp` hotkeys | `integration_registers_all_hotkeys` covers every hotkey id/name/callback; `integration_hotkeys_shared_between_filters` proves one process-wide set shared across filters; `integration_registry_target_selection` proves selection routing/fallback |
 | `test_uniforms.cpp` | every uniform declared by `topscreen.effect` is uploaded on a plain frame (D3D11 aborts the draw otherwise) |
 | `test_text_render.cpp` | key-overlay text batches all glyphs + shadow quads into one vertex buffer (**1 draw total**, cache hit without rebuild) and falls back to per-glyph sprites if vertex-buffer creation fails |

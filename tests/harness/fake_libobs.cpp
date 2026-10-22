@@ -668,7 +668,13 @@ size_t obs_property_list_add_string(obs_property_t *, const char *, const char *
 	return 0;
 }
 
-void obs_property_set_modified_callback(obs_property_t *, obs_property_modified_t) {}
+void obs_property_set_modified_callback(obs_property_t *prop, obs_property_modified_t callback)
+{
+	if (prop)
+		prop->modified = callback;
+}
+
+void obs_property_set_long_description(obs_property_t *, const char *) {}
 
 // ---- obs_hotkey ----
 obs_hotkey_id register_hotkey(const char *name, obs_hotkey_func func, void *data)
@@ -825,6 +831,12 @@ namespace fakeobs {
 bool property_visible(obs_property_t *prop)
 {
 	return prop && prop->visible;
+}
+
+bool invoke_property_modified(obs_properties_t *props, obs_property_t *prop,
+			      obs_data_t *settings)
+{
+	return prop && prop->modified ? prop->modified(props, prop, settings) : false;
 }
 
 } // namespace fakeobs

@@ -1065,7 +1065,8 @@ void ts_filter_render(void *data, gs_effect_t *effect)
 	 * cursor setting: hidden only while TopScreen actually draws its own. */
 	ctx->sync_parent_cursor(ctx->cfg.effects_enabled && ctx->cfg.cursor.enabled);
 
-	ctx->compositor.render(ctx->source, ctx->cfg, ctx->frame);
+	ctx->compositor.render(ctx->source, target, ctx->target_w, ctx->target_h, ctx->cfg,
+			       ctx->frame);
 }
 
 void ts_filter_defaults(obs_data_t *settings)

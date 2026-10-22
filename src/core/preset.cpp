@@ -89,18 +89,10 @@ bool Preset::apply(Config *cfg, std::string *error) const
 		cfg->bg.mode = read_int(o, kBgType, cfg->bg.mode);
 	} else {
 		const int legacy = read_int(o, kBgMode, cfg->bg.mode);
-		if (legacy == 0)
-			cfg->bg.mode = static_cast<int>(BgMode::Solid);
-		else if (legacy == 3)
-			cfg->bg.mode = static_cast<int>(BgMode::Wallpaper);
-		else
-			cfg->bg.mode = static_cast<int>(BgMode::Gradient);
-		if (!lookup(o, kBgGradientAngle)) {
-			if (legacy == 1)
-				cfg->bg.gradient_angle = 90.0;
-			else if (legacy == 2)
-				cfg->bg.gradient_angle = 45.0;
-		}
+		cfg->bg.mode = bg_mode_from_legacy(legacy, false);
+		if (!lookup(o, kBgGradientAngle))
+			cfg->bg.gradient_angle =
+				bg_gradient_angle_from_legacy(legacy, cfg->bg.gradient_angle);
 	}
 	if (cfg->bg.mode < 0 || cfg->bg.mode > 2)
 		cfg->bg.mode = static_cast<int>(BgMode::Gradient);
@@ -254,6 +246,7 @@ bool Preset::apply(Config *cfg, std::string *error) const
 	cfg->monitor_x = static_cast<int>(read_int(o, kMonitorX, cfg->monitor_x));
 	cfg->monitor_y = static_cast<int>(read_int(o, kMonitorY, cfg->monitor_y));
 
+	sanitize_config(cfg);
 	return true;
 }
 

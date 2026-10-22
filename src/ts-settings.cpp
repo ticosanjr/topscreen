@@ -10,15 +10,6 @@ using namespace topscreen::core::keys;
 
 namespace topscreen {
 
-namespace {
-
-int legacy_bg_mode(int mode)
-{
-	return mode == static_cast<int>(BgMode::Wallpaper) ? 3 : mode;
-}
-
-} // namespace
-
 void config_defaults(obs_data_t *s)
 {
 	const Config def;
@@ -27,7 +18,7 @@ void config_defaults(obs_data_t *s)
 
 	obs_data_set_default_bool(s, kBgEnabled, def.bg.enabled);
 	obs_data_set_default_int(s, kBgType, def.bg.mode);
-	obs_data_set_default_int(s, kBgMode, legacy_bg_mode(def.bg.mode));
+	obs_data_set_default_int(s, kBgMode, legacy_bg_mode_value(def.bg.mode));
 	obs_data_set_default_int(s, kBgColorA, static_cast<long long>(def.bg.color_a));
 	obs_data_set_default_int(s, kBgColorB, static_cast<long long>(def.bg.color_b));
 	obs_data_set_default_double(s, kBgGradientAngle, def.bg.gradient_angle);
@@ -190,7 +181,7 @@ void config_load(obs_data_t *s, Config *c, const Config *fallback)
 	c->effects_enabled = read_bool(s, kEffectsEnabled, d.effects_enabled);
 
 	c->bg.enabled = read_bool(s, kBgEnabled, d.bg.enabled);
-	const long long legacy_mode = read_int(s, kBgMode, legacy_bg_mode(d.bg.mode));
+	const long long legacy_mode = read_int(s, kBgMode, legacy_bg_mode_value(d.bg.mode));
 	c->bg.color_a = static_cast<uint32_t>(read_int(s, kBgColorA, d.bg.color_a));
 	c->bg.color_b = static_cast<uint32_t>(read_int(s, kBgColorB, d.bg.color_b));
 	c->bg.image = read_string(s, kBgImage, d.bg.image);
@@ -202,12 +193,7 @@ void config_load(obs_data_t *s, Config *c, const Config *fallback)
 		mode = static_cast<int>(read_int(s, kBgType, d.bg.mode));
 	} else {
 		const bool has_wallpaper = !c->bg.image.empty() || !c->bg.image_file.empty();
-		if (has_wallpaper || legacy_mode == 3)
-			mode = static_cast<int>(BgMode::Wallpaper);
-		else if (legacy_mode == 0)
-			mode = static_cast<int>(BgMode::Solid);
-		else
-			mode = static_cast<int>(BgMode::Gradient);
+		mode = bg_mode_from_legacy(static_cast<int>(legacy_mode), has_wallpaper);
 	}
 	c->bg.mode = std::clamp(mode, static_cast<int>(BgMode::Solid),
 				static_cast<int>(BgMode::Wallpaper));
@@ -215,12 +201,10 @@ void config_load(obs_data_t *s, Config *c, const Config *fallback)
 	c->bg.gradient_angle = read_double(s, kBgGradientAngle, d.bg.gradient_angle);
 	c->bg.gradient_center_x = read_double(s, kBgGradientCenterX, d.bg.gradient_center_x);
 	c->bg.gradient_center_y = read_double(s, kBgGradientCenterY, d.bg.gradient_center_y);
-	if (!has_type && !obs_data_has_user_value(s, kBgGradientAngle)) {
-		if (legacy_mode == 1)
-			c->bg.gradient_angle = 90.0;
-		else if (legacy_mode == 2)
-			c->bg.gradient_angle = 45.0;
-	}
+	if (!has_type && !obs_data_has_user_value(s, kBgGradientAngle))
+		c->bg.gradient_angle =
+			bg_gradient_angle_from_legacy(static_cast<int>(legacy_mode),
+						      c->bg.gradient_angle);
 
 	c->bg.image_blur = read_double(s, kBgImageBlur, d.bg.image_blur);
 	c->bg.image_blur_type = static_cast<int>(read_int(s, kBgImageBlurType, d.bg.image_blur_type));
@@ -360,6 +344,8 @@ void config_load(obs_data_t *s, Config *c, const Config *fallback)
 	c->monitor_manual = read_bool(s, kMonitorManual, d.monitor_manual);
 	c->monitor_x = static_cast<int>(read_int(s, kMonitorX, d.monitor_x));
 	c->monitor_y = static_cast<int>(read_int(s, kMonitorY, d.monitor_y));
+
+	sanitize_config(c);
 }
 
 void config_store(obs_data_t *s, const Config &c)
@@ -368,7 +354,7 @@ void config_store(obs_data_t *s, const Config &c)
 
 	obs_data_set_bool(s, kBgEnabled, c.bg.enabled);
 	obs_data_set_int(s, kBgType, c.bg.mode);
-	obs_data_set_int(s, kBgMode, legacy_bg_mode(c.bg.mode));
+	obs_data_set_int(s, kBgMode, legacy_bg_mode_value(c.bg.mode));
 	obs_data_set_int(s, kBgColorA, static_cast<long long>(c.bg.color_a));
 	obs_data_set_int(s, kBgColorB, static_cast<long long>(c.bg.color_b));
 	obs_data_set_double(s, kBgGradientAngle, c.bg.gradient_angle);

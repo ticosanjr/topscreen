@@ -220,20 +220,12 @@ private:
 
 		syncing_ = true;
 
-		/* Rebuild the target selector only when the filter list/name changed:
-		 * clearing it every 500 ms would steal focus and reset the popup. */
-		const std::vector<FilterEntry> entries = registry_list();
-		bool targets_changed = entries.size() != targets_.size();
-		if (!targets_changed) {
-			for (size_t i = 0; i < entries.size(); ++i) {
-				if (entries[i].control != targets_[i].control ||
-				    entries[i].name != targets_[i].name) {
-					targets_changed = true;
-					break;
-				}
-			}
-		}
-		if (targets_changed) {
+		/* Rebuild the target selector only when the registry changed:
+		 * clearing it every 500 ms would steal focus and reset the popup.
+		 * The revision also avoids allocating a snapshot on every tick. */
+		const std::uint64_t revision = registry_revision();
+		if (revision != targets_revision_) {
+			const std::vector<FilterEntry> entries = registry_list();
 			target_->clear();
 			QSet<QString> used;
 			for (size_t i = 0; i < entries.size(); ++i) {
@@ -248,6 +240,7 @@ private:
 				target_->addItem(unique, QVariant::fromValue<void *>(entries[i].control));
 			}
 			targets_ = entries;
+			targets_revision_ = revision;
 		}
 		target_->setEnabled(has);
 
@@ -345,6 +338,7 @@ private:
 	QLabel *status_ = nullptr;
 	QTimer *timer_ = nullptr;
 	std::vector<FilterEntry> targets_;
+	std::uint64_t targets_revision_ = 0;
 	bool syncing_ = false;
 	FilterControl *last_target_ = nullptr;
 	int last_io_ = 0;

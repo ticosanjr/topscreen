@@ -32,7 +32,8 @@ public:
 	bool load();
 	void release();
 
-	void render(obs_source_t *filter, const core::Config &cfg, const FrameState &st);
+	void render(obs_source_t *filter, obs_source_t *target, uint32_t width, uint32_t height,
+		    const core::Config &cfg, const FrameState &st);
 
 	bool loaded() const { return ready_; }
 
@@ -63,7 +64,7 @@ private:
 	gs_eparam_t *p_bg_b_ = nullptr;
 	gs_eparam_t *p_bg_mode_ = nullptr;
 	gs_eparam_t *p_bg_gradient_center_ = nullptr;
-	gs_eparam_t *p_bg_gradient_angle_ = nullptr;
+	gs_eparam_t *p_bg_gradient_dir_ = nullptr;
 	gs_eparam_t *p_bg_tex_ = nullptr;
 	gs_eparam_t *p_bg_tex_enabled_ = nullptr;
 	gs_eparam_t *p_bg_tex_aspect_ = nullptr;
@@ -147,6 +148,13 @@ private:
 	std::string bg_loaded_;
 	std::string bg_requested_;
 	float bg_aspect_ = 1.0f;
+
+	/* Gradient direction is only recomputed when the angle changes. The
+	 * uniform itself is still uploaded every frame (D3D11 requirement). */
+	bool gradient_dir_valid_ = false;
+	double gradient_angle_ = 0.0;
+	float gradient_dir_x_ = 1.0f;
+	float gradient_dir_y_ = 0.0f;
 };
 
 } // namespace topscreen

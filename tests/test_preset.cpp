@@ -64,6 +64,52 @@ TEST(preset_from_json_and_apply)
 	CHECK_NEAR(cfg.zoom.amount, 2.5, 1e-9);
 }
 
+TEST(preset_legacy_background_modes_are_migrated)
+{
+	auto apply = [](const char *json, Config *cfg) {
+		Preset p;
+		std::string err;
+		REQUIRE(Preset::from_json(json, &p, &err));
+		REQUIRE(p.apply(cfg, &err));
+	};
+
+	Config vertical;
+	vertical.bg.gradient_angle = 12.0;
+	apply(R"({"name":"V","settings":{"bg_mode":1}})", &vertical);
+	CHECK_EQ(vertical.bg.mode, static_cast<int>(BgMode::Gradient));
+	CHECK_NEAR(vertical.bg.gradient_angle, 90.0, 1e-9);
+
+	Config diagonal;
+	diagonal.bg.gradient_angle = 12.0;
+	apply(R"({"name":"D","settings":{"bg_mode":2}})", &diagonal);
+	CHECK_EQ(diagonal.bg.mode, static_cast<int>(BgMode::Gradient));
+	CHECK_NEAR(diagonal.bg.gradient_angle, 45.0, 1e-9);
+
+	Config wallpaper;
+	apply(R"({"name":"W","settings":{"bg_mode":3}})", &wallpaper);
+	CHECK_EQ(wallpaper.bg.mode, static_cast<int>(BgMode::Wallpaper));
+
+	/* bg_type is authoritative when both keys are present. */
+	Config modern;
+	modern.bg.gradient_angle = 12.0;
+	apply(R"({"name":"M","settings":{"bg_mode":3,"bg_type":0}})", &modern);
+	CHECK_EQ(modern.bg.mode, static_cast<int>(BgMode::Solid));
+	CHECK_NEAR(modern.bg.gradient_angle, 12.0, 1e-9);
+}
+
+TEST(preset_real_files_use_modern_background_key)
+{
+	const char *names[] = {"demo.json", "tutorial.json", "presentation.json"};
+	for (const char *n : names) {
+		const std::string path = std::string(TOPSCREEN_TEST_DATA_DIR) + "/presets/" + n;
+		bool ok = false;
+		const std::string text = read_file(path, &ok);
+		REQUIRE(ok);
+		CHECK(text.find("\"bg_type\"") != std::string::npos);
+		CHECK(text.find("\"bg_mode\"") == std::string::npos);
+	}
+}
+
 TEST(preset_missing_values_kept)
 {
 	const std::string text = R"({"name":"X","settings":{"bg_padding_x":10}})";

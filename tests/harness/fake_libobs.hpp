@@ -30,6 +30,7 @@ struct obs_data {
 struct obs_property {
 	std::string name;
 	bool visible = true;
+	obs_property_modified_t modified = nullptr;
 };
 
 struct obs_properties {
@@ -41,6 +42,9 @@ struct obs_properties {
 /** Visibility flag (mirrors obs_property_set_visible). */
 namespace fakeobs {
 bool property_visible(obs_property_t *prop);
+/** Runs the stored modified callback, as OBS does when the UI changes. */
+bool invoke_property_modified(obs_properties_t *props, obs_property_t *prop,
+			      obs_data_t *settings);
 } // namespace fakeobs
 
 struct obs_source {

@@ -4,7 +4,7 @@
     "settings": {
         "effects_enabled": true,
         "bg_enabled": true,
-        "bg_mode": 0,
+        "bg_type": 0,
         "bg_color_a": 4278190080,
         "bg_color_b": 4278190080,
         "bg_corner_radius": 12,

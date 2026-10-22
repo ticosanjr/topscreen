@@ -8,11 +8,39 @@ now written into the same vertex buffer, with black/white vertex colors; the
 shader combines them in **one draw**. The integration test
 `integration_text_batches_glyph_draws` pins this behavior.
 
-## Wallpaper blur
+## Wallpaper blur / diffusion
 
-The background blur shader went from **13 taps** (center + two rings) to
-**9 taps** (center + cross + diagonals), a 30% reduction in texture samples.
-The radius still varies by blur type.
+The wallpaper shader used to apply a **stretched 3×3 kernel** (9 taps). At large
+radii the taps were so far apart that individual source pixels were still
+visible, which read as a grid of repeated pixels instead of frosted glass.
+
+The diffusion selector now maps to real kernels:
+
+| Mode | Taps | Kernel |
+|------|------|--------|
+| Soft | 9 | 3×3, fast path |
+| Gaussian | 25 | 5×5 Gaussian (σ = 1 grid unit) |
+| Creamy | 25 | 5×5 Gaussian, wider spread |
+| Frosted glass | 25 | 5×5 Gaussian, wider spread + sub-pixel grid jitter |
+
+Soft is the low-cost option; the 25-tap modes trade texture samples for a smooth
+result. The shader still uses no loops or uniform arrays, so it stays compatible
+with the D3D11 and OpenGL backends.
+
+## Background gradient
+
+The gradient direction (`cos`/`sin` of the angle) is now computed once when the
+angle changes and uploaded as a `float2` (`bg_gradient_dir`) every frame. The
+shader no longer recomputes trigonometry for every covered pixel; the visual
+result is identical. Caching only the CPU math keeps the per-frame uniform upload
+required by D3D11 intact.
+
+## Dock refresh
+
+The dock polls the filter registry every 500 ms. It now reads a small revision
+counter first and only allocates/copies the target snapshot when a filter is
+added or removed. The selector is still rebuilt when needed, but the idle path
+does not allocate a vector of strings on every tick.
 
 ## Click audio (Linux)
 

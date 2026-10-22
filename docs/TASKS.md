@@ -105,7 +105,7 @@ Status: ✅ done · 🟡 partial · ⬜ pending.
 | T7.3 | `uaccess` udev rule + detection in the dock | ✅ (rule ready + log warning) |
 | T7.4 | Graceful degradation + tier report | ✅ (readable tier in the dock + log warnings) |
 | T7.5 | CI: Win + Linux build against OBS | 🟡 (tests CI + header check ✅; plugin build best-effort) |
-| T7.6 | Portable packaging + release | ✅ (packages in `releases/`, published as GitHub Release `v0.4.0`; Windows cross-build without the Qt dock) |
+| T7.6 | Portable packaging + release | ✅ (packages in `releases/`, published as GitHub Release `v0.5.0`; Windows cross-build without the Qt dock) |
 | T7.7 | Final i18n + icon + screenshots | ⬜ |
 | T7.8 | Automated release archive verification (`scripts/verify-release.sh`) | ✅ |
 

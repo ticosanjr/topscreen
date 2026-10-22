@@ -122,7 +122,9 @@ TEST(integration_filter_lifecycle)
 	ctrl->apply_preset(1);
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
 	CHECK_EQ(ctrl->current_preset(), 1);
-	/* tutorial.json uses a solid background (bg_mode = 0). */
+	/* tutorial.json uses a solid background. The modern key is written, and
+	 * the legacy alias keeps old readers working. */
+	CHECK_EQ(static_cast<int>(obs_data_get_int(filter->settings, core::keys::kBgType)), 0);
 	CHECK_EQ(static_cast<int>(obs_data_get_int(filter->settings, core::keys::kBgMode)), 0);
 
 	ts_filter_source_info.destroy(ctx);
@@ -418,6 +420,9 @@ TEST(integration_registry_target_selection)
 	void *ctx2 = create_filter(f2);
 	REQUIRE(ctx1 != nullptr);
 	REQUIRE(ctx2 != nullptr);
+
+	const std::uint64_t revision = registry_revision();
+	CHECK(revision > 0);
 
 	const std::vector<FilterEntry> entries = registry_list();
 	REQUIRE(entries.size() == 2);

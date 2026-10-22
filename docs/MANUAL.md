@@ -59,7 +59,7 @@ The **Effects enabled** (top of Properties) is the "master": it turns everything
 off at once (useful as push-to-talk for effects).
 
 ### Own cursor
-When the effects are enabled **and Cursor → Enabled is on**, TopScreen turns off
+When the effects are enabled **and Cursor → Show custom cursor is on**, TopScreen turns off
 the native cursor of the capture and draws its own, smoothed and scalable. That
 is why you see **a single cursor**. Turning **Effects enabled** off, turning the
 TopScreen cursor off, or removing the filter restores the capture's original
@@ -82,24 +82,24 @@ Places the screen "floating" over a background, with corners and shadow.
 | Option | What it does |
 |-------|-----------|
 | **Enable background** | Turns on the background + corners + spacing |
-| **Background type** | **Solid color**, **Gradient** or **Wallpaper** |
-| **Color 1** | Background color for solid, or the first gradient color |
-| **Color 2** | Second gradient color (gradient only) |
-| **Gradient angle** | Direction of the gradient (0–360°) |
-| **Gradient meeting point X/Y** | Moves the point where the two colors meet |
-| **Wallpaper** | **Transparent (show the scene below)**, **(none)**, or one of the **42 images** that ship with the plugin. Choosing one applies it |
-| **Image from PC** | Button to choose a **file from your PC** (jpg/png/bmp/tga/gif/webp). Choosing one **clears** the Wallpaper (they are mutually exclusive) |
-| **Wallpaper blur (px)** | Blurs the background image (0 = sharp) |
-| **Blur type** | No blur · Soft (box) · **Gaussian** · Creamy (very soft) |
-| **Horizontal / vertical spacing (px)** | Margin between the screen and the edge (separate X and Y) |
+| **Background type** | **Solid color**, **Two-color gradient** or **Wallpaper** |
+| **Color 1 (solid / gradient start)** | Background color for solid, or the first gradient color |
+| **Color 2 (gradient end)** | Second gradient color (gradient only) |
+| **Gradient angle (degrees)** | Direction of the two-color gradient (0–360°) |
+| **Gradient meeting point X/Y** | Moves the point where the two colors meet (0 = left/top, 1 = right/bottom) |
+| **Wallpaper preset** | **Transparent (use the scene below)**, **No wallpaper**, or one of the **42 images** that ship with the plugin. Choosing one applies it |
+| **Custom wallpaper file** | Button to choose a **file from your PC** (jpg/png/bmp/tga/gif/webp). Choosing one **clears** the wallpaper preset (they are mutually exclusive) |
+| **Wallpaper blur radius (px)** | How far the background image spreads (0 = sharp) |
+| **Wallpaper diffusion** | No blur · Soft (fast) · **Gaussian (balanced)** · Creamy (wide) · Frosted glass (smoothest). Soft uses 9 samples; the other modes use a 25-tap 5×5 Gaussian, so large radii look smooth instead of showing a grid of repeated pixels |
+| **Horizontal / vertical screen margin (px)** | Margin between the screen and the edge (separate X and Y) |
 | **Keep screen aspect ratio** | Avoids stretching the screen: it is scaled down proportionally (leave it on) |
-| **Rounded corners (px)** | Radius of the screen corners |
+| **Screen corner radius (px)** | Radius of the captured screen corners |
 | **Window shadow** (sub-group) | |
 | ↳ **Enable shadow** | Turns the shadow behind the screen on/off |
-| ↳ **Intensity** | How strong the shadow is (0 = invisible, 1 = strong) |
-| ↳ **Softness / size** | How soft and large the shadow is |
-| ↳ **Horizontal distance** | Moves the shadow left/right |
-| ↳ **Vertical distance** | Moves the shadow up/down (positive = down) |
+| ↳ **Shadow opacity (0–1)** | How strong the shadow is (0 = invisible, 1 = strong) |
+| ↳ **Shadow blur (px)** | How soft and large the shadow is |
+| ↳ **Shadow offset X (px)** | Moves the shadow left/right |
+| ↳ **Shadow offset Y (px)** | Moves the shadow up/down (positive = down) |
 
 > The background appears **behind** the screen. **Solid** uses Color 1;
 > **Gradient** blends Color 1 → Color 2 through the meeting point and angle;
@@ -109,14 +109,16 @@ Places the screen "floating" over a background, with corners and shadow.
 ### Cursor
 | Option | What it does |
 |-------|-----------|
-| **Show cursor** | Draws the own cursor (turns off the native one) |
-| **Style** | One of the 106 cursors (see below) |
-| **Size** | Cursor scale (1.0 = default) |
-| **Smoothing** | 0 = **follows the mouse exactly**; above that, it glides ("screen recorder" style) |
+| **Show custom cursor** | Draws the own cursor (turns off the native one) |
+| **Cursor style** | One of the 106 cursors (see below) |
+| **Cursor size (1 = default)** | Cursor scale (1.0 = default) |
+| **Smoothing (0 = exact tracking)** | 0 = **follows the mouse exactly**; above that, it glides ("screen recorder" style) |
 | **Curve tilt (sway)** | The cursor tilts slightly when turning |
 | **Cursor shadow** | Shadow to make it stand out from the background |
-| **Hide when idle / Delay** | Disappears when you stop moving |
-| **Return to start when idle / Time** | Cursor "returns" (looping videos) |
+| **Hide cursor when idle** | Disappears when you stop moving |
+| **Idle delay before hiding (ms)** | How long the cursor stays still before hiding |
+| **Return cursor to start when idle** | Cursor "returns" to where it started (useful for looping videos) |
+| **Idle time before returning (ms)** | How long the cursor stays still before returning |
 
 **Cursor styles available (106)**
 
@@ -179,16 +181,16 @@ Each button has its own independent effect.
 
 | Option | What it does |
 |-------|-----------|
-| **Effect** | Ripple, Orb, Ring, Force, Glow, Echo (double ring) or Flare (spark) |
-| **Size / Color / Duration / Curve** | Appearance and timing of the effect |
+| **Click effect** | Ripple, Orb, Ring, Force, Glow, Echo (double ring) or Flare (spark) |
+| **Effect size / color / duration / animation curve** | Appearance and timing of the effect |
 
 ### Click sound
 | Option | What it does |
 |-------|-----------|
-| **Enable sound** | Plays a short click |
+| **Enable click sound** | Plays a short click |
 | **Left / Right click sound** | 41 bundled sounds — **real mouse recordings**: Mouse (tight click), Mouse (single click), Mouse (right click); realistic: Crisp (switch), Deep (thock), Pad (trackpad), Retro (double), Optical (dry), Muted (quiet); FX: Soft, Hard, Pop, Tick, Wood, Glass, Bubble, Thock; plus the custom pack (camera shutter, latch, gear, typewriter, stapler, etc.) |
-| **Volume** | Sound volume (applied on paplay; other system players play as-is) |
-| **On left / right click** | Which buttons trigger it |
+| **Click sound volume (0–1)** | Sound volume (applied on paplay; other system players play as-is) |
+| **Play on left / right click** | Which buttons trigger it |
 
 > Switching sounds applies immediately (no restart needed).
 
@@ -198,33 +200,33 @@ Each button has its own independent effect.
 ### Zoom
 | Option | What it does |
 |-------|-----------|
-| **Mode** | `Off`, `Automatic` (follows clicks/cursor) or `Manual` |
-| **Intensity** | How much it magnifies (1.0 = no zoom) |
-| **Speed (ms)** | Animation duration |
-| **Idle time (ms)** | After stopping, returns to normal |
-| **Pan intensity** | How much the screen "follows" the mouse |
-| **Centering** | 0 = follows the mouse; 1 = keeps the mouse in the **center** (the view **anticipates** the edges — the corner appears before you get to it) |
+| **Zoom mode** | `Off`, `Automatic` (follows clicks/cursor) or `Manual` |
+| **Zoom intensity (1 = no zoom)** | How much it magnifies (1.0 = no zoom) |
+| **Zoom transition time (ms)** | Animation duration |
+| **Return to normal after idle (ms)** | After stopping, returns to normal |
+| **Pan intensity (0 = off)** | How much the screen "follows" the mouse |
+| **Centering (0 = follows mouse, 1 = centered)** | 0 = follows the mouse; 1 = keeps the mouse in the **center** (the view **anticipates** the edges — the corner appears before you get to it) |
 
 ### Movement (motion blur)
 | Option | What it does |
 |-------|-----------|
-| **Motion blur** | Radial blur during zoom |
-| **Intensity** | Blur strength |
+| **Enable motion blur** | Radial blur during zoom |
+| **Motion blur intensity (0–1)** | Blur strength |
 
 ### Spotlight
 | Option | What it does |
 |-------|-----------|
 | **Enable spotlight** | Darkens everything except a shape that follows the cursor |
-| **Shape** | **Round** or **Square** |
-| **Radius** | Size of the spotlight (fraction of the shorter screen side) |
-| **Square corner radius** | Rounded corners for the square shape |
-| **Dim outside** | How much the outside area is darkened |
+| **Spotlight shape** | **Circle** or **Square** |
+| **Radius (fraction of screen)** | Size of the spotlight (fraction of the shorter screen side) |
+| **Square corner radius (px)** | Rounded corners for the square shape |
+| **Darken outside (0 = off, 1 = black)** | How much the outside area is darkened |
 | **Border** | Enables a colored ring around the spotlight, with color and width |
-| **Outer halo shadow** | Soft halo around the spotlight, with color, opacity, blur and X/Y offset |
+| **Outer halo shadow** | Soft halo around the spotlight, with halo color, opacity, blur and X/Y offset |
 | **Blur outside** | Blurs only the captured image outside the spotlight |
-| **Zoom when active** | Extra multiplicative zoom while the spotlight is on |
-| **Drop/zoom in/out** | Durations of the activation/deactivation animation |
-| **Drop distance** | Vertical distance the spotlight drops in/out |
+| **Zoom when active (x)** | Extra multiplicative zoom while the spotlight is on |
+| **Drop/zoom in / out (ms)** | Durations of the activation/deactivation animation |
+| **Vertical drop distance (px)** | Vertical distance the spotlight drops in/out |
 
 Assign `TopScreen_ToggleSpotlight` in **Settings → Hotkeys** to toggle it
 instantly. Activating it drops the shape in, zooms in around the cursor and fades
@@ -238,20 +240,21 @@ mask and zoom focus keep following the mouse while it is active. The global
 | **Show typed keys** | Shows what you type on screen |
 | **Modifiers only** | Shows only Ctrl/Shift/Alt/Win |
 | **Show special keys as icons** | On: Space/Enter/arrows/modifiers appear as icons. Off: those keys are ignored and only normal characters (letters, digits, `@#!?` etc.) are shown |
-| **On-screen time (ms)** | How long each key stays |
-| **Max keys** | How many simultaneous keys to show |
+| **On-screen time per key (ms)** | How long each key stays |
+| **Maximum keys on screen** | How many simultaneous keys to show |
 
 Every keystroke appears as its own character (repeats included) exactly as typed,
 then fades out after the on-screen time. Letters, digits and punctuation such as
 `@#!?` are shown as text. With **Show special keys as icons** on, Space/Backspace/
 Enter/Tab/arrows/modifiers are icons (`Esc` stays as text); off, those named keys
 are ignored and only normal characters remain.
-| **Position X / Y** | Where the band sits (0 = left/top, 1 = right/bottom) |
-| **Text size** | Text scale |
+| **Horizontal position (0 = left, 1 = right)** | Where the band sits horizontally |
+| **Vertical position (0 = top, 1 = bottom)** | Where the band sits vertically |
+| **Text size (1 = default)** | Text scale |
 | **Font** | DejaVu Sans Bold / Sans / ExtraLight / Mono Bold / Mono / Serif Bold, or a path to a `.ttf` |
 | **Text color** | Letter color |
 | **Text shadow** | Dark outline for readability |
-| **Background band / Band color** | Rounded rectangle behind the text and its color |
+| **Show background band / Band color** | Rounded rectangle behind the text and its color |
 
 ### Highlighter (drag + hotkey)
 
@@ -259,12 +262,12 @@ are ignored and only normal characters remain.
 |-------|--------|--------------|
 | — | **Enable drag actions** | Master switch for what a left-drag does |
 | — | **Enable hotkey highlight** | Independent extra: assign `TopScreen_ToggleHighlight`. First press zooms at the current cursor; second press releases/returns. It works with drag actions on or off, and the Zoom group stays visible so those values can be tuned in any drag mode. |
-| — | **What a drag does** | **Filled box** (classic mark) · **Line** (draw freehand, fades out) · **Zoom to the selection** (no drawing) · **Zoom on mouse press** (hold the button, no drag) · **Box + zoom** (marks *and* zooms) · **Line + zoom** (draws freehand *and* zooms) |
-| Look | **Color** | Highlight color (use alpha < 255 for translucent) |
-| Look | **Opacity** | Strength ceiling (0 = invisible, 1 = solid); keeps content readable |
-| Look | **Line thickness** | Stroke width as a fraction of the screen height |
-| Timing | **Keep on screen (ms)** | How long the mark stays after you release |
-| Timing | **Fade out (ms)** | How long the fade takes |
+| — | **Drag action** | **Filled box** (classic mark) · **Line** (draw freehand, fades out) · **Zoom to the selection** (no drawing) · **Zoom on mouse press** (hold the button, no drag) · **Box + zoom** (marks *and* zooms) · **Line + zoom** (draws freehand *and* zooms) |
+| Mark appearance | **Mark color** | Highlight color (use alpha < 255 for translucent) |
+| Mark appearance | **Mark opacity (0 = invisible, 1 = solid)** | Strength ceiling; keeps content readable |
+| Mark appearance | **Line thickness (fraction of the screen)** | Stroke width as a fraction of the screen height |
+| Mark timing | **Mark stays on screen (ms)** | How long the mark stays after you release |
+| Mark timing | **Mark fade-out (ms)** | How long the fade takes |
 | Zoom | **Zoom direction** | **Zoom in** (hold to zoom, release to come back) · **Zoom out** (hold to widen) · **Punch in/out** (same, but instant — no hold needed before) |
 | Zoom | **Zoom: hold-to-zoom delay** | Hold the button this long (ms) before the zoom kicks in (`0` = behaves like punch) |
 | Zoom | **Zoom on press: hold delay** | In *Zoom on mouse press*, how long the button stays down before the zoom starts (default 400 ms) |
@@ -396,10 +399,10 @@ They already ship with examples, so you can just switch and see the difference:
 |---|---|
 | **A** | default |
 | **B** | **green/orange** clicks + **zoom 2.0** |
-| **C** | **purple/cyan** clicks + zoom 1.4 and vertical background |
+| **C** | **purple/cyan** clicks + zoom 1.4 and vertical gradient |
 | **D** | **yellow/white** clicks and **zoom off** |
 | **E** | **blue/orange** clicks + zoom 1.8, solid background |
-| **F** | **magenta/lime** clicks + zoom 2.5, vertical background |
+| **F** | **magenta/lime** clicks + zoom 2.5, vertical gradient |
 | **G** | white/pink clicks + gentle zoom 1.25, green highlighter |
 | **H** | teal/red clicks + zoom 3.0, click sound off |
 | **I** | violet/gold clicks, **neon cursor**, manual zoom |
@@ -410,16 +413,16 @@ They already ship with examples, so you can just switch and see the difference:
 ## 9. Recipes
 
 **Product demo (similar to "Screen Studio")**
-- Background = Diagonal gradient, Spacing 64, Corners 18, Shadow on
-- Cursor = Size 1.6, Smoothing 0.8, sway 0.4
-- Zoom = Automatic, Intensity 1.6
+- Background = Two-color gradient (45°), screen margin 64, corner radius 18, shadow on
+- Cursor = size 1.6, smoothing 0.8, sway 0.4
+- Zoom = Automatic, intensity 1.6
 - Left click = Ripple; Right = Orb
 
 **Tutorial / class**
-- Background = Solid color, Corners 12
-- Keys = on, Time 2000 ms
+- Background = Solid color, screen corner radius 12
+- Keys = on, on-screen time 2000 ms
 - Click sound = on (volume 0.5)
-- Zoom = Automatic, Intensity 1.4
+- Zoom = Automatic, intensity 1.4
 
 **Presentation / meeting**
 - Background = Dark color, Spacing 80
@@ -534,7 +537,7 @@ TOPSCREEN_DEBUG_KEY=Ctrl obs
 - The log confirms registration: `[TopScreen] hotkeys registered: 20/20`.
 
 **Zoom "jumps" or shakes**
-- Increase **Speed (ms)** and reduce **Intensity**.
+- Increase **Zoom transition time (ms)** and reduce **Zoom intensity**.
 
 ---
 
@@ -569,7 +572,7 @@ Yes: hotkey **Enable/disable background**.
 
 **I turned effects off (or the cursor off) and now there is no cursor**
 - TopScreen restores the capture's original native cursor when **Effects
-  enabled** is off, when **Cursor → Enabled** is off, and when the filter is
+  enabled** is off, when **Cursor → Show custom cursor** is off, and when the filter is
   removed. The "effects off" case was fixed in **0.3.0**; the cursor-off case
   and multiple filters sharing a capture were fixed in **0.3.1**.
 

@@ -4,6 +4,7 @@
 
 #include <filesystem>
 #include <fstream>
+#include <map>
 #include <set>
 #include <sstream>
 #include <string>
@@ -39,6 +40,28 @@ std::set<std::string> ini_keys(const std::string &path)
 			keys.insert(key);
 	}
 	return keys;
+}
+
+std::map<std::string, std::string> ini_values(const std::string &path)
+{
+	std::map<std::string, std::string> values;
+	std::ifstream in(path);
+	std::string line;
+	while (std::getline(in, line)) {
+		if (!line.empty() && line.back() == '\r')
+			line.pop_back();
+		if (line.empty() || line[0] == '#' || line[0] == ';' || line[0] == '[')
+			continue;
+		const auto eq = line.find('=');
+		if (eq == std::string::npos)
+			continue;
+		std::string key = line.substr(0, eq);
+		while (!key.empty() && (key.back() == ' ' || key.back() == '\t'))
+			key.pop_back();
+		if (!key.empty())
+			values[key] = line.substr(eq + 1);
+	}
+	return values;
 }
 
 /* Collects the keys used by obs_module_text("...") across the sources. */
@@ -112,5 +135,29 @@ TEST(locale_en_has_no_orphan_keys)
 		++tst::checks();
 		if (code.find(k) == code.end())
 			tst::fail(__FILE__, __LINE__, "key in en-US.ini is not used by the code: " + k);
+	}
+}
+
+/* A label must be a label, not an empty string or a copy of its raw key.
+ * This catches the classic "obs_module_text missing" symptom before OBS
+ * shows an unreadable property name. */
+TEST(locale_labels_are_human_readable)
+{
+	const auto values = ini_values(std::string(TOPSCREEN_TEST_DATA_DIR) + "/locale/en-US.ini");
+	CHECK(!values.empty());
+
+	for (const auto &[key, value] : values) {
+		++tst::checks();
+		if (value.empty()) {
+			tst::fail(__FILE__, __LINE__, "empty label for key: " + key);
+			continue;
+		}
+		++tst::checks();
+		if (value == key)
+			tst::fail(__FILE__, __LINE__, "label is the raw key: " + key);
+		++tst::checks();
+		if (value.front() == ' ' || value.front() == '\t' || value.back() == ' ' ||
+		    value.back() == '\t')
+			tst::fail(__FILE__, __LINE__, "label has leading/trailing whitespace: " + key);
 	}
 }

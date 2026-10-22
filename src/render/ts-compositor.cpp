@@ -4,6 +4,7 @@
 #include <graphics/vec4.h>
 
 #include <algorithm>
+#include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <string>
@@ -174,7 +175,7 @@ void Compositor::cache_params()
 	p_bg_b_ = P("bg_b");
 	p_bg_mode_ = P("bg_mode");
 	p_bg_gradient_center_ = P("bg_gradient_center");
-	p_bg_gradient_angle_ = P("bg_gradient_angle");
+	p_bg_gradient_dir_ = P("bg_gradient_dir");
 	p_bg_tex_ = P("bg_tex");
 	p_bg_tex_enabled_ = P("bg_tex_enabled");
 	p_bg_tex_aspect_ = P("bg_tex_aspect");
@@ -271,9 +272,10 @@ bool Compositor::validate_params() const
 		"bg_b",
 		"bg_mode",
 		"bg_gradient_center",
-		"bg_gradient_angle",
+		"bg_gradient_dir",
 		"bg_tex",
 		"bg_tex_enabled",
+		"bg_transparent",
 		"bg_tex_aspect",
 		"bg_keep_aspect",
 		"bg_blur",
@@ -391,7 +393,7 @@ void Compositor::release()
 	effect_ = nullptr;
 	p_target_size_ = p_pad_ = p_radius_ = p_zoom_ = p_focus_ = nullptr;
 	p_bg_a_ = p_bg_b_ = p_bg_mode_ = nullptr;
-	p_bg_gradient_center_ = p_bg_gradient_angle_ = nullptr;
+	p_bg_gradient_center_ = p_bg_gradient_dir_ = nullptr;
 	p_bg_tex_ = p_bg_tex_enabled_ = p_bg_tex_aspect_ = p_bg_transparent_ = nullptr;
 	p_bg_keep_aspect_ = nullptr;
 	p_bg_blur_ = nullptr;
@@ -418,16 +420,16 @@ void Compositor::release()
 		pt = nullptr;
 }
 
-void Compositor::render(obs_source_t *filter, const core::Config &cfg, const FrameState &st)
+void Compositor::render(obs_source_t *filter, obs_source_t *target, uint32_t width, uint32_t height,
+			const core::Config &cfg, const FrameState &st)
 {
-	obs_source_t *target = obs_filter_get_target(filter);
 	if (!target) {
 		obs_source_skip_video_filter(filter);
 		return;
 	}
 
-	const uint32_t w = obs_source_get_base_width(target);
-	const uint32_t h = obs_source_get_base_height(target);
+	const uint32_t w = width;
+	const uint32_t h = height;
 	if (!w || !h) {
 		obs_source_skip_video_filter(filter);
 		return;
@@ -469,7 +471,14 @@ void Compositor::render(obs_source_t *filter, const core::Config &cfg, const Fra
 	set_f(p_bg_mode_, bg ? static_cast<float>(cfg.bg.mode) : 0.0f);
 	set_v2(p_bg_gradient_center_, static_cast<float>(cfg.bg.gradient_center_x),
 	       static_cast<float>(cfg.bg.gradient_center_y));
-	set_f(p_bg_gradient_angle_, static_cast<float>(cfg.bg.gradient_angle));
+	if (!gradient_dir_valid_ || cfg.bg.gradient_angle != gradient_angle_) {
+		const double gradient_radians = cfg.bg.gradient_angle * 0.017453292519943295;
+		gradient_dir_x_ = static_cast<float>(std::cos(gradient_radians));
+		gradient_dir_y_ = static_cast<float>(std::sin(gradient_radians));
+		gradient_angle_ = cfg.bg.gradient_angle;
+		gradient_dir_valid_ = true;
+	}
+	set_v2(p_bg_gradient_dir_, gradient_dir_x_, gradient_dir_y_);
 	set_f(p_bg_keep_aspect_, cfg.bg.keep_aspect ? 1.0f : 0.0f);
 	set_c(p_bg_a_, cfg.bg.color_a);
 	set_c(p_bg_b_, cfg.bg.color_b);

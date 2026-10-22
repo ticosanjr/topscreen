@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 
-project(TopScreen VERSION 0.4.0 LANGUAGES C CXX)
+project(TopScreen VERSION 0.5.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -22,6 +22,7 @@ option(ENABLE_FRONTEND_API    "Use obs-frontend-api for dock" ON)
 # Core (independent of OBS) - used by the plugin and the tests
 # ---------------------------------------------------------------------------
 set(TOPSCREEN_CORE_SOURCES
+    src/core/config.cpp
     src/core/easing.cpp
     src/core/spring.cpp
     src/core/geometry.cpp

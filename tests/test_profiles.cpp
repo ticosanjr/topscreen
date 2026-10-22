@@ -28,7 +28,7 @@ TEST(profiles_seed_c_and_d)
 	const Config c = make_profile_seed(2);
 	CHECK_EQ(c.click_left.color, 0xFFFF5C7Cu);
 	CHECK_NEAR(c.zoom.amount, 1.4, 1e-9);
-	CHECK_EQ(c.bg.mode, static_cast<int>(BgMode::Vertical));
+	CHECK_EQ(c.bg.mode, static_cast<int>(BgMode::Gradient));
 
 	const Config d = make_profile_seed(3);
 	CHECK_EQ(d.zoom.mode, static_cast<int>(ZoomMode::Off));

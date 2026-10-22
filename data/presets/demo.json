@@ -4,7 +4,8 @@
     "settings": {
         "effects_enabled": true,
         "bg_enabled": true,
-        "bg_mode": 2,
+        "bg_type": 1,
+        "bg_gradient_angle": 45,
         "bg_color_a": 4280296494,
         "bg_color_b": 4282003036,
         "bg_corner_radius": 18,

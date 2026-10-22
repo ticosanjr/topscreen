@@ -49,8 +49,8 @@ OBS headers. See [`docs/TESTS.md`](docs/TESTS.md).
 ### Quick tests
 
 ```bash
-./tests/run.sh            # Linux: 207 core tests
-./tests/run-all.sh        # core + OBS headers + 47 integration tests
+./tests/run.sh            # Linux: 214 core tests
+./tests/run-all.sh        # core + OBS headers + 48 integration tests
 pwsh -File tests\run.ps1  # Windows (or PowerShell on any OS)
 ```
 

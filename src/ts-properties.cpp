@@ -37,6 +37,22 @@ const char *const kImageFilter =
 /* Profiles backup files. */
 const char *const kJsonFilter = "TopScreen profiles (*.json);;All files (*.*)";
 
+void set_tip(obs_property_t *prop, const char *description)
+{
+	if (prop)
+		obs_property_set_long_description(prop, description);
+}
+
+bool setting_bool(obs_data_t *settings, const char *key, bool fallback)
+{
+	return settings ? obs_data_get_bool(settings, key) : fallback;
+}
+
+long long setting_int(obs_data_t *settings, const char *key, long long fallback)
+{
+	return settings ? obs_data_get_int(settings, key) : fallback;
+}
+
 /* Wallpaper and PC Image are mutually exclusive. */
 bool wallpaper_modified(obs_properties_t *props, obs_property_t *p, obs_data_t *settings)
 {
@@ -82,6 +98,41 @@ bool background_type_changed(obs_properties_t *props, obs_property_t *p, obs_dat
 		obs_property_set_visible(v, gradient);
 	if (obs_property_t *v = obs_properties_get(props, "grp_bg_image"))
 		obs_property_set_visible(v, wallpaper);
+	return true;
+}
+
+/* Cursor: the delay only matters while the cursor can hide, and the loop
+ * duration only matters while the loop is enabled. */
+bool cursor_options_changed(obs_properties_t *props, obs_property_t *p, obs_data_t *settings)
+{
+	(void)p;
+	const bool hide = setting_bool(settings, kCursorHideIdle, true);
+	const bool loop = setting_bool(settings, kCursorLoop, false);
+	if (obs_property_t *v = obs_properties_get(props, kCursorIdleDelayMs))
+		obs_property_set_visible(v, hide);
+	if (obs_property_t *v = obs_properties_get(props, kCursorLoopMs))
+		obs_property_set_visible(v, loop);
+	return true;
+}
+
+/* Spotlight: the corner radius only applies to the square shape. */
+bool spotlight_options_changed(obs_properties_t *props, obs_property_t *p, obs_data_t *settings)
+{
+	(void)p;
+	const long long shape =
+		setting_int(settings, kSpotlightShape, static_cast<long long>(SpotlightShape::Circle));
+	if (obs_property_t *v = obs_properties_get(props, kSpotlightCornerRadius))
+		obs_property_set_visible(v, shape == static_cast<long long>(SpotlightShape::Square));
+	return true;
+}
+
+/* Keystrokes: the band color only applies while the band is enabled. */
+bool keys_options_changed(obs_properties_t *props, obs_property_t *p, obs_data_t *settings)
+{
+	(void)p;
+	const bool band = setting_bool(settings, kKeysBand, true);
+	if (obs_property_t *v = obs_properties_get(props, kKeysBandColor))
+		obs_property_set_visible(v, band);
 	return true;
 }
 
@@ -235,15 +286,18 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 
 	obs_properties_add_color(bg, kBgColorA, obs_module_text("Background.ColorA"));
 	obs_properties_add_color(bg, kBgColorB, obs_module_text("Background.ColorB"));
-	obs_properties_add_float_slider(bg, kBgGradientAngle,
-					obs_module_text("Background.GradientAngle"), 0.0, 360.0,
-					1.0);
-	obs_properties_add_float_slider(bg, kBgGradientCenterX,
-					obs_module_text("Background.GradientCenterX"), 0.0, 1.0,
-					0.01);
-	obs_properties_add_float_slider(bg, kBgGradientCenterY,
-					obs_module_text("Background.GradientCenterY"), 0.0, 1.0,
-					0.01);
+	obs_property_t *gangle = obs_properties_add_float_slider(
+		bg, kBgGradientAngle, obs_module_text("Background.GradientAngle"), 0.0, 360.0,
+		1.0);
+	set_tip(gangle, obs_module_text("Tooltip.GradientAngle"));
+	obs_property_t *gcenterx = obs_properties_add_float_slider(
+		bg, kBgGradientCenterX, obs_module_text("Background.GradientCenterX"), 0.0, 1.0,
+		0.01);
+	set_tip(gcenterx, obs_module_text("Tooltip.GradientCenter"));
+	obs_property_t *gcentery = obs_properties_add_float_slider(
+		bg, kBgGradientCenterY, obs_module_text("Background.GradientCenterY"), 0.0, 1.0,
+		0.01);
+	set_tip(gcentery, obs_module_text("Tooltip.GradientCenter"));
 
 	obs_properties_t *bgimg = obs_properties_create();
 	/* NON-editable list: shows the label, saves the path. */
@@ -251,6 +305,7 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 						     obs_module_text("Background.Image"),
 						     OBS_COMBO_TYPE_LIST,
 						     OBS_COMBO_FORMAT_STRING);
+	set_tip(wp, obs_module_text("Tooltip.WallpaperPreset"));
 	obs_property_set_modified_callback(wp, wallpaper_modified);
 	obs_property_list_add_string(wp, obs_module_text("Background.Image.Transparent"),
 				     kTransparentWallpaper);
@@ -261,16 +316,20 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 	obs_property_t *fp = obs_properties_add_path(
 		bgimg, kBgImageFile, obs_module_text("Background.ImageFile"), OBS_PATH_FILE,
 		kImageFilter, nullptr);
+	set_tip(fp, obs_module_text("Tooltip.WallpaperFile"));
 	obs_property_set_modified_callback(fp, bg_file_modified);
-	obs_properties_add_float_slider(bgimg, kBgImageBlur,
-					obs_module_text("Background.ImageBlur"), 0.0, 60.0, 1.0);
+	obs_property_t *blur_amount = obs_properties_add_float_slider(
+		bgimg, kBgImageBlur, obs_module_text("Background.ImageBlur"), 0.0, 60.0, 1.0);
+	set_tip(blur_amount, obs_module_text("Tooltip.WallpaperBlur"));
 	obs_property_t *bt = obs_properties_add_list(
 		bgimg, kBgImageBlurType, obs_module_text("Background.ImageBlurType"),
 		OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
+	set_tip(bt, obs_module_text("Tooltip.WallpaperDiffusion"));
 	obs_property_list_add_int(bt, obs_module_text("Blur.None"), 0);
 	obs_property_list_add_int(bt, obs_module_text("Blur.Soft"), 1);
 	obs_property_list_add_int(bt, obs_module_text("Blur.Gaussian"), 2);
 	obs_property_list_add_int(bt, obs_module_text("Blur.Creamy"), 3);
+	obs_property_list_add_int(bt, obs_module_text("Blur.Frosted"), 4);
 	obs_properties_add_group(bg, "grp_bg_image", obs_module_text("Background.ImageGroup"),
 				 OBS_GROUP_NORMAL, bgimg);
 
@@ -283,7 +342,9 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 	/* Window shadow (sub-group with clear names) */
 	obs_properties_t *sh = obs_properties_create();
 	obs_properties_add_bool(sh, kBgShadow, obs_module_text("Shadow.Enabled"));
-	obs_properties_add_float_slider(sh, kBgShadowAlpha, obs_module_text("Shadow.Opacity"), 0.0, 1.0, 0.01);
+	obs_property_t *shadow_alpha = obs_properties_add_float_slider(
+		sh, kBgShadowAlpha, obs_module_text("Shadow.Opacity"), 0.0, 1.0, 0.01);
+	set_tip(shadow_alpha, obs_module_text("Tooltip.ShadowOpacity"));
 	obs_properties_add_float_slider(sh, kBgShadowBlur, obs_module_text("Shadow.Blur"), 0.0, 200.0, 1.0);
 	obs_properties_add_float_slider(sh, kBgShadowOffsetX, obs_module_text("Shadow.OffsetX"), -100.0, 100.0,
 					1.0);
@@ -308,13 +369,20 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 	obs_properties_add_float_slider(cur, kCursorSmooth, obs_module_text("Cursor.Smooth"), 0.0, 1.0, 0.01);
 	obs_properties_add_float_slider(cur, kCursorSway, obs_module_text("Cursor.Sway"), 0.0, 1.0, 0.01);
 	obs_properties_add_bool(cur, kCursorShadow, obs_module_text("Cursor.Shadow"));
-	obs_properties_add_bool(cur, kCursorHideIdle, obs_module_text("Cursor.HideIdle"));
+	obs_property_t *hide_idle =
+		obs_properties_add_bool(cur, kCursorHideIdle, obs_module_text("Cursor.HideIdle"));
 	obs_properties_add_float_slider(cur, kCursorIdleDelayMs, obs_module_text("Cursor.IdleDelayMs"), 0.0,
 					5000.0, 50.0);
-	obs_properties_add_bool(cur, kCursorLoop, obs_module_text("Cursor.Loop"));
-	obs_properties_add_float_slider(cur, kCursorLoopMs, obs_module_text("Cursor.LoopMs"), 1000.0, 20000.0,
-					100.0);
+	obs_property_t *loop =
+		obs_properties_add_bool(cur, kCursorLoop, obs_module_text("Cursor.Loop"));
+	set_tip(loop, obs_module_text("Tooltip.CursorLoop"));
+	obs_property_t *loop_ms = obs_properties_add_float_slider(
+		cur, kCursorLoopMs, obs_module_text("Cursor.LoopMs"), 1000.0, 20000.0, 100.0);
+	set_tip(loop_ms, obs_module_text("Tooltip.CursorLoopMs"));
+	obs_property_set_modified_callback(hide_idle, cursor_options_changed);
+	obs_property_set_modified_callback(loop, cursor_options_changed);
 	obs_properties_add_group(props, "grp_cursor", obs_module_text("Group.Cursor"), OBS_GROUP_NORMAL, cur);
+	cursor_options_changed(props, nullptr, settings);
 
 	/* ---------------- Clicks ---------------- */
 	add_click_group(props, "grp_click_left", obs_module_text("Group.ClickLeft"), kClickLeftEffect,
@@ -354,9 +422,12 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 					10.0);
 	obs_properties_add_float_slider(zoom, kZoomIdleTimeoutMs, obs_module_text("Zoom.IdleTimeoutMs"), 200.0,
 					10000.0, 50.0);
-	obs_properties_add_float_slider(zoom, kZoomPanAmount, obs_module_text("Zoom.PanAmount"), 0.0, 1.0, 0.01);
-	obs_properties_add_float_slider(zoom, kZoomCenterAmount, obs_module_text("Zoom.CenterAmount"), 0.0, 1.0,
-					0.01);
+	obs_property_t *pan = obs_properties_add_float_slider(
+		zoom, kZoomPanAmount, obs_module_text("Zoom.PanAmount"), 0.0, 1.0, 0.01);
+	set_tip(pan, obs_module_text("Tooltip.ZoomPan"));
+	obs_property_t *center = obs_properties_add_float_slider(
+		zoom, kZoomCenterAmount, obs_module_text("Zoom.CenterAmount"), 0.0, 1.0, 0.01);
+	set_tip(center, obs_module_text("Tooltip.ZoomCentering"));
 	obs_properties_add_group(props, "grp_zoom", obs_module_text("Group.Zoom"), OBS_GROUP_NORMAL, zoom);
 
 	/* ---------------- Motion blur ---------------- */
@@ -377,13 +448,15 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 				  static_cast<int>(core::SpotlightShape::Circle));
 	obs_property_list_add_int(sshape, obs_module_text("Spotlight.Shape.Square"),
 				  static_cast<int>(core::SpotlightShape::Square));
+	obs_property_set_modified_callback(sshape, spotlight_options_changed);
 
 	obs_properties_add_float_slider(spot, kSpotlightRadius, obs_module_text("Spotlight.Radius"),
 					0.05, 1.0, 0.01);
 	obs_properties_add_float_slider(spot, kSpotlightCornerRadius,
 					obs_module_text("Spotlight.CornerRadius"), 0.0, 200.0, 1.0);
-	obs_properties_add_float_slider(spot, kSpotlightDim, obs_module_text("Spotlight.Dim"), 0.0, 1.0,
-					0.01);
+	obs_property_t *dim = obs_properties_add_float_slider(
+		spot, kSpotlightDim, obs_module_text("Spotlight.Dim"), 0.0, 1.0, 0.01);
+	set_tip(dim, obs_module_text("Tooltip.SpotlightDim"));
 
 	obs_properties_t *sborder = obs_properties_create();
 	obs_properties_add_bool(sborder, kSpotlightBorderEnabled,
@@ -427,14 +500,16 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 					0.0, 2000.0, 10.0);
 	obs_properties_add_float_slider(sanim, kSpotlightOutMs, obs_module_text("Spotlight.OutMs"),
 					0.0, 2000.0, 10.0);
-	obs_properties_add_float_slider(sanim, kSpotlightDropPx,
-					obs_module_text("Spotlight.DropPx"), 0.0, 200.0, 1.0);
+	obs_property_t *drop = obs_properties_add_float_slider(
+		sanim, kSpotlightDropPx, obs_module_text("Spotlight.DropPx"), 0.0, 200.0, 1.0);
+	set_tip(drop, obs_module_text("Tooltip.SpotlightDrop"));
 	obs_properties_add_group(spot, "grp_spotlight_animation",
 				 obs_module_text("Spotlight.AnimationGroup"), OBS_GROUP_NORMAL,
 				 sanim);
 
 	obs_properties_add_group(props, "grp_spotlight", obs_module_text("Group.Spotlight"), OBS_GROUP_NORMAL,
 				 spot);
+	spotlight_options_changed(props, nullptr, settings);
 
 	/* ---------------- Keys ---------------- */
 	obs_properties_t *keys = obs_properties_create();
@@ -454,9 +529,12 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 
 	obs_properties_add_color(keys, kKeysColor, obs_module_text("Keys.Color"));
 	obs_properties_add_bool(keys, kKeysShadow, obs_module_text("Keys.Shadow"));
-	obs_properties_add_bool(keys, kKeysBand, obs_module_text("Keys.Band"));
+	obs_property_t *band =
+		obs_properties_add_bool(keys, kKeysBand, obs_module_text("Keys.Band"));
 	obs_properties_add_color(keys, kKeysBandColor, obs_module_text("Keys.BandColor"));
+	obs_property_set_modified_callback(band, keys_options_changed);
 	obs_properties_add_group(props, "grp_keys", obs_module_text("Group.Keys"), OBS_GROUP_NORMAL, keys);
+	keys_options_changed(props, nullptr, settings);
 
 	/* ---------------- Highlighter: action first, then only what applies.
 	 * The mode list below shows/hides the Look / Timing / Zoom groups. */
@@ -512,12 +590,14 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 	obs_property_list_add_int(zdir, obs_module_text("Highlight.ZoomDir.PunchIn"), 2);
 	obs_property_list_add_int(zdir, obs_module_text("Highlight.ZoomDir.PunchOut"), 3);
 
-	obs_properties_add_float_slider(hl_zoom, kHighlightZoomDelayMs,
-					obs_module_text("Highlight.ZoomDelayMs"), 0.0, 5000.0,
-					50.0);
-	obs_properties_add_float_slider(hl_zoom, kHighlightPressDelayMs,
-					obs_module_text("Highlight.PressDelayMs"), 0.0, 3000.0,
-					50.0);
+	obs_property_t *zoom_delay = obs_properties_add_float_slider(
+		hl_zoom, kHighlightZoomDelayMs, obs_module_text("Highlight.ZoomDelayMs"), 0.0,
+		5000.0, 50.0);
+	set_tip(zoom_delay, obs_module_text("Tooltip.HighlightZoomDelay"));
+	obs_property_t *press_delay = obs_properties_add_float_slider(
+		hl_zoom, kHighlightPressDelayMs, obs_module_text("Highlight.PressDelayMs"), 0.0,
+		3000.0, 50.0);
+	set_tip(press_delay, obs_module_text("Tooltip.HighlightPressDelay"));
 	obs_properties_add_float_slider(hl_zoom, kHighlightZoomMax, obs_module_text("Highlight.ZoomMax"),
 					1.2, 8.0, 0.1);
 	obs_properties_add_float_slider(hl_zoom, kHighlightZoomInMs,

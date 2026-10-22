@@ -26,6 +26,12 @@ FilterControl *&selected_control()
 	return control;
 }
 
+std::uint64_t &revision()
+{
+	static std::uint64_t value = 0;
+	return value;
+}
+
 } // namespace
 
 void registry_add(FilterControl *control)
@@ -34,8 +40,10 @@ void registry_add(FilterControl *control)
 		return;
 	std::lock_guard<std::mutex> lock(mutex());
 	auto &v = items();
-	if (std::find(v.begin(), v.end(), control) == v.end())
+	if (std::find(v.begin(), v.end(), control) == v.end()) {
 		v.push_back(control);
+		++revision();
+	}
 	if (!selected_control())
 		selected_control() = control;
 }
@@ -44,7 +52,10 @@ void registry_remove(FilterControl *control)
 {
 	std::lock_guard<std::mutex> lock(mutex());
 	auto &v = items();
+	const auto old_size = v.size();
 	v.erase(std::remove(v.begin(), v.end(), control), v.end());
+	if (v.size() != old_size)
+		++revision();
 	if (selected_control() == control)
 		selected_control() = nullptr;
 }
@@ -58,6 +69,12 @@ std::vector<FilterEntry> registry_list()
 	for (FilterControl *control : v)
 		out.push_back({control, control ? control->source_name() : std::string()});
 	return out;
+}
+
+std::uint64_t registry_revision()
+{
+	std::lock_guard<std::mutex> lock(mutex());
+	return revision();
 }
 
 bool registry_select(FilterControl *control)

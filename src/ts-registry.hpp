@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -63,6 +64,10 @@ void registry_remove(FilterControl *control);
 
 /** Snapshot of the active filters in registration order (dock selector). */
 std::vector<FilterEntry> registry_list();
+
+/** Changes whenever the active filter list changes (add/remove). The dock
+ * uses it to avoid rebuilding the target selector every refresh tick. */
+std::uint64_t registry_revision();
 
 /**
  * Selects the dock/hotkey target. Returns false when the control is no longer

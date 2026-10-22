@@ -30,13 +30,13 @@ Config make_profile_seed(int index)
 		c.zoom.amount = 2.0;
 		break;
 
-	case 2: /* C: purple + cyan, echo halo, soft zoom, vertical background */
+	case 2: /* C: purple + cyan, echo halo, soft zoom, vertical gradient */
 		c.click_left.color = 0xFFFF5C7C;  // purple
 		c.click_left.effect = static_cast<int>(ClickEffect::Echo);
 		c.click_right.color = 0xFFFFE500; // cyan
 		c.click_right.effect = static_cast<int>(ClickEffect::Glow);
 		c.zoom.amount = 1.4;
-		c.bg.mode = static_cast<int>(BgMode::Vertical);
+		c.bg.mode = static_cast<int>(BgMode::Gradient);
 		c.bg.gradient_angle = 90.0;
 		break;
 
@@ -53,11 +53,11 @@ Config make_profile_seed(int index)
 		c.bg.mode = static_cast<int>(BgMode::Solid);
 		break;
 
-	case 5: /* F: magenta + lime, strong zoom, vertical background */
+	case 5: /* F: magenta + lime, strong zoom, vertical gradient */
 		c.click_left.color = 0xFFAA00FF;  // magenta
 		c.click_right.color = 0xFF00DDAA; // lime
 		c.zoom.amount = 2.5;
-		c.bg.mode = static_cast<int>(BgMode::Vertical);
+		c.bg.mode = static_cast<int>(BgMode::Gradient);
 		c.bg.gradient_angle = 90.0;
 		break;
 
@@ -88,7 +88,7 @@ Config make_profile_seed(int index)
 		c.click_right.color = 0xFF111111; // near black
 		c.cursor.style = static_cast<int>(CursorStyle::Cross);
 		c.bg.image = "wallpapers/onyx.jpg";
-		c.bg.mode = static_cast<int>(BgMode::Image);
+		c.bg.mode = static_cast<int>(BgMode::Wallpaper);
 		break;
 
 	case 0: /* A: default */

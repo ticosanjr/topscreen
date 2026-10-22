@@ -20,7 +20,7 @@ uniform float4 bg_a;
 uniform float4 bg_b;
 uniform float  bg_mode;       // 0 solid, 1 gradient, 2 wallpaper
 uniform float2 bg_gradient_center; // 0..1, point where the colors meet
-uniform float  bg_gradient_angle;  // degrees
+uniform float2 bg_gradient_dir;    // unit direction, computed on the CPU
 uniform texture2d bg_tex;     // wallpaper
 uniform float  bg_tex_enabled;
 uniform float  bg_transparent; // 1 = transparent outside the floating screen
@@ -301,6 +301,56 @@ float4 apply_click(float4 col, float2 px, float mask, float2 cu, float prog, flo
 	return col;
 }
 
+/* Fast 3x3 diffusion: 9 taps. Used by the "Soft" mode. */
+float4 blur9(float2 uv, float2 o)
+{
+	float4 c = bg_tex.Sample(def_sampler, uv) * 0.25;
+	c += bg_tex.Sample(def_sampler, uv + float2(o.x, 0.0)) * 0.125;
+	c += bg_tex.Sample(def_sampler, uv - float2(o.x, 0.0)) * 0.125;
+	c += bg_tex.Sample(def_sampler, uv + float2(0.0, o.y)) * 0.125;
+	c += bg_tex.Sample(def_sampler, uv - float2(0.0, o.y)) * 0.125;
+	c += bg_tex.Sample(def_sampler, uv + o) * 0.0625;
+	c += bg_tex.Sample(def_sampler, uv - o) * 0.0625;
+	c += bg_tex.Sample(def_sampler, uv + float2(o.x, -o.y)) * 0.0625;
+	c += bg_tex.Sample(def_sampler, uv - float2(o.x, -o.y)) * 0.0625;
+	return c;
+}
+
+/* 5x5 Gaussian (sigma = 1 grid unit, 25 taps). The weights are the outer
+ * product of the 1D Gaussian [0.0545, 0.2442, 0.4026, 0.2442, 0.0545].
+ * At larger radii this avoids the discrete "repeated pixel" look of a
+ * stretched 3x3 kernel. */
+float4 blur25(float2 uv, float2 step)
+{
+	float4 c = float4(0.0, 0.0, 0.0, 0.0);
+	c += bg_tex.Sample(def_sampler, uv + step * float2(-2.0, -2.0)) * 0.002969;
+	c += bg_tex.Sample(def_sampler, uv + step * float2(-1.0, -2.0)) * 0.013306;
+	c += bg_tex.Sample(def_sampler, uv + step * float2( 0.0, -2.0)) * 0.021938;
+	c += bg_tex.Sample(def_sampler, uv + step * float2( 1.0, -2.0)) * 0.013306;
+	c += bg_tex.Sample(def_sampler, uv + step * float2( 2.0, -2.0)) * 0.002969;
+	c += bg_tex.Sample(def_sampler, uv + step * float2(-2.0, -1.0)) * 0.013306;
+	c += bg_tex.Sample(def_sampler, uv + step * float2(-1.0, -1.0)) * 0.059634;
+	c += bg_tex.Sample(def_sampler, uv + step * float2( 0.0, -1.0)) * 0.098320;
+	c += bg_tex.Sample(def_sampler, uv + step * float2( 1.0, -1.0)) * 0.059634;
+	c += bg_tex.Sample(def_sampler, uv + step * float2( 2.0, -1.0)) * 0.013306;
+	c += bg_tex.Sample(def_sampler, uv + step * float2(-2.0,  0.0)) * 0.021938;
+	c += bg_tex.Sample(def_sampler, uv + step * float2(-1.0,  0.0)) * 0.098320;
+	c += bg_tex.Sample(def_sampler, uv) * 0.162103;
+	c += bg_tex.Sample(def_sampler, uv + step * float2( 1.0,  0.0)) * 0.098320;
+	c += bg_tex.Sample(def_sampler, uv + step * float2( 2.0,  0.0)) * 0.021938;
+	c += bg_tex.Sample(def_sampler, uv + step * float2(-2.0,  1.0)) * 0.013306;
+	c += bg_tex.Sample(def_sampler, uv + step * float2(-1.0,  1.0)) * 0.059634;
+	c += bg_tex.Sample(def_sampler, uv + step * float2( 0.0,  1.0)) * 0.098320;
+	c += bg_tex.Sample(def_sampler, uv + step * float2( 1.0,  1.0)) * 0.059634;
+	c += bg_tex.Sample(def_sampler, uv + step * float2( 2.0,  1.0)) * 0.013306;
+	c += bg_tex.Sample(def_sampler, uv + step * float2(-2.0,  2.0)) * 0.002969;
+	c += bg_tex.Sample(def_sampler, uv + step * float2(-1.0,  2.0)) * 0.013306;
+	c += bg_tex.Sample(def_sampler, uv + step * float2( 0.0,  2.0)) * 0.021938;
+	c += bg_tex.Sample(def_sampler, uv + step * float2( 1.0,  2.0)) * 0.013306;
+	c += bg_tex.Sample(def_sampler, uv + step * float2( 2.0,  2.0)) * 0.002969;
+	return c;
+}
+
 float4 PSCompose(VertInOut vert_in) : TARGET
 {
 	float2 px     = vert_in.uv * target_size;
@@ -328,26 +378,38 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 		float2 buv = (vert_in.uv - 0.5) * sc + 0.5;
 
 		if (bg_blur > 0.01 && bg_blur_type > 0.5) {
-			// 9 samples (center + cross + diagonals). The previous version
-			// used 13 taps; dropping the half-radius ring halves the extra
-			// memory bandwidth with no visible difference at 1080p/4K.
-			float rmul = 2.0;
-			if (bg_blur_type >= 1.5)
-				rmul = 2.6;
-			if (bg_blur_type >= 2.5)
-				rmul = 3.2;
+			float2 texel = 1.0 / max(target_size, float2(1.0, 1.0));
 
-			float2 o = (bg_blur * rmul) / max(target_size, float2(1.0, 1.0));
+			if (bg_blur_type < 1.5) {
+				// Soft: fast 3x3 diffusion (9 taps).
+				float2 o = texel * bg_blur * 0.70;
+				col = blur9(buv, o);
+			} else {
+				// Gaussian / Creamy / Frosted: real 5x5 Gaussian (25 taps).
+				// Sampling a 3x3 kernel with a very wide spread used to
+				// leave visible gaps at large radii (the "repeated pixel"
+				// look). A 5x5 kernel keeps the taps dense enough to read as
+				// frosted glass instead of a grid of ghosts.
+				float spread = 0.50; // Gaussian
+				if (bg_blur_type >= 2.5)
+					spread = 0.62; // Creamy
+				if (bg_blur_type >= 3.5)
+					spread = 0.66; // Frosted glass
 
-			col = bg_tex.Sample(def_sampler, buv) * 0.25;
-			col += bg_tex.Sample(def_sampler, buv + float2(o.x, 0.0)) * 0.125;
-			col += bg_tex.Sample(def_sampler, buv - float2(o.x, 0.0)) * 0.125;
-			col += bg_tex.Sample(def_sampler, buv + float2(0.0, o.y)) * 0.125;
-			col += bg_tex.Sample(def_sampler, buv - float2(0.0, o.y)) * 0.125;
-			col += bg_tex.Sample(def_sampler, buv + o) * 0.0625;
-			col += bg_tex.Sample(def_sampler, buv - o) * 0.0625;
-			col += bg_tex.Sample(def_sampler, buv + float2(o.x, -o.y)) * 0.0625;
-			col += bg_tex.Sample(def_sampler, buv - float2(o.x, -o.y)) * 0.0625;
+				float2 step = texel * bg_blur * spread;
+
+				if (bg_blur_type >= 3.5) {
+					// Sub-pixel rotation of the 5x5 grid breaks the
+					// alignment between neighbouring pixels, which removes
+					// the faint cross/plus pattern of a fixed kernel.
+					float2 jitter = float2(
+						frac(px.x * 0.7548777 + px.y * 0.5698403),
+						frac(px.x * 0.4385791 + px.y * 0.9172837)) - 0.5;
+					buv += jitter * step * 0.35;
+				}
+
+				col = blur25(buv, step);
+			}
 		} else {
 			col = bg_tex.Sample(def_sampler, buv);
 		}
@@ -355,9 +417,7 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 		col = bg_a;
 	    }
 	} else if (bg_mode > 0.5) {
-		float a = bg_gradient_angle * 0.0174532925199433;
-		float2 dir = float2(cos(a), sin(a));
-		float t = saturate(dot(vert_in.uv - bg_gradient_center, dir) + 0.5);
+		float t = saturate(dot(vert_in.uv - bg_gradient_center, bg_gradient_dir) + 0.5);
 		col = lerp(bg_a, bg_b, t);
 	}
 

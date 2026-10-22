@@ -4,7 +4,7 @@
 
 1. **Core tests** (`./tests/run.sh`) — pure logic, runs anywhere.
 2. **Check against the OBS headers** (`./tools/check-obs-headers.sh`) —
-   compiles every plugin source (37 files) against the **real** OBS headers (via
+   compiles every plugin source (38 files) against the **real** OBS headers (via
    `-fsyntax-only`, without libobs installed). It catches API/signature/type
    errors that the core tests do not. The dock (`src/ui`) is checked against real
    Qt6 when available, or the stub in `tools/qt-stub`. Runs in CI
@@ -71,10 +71,11 @@ That is where all the math and the state logic live — what actually must be ri
 | `test_zoom.cpp` | `core/zoom.*` | manual step and limits, auto with recent focus, return on idle, off mode, focus clamp |
 | `test_json.cpp` | `core/json.*` | object/array/nested, numbers, escapes (`\uXXXX`), errors, **depth and size limits** (user-provided profile files) |
 | `test_file.cpp` | `core/file.hpp` | reading a file with a **UTF-8 name** (accents) through the native path helper and enforcing a caller-provided size cap |
-| `test_preset.cpp` | `core/preset.*` | parse + apply, missing fields kept, errors, **real files** `data/presets/*.json` |
+| `test_preset.cpp` | `core/preset.*` | parse + apply, missing fields kept, errors, **legacy `bg_mode` 1/2/3 migration** and `bg_type` precedence, **real files** `data/presets/*.json` use the modern background key |
+| `test_config_sanitize.cpp` | `core/config.*` | NaN/infinity fallback, out-of-range clamping (including the new frosted type `4`), angle wrapping, valid values untouched, preset apply sanitizes imported data |
 | `test_shader_params.cpp` | `data/effects/topscreen.effect` | presence of the uniforms the compositor looks up by name + `Draw` technique (catches silent divergence); **line slots**: every consecutive `line_p` pair has its own segment and `line_count`/`line_width` are declared (the CPU decimates to those 16 points) |
 | `test_preset_all_keys.cpp` | `core/preset.*` | all config keys are mapped (guarantees a complete preset) |
-| `test_locale_keys.cpp` | `data/locale/*.ini` | every key used in `obs_module_text()` exists in `en-US.ini`; no orphan keys |
+| `test_locale_keys.cpp` | `data/locale/*.ini` | every key used in `obs_module_text()` exists in `en-US.ini`; no orphan keys; labels are non-empty, not raw keys and have no stray whitespace |
 | `test_profiles.cpp` | `core/profiles.*` | distinct A–J seeds (colors + zoom), labels, index wrap |
 | `test_profiles_io.cpp` | `core/profiles_io.*` | backup format validation: full bundle, marker/plugin, missing `current` defaults to 0, missing/empty slots accepted, slot object type, malformed JSON, extra keys accepted |
 | `test_wallpapers.cpp` | `src/ts-wallpapers.*` | label/path/stem resolution, case-insensitivity, all 42 built-ins, transparent sentinel, invalid input |
@@ -97,8 +98,8 @@ That is where all the math and the state logic live — what actually must be ri
 ## Current numbers
 
 ```
-207 tests | 5324 checks | 0 failures   (core)
-47 tests | 602 checks   | 0 failures   (integration with fake libobs)
+214 tests | 6416 checks | 0 failures   (core)
+48 tests | 613 checks   | 0 failures   (integration with fake libobs)
 ```
 
 ## What the integration layer covers
@@ -113,7 +114,7 @@ fake libobs:
 | `test_integration.cpp` hotkeys | `integration_registers_all_hotkeys` covers every hotkey id/name/callback; `integration_hotkeys_shared_between_filters` proves one process-wide set shared across filters; `integration_registry_target_selection` proves selection routing/fallback |
 | `test_uniforms.cpp` | every uniform declared by `topscreen.effect` is uploaded on a plain frame (D3D11 aborts the draw otherwise) |
 | `test_text_render.cpp` | key-overlay text batches all glyphs + shadow quads into one vertex buffer (**1 draw total**, cache hit without rebuild) and falls back to per-glyph sprites if vertex-buffer creation fails |
-| `test_settings.cpp` | defaults match `Config`, legacy source falls back, store/load roundtrip, partial-slot fallback, background type migration/visibility, migrations, properties tree/zoom-group visibility with the hotkey, input without a backend, click sound error handling |
+| `test_settings.cpp` | defaults match `Config`, legacy source falls back, store/load roundtrip, partial-slot fallback, background type migration/visibility, migrations, properties tree/zoom-group visibility with the hotkey, **dependent-control visibility callbacks** (cursor idle/loop, spotlight corner, keystroke band), input without a backend, click sound error handling |
 
 ## What is NOT covered (and why)
 

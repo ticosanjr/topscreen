@@ -105,6 +105,17 @@ struct Config {	bool effects_enabled = true;
 };
 
 /**
+ * Bounds every numeric field and replaces non-finite doubles with the default.
+ *
+ * Imported presets/profiles and older settings can contain values outside the
+ * ranges exposed by the UI (or even NaN). The render and animation models
+ * already clamp many values locally, but doing it once here keeps imported
+ * data from producing degenerate uniforms or states. Valid values are kept
+ * unchanged; only out-of-range input is clamped.
+ */
+void sanitize_config(Config *cfg);
+
+/**
  * Chooses the effective wallpaper path.
  *
  * Rule: the "PC Image" wins if filled in; otherwise the built-in wallpaper.
@@ -117,6 +128,37 @@ inline const char *resolve_bg_path(const char *wallpaper, const char *image_file
 	if (wallpaper && *wallpaper)
 		return wallpaper;
 	return "";
+}
+
+/**
+ * Legacy background migration.
+ *
+ * Old sources and presets stored `bg_mode` as 0 solid, 1 vertical gradient,
+ * 2 diagonal gradient and 3 wallpaper. The current `bg_type` is 0 solid,
+ * 1 gradient and 2 wallpaper. Keep both conversions here so settings and
+ * presets cannot drift apart.
+ */
+inline int legacy_bg_mode_value(int mode)
+{
+	return mode == static_cast<int>(BgMode::Wallpaper) ? 3 : mode;
+}
+
+inline int bg_mode_from_legacy(int legacy_mode, bool has_wallpaper)
+{
+	if (has_wallpaper || legacy_mode == 3)
+		return static_cast<int>(BgMode::Wallpaper);
+	if (legacy_mode == 0)
+		return static_cast<int>(BgMode::Solid);
+	return static_cast<int>(BgMode::Gradient);
+}
+
+inline double bg_gradient_angle_from_legacy(int legacy_mode, double fallback)
+{
+	if (legacy_mode == 1)
+		return 90.0;
+	if (legacy_mode == 2)
+		return 45.0;
+	return fallback;
 }
 
 } // namespace topscreen::core

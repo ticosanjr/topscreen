@@ -393,6 +393,45 @@ TEST(properties_background_type_visibility)
 	}
 }
 
+/* Dependent controls hide when their master switch makes them irrelevant. */
+TEST(properties_dependent_controls_visibility)
+{
+	obs_data_t *s = obs_data_create();
+	config_defaults(s);
+	obs_data_set_bool(s, core::keys::kCursorHideIdle, true);
+	obs_data_set_bool(s, core::keys::kCursorLoop, false);
+	obs_data_set_int(s, core::keys::kSpotlightShape,
+			 static_cast<long long>(core::SpotlightShape::Circle));
+	obs_data_set_bool(s, core::keys::kKeysBand, true);
+
+	obs_properties_t *p = properties_create(nullptr, s);
+	CHECK(p != nullptr);
+	CHECK(fakeobs::property_visible(obs_properties_get(p, core::keys::kCursorIdleDelayMs)));
+	CHECK(!fakeobs::property_visible(obs_properties_get(p, core::keys::kCursorLoopMs)));
+	CHECK(!fakeobs::property_visible(obs_properties_get(p, core::keys::kSpotlightCornerRadius)));
+	CHECK(fakeobs::property_visible(obs_properties_get(p, core::keys::kKeysBandColor)));
+
+	/* Toggle the masters and run the same callbacks OBS would run. */
+	obs_data_set_bool(s, core::keys::kCursorHideIdle, false);
+	obs_data_set_bool(s, core::keys::kCursorLoop, true);
+	fakeobs::invoke_property_modified(p, obs_properties_get(p, core::keys::kCursorHideIdle), s);
+	fakeobs::invoke_property_modified(p, obs_properties_get(p, core::keys::kCursorLoop), s);
+	CHECK(!fakeobs::property_visible(obs_properties_get(p, core::keys::kCursorIdleDelayMs)));
+	CHECK(fakeobs::property_visible(obs_properties_get(p, core::keys::kCursorLoopMs)));
+
+	obs_data_set_int(s, core::keys::kSpotlightShape,
+			 static_cast<long long>(core::SpotlightShape::Square));
+	fakeobs::invoke_property_modified(p, obs_properties_get(p, core::keys::kSpotlightShape), s);
+	CHECK(fakeobs::property_visible(obs_properties_get(p, core::keys::kSpotlightCornerRadius)));
+
+	obs_data_set_bool(s, core::keys::kKeysBand, false);
+	fakeobs::invoke_property_modified(p, obs_properties_get(p, core::keys::kKeysBand), s);
+	CHECK(!fakeobs::property_visible(obs_properties_get(p, core::keys::kKeysBandColor)));
+
+	obs_properties_destroy(p);
+	obs_data_release(s);
+}
+
 /* Input without backend: available=false, tier 0, no phantom edges. */
 TEST(input_without_backend_is_safe)
 {

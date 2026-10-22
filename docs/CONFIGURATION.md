@@ -1,7 +1,9 @@
 # Configuration reference
 
 Values persisted by OBS (per source/scene) and used in the preset files.
-The usage manual is in [`MANUAL.md`](MANUAL.md).
+The usage manual is in [`MANUAL.md`](MANUAL.md). UI labels include units and
+ranges where useful; advanced controls show a longer explanation in their
+tooltip.
 
 ## Colors
 
@@ -16,107 +18,107 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | Background | Enable background | `bg_enabled` | bool | — | `true` |
 | | Background type | `bg_type` | int | 0 solid · 1 gradient · 2 wallpaper | `1` |
 | | Legacy style (migrated) | `bg_mode` | int | old 0 solid · 1/2 gradient · 3 wallpaper | — |
-| | Color 1 | `bg_color_a` | color | — | `0xFF20242E` |
-| | Color 2 | `bg_color_b` | color | gradient only | `0xFF3A2E5C` |
-| | Gradient angle | `bg_gradient_angle` | double | 0–360° | `45` |
+| | Color 1 (solid / gradient start) | `bg_color_a` | color | — | `0xFF20242E` |
+| | Color 2 (gradient end) | `bg_color_b` | color | gradient only | `0xFF3A2E5C` |
+| | Gradient angle (degrees) | `bg_gradient_angle` | double | 0–360° | `45` |
 | | Gradient meeting point X | `bg_gradient_center_x` | double | 0–1 | `0.5` |
 | | Gradient meeting point Y | `bg_gradient_center_y` | double | 0–1 | `0.5` |
-| | Wallpaper | `bg_image` | string | "" (none), `__transparent__` (show the scene below), or `wallpapers/*.jpg` (42) | `""` |
-| | Image from PC | `bg_image_file` | string | file path (**clears** the Wallpaper) | `""` |
-| | Wallpaper blur (px) | `bg_image_blur` | double | 0–60 | `0` |
-| | Blur type | `bg_image_blur_type` | int | 0 none · 1 soft · 2 gaussian · 3 creamy | `2` |
-| | Horizontal spacing (px) | `bg_padding_x` | double | 0–400 | `64` |
-| | Vertical spacing (px) | `bg_padding_y` | double | 0–400 | `64` |
+| | Wallpaper preset | `bg_image` | string | "" (none), `__transparent__` (show the scene below), or `wallpapers/*.jpg` (42) | `""` |
+| | Custom wallpaper file | `bg_image_file` | string | file path (**clears** the Wallpaper) | `""` |
+| | Wallpaper blur radius (px) | `bg_image_blur` | double | 0–60 | `0` |
+| | Wallpaper diffusion | `bg_image_blur_type` | int | 0 none · 1 soft · 2 gaussian · 3 creamy · 4 frosted glass | `2` |
+| | Horizontal screen margin (px) | `bg_padding_x` | double | 0–400 | `64` |
+| | Vertical screen margin (px) | `bg_padding_y` | double | 0–400 | `64` |
 | | Keep screen aspect ratio | `bg_keep_aspect` | bool | — | `true` |
-| | Rounded corners (px) | `bg_corner_radius` | double | 0–200 | `18` |
+| | Screen corner radius (px) | `bg_corner_radius` | double | 0–200 | `18` |
 | | Window shadow | `bg_shadow` | bool | — | `true` |
-| | Shadow opacity | `bg_shadow_alpha` | double | 0–1 | `0.35` |
+| | Shadow opacity (0–1) | `bg_shadow_alpha` | double | 0–1 | `0.35` |
 | | Shadow blur (px) | `bg_shadow_blur` | double | 0–200 | `48` |
-| | Shadow horizontal offset (px) | `bg_shadow_offset_x` | double | -100–100 | `0` |
-| | Shadow vertical offset (px) | `bg_shadow_offset` | double | -100–100 | `12` |
-| Cursor | Show cursor | `cursor_enabled` | bool | — | `true` |
-| | Style (grouped by theme) | `cursor_style` | int | **Bibata** 3 arrow · 27 link hand · 10 Ice · 32 Ice link · 11 Original · 33 Original link · 22 Ice Original · 36 Ice Original link; **Breeze** 2 · 26 link · 21 Snow · 35 Snow link · 25 I-beam; **Adwaita** 4 · 28 link · 6 hand · 16 grab open · 17 grab closed · 18 I-beam; **Yaru** 8 · 30 link · 23 grab · 24 I-beam; **DMZ** 7 white · 29 white link · 19 black · 34 black link; **Google Dot** 5 white · 20 black; **XCursor Pro** 9 · 31 link; **macOS** 0; **Windows** 1; **Effects** 12 Neon · 15 Onyx · 13 Dot · 14 Crosshair; **Custom** 37–105 (see [`CURSORS.md`](CURSORS.md)) | `0` |
-| | Size | `cursor_size` | double | 0.5–4 | `1.4` |
+| | Shadow offset X (px) | `bg_shadow_offset_x` | double | -100–100 | `0` |
+| | Shadow offset Y (px) | `bg_shadow_offset` | double | -100–100 | `12` |
+| Cursor | Show custom cursor | `cursor_enabled` | bool | — | `true` |
+| | Cursor style (grouped by theme) | `cursor_style` | int | **Bibata** 3 arrow · 27 link hand · 10 Ice · 32 Ice link · 11 Original · 33 Original link · 22 Ice Original · 36 Ice Original link; **Breeze** 2 · 26 link · 21 Snow · 35 Snow link · 25 I-beam; **Adwaita** 4 · 28 link · 6 hand · 16 grab open · 17 grab closed · 18 I-beam; **Yaru** 8 · 30 link · 23 grab · 24 I-beam; **DMZ** 7 white · 29 white link · 19 black · 34 black link; **Google Dot** 5 white · 20 black; **XCursor Pro** 9 · 31 link; **macOS** 0; **Windows** 1; **Effects** 12 Neon · 15 Onyx · 13 Dot · 14 Crosshair; **Custom** 37–105 (see [`CURSORS.md`](CURSORS.md)) | `0` |
+| | Cursor size (1 = default) | `cursor_size` | double | 0.5–4 | `1.4` |
 | | Cursor shadow | `cursor_shadow` | bool | — | `true` |
-| | Smoothing | `cursor_smooth` | double | 0–1 | `0.7` |
-| | Curve tilt | `cursor_sway` | double | 0–1 | `0.3` |
-| | Hide when idle | `cursor_hide_idle` | bool | — | `true` |
-| | Hide delay (ms) | `cursor_idle_delay_ms` | double | 0–5000 | `1200` |
-| | Return to start when idle | `cursor_loop` | bool | — | `false` |
-| | Return time (ms) | `cursor_loop_ms` | double | 1000–20000 | `4000` |
-| Zoom | Mode | `zoom_mode` | int | 0 off, 1 auto, 2 manual | `1` |
-| | Intensity | `zoom_amount` | double | 1–4 | `1.6` |
-| | Speed (ms) | `zoom_duration_ms` | double | 100–2000 | `450` |
-| | Idle time (ms) | `zoom_idle_timeout_ms` | double | 200–10000 | `1500` |
-| | Pan intensity | `zoom_pan_amount` | double | 0–1 | `1.0` |
-| | Centering | `zoom_center_amount` | double | 0–1 | `1.0` |
-| Left click | Effect | `click_left_effect` | int | 0 ripple, 1 orb, 2 ring, 3 force, 4 glow, 5 echo, 6 flare | `0` |
-| | Size | `click_left_size` | double | 0.1–4 | `1.0` |
-| | Color | `click_left_color` | color | — | `0xFFFFFFFF` |
-| | Duration (ms) | `click_left_duration_ms` | double | 100–2000 | `650` |
-| | Curve | `click_left_easing` | int | 0 linear, 1 in, 2 out, 3 in-out | `2` |
-| Right click | Effect | `click_right_effect` | int | same | `1` |
-| | Size | `click_right_size` | double | 0.1–4 | `1.2` |
-| | Color | `click_right_color` | color | — | `0xFF7C5CFF` |
-| | Duration (ms) | `click_right_duration_ms` | double | 100–2000 | `700` |
-| | Curve | `click_right_easing` | int | same | `2` |
-| Click sound | Enable sound | `click_sound_enabled` | bool | — | `true` |
+| | Smoothing (0 = exact tracking) | `cursor_smooth` | double | 0–1 | `0.7` |
+| | Curve tilt (sway) | `cursor_sway` | double | 0–1 | `0.3` |
+| | Hide cursor when idle | `cursor_hide_idle` | bool | — | `true` |
+| | Idle delay before hiding (ms) | `cursor_idle_delay_ms` | double | 0–5000 | `1200` |
+| | Return cursor to start when idle | `cursor_loop` | bool | — | `false` |
+| | Idle time before returning (ms) | `cursor_loop_ms` | double | 1000–20000 | `4000` |
+| Zoom | Zoom mode | `zoom_mode` | int | 0 off, 1 auto, 2 manual | `1` |
+| | Zoom intensity (1 = no zoom) | `zoom_amount` | double | 1–4 | `1.6` |
+| | Zoom transition time (ms) | `zoom_duration_ms` | double | 100–2000 | `450` |
+| | Return to normal after idle (ms) | `zoom_idle_timeout_ms` | double | 200–10000 | `1500` |
+| | Pan intensity (0 = off) | `zoom_pan_amount` | double | 0–1 | `1.0` |
+| | Centering (0 = follows mouse, 1 = centered) | `zoom_center_amount` | double | 0–1 | `1.0` |
+| Left click | Click effect | `click_left_effect` | int | 0 ripple, 1 orb, 2 ring, 3 force, 4 glow, 5 echo, 6 flare | `0` |
+| | Effect size (1 = default) | `click_left_size` | double | 0.1–4 | `1.0` |
+| | Effect color | `click_left_color` | color | — | `0xFFFFFFFF` |
+| | Effect duration (ms) | `click_left_duration_ms` | double | 100–2000 | `650` |
+| | Animation curve | `click_left_easing` | int | 0 linear, 1 in, 2 out, 3 in-out | `2` |
+| Right click | Click effect | `click_right_effect` | int | same | `1` |
+| | Effect size (1 = default) | `click_right_size` | double | 0.1–4 | `1.2` |
+| | Effect color | `click_right_color` | color | — | `0xFF7C5CFF` |
+| | Effect duration (ms) | `click_right_duration_ms` | double | 100–2000 | `700` |
+| | Animation curve | `click_right_easing` | int | same | `2` |
+| Click sound | Enable click sound | `click_sound_enabled` | bool | — | `true` |
 | | Left click sound | `click_sound_file_left` | string | bundled `sounds/*.wav` (41; the three `click-mouse-*.wav` are real mouse recordings) | `sounds/click-soft.wav` |
 | | Right click sound | `click_sound_file_right` | string | bundled `sounds/*.wav` | `sounds/click-pop.wav` |
 | | Legacy single file | `click_sound_file` | string | migrates to both sides | — |
-| | Volume | `click_sound_volume` | double | 0–1 (honored by paplay) | `0.6` |
-| | On left click | `click_sound_left` | bool | — | `true` |
-| | On right click | `click_sound_right` | bool | — | `false` |
-| Movement | Motion blur | `motion_blur_enabled` | bool | — | `true` |
-| | Intensity | `motion_blur_amount` | double | 0–1 | `0.35` |
+| | Click sound volume (0–1) | `click_sound_volume` | double | 0–1 (honored by paplay) | `0.6` |
+| | Play on left click | `click_sound_left` | bool | — | `true` |
+| | Play on right click | `click_sound_right` | bool | — | `false` |
+| Movement | Enable motion blur | `motion_blur_enabled` | bool | — | `true` |
+| | Motion blur intensity (0–1) | `motion_blur_amount` | double | 0–1 | `0.35` |
 | Spotlight | Enable spotlight | `spotlight_enabled` | bool | — | `false` |
-| | Shape | `spotlight_shape` | int | 0 round, 1 square | `0` |
-| | Radius | `spotlight_radius` | double | 0.05–1 | `0.30` |
-| | Square corner radius | `spotlight_corner_radius` | double | px | `0` |
-| | Dimming outside | `spotlight_dim` | double | 0–1 | `0.60` |
+| | Spotlight shape | `spotlight_shape` | int | 0 circle, 1 square | `0` |
+| | Radius (fraction of screen) | `spotlight_radius` | double | 0.05–1 | `0.30` |
+| | Square corner radius (px) | `spotlight_corner_radius` | double | px | `0` |
+| | Darken outside (0 = off, 1 = black) | `spotlight_dim` | double | 0–1 | `0.60` |
 | | Enable border | `spotlight_border_enabled` | bool | — | `false` |
 | | Border color | `spotlight_border_color` | color | — | `0xFFFFFFFF` |
-| | Border width | `spotlight_border_width` | double | px | `4` |
+| | Border width (px) | `spotlight_border_width` | double | px | `4` |
 | | Enable outer halo shadow | `spotlight_shadow_enabled` | bool | — | `false` |
-| | Shadow color | `spotlight_shadow_color` | color | — | `0xFF000000` |
-| | Shadow opacity | `spotlight_shadow_alpha` | double | 0–1 | `0.55` |
-| | Shadow blur | `spotlight_shadow_blur` | double | px | `30` |
-| | Shadow offset X | `spotlight_shadow_offset_x` | double | px | `0` |
-| | Shadow offset Y | `spotlight_shadow_offset_y` | double | px | `12` |
+| | Halo color | `spotlight_shadow_color` | color | — | `0xFF000000` |
+| | Halo opacity (0–1) | `spotlight_shadow_alpha` | double | 0–1 | `0.55` |
+| | Halo blur (px) | `spotlight_shadow_blur` | double | px | `30` |
+| | Halo offset X (px) | `spotlight_shadow_offset_x` | double | px | `0` |
+| | Halo offset Y (px) | `spotlight_shadow_offset_y` | double | px | `12` |
 | | Enable blur outside | `spotlight_blur_enabled` | bool | — | `false` |
-| | Blur amount | `spotlight_blur_amount` | double | px | `16` |
-| | Zoom when active | `spotlight_zoom_amount` | double | 1–4 | `1.35` |
-| | Drop/zoom in duration | `spotlight_in_ms` | double | ms | `250` |
-| | Drop/zoom out duration | `spotlight_out_ms` | double | ms | `300` |
-| | Drop distance | `spotlight_drop_px` | double | px | `24` |
+| | Outside blur amount (px) | `spotlight_blur_amount` | double | px | `16` |
+| | Zoom when active (x) | `spotlight_zoom_amount` | double | 1–4 | `1.35` |
+| | Drop/zoom in (ms) | `spotlight_in_ms` | double | ms | `250` |
+| | Drop/zoom out (ms) | `spotlight_out_ms` | double | ms | `300` |
+| | Vertical drop distance (px) | `spotlight_drop_px` | double | px | `24` |
 | Keys | Show typed keys | `keys_enabled` | bool | — | `true` |
 | | Modifiers only | `keys_modifiers_only` | bool | — | `false` |
 | | Show special keys as icons | `keys_show_special` | bool | — | `true` (off = ignore Space/Enter/arrows/modifiers) |
-| | On-screen time (ms) | `keys_ttl_ms` | double | 500–8000 | `2000` |
-| | Max keys | `keys_max` | int | 1–12 | `6` |
-| | Position X | `keys_pos_x` | double | 0–1 | `0.5` |
-| | Position Y | `keys_pos_y` | double | 0–1 | `0.93` |
-| | Text size | `keys_size` | double | 0.4–4 | `1.0` |
+| | On-screen time per key (ms) | `keys_ttl_ms` | double | 500–8000 | `2000` |
+| | Maximum keys on screen | `keys_max` | int | 1–12 | `6` |
+| | Horizontal position (0 = left, 1 = right) | `keys_pos_x` | double | 0–1 | `0.5` |
+| | Vertical position (0 = top, 1 = bottom) | `keys_pos_y` | double | 0–1 | `0.93` |
+| | Text size (1 = default) | `keys_size` | double | 0.4–4 | `1.0` |
 | | Font | `keys_font` | string | `fonts/*.ttf` or path | `fonts/DejaVuSans-Bold.ttf` |
 | | Text color | `keys_color` | color | — | `0xFFFFFFFF` |
 | | Text shadow | `keys_shadow` | bool | — | `true` |
-| | Background band | `keys_band` | bool | — | `true` |
+| | Show background band | `keys_band` | bool | — | `true` |
 | | Band color | `keys_band_color` | color | — | `0x99000000` |
 | Highlighter | Enable drag actions | `highlight_enabled` | bool | — | `true` |
 | | Enable hotkey highlight (toggle zoom) | `highlight_hotkey_enabled` | bool | — | `true` |
-| Look | Drag action: box / line / zoom / press-zoom / box+zoom / line+zoom | `highlight_mode` | int | 0 box, 1 line, 2 zoom, 3 box+zoom, 4 line+zoom, 5 zoom on mouse press | `0` |
-| Look | Color | `highlight_color` | color | — | `0x6600E0FF` |
-| Look | Opacity (0 = invisible) | `highlight_opacity` | double | 0–1 | `0.35` |
-| Look | Line thickness (fraction of screen) | `highlight_thickness` | double | 0.001–0.05 | `0.004` |
-| Timing | Keep on screen (ms) | `highlight_hold_ms` | double | 0–5000 | `900` |
-| Timing | Fade out (ms) | `highlight_fade_ms` | double | 0–2000 | `300` |
+| — | Drag action: box / line / zoom / press-zoom / box+zoom / line+zoom | `highlight_mode` | int | 0 box, 1 line, 2 zoom, 3 box+zoom, 4 line+zoom, 5 zoom on mouse press | `0` |
+| Mark appearance | Mark color | `highlight_color` | color | — | `0x6600E0FF` |
+| Mark appearance | Mark opacity (0 = invisible, 1 = solid) | `highlight_opacity` | double | 0–1 | `0.35` |
+| Mark appearance | Line thickness (fraction of the screen) | `highlight_thickness` | double | 0.001–0.05 | `0.004` |
+| Mark timing | Mark stays on screen (ms) | `highlight_hold_ms` | double | 0–5000 | `900` |
+| Mark timing | Mark fade-out (ms) | `highlight_fade_ms` | double | 0–2000 | `300` |
 | Zoom | Zoom direction (in / out / punch) | `highlight_zoom_dir` | int | 0 in, 1 out, 2 punch in, 3 punch out | `0` |
 | Zoom | Hold-to-zoom delay (ms) | `highlight_zoom_delay_ms` | double | 0–5000 | `1200` |
 | Zoom | Zoom on mouse press: hold delay (ms) | `highlight_press_delay_ms` | double | 0–3000 | `400` |
-| Zoom | Maximum zoom | `highlight_zoom_max` | double | 1.2–8 | `2.5` |
-| Zoom | Zoom-in time (ms) | `highlight_zoom_in_ms` | double | 50–2000 | `250` |
-| Zoom | Return time after release (ms) | `highlight_zoom_out_ms` | double | 100–8000 | `1200` |
-| Zoom | Hold at target after release (ms) | `highlight_zoom_hold_ms` | double | 0–5000 | `600` |
+| Zoom | Maximum zoom (x) | `highlight_zoom_max` | double | 1.2–8 | `2.5` |
+| Zoom | Zoom-in duration (ms) | `highlight_zoom_in_ms` | double | 50–2000 | `250` |
+| Zoom | Return duration (ms) | `highlight_zoom_out_ms` | double | 100–8000 | `1200` |
+| Zoom | Hold at target (ms) | `highlight_zoom_hold_ms` | double | 0–5000 | `600` |
 | Monitor | Manual origin | `monitor_manual` | bool | — | `false` |
 | | Origin X (px) | `monitor_x` | int | −32768…32767 | `0` |
 | | Origin Y (px) | `monitor_y` | int | −32768…32767 | `0` |
@@ -142,6 +144,11 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 > = out** at 1× there is nothing to zoom out from; use **in** (the default) for
 > the first press.
 
+> Imported settings: every numeric value is sanitized when settings, presets or
+> profiles are loaded. Non-finite values (NaN/infinity) fall back to the
+> built-in default and out-of-range values are clamped to the ranges above, so a
+> hand-edited file cannot produce degenerate uniforms or animation state.
+
 ### Profiles backup
 
 `Export profiles` writes a `.json` with the 10 slots and the active index:
@@ -150,7 +157,7 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 {
   "topscreen_profiles": 1,
   "plugin": "TopScreen",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "current": 0,
   "profile_slot_0": { "effects_enabled": true },
   "profile_slot_1": { "effects_enabled": true },
@@ -192,7 +199,7 @@ they act on the filter selected in the dock, or the first active one):
 | `TopScreen_ProfileI` | `TopScreen_ProfileI — Activate profile I` |
 | `TopScreen_ProfileJ` | `TopScreen_ProfileJ — Activate profile J` |
 | `TopScreen_ProfileSave` | `TopScreen_ProfileSave — Save to current profile` |
-| `TopScreen_ToggleHighlight` | `TopScreen_ToggleHighlight — Toggle highlight zoom` |
+| `TopScreen_ToggleHighlight` | `TopScreen_ToggleHighlight — Toggle hotkey highlight (zoom)` |
 | `TopScreen_ToggleSpotlight` | `TopScreen_ToggleSpotlight — Toggle spotlight` |
 
 ## Preset format

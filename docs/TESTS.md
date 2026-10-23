@@ -4,7 +4,7 @@
 
 1. **Core tests** (`./tests/run.sh`) — pure logic, runs anywhere.
 2. **Check against the OBS headers** (`./tools/check-obs-headers.sh`) —
-   compiles every plugin source (38 files) against the **real** OBS headers (via
+   compiles every plugin source (42 files) against the **real** OBS headers (via
    `-fsyntax-only`, without libobs installed). It catches API/signature/type
    errors that the core tests do not. The dock (`src/ui`) is checked against real
    Qt6 when available, or the stub in `tools/qt-stub`. Runs in CI
@@ -100,8 +100,8 @@ That is where all the math and the state logic live — what actually must be ri
 ## Current numbers
 
 ```
-232 tests | 6962 checks | 0 failures   (core)
-49 tests | 666 checks   | 0 failures   (integration with fake libobs)
+233 tests | 7013 checks | 0 failures   (core)
+51 tests | 688 checks   | 0 failures   (integration with fake libobs)
 ```
 
 ## What the integration layer covers

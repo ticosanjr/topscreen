@@ -568,15 +568,26 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 		    spotlight_blur_enabled > 0.5 && spotlight_blur > 0.01 &&
 		    spot_outside > 0.001) {
 			float2 o = spotlight_blur / max(target_size, float2(1.0, 1.0));
-			float4 blurred = sample_scene_at(px) * 0.25;
-			blurred += sample_scene_at(px + float2(o.x, 0.0)) * 0.125;
-			blurred += sample_scene_at(px - float2(o.x, 0.0)) * 0.125;
-			blurred += sample_scene_at(px + float2(0.0, o.y)) * 0.125;
-			blurred += sample_scene_at(px - float2(0.0, o.y)) * 0.125;
-			blurred += sample_scene_at(px + o) * 0.0625;
-			blurred += sample_scene_at(px - o) * 0.0625;
-			blurred += sample_scene_at(px + float2(o.x, -o.y)) * 0.0625;
-			blurred += sample_scene_at(px - float2(o.x, -o.y)) * 0.0625;
+			float4 blurred;
+			/* Large frames/large blurs use a cheaper 5-tap cross; the
+			 * difference is hard to see when the kernel is this wide. */
+			if (target_size.x * target_size.y > 3686400.0 || spotlight_blur >= 24.0) {
+				blurred = sample_scene_at(px) * 0.40;
+				blurred += sample_scene_at(px + float2(o.x, 0.0)) * 0.15;
+				blurred += sample_scene_at(px - float2(o.x, 0.0)) * 0.15;
+				blurred += sample_scene_at(px + float2(0.0, o.y)) * 0.15;
+				blurred += sample_scene_at(px - float2(0.0, o.y)) * 0.15;
+			} else {
+				blurred = sample_scene_at(px) * 0.25;
+				blurred += sample_scene_at(px + float2(o.x, 0.0)) * 0.125;
+				blurred += sample_scene_at(px - float2(o.x, 0.0)) * 0.125;
+				blurred += sample_scene_at(px + float2(0.0, o.y)) * 0.125;
+				blurred += sample_scene_at(px - float2(0.0, o.y)) * 0.125;
+				blurred += sample_scene_at(px + o) * 0.0625;
+				blurred += sample_scene_at(px - o) * 0.0625;
+				blurred += sample_scene_at(px + float2(o.x, -o.y)) * 0.0625;
+				blurred += sample_scene_at(px - float2(o.x, -o.y)) * 0.0625;
+			}
 			blurred = apply_shadow(blurred, px);
 			col = lerp(col, blurred, spot_outside * spot_amount);
 		}

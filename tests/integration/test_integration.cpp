@@ -3,8 +3,10 @@
 
 #include <obs-module.h>
 
+#include <chrono>
 #include <cstdio>
 #include <cstdlib>
+#include <thread>
 #include <string>
 #include <vector>
 
@@ -21,6 +23,7 @@
 #include "core/profiles.hpp"
 #include "core/types.hpp"
 #include "ts-filter.hpp"
+#include "ts-properties.hpp"
 #include "ts-registry.hpp"
 
 using namespace topscreen;
@@ -1207,4 +1210,74 @@ TEST(integration_disables_parent_show_cursor)
 	CHECK(!obs_data_get_bool(parent->settings, "show_cursor"));
 	ts_filter_source_info.destroy(ctx);
 	CHECK(obs_data_get_bool(parent->settings, "show_cursor"));
+}
+
+TEST(integration_wallpaper_prefilter_stress)
+{
+	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
+
+	obs_source_t *parent = make_parent(1280, 720);
+	obs_source_t *filter = fakeobs::make_source(&ts_filter_source_info, parent, 0, 0);
+	void *ctx = create_filter(filter);
+	REQUIRE(ctx != nullptr);
+
+	obs_data_set_bool(filter->settings, core::keys::kEffectsEnabled, true);
+	obs_data_set_bool(filter->settings, core::keys::kBgEnabled, true);
+	obs_data_set_int(filter->settings, core::keys::kBgType,
+			 static_cast<int>(core::BgMode::Wallpaper));
+	obs_data_set_int(filter->settings, core::keys::kBgMode,
+			 static_cast<int>(core::BgMode::Wallpaper));
+	obs_data_set_string(filter->settings, core::keys::kBgImage, "wallpapers/fiber.jpg");
+	obs_data_set_double(filter->settings, core::keys::kBgImageBlur, 30.0);
+	obs_data_set_int(filter->settings, core::keys::kBgImageBlurType, 2);
+	ts_filter_source_info.update(ctx, filter->settings);
+
+	/* Rapid setting changes while the shared cache worker is decoding and
+	 * filtering. This exercises replacement jobs, texture swaps and teardown
+	 * with a pending result. */
+	for (int i = 0; i < 120; ++i) {
+		if (i % 20 == 0) {
+			obs_data_set_double(filter->settings, core::keys::kBgImageBlur,
+					    static_cast<double>((i * 17) % 61));
+			ts_filter_source_info.update(ctx, filter->settings);
+		}
+		ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+		ts_filter_source_info.video_render(ctx, nullptr);
+		std::this_thread::sleep_for(std::chrono::milliseconds(1));
+	}
+
+	CHECK_EQ(obs_data_get_string(filter->settings, core::keys::kBgImage),
+		 std::string("wallpapers/fiber.jpg"));
+	ts_filter_source_info.destroy(ctx);
+}
+
+TEST(integration_properties_parent_groups)
+{
+	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
+	obs_source_t *parent = make_parent(1280, 720);
+	obs_source_t *filter = fakeobs::make_source(&ts_filter_source_info, parent, 0, 0);
+	void *ctx = create_filter(filter);
+	REQUIRE(ctx != nullptr);
+
+	obs_properties_t *props = properties_create(ctx, filter->settings);
+	REQUIRE(props != nullptr);
+	for (const char *group : {"grp_capture", "grp_pointer", "grp_focus", "grp_overlays",
+				  "grp_advanced"})
+		CHECK(obs_properties_get(props, group) != nullptr);
+	for (const char *child : {"grp_bg", "grp_zoom", "grp_cursor", "grp_click_left",
+				  "grp_sound", "grp_spotlight", "grp_magnifier", "grp_keys",
+				  "grp_highlight", "grp_monitor"})
+		CHECK(obs_properties_get(props, child) != nullptr);
+
+	/* Solid background hides the nested wallpaper group. */
+	CHECK(!fakeobs::property_visible(obs_properties_get(props, "grp_bg_image")));
+	obs_properties_destroy(props);
+
+	obs_data_set_int(filter->settings, core::keys::kBgType,
+			 static_cast<int>(core::BgMode::Wallpaper));
+	props = properties_create(ctx, filter->settings);
+	REQUIRE(props != nullptr);
+	CHECK(fakeobs::property_visible(obs_properties_get(props, "grp_bg_image")));
+	obs_properties_destroy(props);
+	ts_filter_source_info.destroy(ctx);
 }

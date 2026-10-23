@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 
-project(TopScreen VERSION 0.6.3 LANGUAGES C CXX)
+project(TopScreen VERSION 1.0.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -138,6 +138,7 @@ if(TOPSCREEN_BUILD_PLUGIN)
         src/ts-registry.cpp
         src/ts-wallpapers.cpp
         src/render/ts-compositor.cpp
+    src/render/ts-wallpaper.cpp
         src/render/ts-text.cpp
         src/input/ts-input.cpp
         src/input/ts-monitor.cpp

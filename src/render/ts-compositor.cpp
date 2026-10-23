@@ -14,8 +14,6 @@
 #include "core/cursor_atlas.hpp"
 #include "core/cursor_catalog.hpp"
 #include "core/file.hpp"
-#include "core/image.hpp"
-#include "core/image_filter.hpp"
 #include "core/types.hpp"
 #include "ts-wallpapers.hpp"
 
@@ -102,7 +100,6 @@ bool Compositor::load()
 		obs_leave_graphics();
 	}
 
-	start_bg_worker();
 	return ready_;
 }
 
@@ -403,10 +400,9 @@ bool Compositor::validate_params() const
 
 void Compositor::release()
 {
-	stop_bg_worker();
 	text_.release();
 	release_cursor_atlas();
-	release_bg_image();
+	wallpaper_.release();
 
 	if (dummy_tex_) {
 		obs_enter_graphics();
@@ -523,26 +519,30 @@ void Compositor::render(obs_source_t *filter, obs_source_t *target, uint32_t wid
 
 	/* Wallpaper is only sampled in wallpaper mode. The path is passed as a C
 	 * string so the hot path does not allocate. */
-	const bool wallpaper = bg && cfg.bg.mode == static_cast<int>(core::BgMode::Wallpaper);
-	const bool bg_transparent = wallpaper && wallpaper_is_transparent(cfg.bg.image.c_str());
+	const bool wallpaper_mode = bg && cfg.bg.mode == static_cast<int>(core::BgMode::Wallpaper);
+	const bool bg_transparent =
+		wallpaper_mode && wallpaper_is_transparent(cfg.bg.image.c_str());
 	/* Quantize the target size used by the wallpaper prefilter: a one-pixel
 	 * canvas change must not rebuild a multi-megapixel texture. */
 	const uint32_t blur_w = (w + 15u) & ~15u;
 	const uint32_t blur_h = (h + 15u) & ~15u;
-	load_bg_image(wallpaper && !bg_transparent
-			      ? core::resolve_bg_path(cfg.bg.image.c_str(), cfg.bg.image_file.c_str())
-			      : "",
-		      blur_w, blur_h, cfg.bg.image_blur, cfg.bg.image_blur_type);
-	const bool bgimg = wallpaper && !bg_transparent && bg_tex_ != nullptr;
+	if (wallpaper_mode && !bg_transparent)
+		wallpaper_.update(core::resolve_bg_path(cfg.bg.image.c_str(),
+						       cfg.bg.image_file.c_str()),
+				  blur_w, blur_h, cfg.bg.image_blur, cfg.bg.image_blur_type);
+	else
+		wallpaper_.update("", 0, 0, 0.0, 0);
+	const bool bgimg = wallpaper_mode && !bg_transparent && wallpaper_.has_texture();
 	set_f(p_bg_transparent_, bg_transparent ? 1.0f : 0.0f);
 	/* D3D11 aborts the draw ("Not all shader parameters were set") when any
 	 * scalar uniform was never uploaded, leaving the frame empty, so every
 	 * uniform below is uploaded on EVERY frame, even with the feature off.
 	 * Textures always get a real binding (a 1x1 dummy when unused). */
 	set_f(p_bg_tex_enabled_, bgimg ? 1.0f : 0.0f);
-	set_f(p_bg_tex_aspect_, bg_aspect_);
+	set_f(p_bg_tex_aspect_, wallpaper_.aspect());
 	if (p_bg_tex_)
-		gs_effect_set_texture(p_bg_tex_, bgimg && bg_tex_ ? bg_tex_ : dummy_tex_);
+		gs_effect_set_texture(p_bg_tex_,
+				      bgimg ? wallpaper_.texture() : dummy_tex_);
 
 	const float shadow_alpha = (bg && cfg.bg.shadow) ? static_cast<float>(cfg.bg.shadow_alpha) : 0.0f;
 	set_f(p_shadow_alpha_, shadow_alpha);
@@ -723,275 +723,6 @@ void Compositor::render(obs_source_t *filter, obs_source_t *target, uint32_t wid
 	 * the shader draws so typed text remains readable. */
 	if (active && cfg.keys.enabled && st.key_count > 0)
 		text_.draw(st.keys, st.key_count, cfg.keys, w, h);
-}
-
-void Compositor::start_bg_worker()
-{
-	if (bg_worker_.joinable())
-		return;
-	bg_stop_ = false;
-	bg_has_job_ = false;
-	bg_result_.reset();
-	try {
-		bg_worker_ = std::thread(&Compositor::bg_worker_loop, this);
-	} catch (...) {
-		blog(LOG_WARNING, "[TopScreen] wallpaper prefilter worker unavailable");
-	}
-}
-
-void Compositor::stop_bg_worker()
-{
-	if (!bg_worker_.joinable())
-		return;
-	{
-		std::lock_guard<std::mutex> lock(bg_mutex_);
-		bg_stop_ = true;
-		bg_has_job_ = false;
-	}
-	bg_cv_.notify_all();
-	bg_worker_.join();
-	{
-		std::lock_guard<std::mutex> lock(bg_mutex_);
-		bg_result_.reset();
-		bg_job_.source.reset();
-	}
-}
-
-void Compositor::bg_worker_loop()
-{
-	for (;;) {
-		BgPrefilterJob job;
-		{
-			std::unique_lock<std::mutex> lock(bg_mutex_);
-			bg_cv_.wait(lock, [this] { return bg_stop_ || bg_has_job_; });
-			if (bg_stop_)
-				return;
-			job = bg_job_;
-			bg_job_.source.reset();
-			bg_has_job_ = false;
-		}
-
-		std::shared_ptr<core::Image> result;
-		try {
-			result = std::make_shared<core::Image>(
-				core::image_prefilter(*job.source, job.target_w, job.target_h,
-						      job.blur, job.blur_type));
-		} catch (...) {
-			blog(LOG_WARNING, "[TopScreen] wallpaper prefilter failed");
-			continue;
-		}
-
-		{
-			std::lock_guard<std::mutex> lock(bg_mutex_);
-			if (bg_stop_)
-				return;
-			bg_result_ = std::move(result);
-			bg_result_id_ = job.id;
-		}
-	}
-}
-
-void Compositor::schedule_bg_prefilter(const std::shared_ptr<const core::Image> &source,
-				       uint32_t target_w, uint32_t target_h, double blur,
-				       int blur_type)
-{
-	if (!source || !bg_worker_.joinable())
-		return;
-	std::lock_guard<std::mutex> lock(bg_mutex_);
-	bg_job_.source = source;
-	bg_job_.target_w = target_w;
-	bg_job_.target_h = target_h;
-	bg_job_.blur = blur;
-	bg_job_.blur_type = blur_type;
-	bg_job_.id = ++bg_job_id_;
-	bg_has_job_ = true;
-	bg_cv_.notify_one();
-}
-
-bool Compositor::upload_bg_texture(const core::Image &image)
-{
-	if (image.empty())
-		return false;
-	if (bg_tex_) {
-		obs_enter_graphics();
-		gs_texture_destroy(bg_tex_);
-		obs_leave_graphics();
-		bg_tex_ = nullptr;
-	}
-	obs_enter_graphics();
-	const uint8_t *data[1] = {image.pixels.data()};
-	bg_tex_ = gs_texture_create(static_cast<uint32_t>(image.width),
-				    static_cast<uint32_t>(image.height), GS_RGBA, 1, data, 0);
-	obs_leave_graphics();
-	return bg_tex_ != nullptr;
-}
-
-bool Compositor::consume_bg_prefilter_result()
-{
-	std::shared_ptr<const core::Image> result;
-	uint64_t id = 0;
-	{
-		std::lock_guard<std::mutex> lock(bg_mutex_);
-		if (!bg_result_)
-			return false;
-		result = std::move(bg_result_);
-		id = bg_result_id_;
-	}
-	if (id != bg_job_id_)
-		return false;
-	if (!upload_bg_texture(*result))
-		return false;
-	bg_tex_blur_ = bg_pending_blur_;
-	bg_tex_blur_type_ = bg_pending_blur_type_;
-	bg_tex_target_w_ = bg_pending_target_w_;
-	bg_tex_target_h_ = bg_pending_target_h_;
-	bg_pending_ = false;
-	return true;
-}
-
-void Compositor::load_bg_image(const char *raw, uint32_t target_w, uint32_t target_h,
-			       double blur, int blur_type)
-{
-	consume_bg_prefilter_result();
-
-	const char *requested = raw ? raw : "";
-	auto invalidate_prefilter = [this]() {
-		std::lock_guard<std::mutex> lock(bg_mutex_);
-		++bg_job_id_;
-		bg_has_job_ = false;
-		bg_result_.reset();
-		bg_job_.source.reset();
-		bg_pending_ = false;
-	};
-
-	/* Auto-correction: a built-in wallpaper name from older configs
-	 * (e.g. "Aurora") becomes its path. */
-	if (bg_requested_ != requested) {
-		bg_requested_ = requested;
-
-		std::string path = requested;
-		if (const char *w = wallpaper_path_for(requested))
-			path = w;
-
-		if (path != bg_loaded_) {
-			invalidate_prefilter();
-			if (bg_tex_) {
-				obs_enter_graphics();
-				gs_texture_destroy(bg_tex_);
-				obs_leave_graphics();
-				bg_tex_ = nullptr;
-			}
-			bg_image_.reset();
-			bg_loaded_ = path;
-			bg_tex_blur_ = -1.0;
-			bg_tex_blur_type_ = -1;
-			bg_tex_target_w_ = 0;
-			bg_tex_target_h_ = 0;
-			bg_aspect_ = 1.0f;
-
-			if (path.empty())
-				return;
-
-			std::vector<uint8_t> bytes;
-			if (!core::read_file_bytes(path.c_str(), &bytes)) {
-				char *m = obs_module_file(path.c_str());
-				if (!m) {
-					blog(LOG_WARNING, "[TopScreen] wallpaper not found: %s",
-					     path.c_str());
-					return;
-				}
-				const bool mok = core::read_file_bytes(m, &bytes);
-				bfree(m);
-				if (!mok)
-					bytes.clear();
-			}
-
-			if (bytes.empty()) {
-				blog(LOG_WARNING, "[TopScreen] empty/unreadable wallpaper: %s",
-				     path.c_str());
-				return;
-			}
-
-			core::Image decoded;
-			std::string err;
-			if (!core::image_decode(bytes.data(), bytes.size(), &decoded, &err)) {
-				blog(LOG_WARNING, "[TopScreen] invalid wallpaper (%s): %s",
-				     path.c_str(), err.c_str());
-				return;
-			}
-
-			/* Keep the cached source bounded; the shader receives the
-			 * filtered texture, so an 8K source does not need to live in RAM. */
-			core::Image limited = core::image_limit_max(decoded, 4096);
-			bg_image_ = std::make_shared<core::Image>(std::move(limited));
-			bg_aspect_ = static_cast<float>(bg_image_->width) /
-				     static_cast<float>(bg_image_->height);
-			blog(LOG_INFO, "[TopScreen] wallpaper: %s (%dx%d)", path.c_str(),
-			     bg_image_->width, bg_image_->height);
-		}
-	}
-
-	if (!bg_image_)
-		return;
-
-	const bool want_blur = blur > 0.01 && blur_type > 0;
-	if (!want_blur) {
-		if (bg_pending_)
-			invalidate_prefilter();
-		if (bg_tex_ && bg_tex_blur_ < 0.0)
-			return;
-		if (!upload_bg_texture(*bg_image_))
-			return;
-		bg_tex_blur_ = -1.0;
-		bg_tex_blur_type_ = -1;
-		bg_tex_target_w_ = 0;
-		bg_tex_target_h_ = 0;
-		return;
-	}
-
-	if (bg_tex_ && bg_tex_target_w_ == target_w && bg_tex_target_h_ == target_h &&
-	    bg_tex_blur_ == blur && bg_tex_blur_type_ == blur_type)
-		return;
-
-	/* Keep the previous texture visible while the worker prepares the new one;
-	 * on the first load, show the source immediately instead of leaving the
-	 * background empty. */
-	if (!bg_tex_ && !upload_bg_texture(*bg_image_))
-		return;
-
-	if (bg_pending_ && bg_pending_target_w_ == target_w &&
-	    bg_pending_target_h_ == target_h && bg_pending_blur_ == blur &&
-	    bg_pending_blur_type_ == blur_type)
-		return;
-
-	bg_pending_target_w_ = target_w;
-	bg_pending_target_h_ = target_h;
-	bg_pending_blur_ = blur;
-	bg_pending_blur_type_ = blur_type;
-	bg_pending_ = true;
-	schedule_bg_prefilter(bg_image_, target_w, target_h, blur, blur_type);
-}
-
-void Compositor::release_bg_image()
-{
-	if (bg_tex_) {
-		obs_enter_graphics();
-		gs_texture_destroy(bg_tex_);
-		obs_leave_graphics();
-		bg_tex_ = nullptr;
-	}
-	bg_image_.reset();
-	bg_loaded_.clear();
-	bg_requested_.clear();
-	bg_tex_blur_ = -1.0;
-	bg_tex_blur_type_ = -1;
-	bg_tex_target_w_ = 0;
-	bg_tex_target_h_ = 0;
-	bg_pending_ = false;
-	bg_pending_blur_ = -1.0;
-	bg_pending_blur_type_ = -1;
-	bg_pending_target_w_ = 0;
-	bg_pending_target_h_ = 0;
 }
 
 } // namespace topscreen

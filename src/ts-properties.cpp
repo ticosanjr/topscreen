@@ -271,6 +271,11 @@ bool highlight_mode_changed(obs_properties_t *props, obs_property_t *property, o
 obs_properties_t *properties_create(void *data, obs_data_t *settings)
 {
 	obs_properties_t *props = obs_properties_create();
+	obs_properties_t *capture = obs_properties_create();
+	obs_properties_t *pointer = obs_properties_create();
+	obs_properties_t *focus = obs_properties_create();
+	obs_properties_t *overlays = obs_properties_create();
+	obs_properties_t *advanced = obs_properties_create();
 
 	/* ---------------- Version (always visible, first thing) ---------------- */
 	const std::string version_line = std::string("TopScreen ") + kVersion;
@@ -307,6 +312,19 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 	obs_properties_add_group(props, "grp_profiles", obs_module_text("Group.Profiles"), OBS_GROUP_NORMAL, prof);
 
 	obs_properties_add_bool(props, kEffectsEnabled, obs_module_text("Enabled"));
+
+	/* Top-level sections group the detailed settings by purpose. They are added
+	 * before their children so the visibility callbacks can find nested groups. */
+	obs_properties_add_group(props, "grp_capture", obs_module_text("Group.Capture"),
+				 OBS_GROUP_NORMAL, capture);
+	obs_properties_add_group(props, "grp_pointer", obs_module_text("Group.Pointer"),
+				 OBS_GROUP_NORMAL, pointer);
+	obs_properties_add_group(props, "grp_focus", obs_module_text("Group.Focus"),
+				 OBS_GROUP_NORMAL, focus);
+	obs_properties_add_group(props, "grp_overlays", obs_module_text("Group.Overlays"),
+				 OBS_GROUP_NORMAL, overlays);
+	obs_properties_add_group(props, "grp_advanced", obs_module_text("Group.Advanced"),
+				 OBS_GROUP_NORMAL, advanced);
 
 	/* ---------------- Background ---------------- */
 	obs_properties_t *bg = obs_properties_create();
@@ -390,7 +408,7 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 	obs_properties_add_float_slider(sh, kBgShadowOffset, obs_module_text("Shadow.Offset"), -100.0, 100.0,
 					1.0);
 	obs_properties_add_group(bg, "grp_shadow", obs_module_text("Group.Shadow"), OBS_GROUP_NORMAL, sh);
-	obs_properties_add_group(props, "grp_bg", obs_module_text("Group.Background"), OBS_GROUP_NORMAL, bg);
+	obs_properties_add_group(capture, "grp_bg", obs_module_text("Group.Background"), OBS_GROUP_NORMAL, bg);
 	background_type_changed(props, nullptr, settings);
 
 	/* ---------------- Zoom ---------------- */
@@ -412,14 +430,14 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 	obs_property_t *center = obs_properties_add_float_slider(
 		zoom, kZoomCenterAmount, obs_module_text("Zoom.CenterAmount"), 0.0, 1.0, 0.01);
 	set_tip(center, obs_module_text("Tooltip.ZoomCentering"));
-	obs_properties_add_group(props, "grp_zoom", obs_module_text("Group.Zoom"), OBS_GROUP_NORMAL, zoom);
+	obs_properties_add_group(capture, "grp_zoom", obs_module_text("Group.Zoom"), OBS_GROUP_NORMAL, zoom);
 
 	/* ---------------- Motion blur ---------------- */
 	obs_properties_t *mb = obs_properties_create();
 	obs_properties_add_bool(mb, kMotionBlurEnabled, obs_module_text("MotionBlur.Enabled"));
 	obs_properties_add_float_slider(mb, kMotionBlurAmount, obs_module_text("MotionBlur.Amount"), 0.0, 1.0,
 					0.01);
-	obs_properties_add_group(props, "grp_motionblur", obs_module_text("Group.MotionBlur"), OBS_GROUP_NORMAL, mb);
+	obs_properties_add_group(capture, "grp_motionblur", obs_module_text("Group.MotionBlur"), OBS_GROUP_NORMAL, mb);
 
 	/* ---------------- Cursor ---------------- */
 	obs_properties_t *cur = obs_properties_create();
@@ -474,13 +492,13 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 	set_tip(loop_ms, obs_module_text("Tooltip.CursorLoopMs"));
 	obs_property_set_modified_callback(hide_idle, cursor_options_changed);
 	obs_property_set_modified_callback(loop, cursor_options_changed);
-	obs_properties_add_group(props, "grp_cursor", obs_module_text("Group.Cursor"), OBS_GROUP_NORMAL, cur);
+	obs_properties_add_group(pointer, "grp_cursor", obs_module_text("Group.Cursor"), OBS_GROUP_NORMAL, cur);
 	cursor_options_changed(props, nullptr, settings);
 
 	/* ---------------- Clicks ---------------- */
-	add_click_group(props, "grp_click_left", obs_module_text("Group.ClickLeft"), kClickLeftEffect,
+	add_click_group(pointer, "grp_click_left", obs_module_text("Group.ClickLeft"), kClickLeftEffect,
 			kClickLeftSize, kClickLeftColor, kClickLeftDurationMs, kClickLeftEasing);
-	add_click_group(props, "grp_click_right", obs_module_text("Group.ClickRight"), kClickRightEffect,
+	add_click_group(pointer, "grp_click_right", obs_module_text("Group.ClickRight"), kClickRightEffect,
 			kClickRightSize, kClickRightColor, kClickRightDurationMs, kClickRightEasing);
 
 	/* ---------------- Click sound ---------------- */
@@ -500,7 +518,7 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 	}
 	obs_properties_add_float_slider(snd, kClickSoundVolume, obs_module_text("ClickSound.Volume"), 0.0, 1.0,
 					0.01);
-	obs_properties_add_group(props, "grp_sound", obs_module_text("Group.ClickSound"), OBS_GROUP_NORMAL, snd);
+	obs_properties_add_group(pointer, "grp_sound", obs_module_text("Group.ClickSound"), OBS_GROUP_NORMAL, snd);
 
 	/* ---------------- Spotlight ---------------- */
 	obs_properties_t *spot = obs_properties_create();
@@ -574,7 +592,7 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 				 obs_module_text("Spotlight.AnimationGroup"), OBS_GROUP_NORMAL,
 				 sanim);
 
-	obs_properties_add_group(props, "grp_spotlight", obs_module_text("Group.Spotlight"), OBS_GROUP_NORMAL,
+	obs_properties_add_group(focus, "grp_spotlight", obs_module_text("Group.Spotlight"), OBS_GROUP_NORMAL,
 				 spot);
 	spotlight_options_changed(props, nullptr, settings);
 
@@ -633,7 +651,7 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 					0.0, 2000.0, 10.0);
 	obs_properties_add_float_slider(mag, kMagnifierDropPx, obs_module_text("Magnifier.DropPx"),
 					0.0, 200.0, 1.0);
-	obs_properties_add_group(props, "grp_magnifier", obs_module_text("Group.Magnifier"),
+	obs_properties_add_group(focus, "grp_magnifier", obs_module_text("Group.Magnifier"),
 				 OBS_GROUP_NORMAL, mag);
 	obs_property_set_modified_callback(mag_enabled, magnifier_options_changed);
 	magnifier_options_changed(props, nullptr, settings);
@@ -661,7 +679,7 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 		obs_properties_add_bool(keys, kKeysBand, obs_module_text("Keys.Band"));
 	obs_properties_add_color(keys, kKeysBandColor, obs_module_text("Keys.BandColor"));
 	obs_property_set_modified_callback(band, keys_options_changed);
-	obs_properties_add_group(props, "grp_keys", obs_module_text("Group.Keys"), OBS_GROUP_NORMAL, keys);
+	obs_properties_add_group(overlays, "grp_keys", obs_module_text("Group.Keys"), OBS_GROUP_NORMAL, keys);
 	keys_options_changed(props, nullptr, settings);
 
 	/* ---------------- Highlighter: action first, then only what applies.
@@ -738,7 +756,7 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 	obs_properties_add_group(hl, "grp_hl_zoom", obs_module_text("Highlight.ZoomGroup"), OBS_GROUP_NORMAL,
 				 hl_zoom);
 
-	obs_properties_add_group(props, "grp_highlight", obs_module_text("Group.Highlight"), OBS_GROUP_NORMAL,
+	obs_properties_add_group(overlays, "grp_highlight", obs_module_text("Group.Highlight"), OBS_GROUP_NORMAL,
 				 hl);
 
 	/* Initial visibility matches the saved mode (the callback keeps it live). */
@@ -750,8 +768,10 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 	obs_properties_add_bool(mon, kMonitorManual, obs_module_text("Monitor.Manual"));
 	obs_properties_add_int(mon, kMonitorX, obs_module_text("Monitor.X"), -32768, 32767, 1);
 	obs_properties_add_int(mon, kMonitorY, obs_module_text("Monitor.Y"), -32768, 32767, 1);
-	obs_properties_add_group(props, "grp_monitor", obs_module_text("Group.Monitor"), OBS_GROUP_NORMAL,
+	obs_properties_add_group(advanced, "grp_monitor", obs_module_text("Group.Monitor"), OBS_GROUP_NORMAL,
 				 mon);
+
+
 
 
 	/* Simple English explanations shown as the OBS "?" tooltip. */
@@ -914,6 +934,11 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 	tip(kZoomCenterAmount, obs_module_text("Tooltip.kZoomCenterAmount"));
 	tip(kZoomDurationMs, obs_module_text("Tooltip.kZoomDurationMs"));
 	tip(kZoomPanAmount, obs_module_text("Tooltip.kZoomPanAmount"));
+	tip("grp_capture", obs_module_text("Tooltip.GroupCapture"));
+	tip("grp_pointer", obs_module_text("Tooltip.GroupPointer"));
+	tip("grp_focus", obs_module_text("Tooltip.GroupFocus"));
+	tip("grp_overlays", obs_module_text("Tooltip.GroupOverlays"));
+	tip("grp_advanced", obs_module_text("Tooltip.GroupAdvanced"));
 	return props;
 }
 

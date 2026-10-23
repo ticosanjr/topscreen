@@ -1,7 +1,9 @@
 #include "core/image_filter.hpp"
 #include "test_framework.hpp"
 
+#include <atomic>
 #include <cstdint>
+#include <thread>
 #include <vector>
 
 using namespace topscreen::core;
@@ -65,4 +67,24 @@ TEST(image_limit_max_keeps_aspect_and_caps_long_edge)
 	const Image unchanged = image_limit_max(src, 100);
 	CHECK_EQ(unchanged.width, 80);
 	CHECK_EQ(unchanged.height, 40);
+}
+
+TEST(image_filter_is_thread_safe)
+{
+	const Image src = make_test_image(1200, 600);
+	std::atomic<int> failures{0};
+	std::vector<std::thread> workers;
+	for (int t = 0; t < 4; ++t) {
+		workers.emplace_back([&src, &failures] {
+			for (int i = 0; i < 2; ++i) {
+				const Image out = image_prefilter(src, 1200, 600, 8.0, 2);
+				if (out.width != 600 || out.height != 300 ||
+				    out.pixels.size() != 600u * 300u * 4u)
+					++failures;
+			}
+		});
+	}
+	for (auto &worker : workers)
+		worker.join();
+	CHECK_EQ(failures.load(), 0);
 }

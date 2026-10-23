@@ -28,8 +28,8 @@ The diffusion selector still changes the effective spread:
 | Frosted glass | widest kernel, with a softer upscale |
 
 All modes use the same one-sample shader path, including the magnifier lens and
-the full-frame spotlight blur. The worker prepares the image off the video
-thread; only the final texture upload happens on the render thread. The
+the full-frame spotlight blur. The worker and CPU image cache are shared by all TopScreen filters; only the
+final texture upload happens on the render thread. The
 spotlight blur itself still uses nine scene taps, but its shadow is applied once
 after the blur instead of once per tap.
 
@@ -101,3 +101,10 @@ This is a CPU/software-rendering comparison, not a GPU benchmark. The text draw
 count and the blur tap reduction are deterministic and pinned by tests; the
 wall-clock numbers should be re-measured on real GPU hardware before making
 larger performance claims.
+
+## Current 1.0.0 smoke observation
+
+At 1920×1080 with llvmpipe software rendering, wallpaper blur 30, the async
+wallpaper prefilter and the magnifier lens active, OBS reported 60/60 FPS and
+roughly 45% CPU in its status bar. This is a smoke observation, not a controlled
+GPU benchmark or a comparison against 0.6.2.

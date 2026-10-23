@@ -454,12 +454,13 @@ float4 sample_content_at(float2 screen_px, out float mask)
 	return image.Sample(def_sampler, uv_screen);
 }
 
-// Background + frame shadow + captured screen at any target pixel. Used by
-// the full-frame spotlight blur; overlays are deliberately excluded so click
-// effects and highlights stay crisp.
+// Background + captured screen at any target pixel. Used by the full-frame
+// spotlight blur; overlays are deliberately excluded so click effects and
+// highlights stay crisp. The shadow is applied once after the blur instead of
+// nine times, which is visually equivalent for a soft shadow.
 float4 sample_scene_at(float2 screen_px)
 {
-	float4 c = apply_shadow(sample_background(screen_px), screen_px);
+	float4 c = sample_background(screen_px);
 	float m;
 	float4 screen = sample_content_at(screen_px, m);
 	if (m > 0.0) {
@@ -576,6 +577,7 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 			blurred += sample_scene_at(px - o) * 0.0625;
 			blurred += sample_scene_at(px + float2(o.x, -o.y)) * 0.0625;
 			blurred += sample_scene_at(px - float2(o.x, -o.y)) * 0.0625;
+			blurred = apply_shadow(blurred, px);
 			col = lerp(col, blurred, spot_outside * spot_amount);
 		}
 	}

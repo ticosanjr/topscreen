@@ -70,18 +70,34 @@ void KeyOverlayModel::press(std::string_view label, bool is_modifier, double now
 		 * combined shortcut, so Ctrl then C reads as Ctrl + C once. */
 		while (!entries_.empty() && entries_.back().modifier)
 			entries_.pop_back();
-		std::vector<std::string> mods;
+		char combo[KeyLabel::kCapacity];
+		size_t used = 0;
+		auto append = [&](std::string_view part) {
+			if (part.empty())
+				return;
+			if (used && used < KeyLabel::kCapacity - 1) {
+				const char sep[] = " + ";
+				const size_t sn = std::min(sizeof(sep) - 1, KeyLabel::kCapacity - 1 - used);
+				std::memcpy(combo + used, sep, sn);
+				used += sn;
+			}
+			const size_t n = std::min(part.size(), KeyLabel::kCapacity - 1 - used);
+			if (n) {
+				std::memcpy(combo + used, part.data(), n);
+				used += n;
+			}
+		};
 		if (modifiers & KeyModCtrl)
-			mods.emplace_back("Ctrl");
+			append("Ctrl");
 		if (modifiers & KeyModShift)
-			mods.emplace_back("Shift");
+			append("Shift");
 		if (modifiers & KeyModAlt)
-			mods.emplace_back("Alt");
+			append("Alt");
 		if (modifiers & KeyModWin)
-			mods.emplace_back("Win");
-		const std::string combo = format_combo(mods, std::string(shown));
+			append("Win");
+		append(shown);
 		Entry entry;
-		entry.label.assign(combo);
+		entry.label.assign(std::string_view(combo, used));
 		entry.born_ms = now_ms;
 		entry.modifier = false;
 		entries_.push_back(entry);

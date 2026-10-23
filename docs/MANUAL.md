@@ -259,6 +259,7 @@ other. The global **Effects enabled** master still applies.
 | **On-screen time per key (ms)** | How long each key stays |
 | **Maximum keys on screen** | How many simultaneous keys to show |
 
+The key overlay is drawn above the cursor so typed text always stays readable.
 Every keystroke appears as its own character (repeats included) exactly as typed,
 then fades out after the on-screen time. Letters, digits and punctuation such as
 `@#!?` are shown as text. Special keys are shown by name (`Shift`, `Ctrl`, `Alt`,

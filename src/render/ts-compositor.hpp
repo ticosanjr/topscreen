@@ -3,6 +3,11 @@
 #include <graphics/graphics.h>
 #include <obs-module.h>
 
+#include <condition_variable>
+#include <cstdint>
+#include <memory>
+#include <mutex>
+#include <thread>
 #include <vector>
 
 #include "core/config.hpp"
@@ -46,6 +51,24 @@ private:
 	void load_bg_image(const char *path, uint32_t target_w, uint32_t target_h, double blur,
 			   int blur_type);
 	void release_bg_image();
+
+	struct BgPrefilterJob {
+		std::shared_ptr<const core::Image> source;
+		uint32_t target_w = 0;
+		uint32_t target_h = 0;
+		double blur = 0.0;
+		int blur_type = 0;
+		uint64_t id = 0;
+	};
+
+	void start_bg_worker();
+	void stop_bg_worker();
+	void bg_worker_loop();
+	void schedule_bg_prefilter(const std::shared_ptr<const core::Image> &source,
+				   uint32_t target_w, uint32_t target_h, double blur,
+				   int blur_type);
+	bool consume_bg_prefilter_result();
+	bool upload_bg_texture(const core::Image &image);
 
 	gs_effect_t *effect_ = nullptr;
 	/* True only when the effect compiled AND every critical uniform resolved;
@@ -160,19 +183,32 @@ private:
 	core::CursorAtlas cursor_atlas_;
 	std::vector<core::Vec2f> cursor_hotspots_;
 
-	/* Background wallpaper. The decoded image is kept so blur changes can
-	 * rebuild the texture without decoding or reading the file again. */
+	/* Background wallpaper. The decoded image is shared with the prefilter
+	 * worker instead of being copied. */
 	gs_texture_t *bg_tex_ = nullptr;
-	core::Image bg_image_;
+	std::shared_ptr<const core::Image> bg_image_;
 	std::string bg_loaded_;
 	std::string bg_requested_;
 	float bg_aspect_ = 1.0f;
-	uint32_t bg_width_ = 0;
-	uint32_t bg_height_ = 0;
 	double bg_tex_blur_ = -1.0;
 	int bg_tex_blur_type_ = -1;
 	uint32_t bg_tex_target_w_ = 0;
 	uint32_t bg_tex_target_h_ = 0;
+	double bg_pending_blur_ = -1.0;
+	int bg_pending_blur_type_ = -1;
+	uint32_t bg_pending_target_w_ = 0;
+	uint32_t bg_pending_target_h_ = 0;
+	bool bg_pending_ = false;
+
+	std::thread bg_worker_;
+	std::mutex bg_mutex_;
+	std::condition_variable bg_cv_;
+	bool bg_stop_ = false;
+	bool bg_has_job_ = false;
+	BgPrefilterJob bg_job_;
+	std::shared_ptr<const core::Image> bg_result_;
+	uint64_t bg_job_id_ = 0;
+	uint64_t bg_result_id_ = 0;
 
 	/* Gradient direction is only recomputed when the angle changes. The
 	 * uniform itself is still uploaded every frame (D3D11 requirement). */

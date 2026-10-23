@@ -93,13 +93,14 @@ That is where all the math and the state logic live — what actually must be ri
 | `test_hotkeys.cpp` | `hotkeys/ts-hotkey-actions.hpp` + locale | every id starts with `TopScreen_`, no duplicates, every displayed description starts with the literal id, raw `Hotkey.*` fallback becomes the literal id |
 | `test_cursor_atlas.cpp` | `core/cursor_atlas.*` + `data/cursors/` | TSAT v1/v2, row-major grid, hotspots and **real atlas** (106 cells = `CursorStyle::Count`); built-in link hands plus every active custom cell must be populated, and all retired cells transparent |
 | `test_image.cpp` | `core/image.*` + `data/wallpapers/` | image decode (reads a **real wallpaper** 1920x1080), invalid cases and the **decompression-bomb pixel cap** |
+| `test_image_filter.cpp` | `core/image_filter.*` | bilinear resize, max-size cap, identity no-blur path, blurred edges and alpha preservation |
 | `test_monitor.cpp` (integration: manual origin wins over the env) | `core/monitor.*` + `core/coord.*` | monitor pick (hint/size/ambiguity) and global→content mapping with the capture **below/right/left/above**, including the old broken case |
 | `test_mapping.cpp` | `core/mapping.*` | content area (padding/aspect), forward zoom and **consistency with the shader** (proves the cursor lands on the right pixel at any zoom) |
 
 ## Current numbers
 
 ```
-229 tests | 6947 checks | 0 failures   (core)
+232 tests | 6962 checks | 0 failures   (core)
 49 tests | 666 checks   | 0 failures   (integration with fake libobs)
 ```
 

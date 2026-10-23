@@ -15,6 +15,7 @@
 #include "core/cursor_catalog.hpp"
 #include "core/file.hpp"
 #include "core/image.hpp"
+#include "core/image_filter.hpp"
 #include "core/types.hpp"
 #include "ts-wallpapers.hpp"
 
@@ -40,143 +41,6 @@ inline void set_c(gs_eparam_t *p, uint32_t abgr)
 {
 	if (p)
 		gs_effect_set_color(p, core::abgr_to_argb(abgr));
-}
-
-inline int clamp_index(int v, int n)
-{
-	return v < 0 ? 0 : (v >= n ? n - 1 : v);
-}
-
-/* Separable box blur for the static wallpaper. The source is already
- * downscaled by the caller, so this runs once per image/blur setting change
- * instead of once per screen pixel per frame. */
-void box_blur_pass(const uint8_t *src, uint8_t *dst, int w, int h, int radius, bool horizontal)
-{
-	const int div = radius * 2 + 1;
-	if (horizontal) {
-		for (int y = 0; y < h; ++y) {
-			int s0 = 0, s1 = 0, s2 = 0, s3 = 0;
-			for (int k = -radius; k <= radius; ++k) {
-				const int x = clamp_index(k, w);
-				const int i = (y * w + x) * 4;
-				s0 += src[i];
-				s1 += src[i + 1];
-				s2 += src[i + 2];
-				s3 += src[i + 3];
-			}
-			for (int x = 0; x < w; ++x) {
-				const int o = (y * w + x) * 4;
-				dst[o] = static_cast<uint8_t>(s0 / div);
-				dst[o + 1] = static_cast<uint8_t>(s1 / div);
-				dst[o + 2] = static_cast<uint8_t>(s2 / div);
-				dst[o + 3] = static_cast<uint8_t>(s3 / div);
-
-				const int xo = clamp_index(x - radius, w);
-				const int xi = clamp_index(x + radius + 1, w);
-				const int io = (y * w + xo) * 4;
-				const int ii = (y * w + xi) * 4;
-				s0 += src[ii] - src[io];
-				s1 += src[ii + 1] - src[io + 1];
-				s2 += src[ii + 2] - src[io + 2];
-				s3 += src[ii + 3] - src[io + 3];
-			}
-		}
-		return;
-	}
-
-	for (int x = 0; x < w; ++x) {
-		int s0 = 0, s1 = 0, s2 = 0, s3 = 0;
-		for (int k = -radius; k <= radius; ++k) {
-			const int y = clamp_index(k, h);
-			const int i = (y * w + x) * 4;
-			s0 += src[i];
-			s1 += src[i + 1];
-			s2 += src[i + 2];
-			s3 += src[i + 3];
-		}
-		for (int y = 0; y < h; ++y) {
-			const int o = (y * w + x) * 4;
-			dst[o] = static_cast<uint8_t>(s0 / div);
-			dst[o + 1] = static_cast<uint8_t>(s1 / div);
-			dst[o + 2] = static_cast<uint8_t>(s2 / div);
-			dst[o + 3] = static_cast<uint8_t>(s3 / div);
-
-			const int yo = clamp_index(y - radius, h);
-			const int yi = clamp_index(y + radius + 1, h);
-			const int io = (yo * w + x) * 4;
-			const int ii = (yi * w + x) * 4;
-			s0 += src[ii] - src[io];
-			s1 += src[ii + 1] - src[io + 1];
-			s2 += src[ii + 2] - src[io + 2];
-			s3 += src[ii + 3] - src[io + 3];
-		}
-	}
-}
-
-core::Image resize_rgba(const core::Image &src, int dw, int dh)
-{
-	core::Image out;
-	out.width = dw;
-	out.height = dh;
-	out.pixels.resize(static_cast<size_t>(dw) * static_cast<size_t>(dh) * 4u);
-	if (dw == src.width && dh == src.height) {
-		out.pixels = src.pixels;
-		return out;
-	}
-
-	for (int y = 0; y < dh; ++y) {
-		const float sy = (static_cast<float>(y) + 0.5f) *
-				 static_cast<float>(src.height) / static_cast<float>(dh) - 0.5f;
-		const int y0 = static_cast<int>(std::floor(sy));
-		const int y1 = clamp_index(y0 + 1, src.height);
-		const float fy = sy - static_cast<float>(y0);
-		for (int x = 0; x < dw; ++x) {
-			const float sx = (static_cast<float>(x) + 0.5f) *
-					 static_cast<float>(src.width) / static_cast<float>(dw) - 0.5f;
-			const int x0 = clamp_index(static_cast<int>(std::floor(sx)), src.width);
-			const int x1 = clamp_index(x0 + 1, src.width);
-			const float fx = sx - static_cast<float>(static_cast<int>(std::floor(sx)));
-			const int i00 = (clamp_index(y0, src.height) * src.width + x0) * 4;
-			const int i10 = (clamp_index(y0, src.height) * src.width + x1) * 4;
-			const int i01 = (y1 * src.width + x0) * 4;
-			const int i11 = (y1 * src.width + x1) * 4;
-			const int o = (y * dw + x) * 4;
-			for (int c = 0; c < 4; ++c) {
-				const float a = src.pixels[i00 + c] * (1.0f - fx) + src.pixels[i10 + c] * fx;
-				const float b = src.pixels[i01 + c] * (1.0f - fx) + src.pixels[i11 + c] * fx;
-				out.pixels[o + c] = static_cast<uint8_t>(a * (1.0f - fy) + b * fy + 0.5f);
-			}
-		}
-	}
-	return out;
-}
-
-core::Image prefilter_wallpaper(const core::Image &src, uint32_t target_w, uint32_t target_h,
-				double blur, int blur_type)
-{
-	if (src.empty() || blur <= 0.01 || blur_type <= 0)
-		return src;
-
-	const float spread = blur_type < 1.5 ? 0.70f : (blur_type >= 3.5 ? 0.66f :
-								 (blur_type >= 2.5 ? 0.62f : 0.50f));
-	int bw = src.width;
-	int bh = src.height;
-	if (blur >= 4.0 && bw > 960) {
-		bw = std::max(1, bw / 2);
-		bh = std::max(1, bh / 2);
-	}
-	core::Image out = resize_rgba(src, bw, bh);
-
-	const float scale = std::max(static_cast<float>(bw) / static_cast<float>(std::max(target_w, 1u)),
-				     static_cast<float>(bh) / static_cast<float>(std::max(target_h, 1u)));
-	const int radius = static_cast<int>(std::lround(blur * spread * scale));
-	if (radius <= 0)
-		return out;
-
-	std::vector<uint8_t> tmp(out.pixels.size());
-	box_blur_pass(out.pixels.data(), tmp.data(), bw, bh, radius, true);
-	box_blur_pass(tmp.data(), out.pixels.data(), bw, bh, radius, false);
-	return out;
 }
 
 } // namespace
@@ -238,6 +102,7 @@ bool Compositor::load()
 		obs_leave_graphics();
 	}
 
+	start_bg_worker();
 	return ready_;
 }
 
@@ -538,6 +403,7 @@ bool Compositor::validate_params() const
 
 void Compositor::release()
 {
+	stop_bg_worker();
 	text_.release();
 	release_cursor_atlas();
 	release_bg_image();
@@ -853,15 +719,151 @@ void Compositor::render(obs_source_t *filter, obs_source_t *target, uint32_t wid
 	else
 		obs_source_process_filter_end(filter, effect_, w, h);
 
-	/* Key overlay on top of the result. */
+	/* Key overlay on top of the result, intentionally above the cursor that
+	 * the shader draws so typed text remains readable. */
 	if (active && cfg.keys.enabled && st.key_count > 0)
 		text_.draw(st.keys, st.key_count, cfg.keys, w, h);
+}
+
+void Compositor::start_bg_worker()
+{
+	if (bg_worker_.joinable())
+		return;
+	bg_stop_ = false;
+	bg_has_job_ = false;
+	bg_result_.reset();
+	try {
+		bg_worker_ = std::thread(&Compositor::bg_worker_loop, this);
+	} catch (...) {
+		blog(LOG_WARNING, "[TopScreen] wallpaper prefilter worker unavailable");
+	}
+}
+
+void Compositor::stop_bg_worker()
+{
+	if (!bg_worker_.joinable())
+		return;
+	{
+		std::lock_guard<std::mutex> lock(bg_mutex_);
+		bg_stop_ = true;
+		bg_has_job_ = false;
+	}
+	bg_cv_.notify_all();
+	bg_worker_.join();
+	{
+		std::lock_guard<std::mutex> lock(bg_mutex_);
+		bg_result_.reset();
+		bg_job_.source.reset();
+	}
+}
+
+void Compositor::bg_worker_loop()
+{
+	for (;;) {
+		BgPrefilterJob job;
+		{
+			std::unique_lock<std::mutex> lock(bg_mutex_);
+			bg_cv_.wait(lock, [this] { return bg_stop_ || bg_has_job_; });
+			if (bg_stop_)
+				return;
+			job = bg_job_;
+			bg_job_.source.reset();
+			bg_has_job_ = false;
+		}
+
+		std::shared_ptr<core::Image> result;
+		try {
+			result = std::make_shared<core::Image>(
+				core::image_prefilter(*job.source, job.target_w, job.target_h,
+						      job.blur, job.blur_type));
+		} catch (...) {
+			blog(LOG_WARNING, "[TopScreen] wallpaper prefilter failed");
+			continue;
+		}
+
+		{
+			std::lock_guard<std::mutex> lock(bg_mutex_);
+			if (bg_stop_)
+				return;
+			bg_result_ = std::move(result);
+			bg_result_id_ = job.id;
+		}
+	}
+}
+
+void Compositor::schedule_bg_prefilter(const std::shared_ptr<const core::Image> &source,
+				       uint32_t target_w, uint32_t target_h, double blur,
+				       int blur_type)
+{
+	if (!source || !bg_worker_.joinable())
+		return;
+	std::lock_guard<std::mutex> lock(bg_mutex_);
+	bg_job_.source = source;
+	bg_job_.target_w = target_w;
+	bg_job_.target_h = target_h;
+	bg_job_.blur = blur;
+	bg_job_.blur_type = blur_type;
+	bg_job_.id = ++bg_job_id_;
+	bg_has_job_ = true;
+	bg_cv_.notify_one();
+}
+
+bool Compositor::upload_bg_texture(const core::Image &image)
+{
+	if (image.empty())
+		return false;
+	if (bg_tex_) {
+		obs_enter_graphics();
+		gs_texture_destroy(bg_tex_);
+		obs_leave_graphics();
+		bg_tex_ = nullptr;
+	}
+	obs_enter_graphics();
+	const uint8_t *data[1] = {image.pixels.data()};
+	bg_tex_ = gs_texture_create(static_cast<uint32_t>(image.width),
+				    static_cast<uint32_t>(image.height), GS_RGBA, 1, data, 0);
+	obs_leave_graphics();
+	return bg_tex_ != nullptr;
+}
+
+bool Compositor::consume_bg_prefilter_result()
+{
+	std::shared_ptr<const core::Image> result;
+	uint64_t id = 0;
+	{
+		std::lock_guard<std::mutex> lock(bg_mutex_);
+		if (!bg_result_)
+			return false;
+		result = std::move(bg_result_);
+		id = bg_result_id_;
+	}
+	if (id != bg_job_id_)
+		return false;
+	if (!upload_bg_texture(*result))
+		return false;
+	bg_tex_blur_ = bg_pending_blur_;
+	bg_tex_blur_type_ = bg_pending_blur_type_;
+	bg_tex_target_w_ = bg_pending_target_w_;
+	bg_tex_target_h_ = bg_pending_target_h_;
+	bg_pending_ = false;
+	return true;
 }
 
 void Compositor::load_bg_image(const char *raw, uint32_t target_w, uint32_t target_h,
 			       double blur, int blur_type)
 {
+	consume_bg_prefilter_result();
+
 	const char *requested = raw ? raw : "";
+	auto invalidate_prefilter = [this]() {
+		std::lock_guard<std::mutex> lock(bg_mutex_);
+		++bg_job_id_;
+		bg_has_job_ = false;
+		bg_result_.reset();
+		bg_job_.source.reset();
+		bg_pending_ = false;
+	};
+
 	/* Auto-correction: a built-in wallpaper name from older configs
 	 * (e.g. "Aurora") becomes its path. */
 	if (bg_requested_ != requested) {
@@ -872,20 +874,19 @@ void Compositor::load_bg_image(const char *raw, uint32_t target_w, uint32_t targ
 			path = w;
 
 		if (path != bg_loaded_) {
+			invalidate_prefilter();
 			if (bg_tex_) {
 				obs_enter_graphics();
 				gs_texture_destroy(bg_tex_);
 				obs_leave_graphics();
 				bg_tex_ = nullptr;
 			}
-			bg_image_ = core::Image{};
+			bg_image_.reset();
 			bg_loaded_ = path;
 			bg_tex_blur_ = -1.0;
 			bg_tex_blur_type_ = -1;
 			bg_tex_target_w_ = 0;
 			bg_tex_target_h_ = 0;
-			bg_width_ = 0;
-			bg_height_ = 0;
 			bg_aspect_ = 1.0f;
 
 			if (path.empty())
@@ -911,59 +912,64 @@ void Compositor::load_bg_image(const char *raw, uint32_t target_w, uint32_t targ
 				return;
 			}
 
+			core::Image decoded;
 			std::string err;
-			if (!core::image_decode(bytes.data(), bytes.size(), &bg_image_, &err)) {
+			if (!core::image_decode(bytes.data(), bytes.size(), &decoded, &err)) {
 				blog(LOG_WARNING, "[TopScreen] invalid wallpaper (%s): %s",
 				     path.c_str(), err.c_str());
-				bg_image_ = core::Image{};
 				return;
 			}
 
-			bg_aspect_ = static_cast<float>(bg_image_.width) /
-				     static_cast<float>(bg_image_.height);
-			bg_width_ = static_cast<uint32_t>(bg_image_.width);
-			bg_height_ = static_cast<uint32_t>(bg_image_.height);
+			/* Keep the cached source bounded; the shader receives the
+			 * filtered texture, so an 8K source does not need to live in RAM. */
+			core::Image limited = core::image_limit_max(decoded, 4096);
+			bg_image_ = std::make_shared<core::Image>(std::move(limited));
+			bg_aspect_ = static_cast<float>(bg_image_->width) /
+				     static_cast<float>(bg_image_->height);
 			blog(LOG_INFO, "[TopScreen] wallpaper: %s (%dx%d)", path.c_str(),
-			     bg_image_.width, bg_image_.height);
+			     bg_image_->width, bg_image_->height);
 		}
 	}
 
-	if (bg_image_.empty())
+	if (!bg_image_)
 		return;
 
-	/* Rebuild only when the source pixels, blur settings or target size change.
-	 * The expensive blur therefore runs once, not once per frame. */
+	const bool want_blur = blur > 0.01 && blur_type > 0;
+	if (!want_blur) {
+		if (bg_pending_)
+			invalidate_prefilter();
+		if (bg_tex_ && bg_tex_blur_ < 0.0)
+			return;
+		if (!upload_bg_texture(*bg_image_))
+			return;
+		bg_tex_blur_ = -1.0;
+		bg_tex_blur_type_ = -1;
+		bg_tex_target_w_ = 0;
+		bg_tex_target_h_ = 0;
+		return;
+	}
+
 	if (bg_tex_ && bg_tex_target_w_ == target_w && bg_tex_target_h_ == target_h &&
 	    bg_tex_blur_ == blur && bg_tex_blur_type_ == blur_type)
 		return;
 
-	if (bg_tex_) {
-		obs_enter_graphics();
-		gs_texture_destroy(bg_tex_);
-		obs_leave_graphics();
-		bg_tex_ = nullptr;
-	}
-
-	core::Image filtered = prefilter_wallpaper(bg_image_, target_w, target_h, blur, blur_type);
-	if (filtered.empty())
+	/* Keep the previous texture visible while the worker prepares the new one;
+	 * on the first load, show the source immediately instead of leaving the
+	 * background empty. */
+	if (!bg_tex_ && !upload_bg_texture(*bg_image_))
 		return;
 
-	obs_enter_graphics();
-	const uint8_t *data[1] = {filtered.pixels.data()};
-	bg_tex_ = gs_texture_create(static_cast<uint32_t>(filtered.width),
-				    static_cast<uint32_t>(filtered.height), GS_RGBA, 1,
-				    data, 0);
-	obs_leave_graphics();
+	if (bg_pending_ && bg_pending_target_w_ == target_w &&
+	    bg_pending_target_h_ == target_h && bg_pending_blur_ == blur &&
+	    bg_pending_blur_type_ == blur_type)
+		return;
 
-	if (bg_tex_) {
-		bg_tex_blur_ = blur;
-		bg_tex_blur_type_ = blur_type;
-		bg_tex_target_w_ = target_w;
-		bg_tex_target_h_ = target_h;
-	} else {
-		blog(LOG_WARNING, "[TopScreen] failed to create the wallpaper texture: %s",
-		     bg_loaded_.c_str());
-	}
+	bg_pending_target_w_ = target_w;
+	bg_pending_target_h_ = target_h;
+	bg_pending_blur_ = blur;
+	bg_pending_blur_type_ = blur_type;
+	bg_pending_ = true;
+	schedule_bg_prefilter(bg_image_, target_w, target_h, blur, blur_type);
 }
 
 void Compositor::release_bg_image()
@@ -974,15 +980,18 @@ void Compositor::release_bg_image()
 		obs_leave_graphics();
 		bg_tex_ = nullptr;
 	}
-	bg_image_ = core::Image{};
+	bg_image_.reset();
 	bg_loaded_.clear();
 	bg_requested_.clear();
-	bg_width_ = 0;
-	bg_height_ = 0;
 	bg_tex_blur_ = -1.0;
 	bg_tex_blur_type_ = -1;
 	bg_tex_target_w_ = 0;
 	bg_tex_target_h_ = 0;
+	bg_pending_ = false;
+	bg_pending_blur_ = -1.0;
+	bg_pending_blur_type_ = -1;
+	bg_pending_target_w_ = 0;
+	bg_pending_target_h_ = 0;
 }
 
 } // namespace topscreen

@@ -249,6 +249,8 @@ struct LinuxInput {
 	bool xfixes = false;
 	int link_poll = 0;
 	bool link = false;
+	KeyCode shift_l = 0;
+	KeyCode shift_r = 0;
 #endif
 #if defined(TOPSCREEN_HAVE_EVDEV)
 	int fd = -1;
@@ -435,6 +437,10 @@ void *ts_input_platform_start(obs_source_t *source)
 
 #if defined(TOPSCREEN_HAVE_X11)
 	s->dpy = XOpenDisplay(nullptr);
+	if (s->dpy) {
+		s->shift_l = XKeysymToKeycode(s->dpy, XK_Shift_L);
+		s->shift_r = XKeysymToKeycode(s->dpy, XK_Shift_R);
+	}
 	if (!s->dpy) {
 		blog(LOG_INFO, "[TopScreen] X11 unavailable (X11 cursor/rotation disabled)");
 	}
@@ -602,8 +608,7 @@ void ts_input_platform_poll(void *state, InputState *out)
 			const unsigned char bit = static_cast<unsigned char>(1u << (kc & 7));
 			return kc > 0 && (keys[kc >> 3] & bit) != 0;
 		};
-		const bool shift = down(XKeysymToKeycode(s->dpy, XK_Shift_L)) ||
-				   down(XKeysymToKeycode(s->dpy, XK_Shift_R));
+		const bool shift = down(s->shift_l) || down(s->shift_r);
 		for (int kc = 8; kc < 256; ++kc) {
 			const unsigned char bit = static_cast<unsigned char>(1u << (kc & 7));
 			const bool is_down = (keys[kc >> 3] & bit) != 0;

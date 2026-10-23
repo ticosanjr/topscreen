@@ -10,11 +10,13 @@ shader combines them in **one draw**. The integration test
 
 ## Wallpaper blur / diffusion
 
-The wallpaper is decoded once and kept in memory. When the image, blur amount,
-diffusion mode or target size changes, the CPU builds a prefiltered texture:
-large radii are downscaled first, then a separable box blur is applied once.
-The shader now takes **one filtered sample** per pixel instead of the old 9/25
-taps, so the cost is paid on settings changes rather than every frame.
+The wallpaper is decoded once and kept in memory (capped at 4096 px on the long
+edge). When the image, blur amount, diffusion mode or target size changes, a
+worker thread builds a prefiltered texture while the previous texture stays on
+screen. Large radii are downscaled first, then filtered; Gaussian/Creamy/Frosted
+use two box passes for a smoother gradient. The shader now takes **one filtered
+sample** per pixel instead of the old 9/25 taps, so the cost never blocks normal
+playback.
 
 The diffusion selector still changes the effective spread:
 
@@ -26,8 +28,10 @@ The diffusion selector still changes the effective spread:
 | Frosted glass | widest kernel, with a softer upscale |
 
 All modes use the same one-sample shader path, including the magnifier lens and
-the full-frame spotlight blur. The prefilter runs on the video thread, but only
-when a relevant setting or the target size changes; normal playback is unaffected.
+the full-frame spotlight blur. The worker prepares the image off the video
+thread; only the final texture upload happens on the render thread. The
+spotlight blur itself still uses nine scene taps, but its shadow is applied once
+after the blur instead of once per tap.
 
 ## Background gradient
 

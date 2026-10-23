@@ -334,11 +334,14 @@ float4 apply_click(float4 col, float2 px, float mask, float2 cu, float prog, flo
 		float edge = 1.0 - smoothstep(aa, aa * 3.0, abs(dist - r));
 		a = disc * 0.18 + edge * 0.12;
 		a *= (1.0 - prog);
-	} else {
+	} else if (type < 8.5) {
 		// water ripple: soft expanding ring; the pixel distortion itself is
 		// applied in ripple_offset() while sampling the captured image.
 		float th = max(base * csize * 0.06, aa);
 		a = (1.0 - smoothstep(th - aa, th + aa, abs(dist - r))) * (1.0 - prog) * 0.35;
+	} else {
+		// clear water ripple: only the UV distortion, never a colored overlay.
+		a = 0.0;
 	}
 
 	a *= ccol.a * mask;

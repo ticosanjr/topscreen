@@ -89,6 +89,12 @@ TEST(preset_legacy_background_modes_are_migrated)
 	apply(R"({"name":"W","settings":{"bg_mode":3}})", &wallpaper);
 	CHECK_EQ(wallpaper.bg.mode, static_cast<int>(BgMode::Wallpaper));
 
+	/* Legacy preset with an image but no bg_type must infer wallpaper. */
+	Config image_only;
+	apply(R"({"name":"I","settings":{"bg_mode":0,"bg_image":"wallpapers/fiber.jpg"}})",
+	      &image_only);
+	CHECK_EQ(image_only.bg.mode, static_cast<int>(BgMode::Wallpaper));
+
 	/* bg_type is authoritative when both keys are present. */
 	Config modern;
 	modern.bg.gradient_angle = 12.0;

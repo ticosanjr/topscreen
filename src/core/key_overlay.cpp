@@ -26,7 +26,7 @@ bool is_special_key_label(std::string_view label)
 {
 	static constexpr std::string_view kSpecial[] = {
 		"Backspace", "Enter", "Tab", "Esc", "Del", "Delete",
-		"Left",      "Right", "Up",  "Down", "Shift", "Ctrl", "Alt", "Win",
+		"Left",      "Right", "Up",  "Down",
 	};
 	for (std::string_view s : kSpecial) {
 		if (label == s)
@@ -56,7 +56,7 @@ void KeyOverlayModel::press(std::string_view label, bool is_modifier, double now
 	if (cfg_.modifiers_only) {
 		if (!is_modifier)
 			return;
-	} else if (!cfg_.show_special && is_special_key_label(label)) {
+	} else if (!is_modifier && !cfg_.show_special && is_special_key_label(label)) {
 		return;
 	}
 
@@ -66,10 +66,6 @@ void KeyOverlayModel::press(std::string_view label, bool is_modifier, double now
 	/* With shortcuts on, modifiers are folded into the non-modifier key that
 	 * follows them. Modifier-only mode still shows each modifier by name. */
 	if (cfg_.show_shortcuts && !cfg_.modifiers_only && !is_modifier && modifiers) {
-		/* Replace any standalone modifier labels just pressed with the
-		 * combined shortcut, so Ctrl then C reads as Ctrl + C once. */
-		while (!entries_.empty() && entries_.back().modifier)
-			entries_.pop_back();
 		char combo[KeyLabel::kCapacity];
 		size_t used = 0;
 		auto append = [&](std::string_view part) {
@@ -101,13 +97,19 @@ void KeyOverlayModel::press(std::string_view label, bool is_modifier, double now
 		entry.born_ms = now_ms;
 		entry.modifier = false;
 		entries_.push_back(entry);
-	} else if (cfg_.show_shortcuts && !cfg_.modifiers_only && is_modifier &&
-		   !cfg_.show_special) {
-		/* Shortcut mode only: wait for the key that completes the combo. */
+	} else if (cfg_.show_shortcuts && !cfg_.modifiers_only && is_modifier) {
+		/* Shortcut mode: a standalone modifier is never a key entry. */
 		return;
 	} else {
-		/* Every keystroke is appended as its own entry (repeats included),
-		 * so what you typed is what you see. */
+		/* A repeated modifier is one physical key held down, not two labels.
+		 * Refresh the existing entry instead of stacking a duplicate. */
+		if (is_modifier && !entries_.empty() && entries_.back().modifier &&
+		    entries_.back().label.view() == shown) {
+			entries_.back().born_ms = now_ms;
+			return;
+		}
+		/* Every other keystroke is appended as its own entry (repeats
+		 * included), so what you typed is what you see. */
 		Entry entry;
 		entry.label.assign(shown);
 		entry.born_ms = now_ms;

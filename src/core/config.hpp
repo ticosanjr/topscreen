@@ -81,6 +81,7 @@ struct SpotlightConfig {
 	double in_ms = 250.0;
 	double out_ms = 300.0;
 	double drop_px = 24.0;
+	bool show_cursor = true;
 };
 
 /** Magnifier lens: zooms only inside a circle/square, independent of Spotlight. */
@@ -108,6 +109,7 @@ struct MagnifierConfig {
 	double in_ms = 250.0;
 	double out_ms = 300.0;
 	double drop_px = 24.0;
+	bool show_cursor = true;
 };
 
 /** Complete TopScreen configuration (independent of OBS). */

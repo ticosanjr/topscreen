@@ -38,7 +38,7 @@ double wrapped_angle(double value, double fallback)
 void sanitize_click(ClickConfig *c, const ClickConfig &def)
 {
 	c->effect = bounded_int(c->effect, static_cast<int>(ClickEffect::Ripple),
-				static_cast<int>(ClickEffect::WaterRipple));
+				static_cast<int>(ClickEffect::WaterRippleClear));
 	c->size = bounded(c->size, 0.1, 4.0, def.size);
 	c->duration_ms = bounded(c->duration_ms, 100.0, 2000.0, def.duration_ms);
 	c->easing = bounded_int(c->easing, EASE_LINEAR, EASE_IN_OUT_CUBIC);
@@ -92,6 +92,8 @@ void sanitize_config(Config *cfg)
 	cfg->cursor.idle_delay_ms =
 		bounded(cfg->cursor.idle_delay_ms, 0.0, 5000.0, def.cursor.idle_delay_ms);
 	cfg->cursor.loop_ms = bounded(cfg->cursor.loop_ms, 1000.0, 20000.0, def.cursor.loop_ms);
+	cfg->cursor.offset_x = bounded(cfg->cursor.offset_x, -100.0, 100.0, def.cursor.offset_x);
+	cfg->cursor.offset_y = bounded(cfg->cursor.offset_y, -100.0, 100.0, def.cursor.offset_y);
 
 	/* Zoom */
 	cfg->zoom.mode = bounded_int(cfg->zoom.mode, static_cast<int>(ZoomMode::Off),

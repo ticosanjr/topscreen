@@ -47,6 +47,8 @@ inline constexpr const char *kCursorHideIdle = "cursor_hide_idle";
 inline constexpr const char *kCursorIdleDelayMs = "cursor_idle_delay_ms";
 inline constexpr const char *kCursorLoop = "cursor_loop";
 inline constexpr const char *kCursorLoopMs = "cursor_loop_ms";
+inline constexpr const char *kCursorOffsetX = "cursor_offset_x";
+inline constexpr const char *kCursorOffsetY = "cursor_offset_y";
 
 inline constexpr const char *kZoomMode = "zoom_mode";
 inline constexpr const char *kZoomAmount = "zoom_amount";
@@ -98,6 +100,7 @@ inline constexpr const char *kSpotlightZoomAmount = "spotlight_zoom_amount";
 inline constexpr const char *kSpotlightInMs = "spotlight_in_ms";
 inline constexpr const char *kSpotlightOutMs = "spotlight_out_ms";
 inline constexpr const char *kSpotlightDropPx = "spotlight_drop_px";
+inline constexpr const char *kSpotlightShowCursor = "spotlight_show_cursor";
 
 inline constexpr const char *kMagnifierEnabled = "magnifier_enabled";
 inline constexpr const char *kMagnifierShape = "magnifier_shape";
@@ -119,6 +122,7 @@ inline constexpr const char *kMagnifierCenterY = "magnifier_center_y";
 inline constexpr const char *kMagnifierInMs = "magnifier_in_ms";
 inline constexpr const char *kMagnifierOutMs = "magnifier_out_ms";
 inline constexpr const char *kMagnifierDropPx = "magnifier_drop_px";
+inline constexpr const char *kMagnifierShowCursor = "magnifier_show_cursor";
 
 inline constexpr const char *kKeysEnabled = "keys_enabled";
 inline constexpr const char *kKeysModifiersOnly = "keys_modifiers_only";

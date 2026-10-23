@@ -89,7 +89,9 @@ bool Preset::apply(Config *cfg, std::string *error) const
 		cfg->bg.mode = read_int(o, kBgType, cfg->bg.mode);
 	} else {
 		const int legacy = read_int(o, kBgMode, cfg->bg.mode);
-		cfg->bg.mode = bg_mode_from_legacy(legacy, false);
+		const bool has_wallpaper = !read_string(o, kBgImage, cfg->bg.image).empty() ||
+					   !read_string(o, kBgImageFile, cfg->bg.image_file).empty();
+		cfg->bg.mode = bg_mode_from_legacy(legacy, has_wallpaper);
 		if (!lookup(o, kBgGradientAngle))
 			cfg->bg.gradient_angle =
 				bg_gradient_angle_from_legacy(legacy, cfg->bg.gradient_angle);
@@ -135,6 +137,8 @@ bool Preset::apply(Config *cfg, std::string *error) const
 	cfg->cursor.idle_delay_ms = read_number(o, kCursorIdleDelayMs, cfg->cursor.idle_delay_ms);
 	cfg->cursor.loop = read_bool(o, kCursorLoop, cfg->cursor.loop);
 	cfg->cursor.loop_ms = read_number(o, kCursorLoopMs, cfg->cursor.loop_ms);
+	cfg->cursor.offset_x = read_number(o, kCursorOffsetX, cfg->cursor.offset_x);
+	cfg->cursor.offset_y = read_number(o, kCursorOffsetY, cfg->cursor.offset_y);
 
 	/* Zoom */
 	cfg->zoom.mode = read_int(o, kZoomMode, cfg->zoom.mode);
@@ -215,6 +219,7 @@ bool Preset::apply(Config *cfg, std::string *error) const
 	cfg->spotlight.in_ms = read_number(o, kSpotlightInMs, cfg->spotlight.in_ms);
 	cfg->spotlight.out_ms = read_number(o, kSpotlightOutMs, cfg->spotlight.out_ms);
 	cfg->spotlight.drop_px = read_number(o, kSpotlightDropPx, cfg->spotlight.drop_px);
+	cfg->spotlight.show_cursor = read_bool(o, kSpotlightShowCursor, cfg->spotlight.show_cursor);
 
 	/* Magnifier */
 	cfg->magnifier.enabled = read_bool(o, kMagnifierEnabled, cfg->magnifier.enabled);
@@ -248,6 +253,7 @@ bool Preset::apply(Config *cfg, std::string *error) const
 	cfg->magnifier.in_ms = read_number(o, kMagnifierInMs, cfg->magnifier.in_ms);
 	cfg->magnifier.out_ms = read_number(o, kMagnifierOutMs, cfg->magnifier.out_ms);
 	cfg->magnifier.drop_px = read_number(o, kMagnifierDropPx, cfg->magnifier.drop_px);
+	cfg->magnifier.show_cursor = read_bool(o, kMagnifierShowCursor, cfg->magnifier.show_cursor);
 
 	/* Keys */
 	cfg->keys.enabled = read_bool(o, kKeysEnabled, cfg->keys.enabled);

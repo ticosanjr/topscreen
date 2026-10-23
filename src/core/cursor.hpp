@@ -49,6 +49,8 @@ struct CursorConfig {
 	double idle_delay_ms = 1200.0;
 	bool loop = false; // returns to the start when idle
 	double loop_ms = 4000.0;
+	double offset_x = 0.0; // correction in target pixels
+	double offset_y = 0.0;
 };
 
 struct CursorRender {

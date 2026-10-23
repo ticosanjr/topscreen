@@ -51,6 +51,8 @@ TEST(config_sanitize_clamps_ranges_and_keeps_valid_values)
 	cfg.cursor.follow_mode = 99;
 	cfg.cursor.glide_ms = 0.0;
 	cfg.cursor.glide_sample_ms = 1.0;
+	cfg.cursor.offset_x = 999.0;
+	cfg.cursor.offset_y = -999.0;
 	cfg.click_left.effect = 99;
 	cfg.keys.max_keys = 50;
 	cfg.highlight.thickness = 0.0;
@@ -68,7 +70,9 @@ TEST(config_sanitize_clamps_ranges_and_keeps_valid_values)
 	CHECK_EQ(cfg.cursor.follow_mode, static_cast<int>(CursorFollowMode::GlideAB));
 	CHECK_NEAR(cfg.cursor.glide_ms, 50.0, 1e-9);
 	CHECK_NEAR(cfg.cursor.glide_sample_ms, 20.0, 1e-9);
-	CHECK_EQ(cfg.click_left.effect, static_cast<int>(ClickEffect::WaterRipple));
+	CHECK_NEAR(cfg.cursor.offset_x, 100.0, 1e-9);
+	CHECK_NEAR(cfg.cursor.offset_y, -100.0, 1e-9);
+	CHECK_EQ(cfg.click_left.effect, static_cast<int>(ClickEffect::WaterRippleClear));
 	CHECK_EQ(cfg.keys.max_keys, 12);
 	CHECK_NEAR(cfg.highlight.thickness, 0.001, 1e-9);
 	CHECK_EQ(cfg.highlight.mode, static_cast<int>(HighlightMode::PressZoom));

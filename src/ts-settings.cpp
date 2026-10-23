@@ -53,6 +53,8 @@ void config_defaults(obs_data_t *s)
 	obs_data_set_default_double(s, kCursorIdleDelayMs, def.cursor.idle_delay_ms);
 	obs_data_set_default_bool(s, kCursorLoop, def.cursor.loop);
 	obs_data_set_default_double(s, kCursorLoopMs, def.cursor.loop_ms);
+	obs_data_set_default_double(s, kCursorOffsetX, def.cursor.offset_x);
+	obs_data_set_default_double(s, kCursorOffsetY, def.cursor.offset_y);
 
 	obs_data_set_default_int(s, kZoomMode, def.zoom.mode);
 	obs_data_set_default_double(s, kZoomAmount, def.zoom.amount);
@@ -105,6 +107,7 @@ void config_defaults(obs_data_t *s)
 	obs_data_set_default_double(s, kSpotlightInMs, def.spotlight.in_ms);
 	obs_data_set_default_double(s, kSpotlightOutMs, def.spotlight.out_ms);
 	obs_data_set_default_double(s, kSpotlightDropPx, def.spotlight.drop_px);
+	obs_data_set_default_bool(s, kSpotlightShowCursor, def.spotlight.show_cursor);
 
 	obs_data_set_default_bool(s, kMagnifierEnabled, def.magnifier.enabled);
 	obs_data_set_default_int(s, kMagnifierShape, def.magnifier.shape);
@@ -126,6 +129,7 @@ void config_defaults(obs_data_t *s)
 	obs_data_set_default_double(s, kMagnifierInMs, def.magnifier.in_ms);
 	obs_data_set_default_double(s, kMagnifierOutMs, def.magnifier.out_ms);
 	obs_data_set_default_double(s, kMagnifierDropPx, def.magnifier.drop_px);
+	obs_data_set_default_bool(s, kMagnifierShowCursor, def.magnifier.show_cursor);
 
 	obs_data_set_default_bool(s, kKeysEnabled, def.keys.enabled);
 	obs_data_set_default_bool(s, kKeysModifiersOnly, def.keys.modifiers_only);
@@ -270,6 +274,8 @@ void config_load(obs_data_t *s, Config *c, const Config *fallback)
 	c->cursor.idle_delay_ms = read_double(s, kCursorIdleDelayMs, d.cursor.idle_delay_ms);
 	c->cursor.loop = read_bool(s, kCursorLoop, d.cursor.loop);
 	c->cursor.loop_ms = read_double(s, kCursorLoopMs, d.cursor.loop_ms);
+	c->cursor.offset_x = read_double(s, kCursorOffsetX, d.cursor.offset_x);
+	c->cursor.offset_y = read_double(s, kCursorOffsetY, d.cursor.offset_y);
 
 	c->zoom.mode = static_cast<int>(read_int(s, kZoomMode, d.zoom.mode));
 	c->zoom.amount = read_double(s, kZoomAmount, d.zoom.amount);
@@ -343,6 +349,7 @@ void config_load(obs_data_t *s, Config *c, const Config *fallback)
 	c->spotlight.in_ms = read_double(s, kSpotlightInMs, d.spotlight.in_ms);
 	c->spotlight.out_ms = read_double(s, kSpotlightOutMs, d.spotlight.out_ms);
 	c->spotlight.drop_px = read_double(s, kSpotlightDropPx, d.spotlight.drop_px);
+	c->spotlight.show_cursor = read_bool(s, kSpotlightShowCursor, d.spotlight.show_cursor);
 
 	c->magnifier.enabled = read_bool(s, kMagnifierEnabled, d.magnifier.enabled);
 	c->magnifier.shape = static_cast<int>(read_int(s, kMagnifierShape, d.magnifier.shape));
@@ -375,6 +382,7 @@ void config_load(obs_data_t *s, Config *c, const Config *fallback)
 	c->magnifier.in_ms = read_double(s, kMagnifierInMs, d.magnifier.in_ms);
 	c->magnifier.out_ms = read_double(s, kMagnifierOutMs, d.magnifier.out_ms);
 	c->magnifier.drop_px = read_double(s, kMagnifierDropPx, d.magnifier.drop_px);
+	c->magnifier.show_cursor = read_bool(s, kMagnifierShowCursor, d.magnifier.show_cursor);
 
 	c->keys.enabled = read_bool(s, kKeysEnabled, d.keys.enabled);
 	c->keys.modifiers_only = read_bool(s, kKeysModifiersOnly, d.keys.modifiers_only);
@@ -456,6 +464,8 @@ void config_store(obs_data_t *s, const Config &c)
 	obs_data_set_double(s, kCursorIdleDelayMs, c.cursor.idle_delay_ms);
 	obs_data_set_bool(s, kCursorLoop, c.cursor.loop);
 	obs_data_set_double(s, kCursorLoopMs, c.cursor.loop_ms);
+	obs_data_set_double(s, kCursorOffsetX, c.cursor.offset_x);
+	obs_data_set_double(s, kCursorOffsetY, c.cursor.offset_y);
 
 	obs_data_set_int(s, kZoomMode, c.zoom.mode);
 	obs_data_set_double(s, kZoomAmount, c.zoom.amount);
@@ -506,6 +516,7 @@ void config_store(obs_data_t *s, const Config &c)
 	obs_data_set_double(s, kSpotlightInMs, c.spotlight.in_ms);
 	obs_data_set_double(s, kSpotlightOutMs, c.spotlight.out_ms);
 	obs_data_set_double(s, kSpotlightDropPx, c.spotlight.drop_px);
+	obs_data_set_bool(s, kSpotlightShowCursor, c.spotlight.show_cursor);
 
 	obs_data_set_bool(s, kMagnifierEnabled, c.magnifier.enabled);
 	obs_data_set_int(s, kMagnifierShape, c.magnifier.shape);
@@ -527,6 +538,7 @@ void config_store(obs_data_t *s, const Config &c)
 	obs_data_set_double(s, kMagnifierInMs, c.magnifier.in_ms);
 	obs_data_set_double(s, kMagnifierOutMs, c.magnifier.out_ms);
 	obs_data_set_double(s, kMagnifierDropPx, c.magnifier.drop_px);
+	obs_data_set_bool(s, kMagnifierShowCursor, c.magnifier.show_cursor);
 
 	obs_data_set_bool(s, kKeysEnabled, c.keys.enabled);
 	obs_data_set_bool(s, kKeysModifiersOnly, c.keys.modifiers_only);

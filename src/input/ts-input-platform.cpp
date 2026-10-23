@@ -185,8 +185,7 @@ void ts_input_platform_poll(void *state, InputState *out)
 		'0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
 		VK_SPACE, VK_RETURN, VK_TAB, VK_ESCAPE, VK_BACK, VK_DELETE,
 		VK_LEFT, VK_UP, VK_RIGHT, VK_DOWN,
-		VK_SHIFT, VK_LSHIFT, VK_RSHIFT, VK_CONTROL, VK_LCONTROL, VK_RCONTROL,
-		VK_MENU, VK_LMENU, VK_RMENU, VK_LWIN, VK_RWIN,
+		VK_SHIFT, VK_CONTROL, VK_MENU, VK_LWIN, VK_RWIN,
 		VK_OEM_1, VK_OEM_PLUS, VK_OEM_COMMA, VK_OEM_MINUS, VK_OEM_PERIOD,
 		VK_OEM_2, VK_OEM_3, VK_OEM_4, VK_OEM_5, VK_OEM_6, VK_OEM_7,
 		VK_OEM_8, VK_OEM_102,
@@ -200,6 +199,7 @@ void ts_input_platform_poll(void *state, InputState *out)
 			if (!label.empty() && out->key_count < InputState::kMaxKeyEvents) {
 				out->key_labels[out->key_count] = label;
 				out->key_modifier[out->key_count] = is_mod;
+				out->key_modifiers[out->key_count] = out->modifiers;
 				++out->key_count;
 			}
 		}
@@ -221,7 +221,6 @@ void ts_input_platform_poll(void *state, InputState *out)
 #include "core/key_modifiers.hpp"
 
 #if defined(TOPSCREEN_HAVE_X11)
-#include <X11/XKBlib.h>
 #include <X11/XKBlib.h>
 #include <X11/Xlib.h>
 #include <X11/keysym.h>
@@ -549,23 +548,56 @@ void ts_input_platform_poll(void *state, InputState *out)
 			std::memmove(s->buf, s->buf + usable, s->buflen - usable);
 			s->buflen -= usable;
 
+			auto current_modifiers = [&]() {
+				uint32_t mods = 0;
+				if (s->shift)
+					mods |= core::KeyModShift;
+				if (s->ctrl)
+					mods |= core::KeyModCtrl;
+				if (s->alt)
+					mods |= core::KeyModAlt;
+				if (s->meta)
+					mods |= core::KeyModWin;
+				return mods;
+			};
+			auto emit = [&](std::string_view label, bool is_modifier) {
+				if (label.empty() || out->key_count >= InputState::kMaxKeyEvents)
+					return;
+				out->key_labels[out->key_count] = std::string(label);
+				out->key_modifier[out->key_count] = is_modifier;
+				out->key_modifiers[out->key_count] = current_modifiers();
+				++out->key_count;
+			};
+
 			for (const core::EvdevKey &k : events) {
 				if (k.code == KEY_LEFTSHIFT || k.code == KEY_RIGHTSHIFT) {
+					const bool was = s->shift;
 					s->shift = k.pressed;
+					if (k.pressed && !was)
+						emit("Shift", true);
 					continue;
 				}
 				if (k.code == KEY_LEFTCTRL || k.code == KEY_RIGHTCTRL) {
+					const bool was = s->ctrl;
 					s->ctrl = k.pressed;
+					if (k.pressed && !was)
+						emit("Ctrl", true);
 					continue;
 				}
 				if (k.code == KEY_LEFTALT || k.code == KEY_RIGHTALT) {
+					const bool was = s->alt;
 					s->alt = k.pressed;
 					if (k.code == KEY_RIGHTALT)
 						s->altgr = k.pressed;
+					if (k.pressed && !was)
+						emit("Alt", true);
 					continue;
 				}
 				if (k.code == KEY_LEFTMETA || k.code == KEY_RIGHTMETA) {
+					const bool was = s->meta;
 					s->meta = k.pressed;
+					if (k.pressed && !was)
+						emit("Win", true);
 					continue;
 				}
 				if (!k.pressed)
@@ -579,11 +611,7 @@ void ts_input_platform_poll(void *state, InputState *out)
 					label = core::evdev_key_label_with_shift(k.code, s->shift, s->altgr);
 				if (label.empty())
 					continue;
-				if (out->key_count < InputState::kMaxKeyEvents) {
-					out->key_labels[out->key_count] = label;
-					out->key_modifier[out->key_count] = core::evdev_key_is_modifier(k.code);
-					++out->key_count;
-				}
+				emit(label, core::evdev_key_is_modifier(k.code));
 			}
 		}
 		out->modifiers = 0;
@@ -622,6 +650,7 @@ void ts_input_platform_poll(void *state, InputState *out)
 					if (!label.empty() && out->key_count < InputState::kMaxKeyEvents) {
 						out->key_labels[out->key_count] = label;
 						out->key_modifier[out->key_count] = is_mod;
+						out->key_modifiers[out->key_count] = out->modifiers;
 						++out->key_count;
 					}
 				}

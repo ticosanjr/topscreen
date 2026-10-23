@@ -978,7 +978,7 @@ void ts_filter_tick(void *data, float seconds)
 	/* Keys feed the overlay even without a cursor available. */
 	for (int i = 0; i < ctx->input.state().key_count; ++i)
 		ctx->keys.press(ctx->input.state().key_labels[i], ctx->input.state().key_modifier[i],
-				ctx->time_ms, ctx->input.state().modifiers);
+				ctx->time_ms, ctx->input.state().key_modifiers[i]);
 
 	if (ctx->input.available() && ctx->target_w > 0 && ctx->target_h > 0) {
 		const InputState &st = ctx->input.state();
@@ -988,8 +988,10 @@ void ts_filter_tick(void *data, float seconds)
 					static_cast<double>(ctx->target_h)};
 		const core::Vec2f c = core::screen_to_content(st.x, st.y, mon);
 
-		const double cx = core::clamp01(c.x);
-		const double cy = core::clamp01(c.y);
+		const double cx = core::clamp01(
+			c.x + ctx->cfg.cursor.offset_x / static_cast<double>(ctx->target_w));
+		const double cy = core::clamp01(
+			c.y + ctx->cfg.cursor.offset_y / static_cast<double>(ctx->target_h));
 
 		ctx->cursor.set_target(cx, cy, ctx->time_ms);
 		ctx->zoom.set_cursor(cx, cy, ctx->time_ms);

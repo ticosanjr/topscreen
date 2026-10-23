@@ -46,6 +46,8 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Idle delay before hiding (ms) | `cursor_idle_delay_ms` | double | 0–5000 | `1200` |
 | | Return cursor to start when idle | `cursor_loop` | bool | — | `false` |
 | | Idle time before returning (ms) | `cursor_loop_ms` | double | 1000–20000 | `4000` |
+| | Pointer correction X (px) | `cursor_offset_x` | double | −100–100 | `0` |
+| | Pointer correction Y (px) | `cursor_offset_y` | double | −100–100 | `0` |
 | | Secondary cursor (links) | `cursor_secondary_style` | int | -1 = same as primary; otherwise a cursor style ID | `-1` |
 | | Change cursor over links | `cursor_link_detection` | bool | Windows/X11 only | `true` |
 | | Cursor movement | `cursor_follow_mode` | int | 0 exact · 1 spring · 2 glide sampled · 3 glide A→B | `1` |
@@ -57,7 +59,7 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Return to normal after idle (ms) | `zoom_idle_timeout_ms` | double | 200–10000 | `1500` |
 | | Pan intensity (0 = off) | `zoom_pan_amount` | double | 0–1 | `1.0` |
 | | Centering (0 = follows mouse, 1 = centered) | `zoom_center_amount` | double | 0–1 | `1.0` |
-| Left click | Click effect | `click_left_effect` | int | 0 ripple, 1 orb, 2 ring, 3 force, 4 glow, 5 echo, 6 flare, 7 quiet circle, 8 water ripple | `0` |
+| Left click | Click effect | `click_left_effect` | int | 0 ripple, 1 orb, 2 ring, 3 force, 4 glow, 5 echo, 6 flare, 7 quiet circle, 8 water ripple, 9 clear water ripple | `0` |
 | | Effect size (1 = default) | `click_left_size` | double | 0.1–4 | `1.0` |
 | | Effect color | `click_left_color` | color | — | `0xFFFFFFFF` |
 | | Effect duration (ms) | `click_left_duration_ms` | double | 100–2000 | `650` |
@@ -96,6 +98,7 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Drop/zoom in (ms) | `spotlight_in_ms` | double | ms | `250` |
 | | Drop/zoom out (ms) | `spotlight_out_ms` | double | ms | `300` |
 | | Vertical drop distance (px) | `spotlight_drop_px` | double | px | `24` |
+| | Show cursor during spotlight | `spotlight_show_cursor` | bool | — | `true` |
 | Magnifier | Enable magnifier lens | `magnifier_enabled` | bool | — | `false` |
 | | Lens shape | `magnifier_shape` | int | 0 circle · 1 square | `0` |
 | | Lens radius | `magnifier_radius` | double | 0.05–1 (fraction of the shorter side) | `0.28` |
@@ -116,6 +119,7 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Zoom in (ms) | `magnifier_in_ms` | double | 0–2000 | `250` |
 | | Zoom out (ms) | `magnifier_out_ms` | double | 0–2000 | `300` |
 | | Vertical drop distance (px) | `magnifier_drop_px` | double | 0–200 | `24` |
+| | Show cursor during magnifier | `magnifier_show_cursor` | bool | — | `true` |
 | Keys | Show typed keys | `keys_enabled` | bool | — | `true` |
 | | Modifiers only | `keys_modifiers_only` | bool | — | `false` |
 | | Show special key names | `keys_show_special` | bool | — | `false` (off = ignore named keys; Space is always shown) |
@@ -185,7 +189,7 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 {
   "topscreen_profiles": 1,
   "plugin": "TopScreen",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "current": 0,
   "profile_slot_0": { "effects_enabled": true },
   "profile_slot_1": { "effects_enabled": true },

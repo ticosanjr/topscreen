@@ -53,24 +53,36 @@ long long setting_int(obs_data_t *settings, const char *key, long long fallback)
 	return settings ? obs_data_get_int(settings, key) : fallback;
 }
 
+bool background_type_changed(obs_properties_t *props, obs_property_t *p, obs_data_t *settings);
+
 /* Wallpaper and PC Image are mutually exclusive. */
 bool wallpaper_modified(obs_properties_t *props, obs_property_t *p, obs_data_t *settings)
 {
-	(void)props;
-	(void)p;
 	const char *v = obs_data_get_string(settings, kBgImage);
-	if (v && *v)
+	if (v && *v) {
 		obs_data_set_string(settings, kBgImageFile, "");
+		obs_data_set_int(settings, kBgType, static_cast<int>(BgMode::Wallpaper));
+		obs_data_set_int(settings, kBgMode, legacy_bg_mode_value(static_cast<int>(BgMode::Wallpaper)));
+	} else {
+		obs_data_set_int(settings, kBgType, static_cast<int>(BgMode::Solid));
+		obs_data_set_int(settings, kBgMode, legacy_bg_mode_value(static_cast<int>(BgMode::Solid)));
+	}
+	background_type_changed(props, p, settings);
 	return true;
 }
 
 bool bg_file_modified(obs_properties_t *props, obs_property_t *p, obs_data_t *settings)
 {
-	(void)props;
-	(void)p;
 	const char *v = obs_data_get_string(settings, kBgImageFile);
-	if (v && *v)
+	if (v && *v) {
 		obs_data_set_string(settings, kBgImage, "");
+		obs_data_set_int(settings, kBgType, static_cast<int>(BgMode::Wallpaper));
+		obs_data_set_int(settings, kBgMode, legacy_bg_mode_value(static_cast<int>(BgMode::Wallpaper)));
+	} else {
+		obs_data_set_int(settings, kBgType, static_cast<int>(BgMode::Solid));
+		obs_data_set_int(settings, kBgMode, legacy_bg_mode_value(static_cast<int>(BgMode::Solid)));
+	}
+	background_type_changed(props, p, settings);
 	return true;
 }
 
@@ -212,6 +224,8 @@ void add_click_group(obs_properties_t *props, const char *group_key, const char 
 				  static_cast<int>(ClickEffect::QuietCircle));
 	obs_property_list_add_int(effect, obs_module_text("Click.Effect.WaterRipple"),
 				  static_cast<int>(ClickEffect::WaterRipple));
+	obs_property_list_add_int(effect, obs_module_text("Click.Effect.WaterRippleClear"),
+				  static_cast<int>(ClickEffect::WaterRippleClear));
 
 	obs_properties_add_float_slider(g, size_key, obs_module_text("Click.Size"), 0.1, 4.0, 0.05);
 	obs_properties_add_color(g, color_key, obs_module_text("Click.Color"));
@@ -225,6 +239,28 @@ void add_click_group(obs_properties_t *props, const char *group_key, const char 
 	obs_property_list_add_int(easing, obs_module_text("Easing.InOutCubic"), EASE_IN_OUT_CUBIC);
 
 	obs_properties_add_group(props, group_key, title, OBS_GROUP_NORMAL, g);
+}
+
+bool click_left_effect_changed(obs_properties_t *props, obs_property_t *p, obs_data_t *settings)
+{
+	(void)p;
+	const bool clear = settings &&
+			   obs_data_get_int(settings, kClickLeftEffect) ==
+				   static_cast<long long>(ClickEffect::WaterRippleClear);
+	if (obs_property_t *c = obs_properties_get(props, kClickLeftColor))
+		obs_property_set_visible(c, !clear);
+	return true;
+}
+
+bool click_right_effect_changed(obs_properties_t *props, obs_property_t *p, obs_data_t *settings)
+{
+	(void)p;
+	const bool clear = settings &&
+			   obs_data_get_int(settings, kClickRightEffect) ==
+				   static_cast<long long>(ClickEffect::WaterRippleClear);
+	if (obs_property_t *c = obs_properties_get(props, kClickRightColor))
+		obs_property_set_visible(c, !clear);
+	return true;
 }
 
 } // namespace
@@ -462,6 +498,10 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 	set_tip(link_detection, obs_module_text("Tooltip.CursorLinkDetection"));
 
 	obs_properties_add_float_slider(cur, kCursorSize, obs_module_text("Cursor.Size"), 0.5, 4.0, 0.05);
+	obs_properties_add_float_slider(cur, kCursorOffsetX, obs_module_text("Cursor.OffsetX"), -100.0,
+					100.0, 1.0);
+	obs_properties_add_float_slider(cur, kCursorOffsetY, obs_module_text("Cursor.OffsetY"), -100.0,
+					100.0, 1.0);
 	obs_property_t *follow = obs_properties_add_list(
 		cur, kCursorFollowMode, obs_module_text("Cursor.FollowMode"), OBS_COMBO_TYPE_LIST,
 		OBS_COMBO_FORMAT_INT);
@@ -500,6 +540,12 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 			kClickLeftSize, kClickLeftColor, kClickLeftDurationMs, kClickLeftEasing);
 	add_click_group(pointer, "grp_click_right", obs_module_text("Group.ClickRight"), kClickRightEffect,
 			kClickRightSize, kClickRightColor, kClickRightDurationMs, kClickRightEasing);
+	if (obs_property_t *p = obs_properties_get(props, kClickLeftEffect))
+		obs_property_set_modified_callback(p, click_left_effect_changed);
+	if (obs_property_t *p = obs_properties_get(props, kClickRightEffect))
+		obs_property_set_modified_callback(p, click_right_effect_changed);
+	click_left_effect_changed(props, nullptr, settings);
+	click_right_effect_changed(props, nullptr, settings);
 
 	/* ---------------- Click sound ---------------- */
 	obs_properties_t *snd = obs_properties_create();
@@ -525,6 +571,7 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 	obs_property_t *spot_enabled =
 		obs_properties_add_bool(spot, kSpotlightEnabled, obs_module_text("Spotlight.Enabled"));
 	obs_property_set_modified_callback(spot_enabled, spotlight_options_changed);
+	obs_properties_add_bool(spot, kSpotlightShowCursor, obs_module_text("Spotlight.ShowCursor"));
 
 	obs_property_t *sshape = obs_properties_add_list(
 		spot, kSpotlightShape, obs_module_text("Spotlight.Shape"), OBS_COMBO_TYPE_LIST,
@@ -600,6 +647,7 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 	obs_properties_t *mag = obs_properties_create();
 	obs_property_t *mag_enabled =
 		obs_properties_add_bool(mag, kMagnifierEnabled, obs_module_text("Magnifier.Enabled"));
+	obs_properties_add_bool(mag, kMagnifierShowCursor, obs_module_text("Magnifier.ShowCursor"));
 	obs_property_t *mshape = obs_properties_add_list(
 		mag, kMagnifierShape, obs_module_text("Magnifier.Shape"), OBS_COMBO_TYPE_LIST,
 		OBS_COMBO_FORMAT_INT);
@@ -679,8 +727,6 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 		obs_properties_add_bool(keys, kKeysBand, obs_module_text("Keys.Band"));
 	obs_properties_add_color(keys, kKeysBandColor, obs_module_text("Keys.BandColor"));
 	obs_property_set_modified_callback(band, keys_options_changed);
-	obs_properties_add_group(overlays, "grp_keys", obs_module_text("Group.Keys"), OBS_GROUP_NORMAL, keys);
-	keys_options_changed(props, nullptr, settings);
 
 	/* ---------------- Highlighter: action first, then only what applies.
 	 * The mode list below shows/hides the Look / Timing / Zoom groups. */
@@ -758,6 +804,10 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 
 	obs_properties_add_group(overlays, "grp_highlight", obs_module_text("Group.Highlight"), OBS_GROUP_NORMAL,
 				 hl);
+
+	/* Keys come after the highlighter in the Overlays section. */
+	obs_properties_add_group(overlays, "grp_keys", obs_module_text("Group.Keys"), OBS_GROUP_NORMAL, keys);
+	keys_options_changed(props, nullptr, settings);
 
 	/* Initial visibility matches the saved mode (the callback keeps it live). */
 	highlight_mode_changed(props, nullptr, settings);
@@ -935,6 +985,10 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 	tip(kZoomDurationMs, obs_module_text("Tooltip.kZoomDurationMs"));
 	tip(kZoomPanAmount, obs_module_text("Tooltip.kZoomPanAmount"));
 	tip("grp_capture", obs_module_text("Tooltip.GroupCapture"));
+	tip(kCursorOffsetX, obs_module_text("Tooltip.CursorOffsetX"));
+	tip(kCursorOffsetY, obs_module_text("Tooltip.CursorOffsetY"));
+	tip(kSpotlightShowCursor, obs_module_text("Tooltip.SpotlightShowCursor"));
+	tip(kMagnifierShowCursor, obs_module_text("Tooltip.MagnifierShowCursor"));
 	tip("grp_pointer", obs_module_text("Tooltip.GroupPointer"));
 	tip("grp_focus", obs_module_text("Tooltip.GroupFocus"));
 	tip("grp_overlays", obs_module_text("Tooltip.GroupOverlays"));

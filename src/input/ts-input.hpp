@@ -24,6 +24,7 @@ struct InputState {
 	/* Keys with a rising edge this tick (for the overlay). */
 	std::string key_labels[kMaxKeyEvents];
 	bool key_modifier[kMaxKeyEvents] = {};
+	uint32_t key_modifiers[kMaxKeyEvents] = {};
 	int key_count = 0;
 
 	/* Capability tier: 0 = unavailable, 1 = native, 2 = portal, 3 = evdev. */

@@ -115,6 +115,7 @@ Places the screen "floating" over a background, with corners and shadow.
 | **Change cursor over links** | Automatic on **Windows and X11**. Wayland has no portable link-cursor signal, so the primary stays active |
 | **Cursor movement** | **Exact**, **Spring smoothing**, **Glide (sampled)** or **Glide (A to B)** |
 | **Cursor size (1 = default)** | Cursor scale (1.0 = default) |
+| **Pointer correction X/Y (px)** | Fine adjustment if the recorded pointer is a few pixels away from the real one |
 | **Smoothing (0 = exact tracking)** | Spring mode: 0 = follows exactly; above that, it glides |
 | **Glide duration / sample interval** | A→B duration and how often the sampled glide takes a new destination |
 | **Curve tilt (sway)** | The cursor tilts slightly when turning |
@@ -177,7 +178,7 @@ Each button has its own independent effect.
 
 | Option | What it does |
 |-------|-----------|
-| **Click effect** | Ripple, Orb, Ring, Force, Glow, Echo (double ring), Flare (spark), **Quiet circle** or **Water ripple** (pixel distortion) |
+| **Click effect** | Ripple, Orb, Ring, Force, Glow, Echo (double ring), Flare (spark), **Quiet circle**, **Water ripple** (colored ring with distortion) or **Water ripple (clear)** (distortion only, no color) |
 | **Effect size / color / duration / animation curve** | Appearance and timing of the effect |
 
 ### Click sound
@@ -223,6 +224,7 @@ Each button has its own independent effect.
 | **Zoom when active (x)** | Extra multiplicative zoom while the spotlight is on |
 | **Drop/zoom in / out (ms)** | Durations of the activation/deactivation animation |
 | **Vertical drop distance (px)** | Vertical distance the spotlight drops in/out |
+| **Show cursor during spotlight** | Keep the recorded cursor visible while the spotlight is active |
 
 The spotlight mask, blur, dim, border, halo and zoom affect the whole frame,
 including the wallpaper. Click effects and highlights stay crisp on top. Assign `TopScreen_ToggleSpotlight` in **Settings → Hotkeys** to toggle it
@@ -242,6 +244,7 @@ mask and zoom focus keep following the mouse while it is active. The global
 | **Border / shadow** | Optional ring and soft halo around the lens |
 | **Zoom in / out (ms)** | Activation/deactivation transition |
 | **Vertical drop distance (px)** | Drop-in/out animation distance |
+| **Show cursor during magnifier** | Keep the recorded cursor visible while the lens is active |
 
 The lens magnifies both the wallpaper and the captured screen inside its shape.
 Click effects, highlights, the key overlay and the cursor stay crisp on top and
@@ -254,18 +257,19 @@ other. The global **Effects enabled** master still applies.
 |-------|-----------|
 | **Show typed keys** | Shows what you type on screen |
 | **Modifiers only** | Shows only Ctrl/Shift/Alt/Win |
-| **Show special key names** | On: Enter/arrows/modifiers appear as text names. Off: those keys are ignored; Space is always shown as a blank space |
-| **Show shortcuts** | On: held modifiers appear as one combo (`Ctrl + C`). Off: keys are shown individually |
+| **Show special keys** | On: Enter, Tab, arrows and similar keys appear by name. Off: those keys are ignored. Space is always shown as a blank space; modifiers are handled by the shortcut option |
+| **Show shortcuts** | On: held modifiers are folded into one entry such as `Ctrl + C`; Shift/Ctrl are not shown twice. Off: each modifier and key is shown individually |
 | **On-screen time per key (ms)** | How long each key stays |
 | **Maximum keys on screen** | How many simultaneous keys to show |
 
 The key overlay is drawn above the cursor so typed text always stays readable.
 Every keystroke appears as its own character (repeats included) exactly as typed,
 then fades out after the on-screen time. Letters, digits and punctuation such as
-`@#!?` are shown as text. Special keys are shown by name (`Shift`, `Ctrl`, `Alt`,
-`Win`, `Enter`, `Left`, …), and Space is a literal blank space. With **Show
-shortcuts** on, modifiers held with the next key become one entry such as
-`Ctrl + Shift + C`; with it off, keys are shown individually.
+`@#!?` are shown as text. Special keys such as `Enter`, `Tab` and `Left` are
+shown by name, and Space is a literal blank space. With **Show shortcuts** on,
+held modifiers become one entry such as `Ctrl + Shift + C`; with it off, each
+modifier is shown once and each normal key follows individually. The Overlays
+section lists Highlighter before Keystrokes.
 | **Horizontal position (0 = left, 1 = right)** | Where the band sits horizontally |
 | **Vertical position (0 = top, 1 = bottom)** | Where the band sits vertically |
 | **Text size (1 = default)** | Text scale |

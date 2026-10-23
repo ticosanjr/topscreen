@@ -1271,6 +1271,17 @@ TEST(integration_properties_parent_groups)
 
 	/* Solid background hides the nested wallpaper group. */
 	CHECK(!fakeobs::property_visible(obs_properties_get(props, "grp_bg_image")));
+
+	/* Selecting a wallpaper must switch the background mode, not only store
+	 * the path. This is the regression that left the frame on a solid color. */
+	obs_property_t *wallpaper = obs_properties_get(props, core::keys::kBgImage);
+	REQUIRE(wallpaper != nullptr);
+	REQUIRE(wallpaper->modified != nullptr);
+	obs_data_set_string(filter->settings, core::keys::kBgImage, "wallpapers/fiber.jpg");
+	wallpaper->modified(props, wallpaper, filter->settings);
+	CHECK_EQ(static_cast<int>(obs_data_get_int(filter->settings, core::keys::kBgType)),
+		 static_cast<int>(core::BgMode::Wallpaper));
+	CHECK(fakeobs::property_visible(obs_properties_get(props, "grp_bg_image")));
 	obs_properties_destroy(props);
 
 	obs_data_set_int(filter->settings, core::keys::kBgType,

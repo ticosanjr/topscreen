@@ -556,12 +556,19 @@ void Compositor::render(obs_source_t *filter, obs_source_t *target, uint32_t wid
 	set_f(p_zoom_, zoom);
 	set_v2(p_focus_, static_cast<float>(st.zoom.focus_x), static_cast<float>(st.zoom.focus_y));
 
-	/* Cursor */
-	const bool cursor_on = active && cfg.cursor.enabled && st.cursor.visible && st.cursor.opacity > 0.001;
+	/* Cursor. The offset is applied on the CPU so clicks, zoom, spotlight and
+	 * the lens all use the same corrected pointer position. */
+	float cursor_opacity = static_cast<float>(st.cursor.opacity);
+	if (!cfg.spotlight.show_cursor)
+		cursor_opacity *= static_cast<float>(1.0 - st.spotlight.amount);
+	if (!cfg.magnifier.show_cursor)
+		cursor_opacity *= static_cast<float>(1.0 - st.magnifier.amount);
+	const bool cursor_on = active && cfg.cursor.enabled && st.cursor.visible &&
+			       cursor_opacity > 0.001f;
 	set_f(p_cursor_enabled_, cursor_on ? 1.0f : 0.0f);
 	set_v2(p_cursor_pos_, static_cast<float>(st.cursor.x), static_cast<float>(st.cursor.y));
 	set_f(p_cursor_scale_, static_cast<float>(st.cursor.size));
-	set_f(p_cursor_opacity_, static_cast<float>(st.cursor.opacity));
+	set_f(p_cursor_opacity_, cursor_opacity);
 	set_f(p_cursor_rotation_, static_cast<float>(st.cursor.rotation));
 	set_f(p_cursor_shadow_, cfg.cursor.shadow ? 1.0f : 0.0f);
 

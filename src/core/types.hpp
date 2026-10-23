@@ -160,6 +160,7 @@ enum class ClickEffect : int {
 	Flare = 6,
 	QuietCircle = 7,
 	WaterRipple = 8,
+	WaterRippleClear = 9,
 };
 
 enum class ZoomMode : int {

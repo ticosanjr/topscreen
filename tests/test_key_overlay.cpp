@@ -145,8 +145,9 @@ TEST(key_special_label_classifier)
 	CHECK(is_special_key_label("Tab"));
 	CHECK(is_special_key_label("Esc"));
 	CHECK(is_special_key_label("Left"));
-	CHECK(is_special_key_label("Ctrl"));
-	CHECK(is_special_key_label("Win"));
+	CHECK(!is_special_key_label("Ctrl"));
+	CHECK(!is_special_key_label("Shift"));
+	CHECK(!is_special_key_label("Win"));
 	CHECK(!is_special_key_label("A"));
 	CHECK(!is_special_key_label("1"));
 	CHECK(!is_special_key_label("@"));
@@ -258,4 +259,38 @@ TEST(key_special_names_are_text_and_space_is_blank)
 	CHECK_EQ(out[0].label.view(), std::string_view("Shift"));
 	CHECK_EQ(out[1].label.view(), std::string_view(" "));
 	CHECK_EQ(out[2].label.view(), std::string_view("Left"));
+}
+
+TEST(key_shortcuts_suppress_standalone_modifiers_even_with_special)
+{
+	KeyOverlayModel m;
+	KeyOverlayConfig cfg;
+	cfg.show_shortcuts = true;
+	cfg.show_special = true;
+	m.configure(cfg);
+
+	/* Duplicate modifier events from a platform must not create entries. */
+	m.press("Ctrl", true, 0.0, KeyModCtrl);
+	m.press("Ctrl", true, 0.0, KeyModCtrl);
+	m.press("C", false, 1.0, KeyModCtrl);
+	CHECK_EQ(m.active_count(), 1);
+
+	KeyRender out[8];
+	const int n = m.collect(1.0, out, 8);
+	REQUIRE(n == 1);
+	CHECK_EQ(out[0].label.view(), std::string_view("Ctrl + C"));
+}
+
+TEST(key_without_shortcuts_shows_modifier_once)
+{
+	KeyOverlayModel m;
+	KeyOverlayConfig cfg;
+	cfg.show_shortcuts = false;
+	cfg.show_special = false;
+	m.configure(cfg);
+
+	m.press("Ctrl", true, 0.0, KeyModCtrl);
+	m.press("Ctrl", true, 1.0, KeyModCtrl);
+	m.press("C", false, 2.0, KeyModCtrl);
+	CHECK_EQ(m.active_count(), 2);
 }

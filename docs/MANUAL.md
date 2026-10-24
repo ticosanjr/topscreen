@@ -204,6 +204,8 @@ Each button has its own independent effect.
 | **Pan intensity (0 = off)** | How much the screen "follows" the mouse |
 | **Centering (0 = follows mouse, 1 = centered)** | 0 = follows the mouse; 1 = keeps the mouse in the **center** (the view **anticipates** the edges — the corner appears before you get to it) |
 
+Zoom treats the whole scene as one image: the wallpaper, frame, shadow and captured screen magnify around the same focus. The cursor and key overlay stay readable and follow the physical pointer.
+
 ### Movement (motion blur)
 | Option | What it does |
 |-------|-----------|

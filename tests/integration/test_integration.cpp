@@ -24,6 +24,7 @@
 #include "core/types.hpp"
 #include "ts-filter.hpp"
 #include "ts-properties.hpp"
+#include "render/ts-wallpaper.hpp"
 #include "ts-registry.hpp"
 
 using namespace topscreen;
@@ -1291,4 +1292,27 @@ TEST(integration_properties_parent_groups)
 	CHECK(fakeobs::property_visible(obs_properties_get(props, "grp_bg_image")));
 	obs_properties_destroy(props);
 	ts_filter_source_info.destroy(ctx);
+}
+
+TEST(integration_wallpaper_pipeline_polls_ready_texture)
+{
+	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
+	WallpaperPipeline pipeline;
+	pipeline.update("wallpapers/fiber.jpg", 1280, 720, 30.0, 2);
+	for (int i = 0; i < 1000 && !pipeline.has_texture(); ++i) {
+		std::this_thread::sleep_for(std::chrono::milliseconds(2));
+		pipeline.update("wallpapers/fiber.jpg", 1280, 720, 30.0, 2);
+	}
+	CHECK(pipeline.has_texture());
+	CHECK(pipeline.aspect() > 1.0f);
+
+	/* Switching to another wallpaper must replace the texture without a
+	 * detour through Solid mode. */
+	pipeline.update("wallpapers/glacier.jpg", 1280, 720, 30.0, 2);
+	for (int i = 0; i < 1000 && !pipeline.has_texture(); ++i) {
+		std::this_thread::sleep_for(std::chrono::milliseconds(2));
+		pipeline.update("wallpapers/glacier.jpg", 1280, 720, 30.0, 2);
+	}
+	CHECK(pipeline.has_texture());
+	pipeline.release();
 }

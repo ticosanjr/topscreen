@@ -304,11 +304,14 @@ void WallpaperPipeline::update(const char *raw, uint32_t target_w, uint32_t targ
 	const std::string key = make_key(resolved_, target_w, target_h, blur, blur_type);
 	if (actual_key_ == key || failed_key_ == key)
 		return;
-	if (pending_ && pending_key_ == key)
-		return;
 
+	/* A pending request may already be finished. Poll before deciding to wait,
+	 * otherwise the ready texture is never uploaded and the frame stays solid
+	 * until the background mode changes. */
 	poll_pending();
 	if (actual_key_ == key || failed_key_ == key)
+		return;
+	if (pending_ && pending_key_ == key)
 		return;
 
 	auto result = std::make_shared<WallpaperRequestResult>();

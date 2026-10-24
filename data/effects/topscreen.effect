@@ -235,16 +235,21 @@ float scene_zoom_value()
 	return max(zoom, 1.0) * max(spotlight_zoom, 1.0);
 }
 
-float2 target_to_content_uv(float2 target_uv)
+// Zoom focus in target coordinates. Both the normal zoom and the spotlight
+// focus use the same screen-space origin, so the wallpaper and the captured
+// screen move together.
+float2 scene_focus_target()
 {
-	float2 cs = max(content_size(), float2(1.0, 1.0));
-	return (target_uv * target_size - content_origin()) / cs;
+	return lerp(zoom_focus, spotlight_focus, saturate(spotlight_amount));
 }
 
-float2 scene_focus_value()
+// Map a displayed target UV back to the unzoomed scene. The same transform is
+// used by the wallpaper, the captured screen and the magnifier.
+float2 scene_target_uv(float2 target_uv)
 {
-	return lerp(zoom_focus, target_to_content_uv(spotlight_focus),
-		    saturate(spotlight_amount));
+	float2 f = scene_focus_target();
+	float z = scene_zoom_value();
+	return f + (target_uv - f) / max(z, 0.0001);
 }
 
 // DISPLAYED position, in pixels, of a SOURCE point (content uv).
@@ -255,9 +260,11 @@ float2 scene_focus_value()
 float2 content_to_pixel(float2 cu)
 {
 	float2 cs = content_size();
-	float2 f  = scene_focus_value();
-	float2 su = f + (cu - f) * scene_zoom_value();
-	return su * cs + content_origin();
+	float2 target0 = (cu * cs + content_origin()) /
+			 max(target_size, float2(1.0, 1.0));
+	float2 f = scene_focus_target();
+	float2 target1 = f + (target0 - f) * scene_zoom_value();
+	return target1 * target_size;
 }
 
 // Signed distance to the spotlight shape, in pixels. Positive = outside.
@@ -382,16 +389,13 @@ float2 ripple_offset(float2 cu)
 	return o;
 }
 
-// Background for an arbitrary target pixel. The spotlight zoom is applied
-// here too, so the wallpaper and the captured screen magnify together.
+// Background for an arbitrary displayed target pixel. The full scene zoom
+// (including the spotlight zoom) is applied so the wallpaper magnifies with
+// the captured screen instead of staying fixed.
 float4 sample_background(float2 screen_px)
 {
 	float2 uv = screen_px / max(target_size, float2(1.0, 1.0));
-	float2 bg_uv = uv;
-	if (spotlight_enabled > 0.5 && spotlight_amount > 0.001) {
-		float z = 1.0 + (max(spotlight_zoom, 1.0) - 1.0) * saturate(spotlight_amount);
-		bg_uv = cursor_pos + (uv - cursor_pos) / max(z, 0.0001);
-	}
+	float2 bg_uv = scene_target_uv(uv);
 
 	if (bg_transparent > 0.5)
 		return float4(0.0, 0.0, 0.0, 0.0);
@@ -440,21 +444,19 @@ float4 apply_shadow(float4 col, float2 screen_px)
 float4 sample_content_at(float2 screen_px, out float mask)
 {
 	float2 center = target_size * 0.5;
+	float2 scene_px = scene_target_uv(screen_px / max(target_size, float2(1.0, 1.0))) *
+			  target_size;
 	float2 content_half = content_size() * 0.5;
 	float radius = min(corner_radius, min(content_half.x, content_half.y));
 	radius = max(radius, 0.0);
 	mask = 1.0 - smoothstep(-1.0, 1.0,
-				 sd_round_box(screen_px - center, content_half, radius));
+				 sd_round_box(scene_px - center, content_half, radius));
 	if (mask <= 0.0)
 		return float4(0.0, 0.0, 0.0, 0.0);
-
 	float2 cs = content_size();
-	float2 content_uv = (screen_px - content_origin()) / cs;
+	float2 content_uv = (scene_px - content_origin()) / cs;
 	content_uv += ripple_offset(content_uv);
-	float2 focus = scene_focus_value();
-	float scene_zoom = scene_zoom_value();
-	float2 uv_screen = focus + (content_uv - focus) / max(scene_zoom, 0.0001);
-	return image.Sample(def_sampler, uv_screen);
+	return image.Sample(def_sampler, content_uv);
 }
 
 // Background + captured screen at any target pixel. Used by the full-frame
@@ -479,7 +481,11 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 {
 	float2 px     = vert_in.uv * target_size;
 	float2 center = target_size * 0.5;
-	float2 p      = px - center;
+	// The whole scene (wallpaper, frame, shadow and captured screen) uses this
+	// unzoomed target position. The cursor/text overlays intentionally stay in
+	// displayed coordinates so they remain readable and follow the real pointer.
+	float2 scene_px = scene_target_uv(vert_in.uv) * target_size;
+	float2 p      = scene_px - center;
 
 	float2 content_half = content_size() * 0.5;
 	float  radius       = min(corner_radius, min(content_half.x, content_half.y));
@@ -488,31 +494,30 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 	// Background + shadow. Both are sampled through sample_background() so the
 	// spotlight can magnify the wallpaper together with the captured screen.
 	float4 col = sample_background(px);
-	col = apply_shadow(col, px);
+	col = apply_shadow(col, scene_px);
 
 	// Content: corner mask with anti-aliasing
 	float dc   = sd_round_box(p, content_half, radius);
 	float mask = 1.0 - smoothstep(-1.0, 1.0, dc);
 
 	if (mask > 0.0) {
-		float2 cs         = content_size();
-		float2 content_uv = (px - content_origin()) / cs;
+		float2 cs = content_size();
+		float2 source_target = scene_px / max(target_size, float2(1.0, 1.0));
+		float2 content_uv = (scene_px - content_origin()) / cs;
 		// Distorts the captured image only; background and overlays stay sharp.
 		content_uv += ripple_offset(content_uv);
-		float2 focus      = scene_focus_value();
-		float  scene_zoom = scene_zoom_value();
-		float2 uv_screen  = focus + (content_uv - focus) / max(scene_zoom, 0.0001);
 
 		float4 screen;
 		if (zoom_blur > 0.001) {
 			// Radial motion blur (approx. of the zoom movement)
-			float2 d = (uv_screen - focus) * zoom_blur * 0.03;
-			screen = image.Sample(def_sampler, uv_screen - d);
-			screen += image.Sample(def_sampler, uv_screen);
-			screen += image.Sample(def_sampler, uv_screen + d);
+			float2 d_target = (source_target - scene_focus_target()) * zoom_blur * 0.03;
+			float2 d = d_target * target_size / max(cs, float2(1.0, 1.0));
+			screen = image.Sample(def_sampler, content_uv - d);
+			screen += image.Sample(def_sampler, content_uv);
+			screen += image.Sample(def_sampler, content_uv + d);
 			screen *= (1.0 / 3.0);
 		} else {
-			screen = image.Sample(def_sampler, uv_screen);
+			screen = image.Sample(def_sampler, content_uv);
 		}
 
 		if (bg_transparent > 0.5)
@@ -533,7 +538,9 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 					     float2(0.0, magnifier_drop);
 			float2 lens_px = lens_center +
 					 (px - lens_center) / max(magnifier_zoom, 1.0001);
-			float4 lens_col = apply_shadow(sample_background(lens_px), lens_px);
+			float2 lens_scene = scene_target_uv(lens_px / max(target_size, float2(1.0, 1.0))) *
+					    target_size;
+			float4 lens_col = apply_shadow(sample_background(lens_px), lens_scene);
 			float lens_content;
 			float4 lens_screen = sample_content_at(lens_px, lens_content);
 			if (lens_content > 0.0) {
@@ -591,7 +598,9 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 				blurred += sample_scene_at(px + float2(o.x, -o.y)) * 0.0625;
 				blurred += sample_scene_at(px - float2(o.x, -o.y)) * 0.0625;
 			}
-			blurred = apply_shadow(blurred, px);
+			float2 blur_scene = scene_target_uv(px / max(target_size, float2(1.0, 1.0))) *
+					    target_size;
+			blurred = apply_shadow(blurred, blur_scene);
 			col = lerp(col, blurred, spot_outside * spot_amount);
 		}
 	}

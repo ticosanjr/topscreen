@@ -59,7 +59,7 @@ void SpotlightModel::update(double now_ms, double cursor_x, double cursor_y)
 		return;
 
 	const double t = std::clamp((now_ms - start_ms_) / duration_ms_, 0.0, 1.0);
-	const double e = target_ ? ease_out_cubic(t) : ease_in_cubic(t);
+	const double e = ease_in_out_cubic(t);
 	amount_ = from_ + (to_ - from_) * e;
 	if (t >= 1.0)
 		duration_ms_ = 0.0;

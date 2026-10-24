@@ -40,17 +40,18 @@ struct CursorConfig {
 	bool link_detection = true;
 	double size = 1.4;     // size multiplier
 	bool shadow = true;
-	int follow_mode = static_cast<int>(CursorFollowMode::Spring);
-	double smooth = 0.0;   // Spring: 0 = follows the mouse exactly
+	int follow_mode = static_cast<int>(CursorFollowMode::Exact);
 	double glide_ms = 180.0; // Glide: A->B easing duration
-	double glide_sample_ms = 90.0; // GlideSampled: pointer sampling interval
-	double sway = 0.0;     // 0..1 -> tilt on the curve
+	/* Deprecated fields kept for profile compatibility; no UI. */
+	double smooth = 0.0;
+	double glide_sample_ms = 90.0;
+	double sway = 0.0;
+	bool loop = false;
+	double loop_ms = 4000.0;
+	double offset_x = 0.0;
+	double offset_y = 0.0;
 	bool hide_idle = true; // hides when idle
 	double idle_delay_ms = 1200.0;
-	bool loop = false; // returns to the start when idle
-	double loop_ms = 4000.0;
-	double offset_x = 0.0; // correction in target pixels
-	double offset_y = 0.0;
 };
 
 struct CursorRender {

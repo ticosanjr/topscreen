@@ -35,6 +35,7 @@ enum HotkeyAction {
 	HK_ToggleHighlight,
 	HK_ToggleSpotlight,
 	HK_ToggleMagnifier,
+	HK_ToggleCursor,
 	HK_Count,
 };
 
@@ -52,6 +53,7 @@ inline constexpr const char *kHotkeyNames[HK_Count] = {
 	"TopScreen_ToggleHighlight",
 	"TopScreen_ToggleSpotlight",
 	"TopScreen_ToggleMagnifier",
+	"TopScreen_ToggleCursor",
 };
 
 inline constexpr int kHotkeyCount = HK_Count;

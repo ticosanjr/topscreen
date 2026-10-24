@@ -192,7 +192,8 @@ TEST(integration_hotkeys_all_actions)
 			       "TopScreen_ProfileH",	      "TopScreen_ProfileI",
 			       "TopScreen_ProfileJ",	      "TopScreen_ProfileSave",
 			       "TopScreen_ToggleHighlight",
-			       "TopScreen_ToggleSpotlight", "TopScreen_ToggleMagnifier"};
+			       "TopScreen_ToggleSpotlight", "TopScreen_ToggleMagnifier",
+			       "TopScreen_ToggleCursor"};
 	for (const char *n : names)
 		REQUIRE(fakeobs::find_hotkey(n) >= 0);
 
@@ -601,7 +602,8 @@ TEST(integration_registers_all_hotkeys)
 			       "TopScreen_ProfileH",	      "TopScreen_ProfileI",
 			       "TopScreen_ProfileJ",	      "TopScreen_ProfileSave",
 			       "TopScreen_ToggleHighlight",
-			       "TopScreen_ToggleSpotlight", "TopScreen_ToggleMagnifier"};
+			       "TopScreen_ToggleSpotlight", "TopScreen_ToggleMagnifier",
+			       "TopScreen_ToggleCursor"};
 	const int expected = static_cast<int>(sizeof(names) / sizeof(names[0]));
 
 	/* The harness keeps earlier registrations, so measure this filter's delta. */
@@ -618,7 +620,7 @@ TEST(integration_registers_all_hotkeys)
 }
 
 /* Frontend hotkeys are process-wide: a second filter must NOT register a
- * second set of 21, and destroying one filter must keep them alive. */
+ * second set of 22, and destroying one filter must keep them alive. */
 TEST(integration_hotkeys_shared_between_filters)
 {
 	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
@@ -633,7 +635,7 @@ TEST(integration_hotkeys_shared_between_filters)
 	REQUIRE(ctx1 != nullptr);
 	REQUIRE(ctx2 != nullptr);
 
-	CHECK_EQ(fakeobs::hotkey_count() - before, 21);
+	CHECK_EQ(fakeobs::hotkey_count() - before, 22);
 	CHECK(fakeobs::hotkeys_active_from(before));
 
 	/* Destroying one filter keeps the shared hotkeys working. */

@@ -6,6 +6,7 @@
 
 #include "geometry.hpp"
 #include "math.hpp"
+#include "easing.hpp"
 
 namespace topscreen::core {
 
@@ -136,7 +137,7 @@ double ZoomModel::spot_zoom_at(double now_ms) const
 		/* Ease into the target and stay there while held. */
 		const double elapsed = now_ms - spot_start_ms_;
 		const double u = std::min(1.0, elapsed / spot_in_ms_);
-		const double e = 1.0 - (1.0 - u) * (1.0 - u) * (1.0 - u);
+		const double e = ease_in_out_cubic(u);
 		return spot_base_ + (spot_target_ - spot_base_) * e;
 	}
 
@@ -147,7 +148,7 @@ double ZoomModel::spot_zoom_at(double now_ms) const
 	const double u = (now_ms - spot_release_ms_ - spot_hold_ms_) / spot_out_ms_;
 	if (u >= 1.0)
 		return spot_base_;
-	const double e = u * u * (3.0 - 2.0 * u); /* smoothstep */
+	const double e = ease_in_out_cubic(u);
 	return spot_release_zoom_ + (spot_base_ - spot_release_zoom_) * e;
 }
 

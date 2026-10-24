@@ -6,6 +6,7 @@
 #include "core/keys.hpp"
 #include "core/math.hpp"
 #include "core/geometry.hpp"
+#include "core/mapping.hpp"
 #include "core/profiles.hpp"
 #include "core/profiles_io.hpp"
 #include "core/magnifier.hpp"
@@ -54,6 +55,7 @@ enum ActionBits : uint32_t {
 	A_TOGGLE_HIGHLIGHT = 1u << 13,
 	A_TOGGLE_SPOTLIGHT = 1u << 14,
 	A_TOGGLE_MAGNIFIER = 1u << 15,
+	A_TOGGLE_CURSOR = 1u << 16,
 };
 
 /* Native cursor ownership is shared by every TopScreen filter attached to the
@@ -199,6 +201,7 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 	bool cursor_acquired_ = false;
 	bool cursor_hiding_ = false;
 	bool prev_left = false;
+	bool cursor_hotkey_visible_ = true;
 	std::atomic<bool> hotkey_highlight_active_{false};
 
 	int current_profile_ = 0;
@@ -271,6 +274,7 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 	void toggle_highlight() override { actions_.fetch_or(A_TOGGLE_HIGHLIGHT); }
 	void toggle_spotlight() override { actions_.fetch_or(A_TOGGLE_SPOTLIGHT); }
 	void toggle_magnifier() override { actions_.fetch_or(A_TOGGLE_MAGNIFIER); }
+	void toggle_cursor() override { actions_.fetch_or(A_TOGGLE_CURSOR); }
 	FilterControl *filter_control() override { return this; }
 
 	/* ---- FilterControl (UI thread: only queues / reads atomic) ---- */
@@ -634,22 +638,20 @@ void ts_filter_ctx::start_zoom_spot(double zx0, double zy0, double zx1, double z
 	const double rh = std::max(1e-3, zy1 - zy0);
 	const bool has_rect = (rw >= cfg.highlight.min_span && rh >= cfg.highlight.min_span);
 	const double base = std::max(1.0, frame.zoom.zoom);
-	const int dir = cfg.highlight.zoom_dir;
 	const core::SpotAim aim =
 		core::spot_aim_for_hold(has_rect, zx0, zy0, zx1, zy1, (zx0 + zx1) * 0.5,
 					(zy0 + zy1) * 0.5, base, cfg.highlight.zoom_max,
-					cfg.highlight.zoom_max, dir == 1 || dir == 3);
+					cfg.highlight.zoom_max, false);
 	if (!aim.valid)
 		return;
 
-	/* Punch modes skip the hold: snap in now, glide straight back out. */
-	const bool punch = dir >= 2;
+	const bool punch = false;
 	const double hold_ms = hold_override_ms >= 0.0 ? hold_override_ms
 						       : cfg.highlight.zoom_hold_ms;
 	zoom.spot_start_hold(aim.focus_x, aim.focus_y, aim.zoom, cfg.highlight.zoom_in_ms,
 			     (punch || immediate_out) ? 0.0 : hold_ms,
 			     cfg.highlight.zoom_out_ms, time_ms);
-	blog(LOG_INFO, "[TopScreen] zoom spotlight: dir=%d %.2fx%s", dir, aim.zoom,
+	blog(LOG_INFO, "[TopScreen] zoom spotlight: %.2fx%s", aim.zoom,
 	     immediate_out ? " (quick)" : "");
 	if (immediate_out)
 		zoom.spot_release(time_ms);
@@ -988,10 +990,19 @@ void ts_filter_tick(void *data, float seconds)
 					static_cast<double>(ctx->target_h)};
 		const core::Vec2f c = core::screen_to_content(st.x, st.y, mon);
 
-		const double cx = core::clamp01(
-			c.x + ctx->cfg.cursor.offset_x / static_cast<double>(ctx->target_w));
-		const double cy = core::clamp01(
-			c.y + ctx->cfg.cursor.offset_y / static_cast<double>(ctx->target_h));
+		/* Keep the cursor hotspot inside the captured content, without the
+		 * wallpaper padding. The icon body may still overhang the screen. */
+		const core::ContentArea area = core::content_area(
+			static_cast<double>(ctx->target_w), static_cast<double>(ctx->target_h),
+			ctx->cfg.bg.enabled ? ctx->cfg.bg.padding_x : 0.0,
+			ctx->cfg.bg.enabled ? ctx->cfg.bg.padding_y : 0.0,
+			ctx->cfg.bg.enabled && ctx->cfg.bg.keep_aspect);
+		const double min_x = area.origin.x / static_cast<double>(ctx->target_w);
+		const double max_x = (area.origin.x + area.size.x) / static_cast<double>(ctx->target_w);
+		const double min_y = area.origin.y / static_cast<double>(ctx->target_h);
+		const double max_y = (area.origin.y + area.size.y) / static_cast<double>(ctx->target_h);
+		const double cx = std::clamp(static_cast<double>(c.x), min_x, max_x);
+		const double cy = std::clamp(static_cast<double>(c.y), min_y, max_y);
 
 		ctx->cursor.set_target(cx, cy, ctx->time_ms);
 		ctx->zoom.set_cursor(cx, cy, ctx->time_ms);
@@ -1033,12 +1044,12 @@ void ts_filter_tick(void *data, float seconds)
 
 		if (st.left_pressed) {
 			ctx->clicks.spawn(cx, cy, ctx->time_ms, false);
-			if (ctx->cfg.click_sound.enabled && ctx->cfg.click_sound.left)
+			if (ctx->cfg.click_sound.enabled)
 				ctx->click_sound.play(false, ctx->cfg.click_sound.volume);
 		}
 		if (st.right_pressed) {
 			ctx->clicks.spawn(cx, cy, ctx->time_ms, true);
-			if (ctx->cfg.click_sound.enabled && ctx->cfg.click_sound.right)
+			if (ctx->cfg.click_sound.enabled)
 				ctx->click_sound.play(true, ctx->cfg.click_sound.volume);
 		}
 	}
@@ -1050,6 +1061,8 @@ void ts_filter_tick(void *data, float seconds)
 	ctx->highlight.update(ctx->time_ms);
 
 	ctx->frame.cursor = ctx->cursor.render();
+	if (!ctx->cursor_hotkey_visible_)
+		ctx->frame.cursor.visible = false;
 	ctx->spotlight.update(ctx->time_ms, ctx->frame.cursor.x, ctx->frame.cursor.y);
 	ctx->frame.spotlight = ctx->spotlight.render();
 	ctx->magnifier.update(ctx->time_ms, ctx->frame.cursor.x, ctx->frame.cursor.y);
@@ -1059,9 +1072,7 @@ void ts_filter_tick(void *data, float seconds)
 	ctx->frame.key_count =
 		ctx->keys.collect(ctx->time_ms, ctx->frame.keys, FrameState::kMaxKeys);
 	ctx->frame.highlight = ctx->highlight.render();
-	ctx->frame.zoom_blur = ctx->cfg.motion_blur.enabled
-				       ? core::clamp01(std::fabs(ctx->zoom.zoom_velocity()) * ctx->cfg.motion_blur.amount * 0.5)
-				       : 0.0;
+	ctx->frame.zoom_blur = 0.0;
 
 	/* Publishes state to the dock (UI thread). */
 	ctx->effects_cache_.store(ctx->cfg.effects_enabled);

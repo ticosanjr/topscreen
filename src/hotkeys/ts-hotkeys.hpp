@@ -26,6 +26,7 @@ struct HotkeyContext {
 	virtual void toggle_highlight() = 0;
 	virtual void toggle_spotlight() = 0;
 	virtual void toggle_magnifier() = 0;
+	virtual void toggle_cursor() = 0;
 
 	/**
 	 * The FilterControl implemented by the same object, when available.

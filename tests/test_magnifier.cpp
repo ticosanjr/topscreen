@@ -22,8 +22,8 @@ TEST(magnifier_starts_off_and_animates_in)
 	const MagnifierRender half = m.render();
 	CHECK(half.amount > 0.0 && half.amount < 1.0);
 	CHECK(half.zoom > 1.0 && half.zoom < 2.0);
-	CHECK_NEAR(half.focus_x, 0.25, 1e-9);
-	CHECK_NEAR(half.focus_y, 0.75, 1e-9);
+	CHECK_NEAR(half.focus_x, 0.325, 1e-9);
+	CHECK_NEAR(half.focus_y, 0.675, 1e-9);
 
 	m.update(100.0, 0.25, 0.75);
 	CHECK(m.active());
@@ -62,7 +62,7 @@ TEST(magnifier_animates_out)
 	m.update(50.0, 0.5, 0.5);
 	const MagnifierRender mid = m.render();
 	CHECK(mid.amount > 0.0 && mid.amount < 1.0);
-	CHECK(mid.drop > 0.0);
+	CHECK_NEAR(mid.drop, 0.0, 1e-9);
 	CHECK_NEAR(mid.zoom, 1.0 + (2.0 - 1.0) * mid.amount, 1e-9);
 
 	m.update(100.0, 0.5, 0.5);

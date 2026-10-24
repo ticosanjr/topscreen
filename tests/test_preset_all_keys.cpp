@@ -174,7 +174,7 @@ TEST(preset_covers_all_keys)
 	CHECK_EQ(c.bg.image, std::string("wallpapers/fiber.jpg"));
 	CHECK_EQ(c.bg.image_file, std::string("/tmp/my-image.jpg"));
 	CHECK_NEAR(c.bg.image_blur, 9.0, 1e-9);
-	CHECK_EQ(c.bg.image_blur_type, 3);
+	CHECK_EQ(c.bg.image_blur_type, 1);
 	CHECK_NEAR(c.bg.padding_x, 11.0, 1e-9);
 	CHECK_NEAR(c.bg.padding_y, 12.0, 1e-9);
 	CHECK_NEAR(c.bg.corner_radius, 12.0, 1e-9);
@@ -191,7 +191,7 @@ TEST(preset_covers_all_keys)
 	CHECK(!c.cursor.link_detection);
 	CHECK_NEAR(c.cursor.size, 2.5, 1e-9);
 	CHECK(!c.cursor.shadow);
-	CHECK_EQ(c.cursor.follow_mode, 2);
+	CHECK_EQ(c.cursor.follow_mode, 3);
 	CHECK_NEAR(c.cursor.smooth, 0.11, 1e-9);
 	CHECK_NEAR(c.cursor.glide_ms, 240.0, 1e-9);
 	CHECK_NEAR(c.cursor.glide_sample_ms, 75.0, 1e-9);
@@ -203,7 +203,7 @@ TEST(preset_covers_all_keys)
 	CHECK_NEAR(c.cursor.offset_x, 5.0, 1e-9);
 	CHECK_NEAR(c.cursor.offset_y, -7.0, 1e-9);
 
-	CHECK_EQ(c.zoom.mode, 2);
+	CHECK_EQ(c.zoom.mode, 0);
 	CHECK_NEAR(c.zoom.amount, 3.3, 1e-9);
 	CHECK_NEAR(c.zoom.duration_ms, 222.0, 1e-9);
 	CHECK_NEAR(c.zoom.idle_timeout_ms, 555.0, 1e-9);
@@ -214,7 +214,7 @@ TEST(preset_covers_all_keys)
 	CHECK_NEAR(c.click_left.size, 1.7, 1e-9);
 	CHECK_EQ(c.click_left.color, 999u);
 	CHECK_NEAR(c.click_left.duration_ms, 123.0, 1e-9);
-	CHECK_EQ(c.click_left.easing, 1);
+	CHECK_EQ(c.click_left.easing, 3);
 
 	CHECK_EQ(c.click_right.effect, 7);
 	CHECK_NEAR(c.click_right.size, 0.4, 1e-9);
@@ -299,7 +299,7 @@ TEST(preset_covers_all_keys)
 
 	CHECK_EQ(c.highlight.mode, 2);
 	CHECK_NEAR(c.highlight.thickness, 0.012, 1e-9);
-	CHECK_EQ(c.highlight.zoom_dir, 3);
+	CHECK_EQ(c.highlight.zoom_dir, 0);
 	CHECK_NEAR(c.highlight.zoom_delay_ms, 1500.0, 1e-9);
 	CHECK_NEAR(c.highlight.zoom_max, 3.5, 1e-9);
 	CHECK_NEAR(c.highlight.zoom_in_ms, 120.0, 1e-9);

@@ -62,7 +62,7 @@ void sanitize_config(Config *cfg)
 	cfg->bg.gradient_center_y =
 		bounded(cfg->bg.gradient_center_y, 0.0, 1.0, def.bg.gradient_center_y);
 	cfg->bg.image_blur = bounded(cfg->bg.image_blur, 0.0, 60.0, def.bg.image_blur);
-	cfg->bg.image_blur_type = bounded_int(cfg->bg.image_blur_type, 0, 4);
+	cfg->bg.image_blur_type = 1; // Soft is the only mode
 	cfg->bg.padding_x = bounded(cfg->bg.padding_x, 0.0, 400.0, def.bg.padding_x);
 	cfg->bg.padding_y = bounded(cfg->bg.padding_y, 0.0, 400.0, def.bg.padding_y);
 	cfg->bg.corner_radius =
@@ -83,6 +83,9 @@ void sanitize_config(Config *cfg)
 	cfg->cursor.follow_mode = bounded_int(cfg->cursor.follow_mode,
 					      static_cast<int>(CursorFollowMode::Exact),
 					      static_cast<int>(CursorFollowMode::GlideAB));
+	/* Spring and sampled glide were removed; every non-Exact mode is A→B. */
+	if (cfg->cursor.follow_mode != static_cast<int>(CursorFollowMode::Exact))
+		cfg->cursor.follow_mode = static_cast<int>(CursorFollowMode::GlideAB);
 	cfg->cursor.size = bounded(cfg->cursor.size, 0.5, 4.0, def.cursor.size);
 	cfg->cursor.smooth = bounded(cfg->cursor.smooth, 0.0, 1.0, def.cursor.smooth);
 	cfg->cursor.glide_ms = bounded(cfg->cursor.glide_ms, 50.0, 1200.0, def.cursor.glide_ms);
@@ -96,8 +99,10 @@ void sanitize_config(Config *cfg)
 	cfg->cursor.offset_y = bounded(cfg->cursor.offset_y, -100.0, 100.0, def.cursor.offset_y);
 
 	/* Zoom */
+	if (cfg->zoom.mode == static_cast<int>(ZoomMode::Manual))
+		cfg->zoom.mode = static_cast<int>(ZoomMode::Off);
 	cfg->zoom.mode = bounded_int(cfg->zoom.mode, static_cast<int>(ZoomMode::Off),
-				     static_cast<int>(ZoomMode::Manual));
+				     static_cast<int>(ZoomMode::Auto));
 	cfg->zoom.amount = bounded(cfg->zoom.amount, 1.0, 4.0, def.zoom.amount);
 	cfg->zoom.duration_ms = bounded(cfg->zoom.duration_ms, 100.0, 2000.0, def.zoom.duration_ms);
 	cfg->zoom.idle_timeout_ms =
@@ -109,6 +114,8 @@ void sanitize_config(Config *cfg)
 	/* Clicks */
 	sanitize_click(&cfg->click_left, def.click_left);
 	sanitize_click(&cfg->click_right, def.click_right);
+	cfg->click_left.easing = EASE_IN_OUT_CUBIC;
+	cfg->click_right.easing = EASE_IN_OUT_CUBIC;
 	cfg->click_sound.volume =
 		bounded(cfg->click_sound.volume, 0.0, 1.0, def.click_sound.volume);
 
@@ -138,6 +145,9 @@ void sanitize_config(Config *cfg)
 			def.spotlight.shadow_offset_y);
 	cfg->spotlight.blur_amount =
 		bounded(cfg->spotlight.blur_amount, 0.0, 60.0, def.spotlight.blur_amount);
+	cfg->spotlight.outside_mode = bounded_int(cfg->spotlight.outside_mode, 0, 1);
+	if (cfg->spotlight.outside_mode == 0 && cfg->spotlight.blur_enabled)
+		cfg->spotlight.outside_mode = 1;
 	cfg->spotlight.zoom_amount =
 		bounded(cfg->spotlight.zoom_amount, 1.0, 4.0, def.spotlight.zoom_amount);
 	cfg->spotlight.in_ms = bounded(cfg->spotlight.in_ms, 0.0, 2000.0, def.spotlight.in_ms);
@@ -200,7 +210,7 @@ void sanitize_config(Config *cfg)
 					 def.highlight.opacity);
 	cfg->highlight.thickness = bounded(cfg->highlight.thickness, 0.001, 0.05,
 					   def.highlight.thickness);
-	cfg->highlight.zoom_dir = bounded_int(cfg->highlight.zoom_dir, 0, 3);
+	cfg->highlight.zoom_dir = 0; // fixed IN direction
 	cfg->highlight.zoom_delay_ms = bounded(cfg->highlight.zoom_delay_ms, 0.0, 5000.0,
 					       def.highlight.zoom_delay_ms);
 	cfg->highlight.zoom_max = bounded(cfg->highlight.zoom_max, 1.2, 8.0,

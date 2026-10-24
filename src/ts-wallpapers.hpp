@@ -35,6 +35,7 @@ inline constexpr int kWallpaperCount = sizeof(kWallpapers) / sizeof(kWallpapers[
 
 /** Synthetic wallpaper entry: transparent outside the floating screen. */
 inline constexpr const char *kTransparentWallpaper = "__transparent__";
+inline constexpr const char *kLocalImageMarker = "__local__";
 
 inline bool wallpaper_is_transparent(const char *value)
 {

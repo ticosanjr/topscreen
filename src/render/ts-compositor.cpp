@@ -213,6 +213,7 @@ void Compositor::cache_params()
 	p_spotlight_shadow_blur_ = P("spotlight_shadow_blur");
 	p_spotlight_shadow_offset_ = P("spotlight_shadow_offset");
 	p_spotlight_blur_enabled_ = P("spotlight_blur_enabled");
+	p_spotlight_outside_mode_ = P("spotlight_outside_mode");
 	p_spotlight_blur_ = P("spotlight_blur");
 	p_spotlight_zoom_ = P("spotlight_zoom");
 	p_spotlight_focus_ = P("spotlight_focus");
@@ -256,8 +257,8 @@ void Compositor::cache_params()
 		click_[i].type = P(name);
 	}
 
-	/* Freehand line: 16 explicit points (line_p0..line_p15), no arrays. */
-	for (int i = 0; i < 16; ++i) {
+	/* Freehand line: 32 explicit points (line_p0..line_p31), no arrays. */
+	for (int i = 0; i < 32; ++i) {
 		std::snprintf(name, sizeof(name), "line_p%d", i);
 		p_line_pts_[i] = P(name);
 	}
@@ -322,6 +323,7 @@ bool Compositor::validate_params() const
 		"spotlight_shadow_blur",
 		"spotlight_shadow_offset",
 		"spotlight_blur_enabled",
+		"spotlight_outside_mode",
 		"spotlight_blur",
 		"spotlight_zoom",
 		"spotlight_focus",
@@ -369,7 +371,7 @@ bool Compositor::validate_params() const
 		}
 	}
 
-	for (int i = 0; i < 16; ++i) {
+	for (int i = 0; i < 32; ++i) {
 		char name[32];
 		std::snprintf(name, sizeof(name), "line_p%d", i);
 		if (!gs_effect_get_param_by_name(effect_, name)) {
@@ -434,7 +436,7 @@ void Compositor::release()
 	p_spotlight_shadow_enabled_ = p_spotlight_shadow_color_ = nullptr;
 	p_spotlight_shadow_alpha_ = p_spotlight_shadow_blur_ = nullptr;
 	p_spotlight_shadow_offset_ = nullptr;
-	p_spotlight_blur_enabled_ = p_spotlight_blur_ = nullptr;
+	p_spotlight_blur_enabled_ = p_spotlight_blur_ = p_spotlight_outside_mode_ = nullptr;
 	p_spotlight_zoom_ = p_spotlight_focus_ = p_spotlight_drop_ = nullptr;
 	p_magnifier_enabled_ = p_magnifier_amount_ = p_magnifier_shape_ = nullptr;
 	p_magnifier_radius_ = p_magnifier_corner_ = p_magnifier_zoom_ = nullptr;
@@ -623,11 +625,12 @@ void Compositor::render(obs_source_t *filter, obs_source_t *target, uint32_t wid
 	set_v2(p_spotlight_shadow_offset_, static_cast<float>(cfg.spotlight.shadow_offset_x),
 	       static_cast<float>(cfg.spotlight.shadow_offset_y));
 	set_f(p_spotlight_blur_enabled_, cfg.spotlight.blur_enabled ? 1.0f : 0.0f);
+	set_f(p_spotlight_outside_mode_, static_cast<float>(cfg.spotlight.outside_mode));
 	set_f(p_spotlight_blur_, static_cast<float>(cfg.spotlight.blur_amount));
 	set_f(p_spotlight_zoom_, static_cast<float>(st.spotlight.zoom));
 	set_v2(p_spotlight_focus_, static_cast<float>(st.spotlight.focus_x),
 	       static_cast<float>(st.spotlight.focus_y));
-	set_f(p_spotlight_drop_, static_cast<float>(st.spotlight.drop));
+	set_f(p_spotlight_drop_, 0.0f);
 
 	/* Magnifier. Same all-uniforms-every-frame rule as Spotlight. */
 	const bool mag = active && st.magnifier.amount > 0.001;
@@ -639,7 +642,7 @@ void Compositor::render(obs_source_t *filter, obs_source_t *target, uint32_t wid
 	set_f(p_magnifier_zoom_, static_cast<float>(st.magnifier.zoom));
 	set_v2(p_magnifier_focus_, static_cast<float>(st.magnifier.focus_x),
 	       static_cast<float>(st.magnifier.focus_y));
-	set_f(p_magnifier_drop_, static_cast<float>(st.magnifier.drop));
+	set_f(p_magnifier_drop_, 0.0f);
 	set_f(p_magnifier_border_enabled_, cfg.magnifier.border_enabled ? 1.0f : 0.0f);
 	set_c(p_magnifier_border_color_, cfg.magnifier.border_color);
 	set_f(p_magnifier_border_width_, static_cast<float>(cfg.magnifier.border_width));

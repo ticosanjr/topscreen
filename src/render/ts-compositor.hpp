@@ -104,6 +104,7 @@ private:
 	gs_eparam_t *p_spotlight_shadow_blur_ = nullptr;
 	gs_eparam_t *p_spotlight_shadow_offset_ = nullptr;
 	gs_eparam_t *p_spotlight_blur_enabled_ = nullptr;
+	gs_eparam_t *p_spotlight_outside_mode_ = nullptr;
 	gs_eparam_t *p_spotlight_blur_ = nullptr;
 	gs_eparam_t *p_spotlight_zoom_ = nullptr;
 	gs_eparam_t *p_spotlight_focus_ = nullptr;
@@ -143,9 +144,9 @@ private:
 	gs_eparam_t *p_click_count_ = nullptr;
 	ClickParams click_[4];
 
-	/* Freehand line: up to 16 polyline points (line_p0..line_p15) and a point
+	/* Freehand line: up to 32 polyline points (line_p0..line_p31) and a point
 	 * count. Zero-filled every frame so D3D11 never sees an unset uniform. */
-	gs_eparam_t *p_line_pts_[16] = {nullptr};
+	gs_eparam_t *p_line_pts_[32] = {nullptr};
 	gs_eparam_t *p_line_count_ = nullptr;
 	gs_eparam_t *p_line_width_ = nullptr;
 

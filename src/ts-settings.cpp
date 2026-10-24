@@ -102,6 +102,7 @@ void config_defaults(obs_data_t *s)
 	obs_data_set_default_double(s, kSpotlightShadowOffsetX, def.spotlight.shadow_offset_x);
 	obs_data_set_default_double(s, kSpotlightShadowOffsetY, def.spotlight.shadow_offset_y);
 	obs_data_set_default_bool(s, kSpotlightBlurEnabled, def.spotlight.blur_enabled);
+	obs_data_set_default_int(s, kSpotlightOutsideMode, def.spotlight.outside_mode);
 	obs_data_set_default_double(s, kSpotlightBlurAmount, def.spotlight.blur_amount);
 	obs_data_set_default_double(s, kSpotlightZoomAmount, def.spotlight.zoom_amount);
 	obs_data_set_default_double(s, kSpotlightInMs, def.spotlight.in_ms);
@@ -511,6 +512,7 @@ void config_store(obs_data_t *s, const Config &c)
 	obs_data_set_double(s, kSpotlightShadowOffsetX, c.spotlight.shadow_offset_x);
 	obs_data_set_double(s, kSpotlightShadowOffsetY, c.spotlight.shadow_offset_y);
 	obs_data_set_bool(s, kSpotlightBlurEnabled, c.spotlight.blur_enabled);
+	obs_data_set_int(s, kSpotlightOutsideMode, c.spotlight.outside_mode);
 	obs_data_set_double(s, kSpotlightBlurAmount, c.spotlight.blur_amount);
 	obs_data_set_double(s, kSpotlightZoomAmount, c.spotlight.zoom_amount);
 	obs_data_set_double(s, kSpotlightInMs, c.spotlight.in_ms);

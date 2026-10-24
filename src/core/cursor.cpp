@@ -135,69 +135,23 @@ void CursorModel::update(double now_ms)
 	if (dt < 0.0)
 		dt = 0.0;
 
-	/* Loop: after being idle long enough, returns to the starting point. */
-	if (cfg_.loop && (now_ms - last_move_ms_) >= cfg_.loop_ms &&
-	    (std::fabs(target_x_ - start_x_) > 1e-9 || std::fabs(target_y_ - start_y_) > 1e-9)) {
-		target_x_ = start_x_;
-		target_y_ = start_y_;
-		target_dirty_ = true;
-	}
-
-	switch (cfg_.follow_mode) {
-	case static_cast<int>(CursorFollowMode::Exact):
+	if (cfg_.follow_mode == static_cast<int>(CursorFollowMode::Exact)) {
 		sx_.reset(target_x_);
 		sy_.reset(target_y_);
 		glide_active_ = false;
-		break;
-
-	case static_cast<int>(CursorFollowMode::GlideSampled):
-		if (!glide_active_ && target_dirty_ && now_ms >= next_sample_ms_) {
-			start_glide(now_ms);
-			target_dirty_ = false;
-			next_sample_ms_ = now_ms + glide_duration(cfg_.glide_sample_ms);
-		}
-		step_glide(now_ms);
-		break;
-
-	case static_cast<int>(CursorFollowMode::GlideAB):
+	} else {
+		/* Only Glide A→B remains; legacy Spring/Sampled values were mapped
+		 * to this mode by config sanitization. */
 		if (!glide_active_ && target_dirty_) {
 			start_glide(now_ms);
 			target_dirty_ = false;
 		}
 		step_glide(now_ms);
-		break;
-
-	case static_cast<int>(CursorFollowMode::Spring):
-	default:
-		sx_.set_target(target_x_);
-		sy_.set_target(target_y_);
-		if (cfg_.smooth <= 0.001) {
-			/* No smoothing: follows the mouse exactly. */
-			sx_.reset(target_x_);
-			sy_.reset(target_y_);
-		} else {
-			sx_.update(dt);
-			sy_.update(dt);
-		}
-		break;
 	}
 
-	/* Sway: tilts toward the movement direction, damped by speed. */
-	if (cfg_.sway > 0.0005) {
-		const double vx = sx_.velocity();
-		const double vy = sy_.velocity();
-		const double speed = std::sqrt(vx * vx + vy * vy);
-		double rot = 0.0;
-		if (speed > 0.001)
-			rot = clamp01(cfg_.sway) * std::atan2(vx, -vy);
-		if (rot > 0.6)
-			rot = 0.6;
-		if (rot < -0.6)
-			rot = -0.6;
-		rotation_ = rot;
-	} else {
-		rotation_ = 0.0;
-	}
+	/* Bitmap cursors use a fixed 30° clockwise tilt. */
+	rotation_ = 0.5235987755982988;
+
 }
 
 CursorRender CursorModel::render() const

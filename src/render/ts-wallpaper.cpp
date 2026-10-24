@@ -288,12 +288,12 @@ void WallpaperPipeline::update(const char *raw, uint32_t target_w, uint32_t targ
 	if (requested_ != requested) {
 		requested_ = requested;
 		resolved_ = resolve_path(requested);
-		release_texture();
+		/* Keep the previous texture visible while the new image is decoded and
+		 * filtered. Releasing it here causes the solid-color flash on every
+		 * wallpaper change. */
 		pending_.reset();
 		pending_key_.clear();
-		actual_key_.clear();
 		failed_key_.clear();
-		aspect_ = 1.0f;
 	}
 
 	if (resolved_.empty()) {

@@ -41,7 +41,7 @@ struct ClickSoundConfig {
 	std::string file_right = "sounds/click-mouse-right.wav";
 	double volume = 0.6;
 	bool left = true;
-	bool right = false;
+	bool right = true; // deprecated; Mute is selected by an empty file
 };
 
 /** Motion blur (radial, tied to the zoom/cursor movement). */
@@ -74,7 +74,8 @@ struct SpotlightConfig {
 	double shadow_offset_x = 0.0;
 	double shadow_offset_y = 12.0;
 
-	bool blur_enabled = false;
+	bool blur_enabled = false; // legacy; outside_mode is authoritative
+	int outside_mode = 0;      // 0 dim, 1 blur
 	double blur_amount = 16.0; // px
 
 	double zoom_amount = 1.35; // multiplicative over the current zoom

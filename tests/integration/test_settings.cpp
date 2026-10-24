@@ -122,7 +122,7 @@ TEST(settings_store_load_roundtrip)
 	CHECK_NEAR(b.cursor.size, 1.5, 1e-9);
 	CHECK_EQ(b.cursor.secondary_style, a.cursor.secondary_style);
 	CHECK(!b.cursor.link_detection);
-	CHECK_EQ(b.cursor.follow_mode, a.cursor.follow_mode);
+	CHECK_EQ(b.cursor.follow_mode, static_cast<int>(core::CursorFollowMode::GlideAB));
 	CHECK_NEAR(b.cursor.glide_ms, 210.0, 1e-9);
 	CHECK_NEAR(b.cursor.glide_sample_ms, 70.0, 1e-9);
 	CHECK_EQ(b.spotlight.shape, a.spotlight.shape);
@@ -259,7 +259,7 @@ TEST(properties_creates_expected_groups)
 	CHECK(obs_properties_get(p, "grp_spotlight") != nullptr);
 	CHECK(obs_properties_get(p, core::keys::kSpotlightShape) != nullptr);
 	CHECK(obs_properties_get(p, core::keys::kSpotlightBorderColor) != nullptr);
-	CHECK(obs_properties_get(p, core::keys::kSpotlightShadowBlur) != nullptr);
+	CHECK(obs_properties_get(p, core::keys::kSpotlightOutsideMode) != nullptr);
 	CHECK(obs_properties_get(p, core::keys::kSpotlightBlurAmount) != nullptr);
 	CHECK(obs_properties_get(p, core::keys::kSpotlightZoomAmount) != nullptr);
 	obs_properties_destroy(p);
@@ -315,20 +315,6 @@ TEST(properties_highlight_groups_follow_the_mode)
 		obs_data_release(s);
 	}
 
-	/* PressZoom: no look/timing, zoom group with the press delay only. */
-	{
-		auto [s, p] = make_props(static_cast<int>(core::HighlightMode::PressZoom));
-		CHECK(p != nullptr);
-		CHECK(!fakeobs::property_visible(obs_properties_get(p, "grp_hl_look")));
-		CHECK(!fakeobs::property_visible(obs_properties_get(p, "grp_hl_timing")));
-		CHECK(fakeobs::property_visible(obs_properties_get(p, "grp_hl_zoom")));
-		CHECK(!fakeobs::property_visible(
-			obs_properties_get(p, core::keys::kHighlightZoomDelayMs)));
-		CHECK(fakeobs::property_visible(
-			obs_properties_get(p, core::keys::kHighlightPressDelayMs)));
-		obs_properties_destroy(p);
-		obs_data_release(s);
-	}
 
 	/* Box+zoom shows everything: it draws the box AND zooms. */
 	{
@@ -421,7 +407,6 @@ TEST(properties_dependent_controls_visibility)
 	obs_data_t *s = obs_data_create();
 	config_defaults(s);
 	obs_data_set_bool(s, core::keys::kCursorHideIdle, true);
-	obs_data_set_bool(s, core::keys::kCursorLoop, false);
 	obs_data_set_int(s, core::keys::kSpotlightShape,
 			 static_cast<long long>(core::SpotlightShape::Circle));
 	obs_data_set_bool(s, core::keys::kKeysBand, true);
@@ -429,17 +414,13 @@ TEST(properties_dependent_controls_visibility)
 	obs_properties_t *p = properties_create(nullptr, s);
 	CHECK(p != nullptr);
 	CHECK(fakeobs::property_visible(obs_properties_get(p, core::keys::kCursorIdleDelayMs)));
-	CHECK(!fakeobs::property_visible(obs_properties_get(p, core::keys::kCursorLoopMs)));
 	CHECK(!fakeobs::property_visible(obs_properties_get(p, core::keys::kSpotlightCornerRadius)));
 	CHECK(fakeobs::property_visible(obs_properties_get(p, core::keys::kKeysBandColor)));
 
 	/* Toggle the masters and run the same callbacks OBS would run. */
 	obs_data_set_bool(s, core::keys::kCursorHideIdle, false);
-	obs_data_set_bool(s, core::keys::kCursorLoop, true);
 	fakeobs::invoke_property_modified(p, obs_properties_get(p, core::keys::kCursorHideIdle), s);
-	fakeobs::invoke_property_modified(p, obs_properties_get(p, core::keys::kCursorLoop), s);
 	CHECK(!fakeobs::property_visible(obs_properties_get(p, core::keys::kCursorIdleDelayMs)));
-	CHECK(fakeobs::property_visible(obs_properties_get(p, core::keys::kCursorLoopMs)));
 
 	obs_data_set_int(s, core::keys::kSpotlightShape,
 			 static_cast<long long>(core::SpotlightShape::Square));

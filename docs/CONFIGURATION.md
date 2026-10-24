@@ -92,7 +92,8 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Halo blur (px) | `spotlight_shadow_blur` | double | px | `30` |
 | | Halo offset X (px) | `spotlight_shadow_offset_x` | double | px | `0` |
 | | Halo offset Y (px) | `spotlight_shadow_offset_y` | double | px | `12` |
-| | Enable blur outside | `spotlight_blur_enabled` | bool | — | `false` |
+| | Outside effect (0 dim, 1 blur) | `spotlight_outside_mode` | int | 0–1 | `0` |
+| | Enable blur outside (legacy) | `spotlight_blur_enabled` | bool | — | `false` |
 | | Outside blur amount (px) | `spotlight_blur_amount` | double | px | `16` |
 | | Zoom when active (x) | `spotlight_zoom_amount` | double | 1–4 | `1.35` |
 | | Drop/zoom in (ms) | `spotlight_in_ms` | double | ms | `250` |
@@ -189,7 +190,7 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 {
   "topscreen_profiles": 1,
   "plugin": "TopScreen",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "current": 0,
   "profile_slot_0": { "effects_enabled": true },
   "profile_slot_1": { "effects_enabled": true },
@@ -297,3 +298,5 @@ preset with the *Next/Previous preset* hotkeys or through the dock.
 | Unavailable | No backend; input effects stay inert |
 
 See [`INPUT-AND-PLATFORMS.md`](INPUT-AND-PLATFORMS.md).
+
+| `TopScreen_ToggleCursor` | `TopScreen_ToggleCursor — Toggle cursor visibility` |

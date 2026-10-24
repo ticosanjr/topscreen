@@ -62,7 +62,7 @@ TEST(config_sanitize_clamps_ranges_and_keeps_valid_values)
 	sanitize_config(&cfg);
 
 	CHECK_NEAR(cfg.bg.image_blur, 60.0, 1e-9);
-	CHECK_EQ(cfg.bg.image_blur_type, 4);
+	CHECK_EQ(cfg.bg.image_blur_type, 1);
 	CHECK_NEAR(cfg.bg.padding_x, 0.0, 1e-9);
 	CHECK_NEAR(cfg.bg.shadow_offset_x, 100.0, 1e-9);
 	CHECK_NEAR(cfg.cursor.size, 4.0, 1e-9);
@@ -87,7 +87,7 @@ TEST(config_sanitize_clamps_ranges_and_keeps_valid_values)
 	valid.zoom.amount = 2.0;
 	sanitize_config(&valid);
 	CHECK_NEAR(valid.bg.image_blur, 24.0, 1e-9);
-	CHECK_EQ(valid.bg.image_blur_type, 3);
+	CHECK_EQ(valid.bg.image_blur_type, 1);
 	CHECK_NEAR(valid.bg.gradient_angle, 315.0, 1e-9);
 	CHECK_NEAR(valid.cursor.size, 1.5, 1e-9);
 	CHECK_NEAR(valid.zoom.amount, 2.0, 1e-9);
@@ -128,7 +128,7 @@ TEST(preset_apply_sanitizes_imported_values)
 	REQUIRE(preset.apply(&cfg, &err));
 
 	CHECK_NEAR(cfg.bg.image_blur, 60.0, 1e-9);
-	CHECK_EQ(cfg.bg.image_blur_type, 4);
+	CHECK_EQ(cfg.bg.image_blur_type, 1);
 	CHECK_NEAR(cfg.cursor.size, 0.5, 1e-9);
 	CHECK_NEAR(cfg.spotlight.radius, 1.0, 1e-9);
 }

@@ -86,10 +86,10 @@ TEST(cursor_loop_returns_to_start)
 	advance(m, t, 1.0);
 	CHECK(m.render().x > 0.5); /* already moved far away */
 
-	/* Stays still: after loop_ms it must return close to the start. */
+	/* Cursor loop was removed: staying idle must leave it at the target. */
 	advance(m, t, 4.0);
-	CHECK_NEAR(m.render().x, 0.1, 0.05);
-	CHECK_NEAR(m.render().y, 0.1, 0.05);
+	CHECK_NEAR(m.render().x, 0.9, 0.05);
+	CHECK_NEAR(m.render().y, 0.9, 0.05);
 }
 
 TEST(cursor_disabled_invisible)

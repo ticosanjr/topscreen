@@ -95,6 +95,7 @@ inline constexpr const char *kSpotlightShadowBlur = "spotlight_shadow_blur";
 inline constexpr const char *kSpotlightShadowOffsetX = "spotlight_shadow_offset_x";
 inline constexpr const char *kSpotlightShadowOffsetY = "spotlight_shadow_offset_y";
 inline constexpr const char *kSpotlightBlurEnabled = "spotlight_blur_enabled";
+inline constexpr const char *kSpotlightOutsideMode = "spotlight_outside_mode";
 inline constexpr const char *kSpotlightBlurAmount = "spotlight_blur_amount";
 inline constexpr const char *kSpotlightZoomAmount = "spotlight_zoom_amount";
 inline constexpr const char *kSpotlightInMs = "spotlight_in_ms";

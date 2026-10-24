@@ -98,7 +98,7 @@ TEST(shader_has_expected_uniforms)
 		"spotlight_dim", "spotlight_border_enabled", "spotlight_border_color",
 		"spotlight_border_width", "spotlight_shadow_enabled", "spotlight_shadow_color",
 		"spotlight_shadow_alpha", "spotlight_shadow_blur", "spotlight_shadow_offset",
-		"spotlight_blur_enabled", "spotlight_blur", "spotlight_zoom",
+		"spotlight_blur_enabled", "spotlight_outside_mode", "spotlight_blur", "spotlight_zoom",
 		"spotlight_focus", "spotlight_drop",
 		"highlight_active", "highlight_rect", "highlight_color", "highlight_alpha",
 		"click0_pos",     "click0_prog",    "click0_size",   "click0_color",
@@ -110,7 +110,11 @@ TEST(shader_has_expected_uniforms)
 		"line_p2",        "line_p3",        "line_p4",       "line_p5",
 		"line_p6",        "line_p7",        "line_p8",       "line_p9",
 		"line_p10",       "line_p11",       "line_p12",      "line_p13",
-		"line_p14",       "line_p15",
+		"line_p14",       "line_p15",       "line_p16",      "line_p17",
+		"line_p18",       "line_p19",       "line_p20",      "line_p21",
+		"line_p22",       "line_p23",       "line_p24",      "line_p25",
+		"line_p26",       "line_p27",       "line_p28",      "line_p29",
+		"line_p30",       "line_p31",
 	};
 
 	for (const char *name : required) {
@@ -223,7 +227,7 @@ TEST(shader_avoids_risky_constructs)
 }
 
 /*
- * The CPU decimates the freehand trail to 16 points (line_p0..line_p15, see
+ * The CPU decimates the freehand trail to 32 points (line_p0..line_p31, see
  * kShaderLineSlots) and relies on the shader pairing every consecutive couple.
  * A shader that lost a segment would silently drop part of the stroke - the
  * exact "line mode does nothing" class of bug - so the pairing is pinned here.
@@ -233,7 +237,7 @@ TEST(shader_line_segments_pair_consecutive_points)
 	const std::string text = read_effect();
 	REQUIRE(!text.empty());
 
-	const int slots = 16;
+	const int slots = 32;
 	for (int i = 1; i < slots; ++i) {
 		const std::string guard = "line_count > " + std::to_string(i) + ".5";
 		++tst::checks();

@@ -59,7 +59,8 @@ uniform float4 spotlight_shadow_color;
 uniform float  spotlight_shadow_alpha;
 uniform float  spotlight_shadow_blur; // px
 uniform float2 spotlight_shadow_offset;
-uniform float  spotlight_blur_enabled;
+uniform float  spotlight_blur_enabled; // legacy
+uniform float  spotlight_outside_mode; // 0 dim, 1 blur
 uniform float  spotlight_blur;   // px
 uniform float  spotlight_zoom;   // multiplicative scene zoom
 uniform float2 spotlight_focus;  // source uv under the cursor
@@ -107,6 +108,22 @@ uniform float2 line_p12;
 uniform float2 line_p13;
 uniform float2 line_p14;
 uniform float2 line_p15;
+uniform float2 line_p16;
+uniform float2 line_p17;
+uniform float2 line_p18;
+uniform float2 line_p19;
+uniform float2 line_p20;
+uniform float2 line_p21;
+uniform float2 line_p22;
+uniform float2 line_p23;
+uniform float2 line_p24;
+uniform float2 line_p25;
+uniform float2 line_p26;
+uniform float2 line_p27;
+uniform float2 line_p28;
+uniform float2 line_p29;
+uniform float2 line_p30;
+uniform float2 line_p31;
 
 uniform float  click_count;
 
@@ -270,7 +287,7 @@ float2 content_to_pixel(float2 cu)
 // Signed distance to the spotlight shape, in pixels. Positive = outside.
 float spotlight_sd(float2 px)
 {
-	float2 cpx = cursor_pos * target_size + float2(0.0, spotlight_drop);
+	float2 cpx = cursor_pos * target_size;
 	float  rad = max(spotlight_radius, 0.001) * min(target_size.x, target_size.y);
 	if (spotlight_shape > 0.5) {
 		float cr = clamp(spotlight_corner, 0.0, rad);
@@ -538,6 +555,18 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 					     float2(0.0, magnifier_drop);
 			float2 lens_px = lens_center +
 					 (px - lens_center) / max(magnifier_zoom, 1.0001);
+			/* Lens shadow is a real halo behind the lens. */
+			if (magnifier_shadow_enabled > 0.5 && magnifier_shadow_alpha > 0.001) {
+				float2 shadow_center = lens_center - magnifier_shadow_offset;
+				float shadow_sd = len2(px - shadow_center) -
+						  max(magnifier_radius, 0.001) *
+							  min(target_size.x, target_size.y);
+				float halo = 1.0 - smoothstep(-magnifier_shadow_blur,
+							      magnifier_shadow_blur, shadow_sd);
+				col.rgb = lerp(col.rgb, magnifier_shadow_color.rgb,
+					       saturate(halo * magnifier_shadow_alpha * magnifier_amount));
+			}
+
 			float2 lens_scene = scene_target_uv(lens_px / max(target_size, float2(1.0, 1.0))) *
 					    target_size;
 			float4 lens_col = apply_shadow(sample_background(lens_px), lens_scene);
@@ -575,7 +604,7 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 	// prefiltered on the CPU, so each scene tap is cheap.
 	{
 		if (spotlight_enabled > 0.5 && spot_amount > 0.001 &&
-		    spotlight_blur_enabled > 0.5 && spotlight_blur > 0.01 &&
+		    spotlight_outside_mode > 0.5 && spotlight_blur > 0.01 &&
 		    spot_outside > 0.001) {
 			float2 o = spotlight_blur / max(target_size, float2(1.0, 1.0));
 			float4 blurred;
@@ -730,6 +759,102 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 				float  ld = seg_dist(px, la, lb);
 				line_a = max(line_a, (1.0 - smoothstep(line_hw - aa, line_hw + aa, ld)) * line_alpha);
 			}
+			if (line_count > 16.5) {
+				float2 la = content_to_pixel(line_p15);
+				float2 lb = content_to_pixel(line_p16);
+				float  ld = seg_dist(px, la, lb);
+				line_a = max(line_a, (1.0 - smoothstep(line_hw - aa, line_hw + aa, ld)) * line_alpha);
+			}
+			if (line_count > 17.5) {
+				float2 la = content_to_pixel(line_p16);
+				float2 lb = content_to_pixel(line_p17);
+				float  ld = seg_dist(px, la, lb);
+				line_a = max(line_a, (1.0 - smoothstep(line_hw - aa, line_hw + aa, ld)) * line_alpha);
+			}
+			if (line_count > 18.5) {
+				float2 la = content_to_pixel(line_p17);
+				float2 lb = content_to_pixel(line_p18);
+				float  ld = seg_dist(px, la, lb);
+				line_a = max(line_a, (1.0 - smoothstep(line_hw - aa, line_hw + aa, ld)) * line_alpha);
+			}
+			if (line_count > 19.5) {
+				float2 la = content_to_pixel(line_p18);
+				float2 lb = content_to_pixel(line_p19);
+				float  ld = seg_dist(px, la, lb);
+				line_a = max(line_a, (1.0 - smoothstep(line_hw - aa, line_hw + aa, ld)) * line_alpha);
+			}
+			if (line_count > 20.5) {
+				float2 la = content_to_pixel(line_p19);
+				float2 lb = content_to_pixel(line_p20);
+				float  ld = seg_dist(px, la, lb);
+				line_a = max(line_a, (1.0 - smoothstep(line_hw - aa, line_hw + aa, ld)) * line_alpha);
+			}
+			if (line_count > 21.5) {
+				float2 la = content_to_pixel(line_p20);
+				float2 lb = content_to_pixel(line_p21);
+				float  ld = seg_dist(px, la, lb);
+				line_a = max(line_a, (1.0 - smoothstep(line_hw - aa, line_hw + aa, ld)) * line_alpha);
+			}
+			if (line_count > 22.5) {
+				float2 la = content_to_pixel(line_p21);
+				float2 lb = content_to_pixel(line_p22);
+				float  ld = seg_dist(px, la, lb);
+				line_a = max(line_a, (1.0 - smoothstep(line_hw - aa, line_hw + aa, ld)) * line_alpha);
+			}
+			if (line_count > 23.5) {
+				float2 la = content_to_pixel(line_p22);
+				float2 lb = content_to_pixel(line_p23);
+				float  ld = seg_dist(px, la, lb);
+				line_a = max(line_a, (1.0 - smoothstep(line_hw - aa, line_hw + aa, ld)) * line_alpha);
+			}
+			if (line_count > 24.5) {
+				float2 la = content_to_pixel(line_p23);
+				float2 lb = content_to_pixel(line_p24);
+				float  ld = seg_dist(px, la, lb);
+				line_a = max(line_a, (1.0 - smoothstep(line_hw - aa, line_hw + aa, ld)) * line_alpha);
+			}
+			if (line_count > 25.5) {
+				float2 la = content_to_pixel(line_p24);
+				float2 lb = content_to_pixel(line_p25);
+				float  ld = seg_dist(px, la, lb);
+				line_a = max(line_a, (1.0 - smoothstep(line_hw - aa, line_hw + aa, ld)) * line_alpha);
+			}
+			if (line_count > 26.5) {
+				float2 la = content_to_pixel(line_p25);
+				float2 lb = content_to_pixel(line_p26);
+				float  ld = seg_dist(px, la, lb);
+				line_a = max(line_a, (1.0 - smoothstep(line_hw - aa, line_hw + aa, ld)) * line_alpha);
+			}
+			if (line_count > 27.5) {
+				float2 la = content_to_pixel(line_p26);
+				float2 lb = content_to_pixel(line_p27);
+				float  ld = seg_dist(px, la, lb);
+				line_a = max(line_a, (1.0 - smoothstep(line_hw - aa, line_hw + aa, ld)) * line_alpha);
+			}
+			if (line_count > 28.5) {
+				float2 la = content_to_pixel(line_p27);
+				float2 lb = content_to_pixel(line_p28);
+				float  ld = seg_dist(px, la, lb);
+				line_a = max(line_a, (1.0 - smoothstep(line_hw - aa, line_hw + aa, ld)) * line_alpha);
+			}
+			if (line_count > 29.5) {
+				float2 la = content_to_pixel(line_p28);
+				float2 lb = content_to_pixel(line_p29);
+				float  ld = seg_dist(px, la, lb);
+				line_a = max(line_a, (1.0 - smoothstep(line_hw - aa, line_hw + aa, ld)) * line_alpha);
+			}
+			if (line_count > 30.5) {
+				float2 la = content_to_pixel(line_p29);
+				float2 lb = content_to_pixel(line_p30);
+				float  ld = seg_dist(px, la, lb);
+				line_a = max(line_a, (1.0 - smoothstep(line_hw - aa, line_hw + aa, ld)) * line_alpha);
+			}
+			if (line_count > 31.5) {
+				float2 la = content_to_pixel(line_p30);
+				float2 lb = content_to_pixel(line_p31);
+				float  ld = seg_dist(px, la, lb);
+				line_a = max(line_a, (1.0 - smoothstep(line_hw - aa, line_hw + aa, ld)) * line_alpha);
+			}
 			col.rgb = lerp(col.rgb, highlight_color.rgb, saturate(line_a));
 		}
 
@@ -743,16 +868,10 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 			float aa = max(1.0, target_size.y * 0.0015);
 			float outside = smoothstep(-aa, aa, spot_sd);
 
-			if (spotlight_shadow_enabled > 0.5 && spotlight_shadow_alpha > 0.001) {
-				float2 sp = px - spotlight_shadow_offset;
-				float  sd = spotlight_sd(sp);
-				float  halo = (1.0 - smoothstep(0.0, max(spotlight_shadow_blur, aa),
-							 abs(sd))) * outside;
-				halo *= spotlight_shadow_alpha * spot_amount;
-				col.rgb = lerp(col.rgb, spotlight_shadow_color.rgb, saturate(halo));
-			}
 
-			col.rgb *= (1.0 - spotlight_dim * outside * 0.85 * spot_amount);
+
+			if (spotlight_outside_mode < 0.5)
+				col.rgb *= (1.0 - spotlight_dim * outside * 0.85 * spot_amount);
 
 			if (spotlight_border_enabled > 0.5) {
 				float hw = max(spotlight_border_width, 0.5) * 0.5;

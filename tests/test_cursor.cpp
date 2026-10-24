@@ -41,6 +41,27 @@ TEST(cursor_follows_target)
 	CHECK_NEAR(r.y, 1.0, 1e-2);
 }
 
+TEST(cursor_bitmap_tilt_is_fixed_at_30_degrees)
+{
+	CursorModel m;
+	CursorConfig cfg;
+	cfg.follow_mode = static_cast<int>(CursorFollowMode::Exact);
+	m.configure(cfg);
+	m.reset(0.1, 0.1, 0.0);
+
+	double t = 0.0;
+	m.update(t);
+	CHECK_NEAR(m.render().rotation, 0.5235987756, 1e-9);
+
+	/* Moving in any direction must not change the tilt (no sway). */
+	m.set_target(0.9, 0.2, 0.0);
+	advance(m, t, 1.0);
+	CHECK_NEAR(m.render().rotation, 0.5235987756, 1e-9);
+	m.set_target(0.2, 0.9, 0.0);
+	advance(m, t, 1.0);
+	CHECK_NEAR(m.render().rotation, 0.5235987756, 1e-9);
+}
+
 TEST(cursor_idle_reduces_opacity)
 {
 	CursorModel m;

@@ -1,5 +1,6 @@
 #include "highlighter.hpp"
 
+#include <algorithm>
 #include <cmath>
 
 #include "math.hpp"
@@ -255,10 +256,48 @@ int subsample_line(const Vec2f *points, int count, Vec2f *out, int max_out)
 		out[0] = points[0];
 		return 1;
 	}
-	/* Even spread; i == max_out-1 lands exactly on count-1 (last point). */
-	for (int i = 0; i < max_out; ++i) {
-		const int idx = (i * (count - 1)) / (max_out - 1);
-		out[i] = points[idx];
+
+	/* Arc-length resampling: the raw trail arrives at the pointer polling
+	 * rate, so slow and fast parts have very different point density.
+	 * Sampling equal distances (instead of equal indexes) keeps the shader
+	 * segments even as the stroke changes speed. */
+	double total = 0.0;
+	for (int i = 1; i < count; ++i) {
+		const double dx = points[i].x - points[i - 1].x;
+		const double dy = points[i].y - points[i - 1].y;
+		total += std::sqrt(dx * dx + dy * dy);
+	}
+	if (total <= 1e-12) {
+		out[0] = points[0];
+		return 1;
+	}
+
+	out[0] = points[0];
+	out[max_out - 1] = points[count - 1];
+
+	int seg = 1;
+	double seg_start = 0.0;
+	double dx = points[1].x - points[0].x;
+	double dy = points[1].y - points[0].y;
+	double seg_len = std::sqrt(dx * dx + dy * dy);
+
+	for (int i = 1; i < max_out - 1; ++i) {
+		const double target = total * static_cast<double>(i) / (max_out - 1);
+		while (seg < count - 1 && seg_start + seg_len < target) {
+			seg_start += seg_len;
+			++seg;
+			dx = points[seg].x - points[seg - 1].x;
+			dy = points[seg].y - points[seg - 1].y;
+			seg_len = std::sqrt(dx * dx + dy * dy);
+		}
+		if (seg_len <= 1e-12) {
+			out[i] = points[seg];
+			continue;
+		}
+		const double t =
+			std::clamp((target - seg_start) / seg_len, 0.0, 1.0);
+		out[i].x = points[seg - 1].x + (points[seg].x - points[seg - 1].x) * t;
+		out[i].y = points[seg - 1].y + (points[seg].y - points[seg - 1].y) * t;
 	}
 	return max_out;
 }

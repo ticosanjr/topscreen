@@ -75,11 +75,10 @@ Config make_profile_seed(int index)
 		c.click_sound.enabled = false;
 		break;
 
-	case 8: /* I: violet + gold, neon cursor, manual zoom */
+	case 8: /* I: violet + gold, neon cursor, warm auto zoom */
 		c.click_left.color = 0xFFFF5599;  // violet
 		c.click_right.color = 0xFF00D7FF; // gold
 		c.cursor.style = static_cast<int>(CursorStyle::Neon);
-		c.zoom.mode = static_cast<int>(ZoomMode::Manual);
 		c.zoom.amount = 1.6;
 		break;
 

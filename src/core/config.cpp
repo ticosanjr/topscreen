@@ -55,7 +55,7 @@ void sanitize_config(Config *cfg)
 
 	/* Background */
 	cfg->bg.mode = bounded_int(cfg->bg.mode, static_cast<int>(BgMode::Solid),
-				   static_cast<int>(BgMode::Wallpaper));
+				   static_cast<int>(BgMode::Transparent));
 	cfg->bg.gradient_angle = wrapped_angle(cfg->bg.gradient_angle, def.bg.gradient_angle);
 	cfg->bg.gradient_center_x =
 		bounded(cfg->bg.gradient_center_x, 0.0, 1.0, def.bg.gradient_center_x);
@@ -146,8 +146,10 @@ void sanitize_config(Config *cfg)
 	cfg->spotlight.blur_amount =
 		bounded(cfg->spotlight.blur_amount, 0.0, 60.0, def.spotlight.blur_amount);
 	cfg->spotlight.outside_mode = bounded_int(cfg->spotlight.outside_mode, 0, 1);
-	if (cfg->spotlight.outside_mode == 0 && cfg->spotlight.blur_enabled)
-		cfg->spotlight.outside_mode = 1;
+	/* Keep the deprecated flag in sync for older builds that still read it.
+	 * Do NOT use it to override outside_mode: that made the Dim choice
+	 * impossible whenever an old profile had blur enabled. */
+	cfg->spotlight.blur_enabled = cfg->spotlight.outside_mode == 1;
 	cfg->spotlight.zoom_amount =
 		bounded(cfg->spotlight.zoom_amount, 1.0, 4.0, def.spotlight.zoom_amount);
 	cfg->spotlight.in_ms = bounded(cfg->spotlight.in_ms, 0.0, 2000.0, def.spotlight.in_ms);
@@ -202,6 +204,10 @@ void sanitize_config(Config *cfg)
 	cfg->highlight.mode = bounded_int(cfg->highlight.mode,
 					  static_cast<int>(HighlightMode::Box),
 					  static_cast<int>(HighlightMode::PressZoom));
+	/* PressZoom was removed from the UI: migrate old profiles to the plain
+	 * hold-to-zoom gesture (always IN, drag still works). */
+	if (cfg->highlight.mode == static_cast<int>(HighlightMode::PressZoom))
+		cfg->highlight.mode = static_cast<int>(HighlightMode::Zoom);
 	cfg->highlight.hold_ms = bounded(cfg->highlight.hold_ms, 0.0, 5000.0,
 					 def.highlight.hold_ms);
 	cfg->highlight.fade_ms = bounded(cfg->highlight.fade_ms, 0.0, 2000.0,

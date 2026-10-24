@@ -89,6 +89,7 @@ TEST(settings_store_load_roundtrip)
 	a.spotlight.shadow_enabled = true;
 	a.spotlight.shadow_blur = 42.0;
 	a.spotlight.blur_enabled = true;
+	a.spotlight.outside_mode = 1;
 	a.spotlight.blur_amount = 21.0;
 	a.spotlight.zoom_amount = 1.7;
 	a.spotlight.in_ms = 120.0;
@@ -131,6 +132,7 @@ TEST(settings_store_load_roundtrip)
 	CHECK(b.spotlight.shadow_enabled);
 	CHECK_NEAR(b.spotlight.shadow_blur, 42.0, 1e-9);
 	CHECK(b.spotlight.blur_enabled);
+	CHECK_EQ(b.spotlight.outside_mode, 1);
 	CHECK_NEAR(b.spotlight.blur_amount, 21.0, 1e-9);
 	CHECK_NEAR(b.spotlight.zoom_amount, 1.7, 1e-9);
 	CHECK_NEAR(b.spotlight.in_ms, 120.0, 1e-9);
@@ -207,6 +209,119 @@ TEST(settings_migrates_legacy_background_modes)
 		core::Config c;
 		config_load(s, &c);
 		CHECK_EQ(c.bg.mode, static_cast<int>(core::BgMode::Solid));
+		obs_data_release(s);
+	}
+}
+
+/* Background source types are first-class: local image and transparent are
+ * not hidden marker entries inside the wallpaper list anymore. */
+TEST(settings_background_types_roundtrip)
+{
+	{
+		core::Config a;
+		a.bg.mode = static_cast<int>(core::BgMode::LocalImage);
+		a.bg.image_file = "/tmp/picture.png";
+
+		obs_data_t *s = obs_data_create();
+		config_store(s, a);
+
+		core::Config b;
+		config_load(s, &b);
+		CHECK_EQ(b.bg.mode, static_cast<int>(core::BgMode::LocalImage));
+		CHECK_EQ(b.bg.image_file, a.bg.image_file);
+		obs_data_release(s);
+	}
+	{
+		core::Config a;
+		a.bg.mode = static_cast<int>(core::BgMode::Transparent);
+
+		obs_data_t *s = obs_data_create();
+		config_store(s, a);
+
+		core::Config b;
+		config_load(s, &b);
+		CHECK_EQ(b.bg.mode, static_cast<int>(core::BgMode::Transparent));
+		obs_data_release(s);
+	}
+}
+
+/* Old 1.1.0 stored Local/Transparent as special values in the image list,
+ * with bg_type=Wallpaper. Those sources must open on the new types. */
+TEST(settings_migrates_image_markers_to_background_types)
+{
+	{
+		obs_data_t *s = obs_data_create();
+		obs_data_set_int(s, core::keys::kBgType,
+				 static_cast<int>(core::BgMode::Wallpaper));
+		obs_data_set_string(s, core::keys::kBgImage, "__transparent__");
+		core::Config c;
+		config_load(s, &c);
+		CHECK_EQ(c.bg.mode, static_cast<int>(core::BgMode::Transparent));
+		obs_data_release(s);
+	}
+	{
+		obs_data_t *s = obs_data_create();
+		obs_data_set_int(s, core::keys::kBgType,
+				 static_cast<int>(core::BgMode::Wallpaper));
+		obs_data_set_string(s, core::keys::kBgImage, "__local__");
+		obs_data_set_string(s, core::keys::kBgImageFile, "/tmp/p.png");
+		core::Config c;
+		config_load(s, &c);
+		CHECK_EQ(c.bg.mode, static_cast<int>(core::BgMode::LocalImage));
+		obs_data_release(s);
+	}
+	/* A real wallpaper path wins over a stale local file left by an older
+	 * version: the visible wallpaper must not silently change. */
+	{
+		obs_data_t *s = obs_data_create();
+		obs_data_set_int(s, core::keys::kBgType,
+				 static_cast<int>(core::BgMode::Wallpaper));
+		obs_data_set_string(s, core::keys::kBgImage, "wallpapers/fiber.jpg");
+		obs_data_set_string(s, core::keys::kBgImageFile, "/tmp/old.png");
+		core::Config c;
+		config_load(s, &c);
+		CHECK_EQ(c.bg.mode, static_cast<int>(core::BgMode::Wallpaper));
+		obs_data_release(s);
+	}
+}
+
+/* Old per-side "enabled" booleans become the new Mute selection. */
+TEST(settings_legacy_click_sound_side_flags_become_mute)
+{
+	obs_data_t *s = obs_data_create();
+	config_defaults(s);
+	obs_data_set_bool(s, core::keys::kClickSoundLeft, false);
+	obs_data_set_bool(s, core::keys::kClickSoundRight, true);
+
+	core::Config c;
+	config_load(s, &c);
+	CHECK(c.click_sound.file_left.empty());
+	CHECK(!c.click_sound.left);
+	CHECK(!c.click_sound.file_right.empty());
+	CHECK(c.click_sound.right);
+	obs_data_release(s);
+}
+
+/* Spotlight outside mode: the legacy blur toggle migrates once, but it must
+ * never override an explicit Dim choice (that made Dim impossible to keep). */
+TEST(settings_spotlight_outside_mode_is_not_overridden_by_legacy_blur)
+{
+	{
+		obs_data_t *s = obs_data_create();
+		obs_data_set_bool(s, core::keys::kSpotlightBlurEnabled, true);
+		core::Config c;
+		config_load(s, &c);
+		CHECK_EQ(c.spotlight.outside_mode, 1);
+		obs_data_release(s);
+	}
+	{
+		obs_data_t *s = obs_data_create();
+		obs_data_set_bool(s, core::keys::kSpotlightBlurEnabled, true);
+		obs_data_set_int(s, core::keys::kSpotlightOutsideMode, 0);
+		core::Config c;
+		config_load(s, &c);
+		CHECK_EQ(c.spotlight.outside_mode, 0);
+		CHECK(!c.spotlight.blur_enabled);
 		obs_data_release(s);
 	}
 }
@@ -396,6 +511,31 @@ TEST(properties_background_type_visibility)
 		CHECK(!fakeobs::property_visible(obs_properties_get(p, core::keys::kBgColorB)));
 		CHECK(!fakeobs::property_visible(obs_properties_get(p, core::keys::kBgGradientAngle)));
 		CHECK(fakeobs::property_visible(obs_properties_get(p, "grp_bg_image")));
+		CHECK(fakeobs::property_visible(obs_properties_get(p, core::keys::kBgImage)));
+		CHECK(!fakeobs::property_visible(obs_properties_get(p, core::keys::kBgImageFile)));
+		obs_properties_destroy(p);
+		obs_data_release(s);
+	}
+	{
+		auto [s, p] = make_props(static_cast<int>(core::BgMode::LocalImage));
+		CHECK(!fakeobs::property_visible(obs_properties_get(p, core::keys::kBgColorA)));
+		CHECK(fakeobs::property_visible(obs_properties_get(p, "grp_bg_image")));
+		CHECK(!fakeobs::property_visible(obs_properties_get(p, core::keys::kBgImage)));
+		CHECK(fakeobs::property_visible(obs_properties_get(p, core::keys::kBgImageFile)));
+		CHECK(fakeobs::property_visible(obs_properties_get(p, core::keys::kBgImageBlur)));
+		obs_properties_destroy(p);
+		obs_data_release(s);
+	}
+	{
+		auto [s, p] = make_props(static_cast<int>(core::BgMode::Transparent));
+		CHECK(!fakeobs::property_visible(obs_properties_get(p, core::keys::kBgColorA)));
+		CHECK(!fakeobs::property_visible(obs_properties_get(p, core::keys::kBgColorB)));
+		CHECK(!fakeobs::property_visible(obs_properties_get(p, "grp_bg_image")));
+		/* Padding/rounding still shape the transparent floating screen. */
+		CHECK(fakeobs::property_visible(obs_properties_get(p, core::keys::kBgPaddingX)));
+		CHECK(fakeobs::property_visible(obs_properties_get(p, core::keys::kBgKeepAspect)));
+		CHECK(fakeobs::property_visible(obs_properties_get(p, core::keys::kBgCornerRadius)));
+		CHECK(fakeobs::property_visible(obs_properties_get(p, "grp_shadow")));
 		obs_properties_destroy(p);
 		obs_data_release(s);
 	}
@@ -413,23 +553,75 @@ TEST(properties_dependent_controls_visibility)
 
 	obs_properties_t *p = properties_create(nullptr, s);
 	CHECK(p != nullptr);
+	CHECK(fakeobs::property_visible(obs_properties_get(p, core::keys::kCursorStyle)));
 	CHECK(fakeobs::property_visible(obs_properties_get(p, core::keys::kCursorIdleDelayMs)));
+	/* Spotlight starts off: only the master switch is meaningful. */
+	CHECK(!fakeobs::property_visible(obs_properties_get(p, core::keys::kSpotlightShape)));
 	CHECK(!fakeobs::property_visible(obs_properties_get(p, core::keys::kSpotlightCornerRadius)));
 	CHECK(fakeobs::property_visible(obs_properties_get(p, core::keys::kKeysBandColor)));
+	CHECK(fakeobs::property_visible(obs_properties_get(p, core::keys::kBgColorB)));
 
 	/* Toggle the masters and run the same callbacks OBS would run. */
 	obs_data_set_bool(s, core::keys::kCursorHideIdle, false);
 	fakeobs::invoke_property_modified(p, obs_properties_get(p, core::keys::kCursorHideIdle), s);
 	CHECK(!fakeobs::property_visible(obs_properties_get(p, core::keys::kCursorIdleDelayMs)));
 
+	obs_data_set_bool(s, core::keys::kCursorEnabled, false);
+	fakeobs::invoke_property_modified(p, obs_properties_get(p, core::keys::kCursorEnabled), s);
+	CHECK(!fakeobs::property_visible(obs_properties_get(p, core::keys::kCursorStyle)));
+
+	/* Spotlight: enabling reveals its controls; the outside slider follows
+	 * the Dim/Blur mode and the corner follows the square shape. */
+	obs_data_set_bool(s, core::keys::kSpotlightEnabled, true);
+	fakeobs::invoke_property_modified(p, obs_properties_get(p, core::keys::kSpotlightEnabled), s);
+	CHECK(fakeobs::property_visible(obs_properties_get(p, core::keys::kSpotlightShape)));
+	CHECK(fakeobs::property_visible(obs_properties_get(p, core::keys::kSpotlightDim)));
+	CHECK(!fakeobs::property_visible(obs_properties_get(p, core::keys::kSpotlightBlurAmount)));
+
+	obs_data_set_int(s, core::keys::kSpotlightOutsideMode, 1);
+	fakeobs::invoke_property_modified(p, obs_properties_get(p, core::keys::kSpotlightOutsideMode), s);
+	CHECK(!fakeobs::property_visible(obs_properties_get(p, core::keys::kSpotlightDim)));
+	CHECK(fakeobs::property_visible(obs_properties_get(p, core::keys::kSpotlightBlurAmount)));
+
 	obs_data_set_int(s, core::keys::kSpotlightShape,
 			 static_cast<long long>(core::SpotlightShape::Square));
 	fakeobs::invoke_property_modified(p, obs_properties_get(p, core::keys::kSpotlightShape), s);
 	CHECK(fakeobs::property_visible(obs_properties_get(p, core::keys::kSpotlightCornerRadius)));
 
+	CHECK(!fakeobs::property_visible(obs_properties_get(p, core::keys::kSpotlightBorderColor)));
+	obs_data_set_bool(s, core::keys::kSpotlightBorderEnabled, true);
+	fakeobs::invoke_property_modified(p, obs_properties_get(p, core::keys::kSpotlightBorderEnabled), s);
+	CHECK(fakeobs::property_visible(obs_properties_get(p, core::keys::kSpotlightBorderColor)));
+	CHECK(fakeobs::property_visible(obs_properties_get(p, core::keys::kSpotlightBorderWidth)));
+
+	/* Magnifier: shadow group contents appear only with the shadow on. */
+	obs_data_set_bool(s, core::keys::kMagnifierEnabled, true);
+	obs_data_set_bool(s, core::keys::kMagnifierShadowEnabled, true);
+	fakeobs::invoke_property_modified(p, obs_properties_get(p, core::keys::kMagnifierEnabled), s);
+	fakeobs::invoke_property_modified(p, obs_properties_get(p, core::keys::kMagnifierShadowEnabled), s);
+	CHECK(fakeobs::property_visible(obs_properties_get(p, core::keys::kMagnifierRadius)));
+	CHECK(fakeobs::property_visible(obs_properties_get(p, core::keys::kMagnifierShadowAlpha)));
+
+	/* Keys: the band color follows both the master switch and the band. */
 	obs_data_set_bool(s, core::keys::kKeysBand, false);
 	fakeobs::invoke_property_modified(p, obs_properties_get(p, core::keys::kKeysBand), s);
 	CHECK(!fakeobs::property_visible(obs_properties_get(p, core::keys::kKeysBandColor)));
+
+	obs_data_set_bool(s, core::keys::kKeysEnabled, false);
+	fakeobs::invoke_property_modified(p, obs_properties_get(p, core::keys::kKeysEnabled), s);
+	CHECK(!fakeobs::property_visible(obs_properties_get(p, core::keys::kKeysSize)));
+
+	/* Background: shadow settings follow the shadow switch, and disabling
+	 * the background hides everything below its master switch. */
+	CHECK(fakeobs::property_visible(obs_properties_get(p, core::keys::kBgShadowAlpha)));
+	obs_data_set_bool(s, core::keys::kBgShadow, false);
+	fakeobs::invoke_property_modified(p, obs_properties_get(p, core::keys::kBgShadow), s);
+	CHECK(!fakeobs::property_visible(obs_properties_get(p, core::keys::kBgShadowAlpha)));
+
+	obs_data_set_bool(s, core::keys::kBgEnabled, false);
+	fakeobs::invoke_property_modified(p, obs_properties_get(p, core::keys::kBgEnabled), s);
+	CHECK(!fakeobs::property_visible(obs_properties_get(p, core::keys::kBgType)));
+	CHECK(!fakeobs::property_visible(obs_properties_get(p, core::keys::kBgPaddingX)));
 
 	obs_properties_destroy(p);
 	obs_data_release(s);

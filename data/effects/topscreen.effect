@@ -550,22 +550,36 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 	if (magnifier_enabled > 0.5 && magnifier_amount > 0.001) {
 		float lens_sd = magnifier_sd(px);
 		float lens_mask = (1.0 - smoothstep(-1.0, 1.0, lens_sd)) * magnifier_amount;
+		float2 lens_center = magnifier_focus * target_size +
+				     float2(0.0, magnifier_drop);
+
+		/* The halo lives OUTSIDE the lens, so it must be painted before the
+		 * lens coverage test. (Inside the lens the sampled lens replaces it.) */
+		if (magnifier_shadow_enabled > 0.5 && magnifier_shadow_alpha > 0.001) {
+			float2 shadow_center = lens_center + magnifier_shadow_offset;
+			float  radius = max(magnifier_radius, 0.001) *
+					min(target_size.x, target_size.y);
+			float  shadow_sd;
+			if (magnifier_shape > 0.5) {
+				float cr = clamp(magnifier_corner, 0.0, radius);
+				shadow_sd = sd_round_box(px - shadow_center,
+							 float2(radius, radius), cr);
+			} else {
+				shadow_sd = len2(px - shadow_center) - radius;
+			}
+			float blur = max(magnifier_shadow_blur, 0.5);
+			float halo = 1.0 - smoothstep(-blur, blur, shadow_sd);
+			float halo_a = saturate(halo * magnifier_shadow_alpha * magnifier_amount);
+			if (bg_transparent > 0.5)
+				col = float4(lerp(col.rgb, magnifier_shadow_color.rgb, halo_a),
+					     max(col.a, halo_a));
+			else
+				col.rgb = lerp(col.rgb, magnifier_shadow_color.rgb, halo_a);
+		}
+
 		if (lens_mask > 0.001) {
-			float2 lens_center = magnifier_focus * target_size +
-					     float2(0.0, magnifier_drop);
 			float2 lens_px = lens_center +
 					 (px - lens_center) / max(magnifier_zoom, 1.0001);
-			/* Lens shadow is a real halo behind the lens. */
-			if (magnifier_shadow_enabled > 0.5 && magnifier_shadow_alpha > 0.001) {
-				float2 shadow_center = lens_center - magnifier_shadow_offset;
-				float shadow_sd = len2(px - shadow_center) -
-						  max(magnifier_radius, 0.001) *
-							  min(target_size.x, target_size.y);
-				float halo = 1.0 - smoothstep(-magnifier_shadow_blur,
-							      magnifier_shadow_blur, shadow_sd);
-				col.rgb = lerp(col.rgb, magnifier_shadow_color.rgb,
-					       saturate(halo * magnifier_shadow_alpha * magnifier_amount));
-			}
 
 			float2 lens_scene = scene_target_uv(lens_px / max(target_size, float2(1.0, 1.0))) *
 					    target_size;
@@ -606,7 +620,11 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 		if (spotlight_enabled > 0.5 && spot_amount > 0.001 &&
 		    spotlight_outside_mode > 0.5 && spotlight_blur > 0.01 &&
 		    spot_outside > 0.001) {
-			float2 o = spotlight_blur / max(target_size, float2(1.0, 1.0));
+			/* px is in target pixels, so the kernel radius must be in
+			 * pixels too. (Dividing by target_size made the blur
+			 * sub-pixel and effectively invisible.) */
+			float2 o = float2(max(spotlight_blur, 1.0),
+					  max(spotlight_blur, 1.0));
 			float4 blurred;
 			/* Large frames/large blurs use a cheaper 5-tap cross; the
 			 * difference is hard to see when the kernel is this wide. */

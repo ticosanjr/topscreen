@@ -2,6 +2,7 @@
 
 #include "core/cursor_catalog.hpp"
 #include "core/keys.hpp"
+#include "ts-wallpapers.hpp"
 
 #include <algorithm>
 
@@ -227,8 +228,17 @@ void config_load(obs_data_t *s, Config *c, const Config *fallback)
 		const bool has_wallpaper = !c->bg.image.empty() || !c->bg.image_file.empty();
 		mode = bg_mode_from_legacy(static_cast<int>(legacy_mode), has_wallpaper);
 	}
+	/* Migrate the old "wallpaper with special image value" representation. */
+	if (mode == static_cast<int>(BgMode::Wallpaper)) {
+		if (c->bg.image == kTransparentWallpaper || c->bg.image == kLocalImageMarker)
+			mode = c->bg.image == kTransparentWallpaper
+				       ? static_cast<int>(BgMode::Transparent)
+				       : static_cast<int>(BgMode::LocalImage);
+		else if (c->bg.image.empty() && !c->bg.image_file.empty())
+			mode = static_cast<int>(BgMode::LocalImage);
+	}
 	c->bg.mode = std::clamp(mode, static_cast<int>(BgMode::Solid),
-				static_cast<int>(BgMode::Wallpaper));
+				static_cast<int>(BgMode::Transparent));
 
 	c->bg.gradient_angle = read_double(s, kBgGradientAngle, d.bg.gradient_angle);
 	c->bg.gradient_center_x = read_double(s, kBgGradientCenterX, d.bg.gradient_center_x);
@@ -311,8 +321,18 @@ void config_load(obs_data_t *s, Config *c, const Config *fallback)
 		}
 	}
 	c->click_sound.volume = read_double(s, kClickSoundVolume, d.click_sound.volume);
-	c->click_sound.left = read_bool(s, kClickSoundLeft, d.click_sound.left);
-	c->click_sound.right = read_bool(s, kClickSoundRight, d.click_sound.right);
+	/* Legacy per-side enable booleans predate the Mute list entries. When
+	 * an old source/profile had a side disabled, clear its file so the new
+	 * model (empty path = mute) keeps the same silence. New settings always
+	 * write the file keys, so an explicit Mute ("") is trusted as-is. */
+	const bool legacy_left = read_bool(s, kClickSoundLeft, true);
+	const bool legacy_right = read_bool(s, kClickSoundRight, true);
+	if (!legacy_left)
+		c->click_sound.file_left.clear();
+	if (!legacy_right)
+		c->click_sound.file_right.clear();
+	c->click_sound.left = !c->click_sound.file_left.empty();
+	c->click_sound.right = !c->click_sound.file_right.empty();
 
 	c->motion_blur.enabled = read_bool(s, kMotionBlurEnabled, d.motion_blur.enabled);
 	c->motion_blur.amount = read_double(s, kMotionBlurAmount, d.motion_blur.amount);
@@ -343,6 +363,13 @@ void config_load(obs_data_t *s, Config *c, const Config *fallback)
 		read_double(s, kSpotlightShadowOffsetY, d.spotlight.shadow_offset_y);
 	c->spotlight.blur_enabled =
 		read_bool(s, kSpotlightBlurEnabled, d.spotlight.blur_enabled);
+	c->spotlight.outside_mode =
+		static_cast<int>(read_int(s, kSpotlightOutsideMode, d.spotlight.outside_mode));
+	/* Very old profiles only had the blur toggle; map it once when the new
+	 * explicit mode key was never written. */
+	if (!obs_data_has_user_value(s, kSpotlightOutsideMode) &&
+	    c->spotlight.blur_enabled)
+		c->spotlight.outside_mode = 1;
 	c->spotlight.blur_amount =
 		read_double(s, kSpotlightBlurAmount, d.spotlight.blur_amount);
 	c->spotlight.zoom_amount =

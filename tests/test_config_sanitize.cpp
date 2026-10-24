@@ -75,7 +75,7 @@ TEST(config_sanitize_clamps_ranges_and_keeps_valid_values)
 	CHECK_EQ(cfg.click_left.effect, static_cast<int>(ClickEffect::WaterRippleClear));
 	CHECK_EQ(cfg.keys.max_keys, 12);
 	CHECK_NEAR(cfg.highlight.thickness, 0.001, 1e-9);
-	CHECK_EQ(cfg.highlight.mode, static_cast<int>(HighlightMode::PressZoom));
+	CHECK_EQ(cfg.highlight.mode, static_cast<int>(HighlightMode::Zoom));
 	CHECK_NEAR(cfg.spotlight.radius, 0.05, 1e-9);
 
 	/* A config already inside the UI ranges is left untouched. */

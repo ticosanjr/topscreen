@@ -14,7 +14,7 @@ namespace topscreen::core {
 
 struct BackgroundConfig {
 	bool enabled = true;
-	int mode = static_cast<int>(BgMode::Gradient); // 0 solid, 1 gradient, 2 wallpaper
+	int mode = static_cast<int>(BgMode::Gradient); // 0 solid, 1 gradient, 2 wallpaper, 3 local image, 4 transparent
 	uint32_t color_a = 0xFF20242E; // 0xAABBGGRR
 	uint32_t color_b = 0xFF3A2E5C; // 0xAABBGGRR
 	double gradient_angle = 45.0; // degrees; 0 = left→right
@@ -23,7 +23,7 @@ struct BackgroundConfig {
 	std::string image;             // wallpaper path/relative ("" = none)
 	std::string image_file;        // PC image (takes priority over `image`)
 	double image_blur = 0.0;       // wallpaper blur (px)
-	int image_blur_type = 2;       // 0 none, 1 soft, 2 gaussian, 3 creamy, 4 frosted
+	int image_blur_type = 1;       // Soft is the only supported blur
 	double padding_x = 64.0;
 	double padding_y = 64.0;
 	double corner_radius = 18.0;
@@ -171,7 +171,11 @@ inline const char *resolve_bg_path(const char *wallpaper, const char *image_file
  */
 inline int legacy_bg_mode_value(int mode)
 {
-	return mode == static_cast<int>(BgMode::Wallpaper) ? 3 : mode;
+	return (mode == static_cast<int>(BgMode::Wallpaper) ||
+		mode == static_cast<int>(BgMode::LocalImage) ||
+		mode == static_cast<int>(BgMode::Transparent))
+		       ? 3
+		       : mode;
 }
 
 inline int bg_mode_from_legacy(int legacy_mode, bool has_wallpaper)

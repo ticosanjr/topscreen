@@ -106,6 +106,30 @@ TEST(subsample_line_keeps_first_and_last_and_caps_at_max)
 	CHECK(out[14].x >= 0.5);
 }
 
+/* Arc-length sampling keeps the segments even when the pointer moved at
+ * different speeds (dense points in slow parts, sparse in fast parts). */
+TEST(subsample_line_resamples_by_distance)
+{
+	/* First half has 60 dense points, second half only 3 points, all on a
+	 * straight line from x=0 to x=1. Equal-index sampling would crowd the
+	 * output in the dense half. */
+	Vec2f in[64];
+	int n = 0;
+	for (int i = 0; i < 60; ++i)
+		in[n++] = pt(0.0 + 0.50 * static_cast<double>(i) / 59.0, 0.0);
+	in[n++] = pt(0.70, 0.0);
+	in[n++] = pt(0.85, 0.0);
+	in[n++] = pt(1.00, 0.0);
+
+	Vec2f out[16];
+	const int got = subsample_line(in, n, out, 16);
+	CHECK_EQ(got, 16);
+	for (int i = 1; i < got; ++i) {
+		const double step = out[i].x - out[i - 1].x;
+		CHECK_NEAR(step, 1.0 / 15.0, 0.02);
+	}
+}
+
 TEST(subsample_line_handles_degenerate_input)
 {
 	Vec2f in[1] = {pt(0.7, 0.8)};

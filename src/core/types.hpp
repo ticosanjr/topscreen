@@ -26,6 +26,8 @@ enum class BgMode : int {
 	Solid = 0,
 	Gradient = 1,
 	Wallpaper = 2,
+	LocalImage = 3,
+	Transparent = 4,
 
 	/* Legacy aliases: old configs/presets used 1=V vertical, 2=diagonal and
 	 * 3=image. They are migrated to the new types on load. */

@@ -45,3 +45,24 @@ TEST(coord_invalid_monitor_safe)
 	CHECK_NEAR(c.x, 0.0, 1e-9);
 	CHECK_NEAR(c.y, 0.0, 1e-9);
 }
+
+/* The cursor target spans the whole monitor. It must NOT be clamped to the
+ * padded content rectangle: that made the drawn cursor stop short of the
+ * physical pointer at the screen edges. */
+TEST(coord_cursor_target_spans_whole_monitor)
+{
+	const Monitor m{100.0, 50.0, 1920.0, 1080.0};
+
+	const Vec2f tl = screen_to_cursor(100.0, 50.0, m);
+	CHECK_NEAR(tl.x, 0.0, 1e-9);
+	CHECK_NEAR(tl.y, 0.0, 1e-9);
+
+	const Vec2f br = screen_to_cursor(100.0 + 1920.0, 50.0 + 1080.0, m);
+	CHECK_NEAR(br.x, 1.0, 1e-9);
+	CHECK_NEAR(br.y, 1.0, 1e-9);
+
+	/* Outside the monitor: clamped to the target edge, not to a content inset. */
+	const Vec2f outside = screen_to_cursor(100.0 + 2400.0, 50.0 - 300.0, m);
+	CHECK_NEAR(outside.x, 1.0, 1e-9);
+	CHECK_NEAR(outside.y, 0.0, 1e-9);
+}

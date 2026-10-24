@@ -988,21 +988,13 @@ void ts_filter_tick(void *data, float seconds)
 					ctx->origin_known_.load() ? ctx->origin_y_.load() : 0.0,
 					static_cast<double>(ctx->target_w),
 					static_cast<double>(ctx->target_h)};
-		const core::Vec2f c = core::screen_to_content(st.x, st.y, mon);
+		/* Cursor overlay lives in OUTPUT coordinates: it must follow the
+		 * physical pointer across the whole monitor, including the wallpaper
+		 * padding. Clamping to the content rectangle made it stop early. */
+		const core::Vec2f c = core::screen_to_cursor(st.x, st.y, mon);
 
-		/* Keep the cursor hotspot inside the captured content, without the
-		 * wallpaper padding. The icon body may still overhang the screen. */
-		const core::ContentArea area = core::content_area(
-			static_cast<double>(ctx->target_w), static_cast<double>(ctx->target_h),
-			ctx->cfg.bg.enabled ? ctx->cfg.bg.padding_x : 0.0,
-			ctx->cfg.bg.enabled ? ctx->cfg.bg.padding_y : 0.0,
-			ctx->cfg.bg.enabled && ctx->cfg.bg.keep_aspect);
-		const double min_x = area.origin.x / static_cast<double>(ctx->target_w);
-		const double max_x = (area.origin.x + area.size.x) / static_cast<double>(ctx->target_w);
-		const double min_y = area.origin.y / static_cast<double>(ctx->target_h);
-		const double max_y = (area.origin.y + area.size.y) / static_cast<double>(ctx->target_h);
-		const double cx = std::clamp(static_cast<double>(c.x), min_x, max_x);
-		const double cy = std::clamp(static_cast<double>(c.y), min_y, max_y);
+		const double cx = c.x;
+		const double cy = c.y;
 
 		ctx->cursor.set_target(cx, cy, ctx->time_ms);
 		ctx->zoom.set_cursor(cx, cy, ctx->time_ms);

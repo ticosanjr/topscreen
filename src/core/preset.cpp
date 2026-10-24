@@ -96,7 +96,7 @@ bool Preset::apply(Config *cfg, std::string *error) const
 			cfg->bg.gradient_angle =
 				bg_gradient_angle_from_legacy(legacy, cfg->bg.gradient_angle);
 	}
-	if (cfg->bg.mode < 0 || cfg->bg.mode > 2)
+	if (cfg->bg.mode < 0 || cfg->bg.mode > static_cast<int>(BgMode::Transparent))
 		cfg->bg.mode = static_cast<int>(BgMode::Gradient);
 	cfg->bg.color_a = static_cast<uint32_t>(read_number(o, kBgColorA, cfg->bg.color_a));
 	cfg->bg.color_b = static_cast<uint32_t>(read_number(o, kBgColorB, cfg->bg.color_b));
@@ -107,6 +107,14 @@ bool Preset::apply(Config *cfg, std::string *error) const
 		read_number(o, kBgGradientCenterY, cfg->bg.gradient_center_y);
 	cfg->bg.image = read_string(o, kBgImage, cfg->bg.image);
 	cfg->bg.image_file = read_string(o, kBgImageFile, cfg->bg.image_file);
+	if (cfg->bg.mode == static_cast<int>(BgMode::Wallpaper)) {
+		if (cfg->bg.image == "__transparent__")
+			cfg->bg.mode = static_cast<int>(BgMode::Transparent);
+		else if (cfg->bg.image == "__local__")
+			cfg->bg.mode = static_cast<int>(BgMode::LocalImage);
+		else if (cfg->bg.image.empty() && !cfg->bg.image_file.empty())
+			cfg->bg.mode = static_cast<int>(BgMode::LocalImage);
+	}
 	cfg->bg.image_blur = read_number(o, kBgImageBlur, cfg->bg.image_blur);
 	cfg->bg.image_blur_type = read_int(o, kBgImageBlurType, cfg->bg.image_blur_type);
 	cfg->bg.padding_x = read_number(o, kBgPaddingX, cfg->bg.padding_x);
@@ -178,8 +186,13 @@ bool Preset::apply(Config *cfg, std::string *error) const
 		}
 	}
 	cfg->click_sound.volume = read_number(o, kClickSoundVolume, cfg->click_sound.volume);
-	cfg->click_sound.left = read_bool(o, kClickSoundLeft, cfg->click_sound.left);
-	cfg->click_sound.right = read_bool(o, kClickSoundRight, cfg->click_sound.right);
+	/* Legacy per-side booleans: false meant muted before the Mute list items. */
+	if (!read_bool(o, kClickSoundLeft, true))
+		cfg->click_sound.file_left.clear();
+	if (!read_bool(o, kClickSoundRight, true))
+		cfg->click_sound.file_right.clear();
+	cfg->click_sound.left = !cfg->click_sound.file_left.empty();
+	cfg->click_sound.right = !cfg->click_sound.file_right.empty();
 
 	/* Motion blur */
 	cfg->motion_blur.enabled = read_bool(o, kMotionBlurEnabled, cfg->motion_blur.enabled);
@@ -212,6 +225,10 @@ bool Preset::apply(Config *cfg, std::string *error) const
 		read_number(o, kSpotlightShadowOffsetY, cfg->spotlight.shadow_offset_y);
 	cfg->spotlight.blur_enabled =
 		read_bool(o, kSpotlightBlurEnabled, cfg->spotlight.blur_enabled);
+	cfg->spotlight.outside_mode = read_int(o, kSpotlightOutsideMode, cfg->spotlight.outside_mode);
+	/* Presets written before the explicit mode only had blur_enabled. */
+	if (!lookup(o, kSpotlightOutsideMode) && cfg->spotlight.blur_enabled)
+		cfg->spotlight.outside_mode = 1;
 	cfg->spotlight.blur_amount =
 		read_number(o, kSpotlightBlurAmount, cfg->spotlight.blur_amount);
 	cfg->spotlight.zoom_amount =

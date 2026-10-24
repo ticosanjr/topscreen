@@ -223,7 +223,7 @@ TEST(preset_covers_all_keys)
 	CHECK_EQ(c.click_right.easing, 3);
 
 	CHECK(!c.click_sound.enabled);
-	CHECK_EQ(c.click_sound.file_left, std::string("l.wav"));
+	CHECK_EQ(c.click_sound.file_left, std::string()); /* legacy left=false -> mute */
 	CHECK_EQ(c.click_sound.file_right, std::string("r.wav"));
 	CHECK_NEAR(c.click_sound.volume, 0.42, 1e-9);
 	CHECK(!c.click_sound.left);
@@ -310,4 +310,35 @@ TEST(preset_covers_all_keys)
 	CHECK(c.monitor_manual);
 	CHECK_EQ(c.monitor_x, -1920);
 	CHECK_EQ(c.monitor_y, 1080);
+}
+
+/* Local image and Transparent are background types, not wallpaper list
+ * entries. A preset saved with the new numeric types must apply directly. */
+TEST(preset_accepts_local_and_transparent_background_types)
+{
+	{
+		const std::string text = R"({
+            "name": "Local",
+            "settings": { "bg_type": 3, "bg_image_file": "/tmp/p.png" }
+        })";
+		Preset p;
+		std::string err;
+		REQUIRE(Preset::from_json(text, &p, &err));
+		Config c;
+		REQUIRE(p.apply(&c, &err));
+		CHECK_EQ(c.bg.mode, static_cast<int>(BgMode::LocalImage));
+		CHECK_EQ(c.bg.image_file, std::string("/tmp/p.png"));
+	}
+	{
+		const std::string text = R"({
+            "name": "Transparent",
+            "settings": { "bg_type": 4 }
+        })";
+		Preset p;
+		std::string err;
+		REQUIRE(Preset::from_json(text, &p, &err));
+		Config c;
+		REQUIRE(p.apply(&c, &err));
+		CHECK_EQ(c.bg.mode, static_cast<int>(BgMode::Transparent));
+	}
 }

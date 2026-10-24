@@ -56,23 +56,14 @@ long long setting_int(obs_data_t *settings, const char *key, long long fallback)
 
 bool background_type_changed(obs_properties_t *props, obs_property_t *p, obs_data_t *settings);
 
-/* Wallpaper and PC Image are mutually exclusive. */
 bool wallpaper_modified(obs_properties_t *props, obs_property_t *p, obs_data_t *settings)
 {
 	const char *v = obs_data_get_string(settings, kBgImage);
-	if (v && std::strcmp(v, kLocalImageMarker) == 0) {
-		obs_data_set_int(settings, kBgType, static_cast<int>(BgMode::Wallpaper));
-		obs_data_set_int(settings, kBgMode, legacy_bg_mode_value(static_cast<int>(BgMode::Wallpaper)));
-	} else if (v && *v) {
+	if (v && *v) {
 		obs_data_set_string(settings, kBgImageFile, "");
 		obs_data_set_int(settings, kBgType, static_cast<int>(BgMode::Wallpaper));
 		obs_data_set_int(settings, kBgMode, legacy_bg_mode_value(static_cast<int>(BgMode::Wallpaper)));
-	} else {
-		obs_data_set_int(settings, kBgType, static_cast<int>(BgMode::Solid));
-		obs_data_set_int(settings, kBgMode, legacy_bg_mode_value(static_cast<int>(BgMode::Solid)));
 	}
-	if (obs_property_t *file = obs_properties_get(props, kBgImageFile))
-		obs_property_set_visible(file, std::strcmp(v ? v : "", kLocalImageMarker) == 0);
 	background_type_changed(props, p, settings);
 	return true;
 }
@@ -81,12 +72,9 @@ bool bg_file_modified(obs_properties_t *props, obs_property_t *p, obs_data_t *se
 {
 	const char *v = obs_data_get_string(settings, kBgImageFile);
 	if (v && *v) {
-		obs_data_set_string(settings, kBgImage, kLocalImageMarker);
-		obs_data_set_int(settings, kBgType, static_cast<int>(BgMode::Wallpaper));
-		obs_data_set_int(settings, kBgMode, legacy_bg_mode_value(static_cast<int>(BgMode::Wallpaper)));
-	} else {
-		obs_data_set_int(settings, kBgType, static_cast<int>(BgMode::Solid));
-		obs_data_set_int(settings, kBgMode, legacy_bg_mode_value(static_cast<int>(BgMode::Solid)));
+		obs_data_set_string(settings, kBgImage, "");
+		obs_data_set_int(settings, kBgType, static_cast<int>(BgMode::LocalImage));
+		obs_data_set_int(settings, kBgMode, legacy_bg_mode_value(static_cast<int>(BgMode::LocalImage)));
 	}
 	background_type_changed(props, p, settings);
 	return true;
@@ -98,24 +86,60 @@ bool background_type_changed(obs_properties_t *props, obs_property_t *p, obs_dat
 	int type = settings ? static_cast<int>(obs_data_get_int(settings, kBgType))
 			    : static_cast<int>(BgMode::Gradient);
 	if (type < static_cast<int>(BgMode::Solid) ||
-	    type > static_cast<int>(BgMode::Wallpaper))
+	    type > static_cast<int>(BgMode::Transparent))
 		type = static_cast<int>(BgMode::Gradient);
 
+	const bool solid = type == static_cast<int>(BgMode::Solid);
 	const bool gradient = type == static_cast<int>(BgMode::Gradient);
 	const bool wallpaper = type == static_cast<int>(BgMode::Wallpaper);
+	const bool local = type == static_cast<int>(BgMode::LocalImage);
+	const bool image = wallpaper || local;
 
-	if (obs_property_t *v = obs_properties_get(props, kBgColorA))
-		obs_property_set_visible(v, !wallpaper);
-	if (obs_property_t *v = obs_properties_get(props, kBgColorB))
-		obs_property_set_visible(v, gradient);
-	if (obs_property_t *v = obs_properties_get(props, kBgGradientAngle))
-		obs_property_set_visible(v, gradient);
-	if (obs_property_t *v = obs_properties_get(props, kBgGradientCenterX))
-		obs_property_set_visible(v, gradient);
-	if (obs_property_t *v = obs_properties_get(props, kBgGradientCenterY))
-		obs_property_set_visible(v, gradient);
-	if (obs_property_t *v = obs_properties_get(props, "grp_bg_image"))
-		obs_property_set_visible(v, wallpaper);
+	auto show = [&](const char *key, bool visible) {
+		if (obs_property_t *v = obs_properties_get(props, key))
+			obs_property_set_visible(v, visible);
+	};
+	show(kBgColorA, solid || gradient);
+	show(kBgColorB, gradient);
+	show(kBgGradientAngle, gradient);
+	show(kBgGradientCenterX, gradient);
+	show(kBgGradientCenterY, gradient);
+	show("grp_bg_image", image);
+	show(kBgImage, wallpaper);
+	show(kBgImageFile, local);
+	show(kBgImageBlur, image);
+	/* Padding, corner and the window shadow still shape the transparent
+	 * "floating screen", so they stay available for every background type. */
+	return true;
+}
+
+/* Background off: every control below the master switch is ignored. */
+bool background_enabled_changed(obs_properties_t *props, obs_property_t *p, obs_data_t *settings)
+{
+	(void)p;
+	const bool on = setting_bool(settings, kBgEnabled, true);
+	for (const char *key : {kBgType, kBgColorA, kBgColorB, kBgGradientAngle,
+			       kBgGradientCenterX, kBgGradientCenterY, "grp_bg_image",
+			       kBgPaddingX, kBgPaddingY, kBgKeepAspect, kBgCornerRadius,
+			       "grp_shadow"}) {
+		if (obs_property_t *v = obs_properties_get(props, key))
+			obs_property_set_visible(v, on);
+	}
+	if (on)
+		background_type_changed(props, nullptr, settings);
+	return true;
+}
+
+/* Window shadow off: its alpha/blur/offsets have no effect. */
+bool background_shadow_changed(obs_properties_t *props, obs_property_t *p, obs_data_t *settings)
+{
+	(void)p;
+	const bool on = setting_bool(settings, kBgShadow, true);
+	for (const char *key : {kBgShadowAlpha, kBgShadowBlur, kBgShadowOffsetX,
+			       kBgShadowOffset}) {
+		if (obs_property_t *v = obs_properties_get(props, key))
+			obs_property_set_visible(v, on);
+	}
 	return true;
 }
 
@@ -124,11 +148,36 @@ bool background_type_changed(obs_properties_t *props, obs_property_t *p, obs_dat
 bool cursor_options_changed(obs_properties_t *props, obs_property_t *p, obs_data_t *settings)
 {
 	(void)p;
+	const bool on = setting_bool(settings, kCursorEnabled, true);
 	const bool hide = setting_bool(settings, kCursorHideIdle, true);
 	const long long mode =
 		setting_int(settings, kCursorFollowMode,
 			    static_cast<long long>(CursorFollowMode::Exact));
 	const bool glide = mode != static_cast<long long>(CursorFollowMode::Exact);
+	if (!on) {
+		for (const char *key : {kCursorStyle, kCursorSecondaryStyle,
+				       kCursorLinkDetection, kCursorSize, kCursorFollowMode,
+				       kCursorGlideMs, kCursorShadow, kCursorHideIdle,
+				       kCursorIdleDelayMs}) {
+			if (obs_property_t *v = obs_properties_get(props, key))
+				obs_property_set_visible(v, false);
+		}
+		return true;
+	}
+	if (obs_property_t *v = obs_properties_get(props, kCursorStyle))
+		obs_property_set_visible(v, true);
+	if (obs_property_t *v = obs_properties_get(props, kCursorSecondaryStyle))
+		obs_property_set_visible(v, true);
+	if (obs_property_t *v = obs_properties_get(props, kCursorLinkDetection))
+		obs_property_set_visible(v, true);
+	if (obs_property_t *v = obs_properties_get(props, kCursorSize))
+		obs_property_set_visible(v, true);
+	if (obs_property_t *v = obs_properties_get(props, kCursorFollowMode))
+		obs_property_set_visible(v, true);
+	if (obs_property_t *v = obs_properties_get(props, kCursorShadow))
+		obs_property_set_visible(v, true);
+	if (obs_property_t *v = obs_properties_get(props, kCursorHideIdle))
+		obs_property_set_visible(v, true);
 	if (obs_property_t *v = obs_properties_get(props, kCursorGlideMs))
 		obs_property_set_visible(v, glide);
 	if (obs_property_t *v = obs_properties_get(props, kCursorIdleDelayMs))
@@ -136,22 +185,44 @@ bool cursor_options_changed(obs_properties_t *props, obs_property_t *p, obs_data
 	return true;
 }
 
-/* Spotlight: the corner radius only applies to the square shape. */
+/* Spotlight: the corner radius only applies to the square shape, and the
+ * outside strength slider follows the selected Dim/Blur mode. */
 bool spotlight_options_changed(obs_properties_t *props, obs_property_t *p, obs_data_t *settings)
 {
 	(void)p;
+	const bool on = setting_bool(settings, kSpotlightEnabled, false);
 	const long long shape =
 		setting_int(settings, kSpotlightShape, static_cast<long long>(SpotlightShape::Circle));
-	if (obs_property_t *v = obs_properties_get(props, kSpotlightCornerRadius))
-		obs_property_set_visible(v, shape == static_cast<long long>(SpotlightShape::Square));
 	const bool blur = setting_int(settings, kSpotlightOutsideMode, 0) != 0;
+	for (const char *key : {kSpotlightShowCursor, kSpotlightShape, kSpotlightRadius,
+			       kSpotlightCornerRadius, kSpotlightOutsideMode, kSpotlightDim,
+			       kSpotlightBlurAmount, "grp_spotlight_border",
+			       "grp_spotlight_animation"}) {
+		if (obs_property_t *v = obs_properties_get(props, key))
+			obs_property_set_visible(v, on);
+	}
+	if (obs_property_t *v = obs_properties_get(props, kSpotlightCornerRadius))
+		obs_property_set_visible(
+			v, on && shape == static_cast<long long>(SpotlightShape::Square));
 	if (obs_property_t *v = obs_properties_get(props, kSpotlightDim))
-		obs_property_set_visible(v, !blur);
+		obs_property_set_visible(v, on && !blur);
 	if (obs_property_t *v = obs_properties_get(props, kSpotlightBlurAmount))
-		obs_property_set_visible(v, blur);
+		obs_property_set_visible(v, on && blur);
 	if (setting_bool(settings, kSpotlightEnabled, false) &&
 	    setting_bool(settings, kMagnifierEnabled, false))
 		obs_data_set_bool(settings, kMagnifierEnabled, false);
+	return true;
+}
+
+/* Spotlight border off: color and width do nothing. */
+bool spotlight_border_changed(obs_properties_t *props, obs_property_t *p, obs_data_t *settings)
+{
+	(void)p;
+	const bool on = setting_bool(settings, kSpotlightBorderEnabled, true);
+	for (const char *key : {kSpotlightBorderColor, kSpotlightBorderWidth}) {
+		if (obs_property_t *v = obs_properties_get(props, key))
+			obs_property_set_visible(v, on);
+	}
 	return true;
 }
 
@@ -159,28 +230,73 @@ bool spotlight_options_changed(obs_properties_t *props, obs_property_t *p, obs_d
 bool magnifier_options_changed(obs_properties_t *props, obs_property_t *p, obs_data_t *settings)
 {
 	(void)p;
+	const bool on = setting_bool(settings, kMagnifierEnabled, false);
 	const long long shape =
 		setting_int(settings, kMagnifierShape, static_cast<long long>(SpotlightShape::Circle));
 	const bool follow = setting_bool(settings, kMagnifierFollowCursor, true);
+	for (const char *key : {kMagnifierShowCursor, kMagnifierShape, kMagnifierRadius,
+			       kMagnifierZoom, kMagnifierCornerRadius,
+			       kMagnifierFollowCursor, kMagnifierCenterX, kMagnifierCenterY,
+			       "grp_magnifier_border", "grp_magnifier_shadow", kMagnifierInMs,
+			       kMagnifierOutMs}) {
+		if (obs_property_t *v = obs_properties_get(props, key))
+			obs_property_set_visible(v, on);
+	}
 	if (obs_property_t *v = obs_properties_get(props, kMagnifierCornerRadius))
-		obs_property_set_visible(v, shape == static_cast<long long>(SpotlightShape::Square));
+		obs_property_set_visible(
+			v, on && shape == static_cast<long long>(SpotlightShape::Square));
 	if (obs_property_t *v = obs_properties_get(props, kMagnifierCenterX))
-		obs_property_set_visible(v, !follow);
+		obs_property_set_visible(v, on && !follow);
 	if (obs_property_t *v = obs_properties_get(props, kMagnifierCenterY))
-		obs_property_set_visible(v, !follow);
+		obs_property_set_visible(v, on && !follow);
 	if (setting_bool(settings, kMagnifierEnabled, false) &&
 	    setting_bool(settings, kSpotlightEnabled, false))
 		obs_data_set_bool(settings, kSpotlightEnabled, false);
 	return true;
 }
 
-/* Keystrokes: the band color only applies while the band is enabled. */
+/* Magnifier border off: color and width do nothing. */
+bool magnifier_border_changed(obs_properties_t *props, obs_property_t *p, obs_data_t *settings)
+{
+	(void)p;
+	const bool on = setting_bool(settings, kMagnifierBorderEnabled, true);
+	for (const char *key : {kMagnifierBorderColor, kMagnifierBorderWidth}) {
+		if (obs_property_t *v = obs_properties_get(props, key))
+			obs_property_set_visible(v, on);
+	}
+	return true;
+}
+
+/* Magnifier shadow off: its alpha/blur/offsets have no effect. */
+bool magnifier_shadow_changed(obs_properties_t *props, obs_property_t *p, obs_data_t *settings)
+{
+	(void)p;
+	const bool on = setting_bool(settings, kMagnifierShadowEnabled, false);
+	for (const char *key : {kMagnifierShadowColor, kMagnifierShadowAlpha,
+			       kMagnifierShadowBlur, kMagnifierShadowOffsetX,
+			       kMagnifierShadowOffsetY}) {
+		if (obs_property_t *v = obs_properties_get(props, key))
+			obs_property_set_visible(v, on);
+	}
+	return true;
+}
+
+/* Keystrokes: hide everything below the master switch, and the band color
+ * only applies while the band is enabled. */
 bool keys_options_changed(obs_properties_t *props, obs_property_t *p, obs_data_t *settings)
 {
 	(void)p;
+	const bool on = setting_bool(settings, kKeysEnabled, true);
 	const bool band = setting_bool(settings, kKeysBand, true);
+	for (const char *key : {kKeysModifiersOnly, kKeysShowSpecial, kKeysShowShortcuts,
+			       kKeysTtlMs, kKeysMax, kKeysPosX, kKeysPosY, kKeysSize,
+			       kKeysFont, kKeysColor, kKeysShadow, kKeysBand,
+			       kKeysBandColor}) {
+		if (obs_property_t *v = obs_properties_get(props, key))
+			obs_property_set_visible(v, on);
+	}
 	if (obs_property_t *v = obs_properties_get(props, kKeysBandColor))
-		obs_property_set_visible(v, band);
+		obs_property_set_visible(v, on && band);
 	return true;
 }
 
@@ -274,6 +390,8 @@ bool highlight_group_visible(obs_properties_t *props, const char *group, bool vi
 bool highlight_mode_changed(obs_properties_t *props, obs_property_t *property, obs_data_t *settings)
 {
 	(void)property;
+	const bool enabled = settings ? obs_data_get_bool(settings, kHighlightEnabled)
+				      : true;
 	const long long mode = settings ? obs_data_get_int(settings, kHighlightMode)
 					: static_cast<long long>(HighlightMode::Box);
 	const bool hotkey_zoom = settings
@@ -282,19 +400,16 @@ bool highlight_mode_changed(obs_properties_t *props, obs_property_t *property, o
 	/* The pure zoom mode draws no mark at all, so its look/timing controls do
 	 * not apply. Every zoom mode (zoom, box+zoom, line+zoom) needs the zoom
 	 * group; the independent hotkey also uses it in any drag mode. */
-	const bool draws_mark = mode_draws_mark(static_cast<int>(mode));
+	const bool draws_mark = enabled && mode_draws_mark(static_cast<int>(mode));
 	highlight_group_visible(props, "grp_hl_look", draws_mark);
 	highlight_group_visible(props, "grp_hl_timing", draws_mark);
-	const bool wants_zoom = mode_wants_zoom(static_cast<int>(mode)) || hotkey_zoom;
+	const bool wants_zoom = enabled &&
+				(mode_wants_zoom(static_cast<int>(mode)) || hotkey_zoom);
 	highlight_group_visible(props, "grp_hl_zoom", wants_zoom);
-
-	/* PressZoom is press-only: it uses its own short delay and the drag delay
-	 * has no meaning there (and vice versa). */
-	const bool press = mode_is_press_zoom(static_cast<int>(mode));
-	if (obs_property_t *p = obs_properties_get(props, kHighlightZoomDelayMs))
-		obs_property_set_visible(p, wants_zoom && !press);
-	if (obs_property_t *p = obs_properties_get(props, kHighlightPressDelayMs))
-		obs_property_set_visible(p, press);
+	if (obs_property_t *p = obs_properties_get(props, kHighlightMode))
+		obs_property_set_visible(p, enabled);
+	if (obs_property_t *p = obs_properties_get(props, kHighlightHotkeyEnabled))
+		obs_property_set_visible(p, enabled);
 	return true;
 }
 
@@ -307,6 +422,18 @@ bool click_sound_changed(obs_properties_t *props, obs_property_t *p, obs_data_t 
 			obs_property_set_visible(v, on);
 	}
 	return true;
+}
+
+/* Selecting "Mute" (empty path) updates the deprecated per-side flag so old
+ * versions and exported profiles see the same silence. */
+bool click_sound_side_changed(obs_properties_t *props, obs_property_t *p, obs_data_t *settings)
+{
+	(void)p;
+	const char *left = settings ? obs_data_get_string(settings, kClickSoundFileLeft) : "";
+	const char *right = settings ? obs_data_get_string(settings, kClickSoundFileRight) : "";
+	obs_data_set_bool(settings, kClickSoundLeft, left && *left);
+	obs_data_set_bool(settings, kClickSoundRight, right && *right);
+	return click_sound_changed(props, nullptr, settings);
 }
 
 bool zoom_mode_changed(obs_properties_t *props, obs_property_t *p, obs_data_t *settings)
@@ -384,7 +511,9 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 
 	/* ---------------- Background ---------------- */
 	obs_properties_t *bg = obs_properties_create();
-	obs_properties_add_bool(bg, kBgEnabled, obs_module_text("Background.Enabled"));
+	obs_property_t *bg_on =
+		obs_properties_add_bool(bg, kBgEnabled, obs_module_text("Background.Enabled"));
+	obs_property_set_modified_callback(bg_on, background_enabled_changed);
 
 	obs_property_t *mode = obs_properties_add_list(bg, kBgType,
 						       obs_module_text("Background.Type"),
@@ -395,6 +524,10 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 				  static_cast<int>(BgMode::Gradient));
 	obs_property_list_add_int(mode, obs_module_text("Background.Type.Wallpaper"),
 				  static_cast<int>(BgMode::Wallpaper));
+	obs_property_list_add_int(mode, obs_module_text("Background.Type.LocalImage"),
+				  static_cast<int>(BgMode::LocalImage));
+	obs_property_list_add_int(mode, obs_module_text("Background.Type.Transparent"),
+				  static_cast<int>(BgMode::Transparent));
 	obs_property_set_modified_callback(mode, background_type_changed);
 
 	obs_properties_add_color(bg, kBgColorA, obs_module_text("Background.ColorA"));
@@ -420,10 +553,6 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 						     OBS_COMBO_FORMAT_STRING);
 	set_tip(wp, obs_module_text("Tooltip.WallpaperPreset"));
 	obs_property_set_modified_callback(wp, wallpaper_modified);
-	obs_property_list_add_string(wp, obs_module_text("Background.Image.Local"), kLocalImageMarker);
-	obs_property_list_add_string(wp, obs_module_text("Background.Image.Transparent"),
-				     kTransparentWallpaper);
-	obs_property_list_add_string(wp, obs_module_text("Background.Image.None"), "");
 	for (const auto &entry : kWallpapers)
 		obs_property_list_add_string(wp, entry.name, entry.path);
 
@@ -446,7 +575,9 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 
 	/* Window shadow (sub-group with clear names) */
 	obs_properties_t *sh = obs_properties_create();
-	obs_properties_add_bool(sh, kBgShadow, obs_module_text("Shadow.Enabled"));
+	obs_property_t *shadow_on =
+		obs_properties_add_bool(sh, kBgShadow, obs_module_text("Shadow.Enabled"));
+	obs_property_set_modified_callback(shadow_on, background_shadow_changed);
 	obs_property_t *shadow_alpha = obs_properties_add_float_slider(
 		sh, kBgShadowAlpha, obs_module_text("Shadow.Opacity"), 0.0, 1.0, 0.01);
 	set_tip(shadow_alpha, obs_module_text("Tooltip.ShadowOpacity"));
@@ -457,9 +588,8 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 					1.0);
 	obs_properties_add_group(bg, "grp_shadow", obs_module_text("Group.Shadow"), OBS_GROUP_NORMAL, sh);
 	obs_properties_add_group(capture, "grp_bg", obs_module_text("Group.Background"), OBS_GROUP_NORMAL, bg);
-	background_type_changed(props, nullptr, settings);
-	if (obs_property_t *file = obs_properties_get(props, kBgImageFile))
-		obs_property_set_visible(file, std::strcmp(obs_data_get_string(settings, kBgImage), kLocalImageMarker) == 0);
+	background_enabled_changed(props, nullptr, settings);
+	background_shadow_changed(props, nullptr, settings);
 
 	/* ---------------- Zoom ---------------- */
 	obs_properties_t *zoom = obs_properties_create();
@@ -485,7 +615,9 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 
 	/* ---------------- Cursor ---------------- */
 	obs_properties_t *cur = obs_properties_create();
-	obs_properties_add_bool(cur, kCursorEnabled, obs_module_text("Cursor.Enabled"));
+	obs_property_t *cursor_on =
+		obs_properties_add_bool(cur, kCursorEnabled, obs_module_text("Cursor.Enabled"));
+	obs_property_set_modified_callback(cursor_on, cursor_options_changed);
 
 	obs_property_t *style = obs_properties_add_list(cur, kCursorStyle, obs_module_text("Cursor.Style"),
 							OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
@@ -546,6 +678,8 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 	obs_property_t *sndright = obs_properties_add_list(snd, kClickSoundFileRight,
 							   obs_module_text("ClickSound.RightSound"),
 							   OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_STRING);
+	obs_property_set_modified_callback(sndleft, click_sound_side_changed);
+	obs_property_set_modified_callback(sndright, click_sound_side_changed);
 	obs_property_list_add_string(sndleft, obs_module_text("ClickSound.Mute"), "");
 	obs_property_list_add_string(sndright, obs_module_text("ClickSound.Mute"), "");
 	for (const auto &s : kSounds) {
@@ -590,8 +724,9 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 					obs_module_text("Spotlight.BlurAmount"), 0.0, 60.0, 1.0);
 
 	obs_properties_t *sborder = obs_properties_create();
-	obs_properties_add_bool(sborder, kSpotlightBorderEnabled,
-				obs_module_text("Spotlight.BorderEnabled"));
+	obs_property_t *spot_border_on = obs_properties_add_bool(
+		sborder, kSpotlightBorderEnabled, obs_module_text("Spotlight.BorderEnabled"));
+	obs_property_set_modified_callback(spot_border_on, spotlight_border_changed);
 	obs_properties_add_color(sborder, kSpotlightBorderColor,
 				 obs_module_text("Spotlight.BorderColor"));
 	obs_properties_add_float_slider(sborder, kSpotlightBorderWidth,
@@ -613,6 +748,7 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 	obs_properties_add_group(focus, "grp_spotlight", obs_module_text("Group.Spotlight"), OBS_GROUP_NORMAL,
 				 spot);
 	spotlight_options_changed(props, nullptr, settings);
+	spotlight_border_changed(props, nullptr, settings);
 
 	/* ---------------- Magnifier ---------------- */
 	obs_properties_t *mag = obs_properties_create();
@@ -641,8 +777,9 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 	obs_properties_add_float_slider(mag, kMagnifierCenterY, obs_module_text("Magnifier.CenterY"),
 					0.0, 1.0, 0.01);
 	obs_properties_t *mborder = obs_properties_create();
-	obs_properties_add_bool(mborder, kMagnifierBorderEnabled,
-				obs_module_text("Magnifier.BorderEnabled"));
+	obs_property_t *mag_border_on = obs_properties_add_bool(
+		mborder, kMagnifierBorderEnabled, obs_module_text("Magnifier.BorderEnabled"));
+	obs_property_set_modified_callback(mag_border_on, magnifier_border_changed);
 	obs_properties_add_color(mborder, kMagnifierBorderColor,
 				 obs_module_text("Magnifier.BorderColor"));
 	obs_properties_add_float_slider(mborder, kMagnifierBorderWidth,
@@ -650,8 +787,9 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 	obs_properties_add_group(mag, "grp_magnifier_border", obs_module_text("Magnifier.BorderGroup"),
 				 OBS_GROUP_NORMAL, mborder);
 	obs_properties_t *mshadow = obs_properties_create();
-	obs_properties_add_bool(mshadow, kMagnifierShadowEnabled,
-				obs_module_text("Magnifier.ShadowEnabled"));
+	obs_property_t *mag_shadow_on = obs_properties_add_bool(
+		mshadow, kMagnifierShadowEnabled, obs_module_text("Magnifier.ShadowEnabled"));
+	obs_property_set_modified_callback(mag_shadow_on, magnifier_shadow_changed);
 	obs_properties_add_color(mshadow, kMagnifierShadowColor,
 				 obs_module_text("Magnifier.ShadowColor"));
 	obs_properties_add_float_slider(mshadow, kMagnifierShadowAlpha,
@@ -672,10 +810,14 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 				 OBS_GROUP_NORMAL, mag);
 	obs_property_set_modified_callback(mag_enabled, magnifier_options_changed);
 	magnifier_options_changed(props, nullptr, settings);
+	magnifier_border_changed(props, nullptr, settings);
+	magnifier_shadow_changed(props, nullptr, settings);
 
 	/* ---------------- Keys ---------------- */
 	obs_properties_t *keys = obs_properties_create();
-	obs_properties_add_bool(keys, kKeysEnabled, obs_module_text("Keys.Enabled"));
+	obs_property_t *keys_on =
+		obs_properties_add_bool(keys, kKeysEnabled, obs_module_text("Keys.Enabled"));
+	obs_property_set_modified_callback(keys_on, keys_options_changed);
 	obs_properties_add_bool(keys, kKeysModifiersOnly, obs_module_text("Keys.ModifiersOnly"));
 	obs_properties_add_bool(keys, kKeysShowSpecial, obs_module_text("Keys.ShowSpecial"));
 	obs_properties_add_bool(keys, kKeysShowShortcuts, obs_module_text("Keys.ShowShortcuts"));
@@ -700,7 +842,9 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 	/* ---------------- Highlighter: action first, then only what applies.
 	 * The mode list below shows/hides the Look / Timing / Zoom groups. */
 	obs_properties_t *hl = obs_properties_create();
-	obs_properties_add_bool(hl, kHighlightEnabled, obs_module_text("Highlight.Enabled"));
+	obs_property_t *hl_on =
+		obs_properties_add_bool(hl, kHighlightEnabled, obs_module_text("Highlight.Enabled"));
+	obs_property_set_modified_callback(hl_on, highlight_mode_changed);
 	obs_property_t *hkh = obs_properties_add_bool(hl, kHighlightHotkeyEnabled,
 						      obs_module_text("Highlight.HotkeyEnabled"));
 
@@ -864,7 +1008,6 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 	tip(kBgGradientCenterY, obs_module_text("Tooltip.kBgGradientCenterY"));
 	tip(kBgImage, obs_module_text("Tooltip.kBgImage"));
 	tip(kBgImageBlur, obs_module_text("Tooltip.kBgImageBlur"));
-	tip(kBgImageBlurType, obs_module_text("Tooltip.kBgImageBlurType"));
 	tip(kBgImageFile, obs_module_text("Tooltip.kBgImageFile"));
 	tip(kBgKeepAspect, obs_module_text("Tooltip.kBgKeepAspect"));
 	tip(kBgShadow, obs_module_text("Tooltip.kBgShadow"));
@@ -875,18 +1018,14 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 	tip(kClickSoundEnabled, obs_module_text("Tooltip.kClickSoundEnabled"));
 	tip(kClickSoundFileLeft, obs_module_text("Tooltip.kClickSoundFileLeft"));
 	tip(kClickSoundFileRight, obs_module_text("Tooltip.kClickSoundFileRight"));
-	tip(kClickSoundLeft, obs_module_text("Tooltip.kClickSoundLeft"));
-	tip(kClickSoundRight, obs_module_text("Tooltip.kClickSoundRight"));
 	tip(kCursorEnabled, obs_module_text("Tooltip.kCursorEnabled"));
 	tip(kCursorIdleDelayMs, obs_module_text("Tooltip.kCursorIdleDelayMs"));
 	tip(kCursorShadow, obs_module_text("Tooltip.kCursorShadow"));
 	tip(kHighlightColor, obs_module_text("Tooltip.kHighlightColor"));
 	tip(kHighlightEnabled, obs_module_text("Tooltip.kHighlightEnabled"));
 	tip(kHighlightHotkeyEnabled, obs_module_text("Tooltip.kHighlightHotkeyEnabled"));
-	tip(kHighlightPressDelayMs, obs_module_text("Tooltip.kHighlightPressDelayMs"));
 	tip(kHighlightThickness, obs_module_text("Tooltip.kHighlightThickness"));
 	tip(kHighlightZoomDelayMs, obs_module_text("Tooltip.kHighlightZoomDelayMs"));
-	tip(kHighlightZoomDir, obs_module_text("Tooltip.kHighlightZoomDir"));
 	tip(kHighlightZoomHoldMs, obs_module_text("Tooltip.kHighlightZoomHoldMs"));
 	tip(kHighlightZoomInMs, obs_module_text("Tooltip.kHighlightZoomInMs"));
 	tip(kHighlightZoomMax, obs_module_text("Tooltip.kHighlightZoomMax"));
@@ -909,24 +1048,16 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 	tip(kMagnifierShadowOffsetY, obs_module_text("Tooltip.kMagnifierShadowOffsetY"));
 	tip(kMonitorX, obs_module_text("Tooltip.kMonitorX"));
 	tip(kMonitorY, obs_module_text("Tooltip.kMonitorY"));
-	tip(kMotionBlurEnabled, obs_module_text("Tooltip.kMotionBlurEnabled"));
 	tip(kProfileCurrent, obs_module_text("Tooltip.kProfileCurrent"));
 	tip(kProfileExportPath, obs_module_text("Tooltip.kProfileExportPath"));
 	tip(kProfileImportPath, obs_module_text("Tooltip.kProfileImportPath"));
 	tip(kSpotlightBlurAmount, obs_module_text("Tooltip.kSpotlightBlurAmount"));
-	tip(kSpotlightBlurEnabled, obs_module_text("Tooltip.kSpotlightBlurEnabled"));
 	tip(kSpotlightBorderColor, obs_module_text("Tooltip.kSpotlightBorderColor"));
 	tip(kSpotlightBorderEnabled, obs_module_text("Tooltip.kSpotlightBorderEnabled"));
 	tip(kSpotlightBorderWidth, obs_module_text("Tooltip.kSpotlightBorderWidth"));
 	tip(kSpotlightCornerRadius, obs_module_text("Tooltip.kSpotlightCornerRadius"));
 	tip(kSpotlightInMs, obs_module_text("Tooltip.kSpotlightInMs"));
 	tip(kSpotlightOutMs, obs_module_text("Tooltip.kSpotlightOutMs"));
-	tip(kSpotlightShadowAlpha, obs_module_text("Tooltip.kSpotlightShadowAlpha"));
-	tip(kSpotlightShadowBlur, obs_module_text("Tooltip.kSpotlightShadowBlur"));
-	tip(kSpotlightShadowColor, obs_module_text("Tooltip.kSpotlightShadowColor"));
-	tip(kSpotlightShadowEnabled, obs_module_text("Tooltip.kSpotlightShadowEnabled"));
-	tip(kSpotlightShadowOffsetX, obs_module_text("Tooltip.kSpotlightShadowOffsetX"));
-	tip(kSpotlightShadowOffsetY, obs_module_text("Tooltip.kSpotlightShadowOffsetY"));
 	tip(kZoomCenterAmount, obs_module_text("Tooltip.kZoomCenterAmount"));
 	tip(kZoomDurationMs, obs_module_text("Tooltip.kZoomDurationMs"));
 	tip(kZoomPanAmount, obs_module_text("Tooltip.kZoomPanAmount"));

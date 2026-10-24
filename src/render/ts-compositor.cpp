@@ -521,17 +521,21 @@ void Compositor::render(obs_source_t *filter, obs_source_t *target, uint32_t wid
 
 	/* Wallpaper is only sampled in wallpaper mode. The path is passed as a C
 	 * string so the hot path does not allocate. */
-	const bool wallpaper_mode = bg && cfg.bg.mode == static_cast<int>(core::BgMode::Wallpaper);
-	const bool bg_transparent =
-		wallpaper_mode && wallpaper_is_transparent(cfg.bg.image.c_str());
+	const bool wallpaper_mode = bg &&
+				   (cfg.bg.mode == static_cast<int>(core::BgMode::Wallpaper) ||
+				    cfg.bg.mode == static_cast<int>(core::BgMode::LocalImage));
+	const bool bg_transparent = bg && cfg.bg.mode == static_cast<int>(core::BgMode::Transparent);
 	/* Quantize the target size used by the wallpaper prefilter: a one-pixel
 	 * canvas change must not rebuild a multi-megapixel texture. */
 	const uint32_t blur_w = (w + 15u) & ~15u;
 	const uint32_t blur_h = (h + 15u) & ~15u;
-	if (wallpaper_mode && !bg_transparent)
-		wallpaper_.update(core::resolve_bg_path(cfg.bg.image.c_str(),
-						       cfg.bg.image_file.c_str()),
-				  blur_w, blur_h, cfg.bg.image_blur, cfg.bg.image_blur_type);
+	if (wallpaper_mode && !bg_transparent) {
+		const char *path = cfg.bg.mode == static_cast<int>(core::BgMode::LocalImage)
+					   ? cfg.bg.image_file.c_str()
+					   : cfg.bg.image.c_str();
+		wallpaper_.update(path, blur_w, blur_h, cfg.bg.image_blur,
+				  cfg.bg.image_blur_type);
+	}
 	else
 		wallpaper_.update("", 0, 0, 0.0, 0);
 	const bool bgimg = wallpaper_mode && !bg_transparent && wallpaper_.has_texture();

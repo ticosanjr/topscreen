@@ -41,11 +41,36 @@ TEST(cursor_follows_target)
 	CHECK_NEAR(r.y, 1.0, 1e-2);
 }
 
-TEST(cursor_bitmap_tilt_is_fixed_at_30_degrees)
+TEST(cursor_bundled_styles_are_upright)
 {
 	CursorModel m;
 	CursorConfig cfg;
 	cfg.follow_mode = static_cast<int>(CursorFollowMode::Exact);
+	cfg.style = static_cast<int>(CursorStyle::MacOs);
+	m.configure(cfg);
+	m.reset(0.1, 0.1, 0.0);
+
+	double t = 0.0;
+	m.update(t);
+	CHECK_NEAR(m.render().rotation, 0.0, 1e-9);
+
+	/* Bibata through Dot, including the procedural effects, stay upright. */
+	for (CursorStyle style : {CursorStyle::Bibata, CursorStyle::Breeze,
+				  CursorStyle::XCursorPro, CursorStyle::MacOs,
+				  CursorStyle::Windows, CursorStyle::Neon,
+				  CursorStyle::Onyx, CursorStyle::Dot}) {
+		cfg.style = static_cast<int>(style);
+		m.configure(cfg);
+		CHECK_NEAR(m.render().rotation, 0.0, 1e-9);
+	}
+}
+
+TEST(cursor_custom_styles_keep_the_fixed_30_degree_tilt)
+{
+	CursorModel m;
+	CursorConfig cfg;
+	cfg.follow_mode = static_cast<int>(CursorFollowMode::Exact);
+	cfg.style = static_cast<int>(CursorStyle::CustomPurpleIris);
 	m.configure(cfg);
 	m.reset(0.1, 0.1, 0.0);
 

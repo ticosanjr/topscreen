@@ -228,4 +228,18 @@ inline int cursor_style_resolve(int style)
 	return cursor_style_is_retired(style) ? cursor_style_fallback(style) : style;
 }
 
+/**
+ * Whether this style keeps the fixed 30° clockwise image tilt.
+ *
+ * Only the user-supplied "Custom" cursors keep it. The bundled cursors from
+ * Bibata through Dot (including the platform and procedural ones) are drawn
+ * upright, as their artwork was designed.
+ */
+inline bool cursor_style_keeps_tilt(int style)
+{
+	style = cursor_style_resolve(style);
+	return style >= static_cast<int>(CursorStyle::CustomPurpleIris) &&
+	       style < static_cast<int>(CursorStyle::Count);
+}
+
 } // namespace topscreen::core

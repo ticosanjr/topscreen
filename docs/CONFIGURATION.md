@@ -169,17 +169,20 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 > Cursor: the cursor **tip** follows the physical pointer over the captured
 > screen (the content area), so it points at the same captured pixel even with
 > wallpaper padding. The icon body is drawn in output coordinates and may
-> overhang into the padding; the tip never leaves the captured screen. Bitmap
-> cursors use a fixed 30° clockwise tilt (no sway). Only Exact and Glide A→B
-> remain; legacy spring/sampled values are migrated to Glide A→B.
+> overhang into the padding; the tip never leaves the captured screen. The
+> bundled cursors (Bibata through Dot) are drawn upright; only the user-supplied
+> Custom images keep the fixed 30° clockwise tilt (no sway). Only Exact and
+> Glide A→B remain; legacy spring/sampled values are migrated to Glide A→B.
 
 > Spotlight: the outside effect is Dim or Blur. Only the strength slider for
 > the selected mode is shown; the blur style is always Soft. Shadow/drop were
 > removed.
 
-> Magnifier: the lens follows the cursor with a 30% bias toward the center near
-> the edges. The lens shadow is a real halo behind the lens; the drop animation
-> was removed.
+> Magnifier: the lens canvas follows the cursor and stops near the edge so it
+> stays on screen, but the magnified view is anchored at the pointer and keeps
+> following it all the way to the corner (the content under the pointer stays
+> under the pointer). The lens shadow is a real halo behind the lens; the drop
+> animation was removed.
 
 > Profiles: switching profile applies the whole slot; subsequent edits are written
 > to the active slot (auto-save, debounced by ~0.4 s) and the chosen profile is
@@ -208,7 +211,7 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 {
   "topscreen_profiles": 1,
   "plugin": "TopScreen",
-  "version": "1.1.2",
+  "version": "1.1.3",
   "current": 0,
   "profile_slot_0": { "effects_enabled": true },
   "profile_slot_1": { "effects_enabled": true },

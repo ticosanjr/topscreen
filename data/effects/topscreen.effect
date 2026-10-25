@@ -72,7 +72,8 @@ uniform float  magnifier_shape;
 uniform float  magnifier_radius;
 uniform float  magnifier_corner;
 uniform float  magnifier_zoom;
-uniform float2 magnifier_focus;  // content uv under the lens
+uniform float2 magnifier_focus;  // lens canvas center (output uv)
+uniform float2 magnifier_sample; // magnification anchor / pointer (output uv)
 uniform float  magnifier_drop;
 uniform float  magnifier_border_enabled;
 uniform float4 magnifier_border_color;
@@ -578,8 +579,13 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 		}
 
 		if (lens_mask > 0.001) {
-			float2 lens_px = lens_center +
-					 (px - lens_center) / max(magnifier_zoom, 1.0001);
+			/* Magnification is anchored at the pointer, not at the clamped
+			 * canvas: the content under the cursor stays under the cursor
+			 * even when the lens aperture stops at the screen edge. */
+			float2 sample_center = magnifier_sample * target_size +
+					       float2(0.0, magnifier_drop);
+			float2 lens_px = sample_center +
+					 (px - sample_center) / max(magnifier_zoom, 1.0001);
 
 			float2 lens_scene = scene_target_uv(lens_px / max(target_size, float2(1.0, 1.0))) *
 					    target_size;

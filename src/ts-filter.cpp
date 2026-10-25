@@ -1109,7 +1109,8 @@ void ts_filter_tick(void *data, float seconds)
 	}
 	ctx->spotlight.update(ctx->time_ms, spot_x, spot_y);
 	ctx->frame.spotlight = ctx->spotlight.render();
-	ctx->magnifier.update(ctx->time_ms, ctx->frame.cursor.x, ctx->frame.cursor.y);
+	ctx->magnifier.update(ctx->time_ms, ctx->frame.cursor.x, ctx->frame.cursor.y,
+			      target_w > 0.0 && target_h > 0.0 ? target_w / target_h : 1.0);
 	ctx->frame.magnifier = ctx->magnifier.render();
 	ctx->frame.zoom = ctx->zoom.render();
 	ctx->frame.click_count = ctx->clicks.collect(ctx->time_ms, ctx->frame.clicks, kShaderClickSlots);

@@ -113,17 +113,12 @@ Places the screen "floating" over a background, with corners and shadow.
 | **Cursor style** | Primary cursor: one of the 79 cursors (see below) |
 | **Secondary cursor (links)** | Cursor used while the native pointer is over a link; "Same as primary" disables the swap |
 | **Change cursor over links** | Automatic on **Windows and X11**. Wayland has no portable link-cursor signal, so the primary stays active |
-| **Cursor movement** | **Exact**, **Spring smoothing**, **Glide (sampled)** or **Glide (A to B)** |
+| **Cursor movement** | **Exact** or **Glide (A to B)** |
 | **Cursor size (1 = default)** | Cursor scale (1.0 = default) |
-| **Pointer correction X/Y (px)** | Fine adjustment if the recorded pointer is a few pixels away from the real one |
-| **Smoothing (0 = exact tracking)** | Spring mode: 0 = follows exactly; above that, it glides |
-| **Glide duration / sample interval** | A→B duration and how often the sampled glide takes a new destination |
-| **Curve tilt (sway)** | The cursor tilts slightly when turning |
+| **Glide duration** | A→B duration |
 | **Cursor shadow** | Shadow to make it stand out from the background |
 | **Hide cursor when idle** | Disappears when you stop moving |
 | **Idle delay before hiding (ms)** | How long the cursor stays still before hiding |
-| **Return cursor to start when idle** | Cursor "returns" to where it started (useful for looping videos) |
-| **Idle time before returning (ms)** | How long the cursor stays still before returning |
 
 **Cursor styles available (79)**
 
@@ -532,9 +527,8 @@ TOPSCREEN_DEBUG_KEY=Ctrl obs
   name, turn off the source's cursor option manually.
 
 **The cursor lags**
-- **Smoothing** at `0` makes the cursor follow the mouse **exactly**. Higher
-  values add glide (on purpose).
-- **Curve tilt** at `0` removes the tilt.
+- Use **Exact** to follow the mouse with no delay. **Glide (A to B)** adds a
+  deliberate short glide between accepted points.
 
 **Zoom cuts off the corners / the cursor disappears at the edge**
 - This has been fixed: the focus now **follows** the cursor to the edges

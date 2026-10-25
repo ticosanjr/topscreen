@@ -14,11 +14,9 @@ Mode: `auto` reacts on its own · `hotkey` only by hotkey · `always` always on.
 | **79 cursor styles** | auto | ✅ | 29 built-ins + 50 custom PNG styles grouped under `Custom`; see [`CURSORS.md`](CURSORS.md) |
 | Size | auto | ✅ | 0.5–4× |
 | Shadow | auto | ✅ | |
-| Motion smoothing | auto | ✅ | exact, spring, sampled glide, A→B glide |
+| Motion smoothing | auto | ✅ | exact or A→B glide |
 | Secondary cursor over links | auto | ✅ | Windows/X11; primary/secondary style pair |
-| Sway (tilts on turns) | auto | ✅ | |
 | Hide when idle | auto | ✅ | with delay |
-| Loop (returns to start) | off | ✅ | |
 
 ## Clicks
 

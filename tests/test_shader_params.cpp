@@ -100,6 +100,7 @@ TEST(shader_has_expected_uniforms)
 		"spotlight_shadow_alpha", "spotlight_shadow_blur", "spotlight_shadow_offset",
 		"spotlight_blur_enabled", "spotlight_outside_mode", "spotlight_blur", "spotlight_zoom",
 		"spotlight_focus", "spotlight_drop",
+		"magnifier_focus", "magnifier_sample", "magnifier_zoom",
 		"highlight_active", "highlight_rect", "highlight_color", "highlight_alpha",
 		"click0_pos",     "click0_prog",    "click0_size",   "click0_color",
 		"click0_type",    "click1_pos",     "click1_prog",   "click1_size",

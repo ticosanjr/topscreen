@@ -117,6 +117,7 @@ private:
 	gs_eparam_t *p_magnifier_corner_ = nullptr;
 	gs_eparam_t *p_magnifier_zoom_ = nullptr;
 	gs_eparam_t *p_magnifier_focus_ = nullptr;
+	gs_eparam_t *p_magnifier_sample_ = nullptr;
 	gs_eparam_t *p_magnifier_drop_ = nullptr;
 	gs_eparam_t *p_magnifier_border_enabled_ = nullptr;
 	gs_eparam_t *p_magnifier_border_color_ = nullptr;

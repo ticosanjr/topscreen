@@ -226,6 +226,7 @@ void Compositor::cache_params()
 	p_magnifier_corner_ = P("magnifier_corner");
 	p_magnifier_zoom_ = P("magnifier_zoom");
 	p_magnifier_focus_ = P("magnifier_focus");
+	p_magnifier_sample_ = P("magnifier_sample");
 	p_magnifier_drop_ = P("magnifier_drop");
 	p_magnifier_border_enabled_ = P("magnifier_border_enabled");
 	p_magnifier_border_color_ = P("magnifier_border_color");
@@ -335,6 +336,7 @@ bool Compositor::validate_params() const
 		"magnifier_corner",
 		"magnifier_zoom",
 		"magnifier_focus",
+		"magnifier_sample",
 		"magnifier_drop",
 		"magnifier_border_enabled",
 		"magnifier_border_color",
@@ -440,7 +442,7 @@ void Compositor::release()
 	p_spotlight_zoom_ = p_spotlight_focus_ = p_spotlight_drop_ = nullptr;
 	p_magnifier_enabled_ = p_magnifier_amount_ = p_magnifier_shape_ = nullptr;
 	p_magnifier_radius_ = p_magnifier_corner_ = p_magnifier_zoom_ = nullptr;
-	p_magnifier_focus_ = p_magnifier_drop_ = nullptr;
+	p_magnifier_focus_ = p_magnifier_sample_ = p_magnifier_drop_ = nullptr;
 	p_magnifier_border_enabled_ = p_magnifier_border_color_ = nullptr;
 	p_magnifier_border_width_ = nullptr;
 	p_magnifier_shadow_enabled_ = p_magnifier_shadow_color_ = nullptr;
@@ -646,6 +648,8 @@ void Compositor::render(obs_source_t *filter, obs_source_t *target, uint32_t wid
 	set_f(p_magnifier_zoom_, static_cast<float>(st.magnifier.zoom));
 	set_v2(p_magnifier_focus_, static_cast<float>(st.magnifier.focus_x),
 	       static_cast<float>(st.magnifier.focus_y));
+	set_v2(p_magnifier_sample_, static_cast<float>(st.magnifier.sample_x),
+	       static_cast<float>(st.magnifier.sample_y));
 	set_f(p_magnifier_drop_, 0.0f);
 	set_f(p_magnifier_border_enabled_, cfg.magnifier.border_enabled ? 1.0f : 0.0f);
 	set_c(p_magnifier_border_color_, cfg.magnifier.border_color);

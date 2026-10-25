@@ -59,7 +59,6 @@ void CursorModel::reset(double x, double y, double now_ms)
 	glide_active_ = false;
 	target_dirty_ = false;
 	next_sample_ms_ = now_ms;
-	rotation_ = 0.0;
 	last_move_ms_ = now_ms;
 	last_update_ms_ = now_ms;
 	started_ = true;
@@ -148,10 +147,6 @@ void CursorModel::update(double now_ms)
 		}
 		step_glide(now_ms);
 	}
-
-	/* Bitmap cursors use a fixed 30° clockwise tilt. */
-	rotation_ = 0.5235987755982988;
-
 }
 
 CursorRender CursorModel::render() const
@@ -160,11 +155,14 @@ CursorRender CursorModel::render() const
 	out.x = sx_.value();
 	out.y = sy_.value();
 	out.size = cfg_.size;
-	out.rotation = rotation_;
 	out.style = cursor_style_resolve(cfg_.style);
 
 	if (cfg_.link_detection && link_ && cfg_.secondary_style >= 0)
 		out.style = cursor_style_resolve(cfg_.secondary_style);
+
+	/* Bundled cursors (Bibata through Dot) are drawn upright; only the
+	 * user-supplied Custom images keep the fixed 30° tilt. */
+	out.rotation = cursor_style_keeps_tilt(out.style) ? 0.5235987755982988 : 0.0;
 
 	if (!cfg_.enabled) {
 		out.opacity = 0.0;

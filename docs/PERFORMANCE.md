@@ -102,7 +102,7 @@ count and the blur tap reduction are deterministic and pinned by tests; the
 wall-clock numbers should be re-measured on real GPU hardware before making
 larger performance claims.
 
-## Current 1.1.2 smoke observation
+## Current 1.1.3 smoke observation
 
 At 1920×1080 with llvmpipe software rendering, wallpaper blur 30, the async
 wallpaper prefilter and the magnifier lens active, OBS reported 60/60 FPS and

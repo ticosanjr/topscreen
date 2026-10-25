@@ -118,7 +118,6 @@ private:
 	bool glide_active_ = false;
 	bool target_dirty_ = false;
 	bool link_ = false;
-	double rotation_ = 0.0;
 	bool started_ = false;
 };
 

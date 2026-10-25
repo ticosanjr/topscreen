@@ -49,4 +49,18 @@ Vec2f source_to_pixel(double s_x, double s_y, double focus_x, double focus_y, do
 	return p;
 }
 
+Vec2f pointer_to_content_output(double nx, double ny, const ContentArea &area,
+				double target_w, double target_h)
+{
+	const double px = std::clamp(nx, 0.0, 1.0);
+	const double py = std::clamp(ny, 0.0, 1.0);
+	const double w = target_w > 0.0 ? target_w : 1.0;
+	const double h = target_h > 0.0 ? target_h : 1.0;
+
+	Vec2f out;
+	out.x = (area.origin.x + px * area.size.x) / w;
+	out.y = (area.origin.y + py * area.size.y) / h;
+	return out;
+}
+
 } // namespace topscreen::core

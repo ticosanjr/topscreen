@@ -138,3 +138,69 @@ TEST(mapping_consistency_with_shader)
 		}
 	}
 }
+
+/*
+ * Cursor: the tip follows the captured screen, not the padded output. The
+ * pointer is mapped INTO the content rectangle, so 25% of the monitor is 25%
+ * of the content. The output point may be inset, and the icon body is then
+ * allowed to overhang into the padding.
+ */
+TEST(mapping_pointer_to_content_output_follows_content)
+{
+	const ContentArea a = content_area(1920, 1080, 64, 64, true);
+	const double points[] = {0.0, 0.25, 0.5, 0.75, 1.0};
+
+	for (double s : points) {
+		const Vec2f out = pointer_to_content_output(s, s, a, 1920, 1080);
+
+		/* Output point is exactly the matching content point. */
+		CHECK_NEAR(out.x, (a.origin.x + s * a.size.x) / 1920.0, 1e-9);
+		CHECK_NEAR(out.y, (a.origin.y + s * a.size.y) / 1080.0, 1e-9);
+
+		/* Recovering the content coordinate gives the original pointer. */
+		CHECK_NEAR((out.x * 1920.0 - a.origin.x) / a.size.x, s, 1e-9);
+		CHECK_NEAR((out.y * 1080.0 - a.origin.y) / a.size.y, s, 1e-9);
+
+		/* The tip is inside the content, never out in the padding. */
+		CHECK(out.x >= a.origin.x / 1920.0 - 1e-9);
+		CHECK(out.x <= (a.origin.x + a.size.x) / 1920.0 + 1e-9);
+		CHECK(out.y >= a.origin.y / 1080.0 - 1e-9);
+		CHECK(out.y <= (a.origin.y + a.size.y) / 1080.0 + 1e-9);
+	}
+}
+
+/* Leaving the monitor clamps the tip to the content edge, not to 0/1 of the
+ * padded output. */
+TEST(mapping_pointer_to_content_output_clamps_to_content_edges)
+{
+	const ContentArea a = content_area(1920, 1080, 64, 64, false);
+
+	const Vec2f tl = pointer_to_content_output(-1.0, -1.0, a, 1920, 1080);
+	CHECK_NEAR(tl.x, a.origin.x / 1920.0, 1e-9);
+	CHECK_NEAR(tl.y, a.origin.y / 1080.0, 1e-9);
+
+	const Vec2f br = pointer_to_content_output(2.0, 2.0, a, 1920, 1080);
+	CHECK_NEAR(br.x, (a.origin.x + a.size.x) / 1920.0, 1e-9);
+	CHECK_NEAR(br.y, (a.origin.y + a.size.y) / 1080.0, 1e-9);
+}
+
+/* Without padding/keep-aspect the content is the whole output, so the mapping
+ * is the identity. */
+TEST(mapping_pointer_without_padding_is_identity)
+{
+	const ContentArea a = content_area(1920, 1080, 0, 0, false);
+	const Vec2f out = pointer_to_content_output(0.3, 0.7, a, 1920, 1080);
+	CHECK_NEAR(out.x, 0.3, 1e-9);
+	CHECK_NEAR(out.y, 0.7, 1e-9);
+}
+
+/* Unequal padding and keep-aspect use the real content area from the shader. */
+TEST(mapping_pointer_uses_real_content_area)
+{
+	const ContentArea a = content_area(2560, 1080, 200, 40, true);
+	const Vec2f out = pointer_to_content_output(0.25, 0.75, a, 2560, 1080);
+	CHECK_NEAR(out.x, (a.origin.x + 0.25 * a.size.x) / 2560.0, 1e-9);
+	CHECK_NEAR(out.y, (a.origin.y + 0.75 * a.size.y) / 1080.0, 1e-9);
+	CHECK(out.x > 0.0 && out.x < 1.0);
+	CHECK(out.y > 0.0 && out.y < 1.0);
+}

@@ -166,8 +166,10 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 > `bg_type` always wins). Sources from 1.1.0 that stored `__local__` or
 > `__transparent__` in `bg_image` are converted to the matching type.
 
-> Cursor: the drawn cursor follows the physical pointer over the whole monitor,
-> including the wallpaper padding; the icon body may overhang the frame. Bitmap
+> Cursor: the cursor **tip** follows the physical pointer over the captured
+> screen (the content area), so it points at the same captured pixel even with
+> wallpaper padding. The icon body is drawn in output coordinates and may
+> overhang into the padding; the tip never leaves the captured screen. Bitmap
 > cursors use a fixed 30° clockwise tilt (no sway). Only Exact and Glide A→B
 > remain; legacy spring/sampled values are migrated to Glide A→B.
 
@@ -206,7 +208,7 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 {
   "topscreen_profiles": 1,
   "plugin": "TopScreen",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "current": 0,
   "profile_slot_0": { "effects_enabled": true },
   "profile_slot_1": { "effects_enabled": true },

@@ -10,15 +10,6 @@ Vec2f screen_to_content(double sx, double sy, const Monitor &m)
 	return out;
 }
 
-Vec2f screen_to_cursor(double sx, double sy, const Monitor &m)
-{
-	const Vec2f c = screen_to_content(sx, sy, m);
-	Vec2f out;
-	out.x = c.x < 0.0 ? 0.0 : (c.x > 1.0 ? 1.0 : c.x);
-	out.y = c.y < 0.0 ? 0.0 : (c.y > 1.0 ? 1.0 : c.y);
-	return out;
-}
-
 Vec2f content_to_screen(double cu, double cv, const Monitor &m)
 {
 	Vec2f out;

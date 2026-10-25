@@ -221,6 +221,12 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 	uint32_t origin_target_w_ = 0;
 	uint32_t origin_target_h_ = 0;
 	int origin_age_ticks_ = 0;
+	/* Last content rectangle logged, so the cursor mapping can be diagnosed
+	 * from the OBS log without spamming a line every frame. */
+	double logged_content_x_ = -1.0;
+	double logged_content_y_ = -1.0;
+	double logged_content_w_ = -1.0;
+	double logged_content_h_ = -1.0;
 
 	std::atomic<uint32_t> actions_{0};
 	std::atomic<int> pending_effects_{-1};
@@ -982,21 +988,54 @@ void ts_filter_tick(void *data, float seconds)
 		ctx->keys.press(ctx->input.state().key_labels[i], ctx->input.state().key_modifier[i],
 				ctx->time_ms, ctx->input.state().key_modifiers[i]);
 
+	/* Same content rectangle the compositor and the shader use. The cursor
+	 * tip is mapped into this area; the icon body may overhang into the
+	 * padding because the shader draws it in output coordinates. */
+	const double target_w = static_cast<double>(ctx->target_w);
+	const double target_h = static_cast<double>(ctx->target_h);
+	const bool bg_on = ctx->cfg.effects_enabled && ctx->cfg.bg.enabled;
+	core::ContentArea content{};
+	if (target_w > 0.0 && target_h > 0.0) {
+		content = core::content_area(
+			target_w, target_h, bg_on ? ctx->cfg.bg.padding_x : 0.0,
+			bg_on ? ctx->cfg.bg.padding_y : 0.0, ctx->cfg.bg.keep_aspect);
+		if (content.origin.x != ctx->logged_content_x_ ||
+		    content.origin.y != ctx->logged_content_y_ ||
+		    content.size.x != ctx->logged_content_w_ ||
+		    content.size.y != ctx->logged_content_h_) {
+			ctx->logged_content_x_ = content.origin.x;
+			ctx->logged_content_y_ = content.origin.y;
+			ctx->logged_content_w_ = content.size.x;
+			ctx->logged_content_h_ = content.size.y;
+			blog(LOG_INFO,
+			     "[TopScreen] cursor map: target=%ux%u content=%.1fx%.1f at (%.1f,%.1f) padding=%.1fx%.1f keep_aspect=%d",
+			     ctx->target_w, ctx->target_h, content.size.x, content.size.y,
+			     content.origin.x, content.origin.y,
+			     bg_on ? ctx->cfg.bg.padding_x : 0.0,
+			     bg_on ? ctx->cfg.bg.padding_y : 0.0,
+			     ctx->cfg.bg.keep_aspect ? 1 : 0);
+		}
+	}
+
 	if (ctx->input.available() && ctx->target_w > 0 && ctx->target_h > 0) {
 		const InputState &st = ctx->input.state();
 		const core::Monitor mon{ctx->origin_known_.load() ? ctx->origin_x_.load() : 0.0,
 					ctx->origin_known_.load() ? ctx->origin_y_.load() : 0.0,
 					static_cast<double>(ctx->target_w),
 					static_cast<double>(ctx->target_h)};
-		/* Cursor overlay lives in OUTPUT coordinates: it must follow the
-		 * physical pointer across the whole monitor, including the wallpaper
-		 * padding. Clamping to the content rectangle made it stop early. */
-		const core::Vec2f c = core::screen_to_cursor(st.x, st.y, mon);
+		/* Source/content pointer (0..1): clicks, zoom and the highlighter use
+		 * this coordinate system. */
+		const core::Vec2f n = core::screen_to_content(st.x, st.y, mon);
+		const double cx = core::clamp01(n.x);
+		const double cy = core::clamp01(n.y);
 
-		const double cx = c.x;
-		const double cy = c.y;
+		/* Cursor overlay in OUTPUT coordinates: the tip follows the same
+		 * captured pixel as the physical pointer (content area), while the
+		 * icon body is allowed to overhang into the wallpaper padding. */
+		const core::Vec2f cursor_pos =
+			core::pointer_to_content_output(cx, cy, content, target_w, target_h);
 
-		ctx->cursor.set_target(cx, cy, ctx->time_ms);
+		ctx->cursor.set_target(cursor_pos.x, cursor_pos.y, ctx->time_ms);
 		ctx->zoom.set_cursor(cx, cy, ctx->time_ms);
 
 		/* Drag highlighter (left button). A drag owns the zoom spot now, so a
@@ -1055,7 +1094,20 @@ void ts_filter_tick(void *data, float seconds)
 	ctx->frame.cursor = ctx->cursor.render();
 	if (!ctx->cursor_hotkey_visible_)
 		ctx->frame.cursor.visible = false;
-	ctx->spotlight.update(ctx->time_ms, ctx->frame.cursor.x, ctx->frame.cursor.y);
+
+	/* The spotlight center is drawn from the cursor overlay (output coords),
+	 * but its ZOOM focus is a source/content coordinate. Invert the content
+	 * mapping from the drawn cursor so the zoom follows the smoothed cursor
+	 * (Exact or Glide) instead of jumping to the raw pointer. */
+	double spot_x = 0.5;
+	double spot_y = 0.5;
+	if (content.size.x > 0.0 && content.size.y > 0.0) {
+		spot_x = core::clamp01((ctx->frame.cursor.x * target_w - content.origin.x) /
+				       content.size.x);
+		spot_y = core::clamp01((ctx->frame.cursor.y * target_h - content.origin.y) /
+				       content.size.y);
+	}
+	ctx->spotlight.update(ctx->time_ms, spot_x, spot_y);
 	ctx->frame.spotlight = ctx->spotlight.render();
 	ctx->magnifier.update(ctx->time_ms, ctx->frame.cursor.x, ctx->frame.cursor.y);
 	ctx->frame.magnifier = ctx->magnifier.render();

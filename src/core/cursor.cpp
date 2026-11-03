@@ -12,6 +12,7 @@ namespace topscreen::core {
 namespace {
 
 constexpr double kIdleFadeMs = 300.0;
+constexpr double kPi = 3.14159265358979323846;
 
 double glide_duration(double ms)
 {
@@ -161,8 +162,10 @@ CursorRender CursorModel::render() const
 		out.style = cursor_style_resolve(cfg_.secondary_style);
 
 	/* Bundled cursors (Bibata through Dot) are drawn upright; only the
-	 * user-supplied Custom images keep the fixed 30° tilt. */
-	out.rotation = cursor_style_keeps_tilt(out.style) ? 0.5235987755982988 : 0.0;
+	 * user-supplied Custom images keep the fixed 30° tilt. The profile can
+	 * add an extra rotation offset on top of that baseline. */
+	const double base_deg = cursor_style_keeps_tilt(out.style) ? 30.0 : 0.0;
+	out.rotation = (base_deg + cfg_.rotation_offset_deg) * kPi / 180.0;
 
 	if (!cfg_.enabled) {
 		out.opacity = 0.0;

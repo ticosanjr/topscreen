@@ -37,6 +37,7 @@ inline constexpr const char *kCursorStyle = "cursor_style";
 inline constexpr const char *kCursorSecondaryStyle = "cursor_secondary_style";
 inline constexpr const char *kCursorLinkDetection = "cursor_link_detection";
 inline constexpr const char *kCursorSize = "cursor_size";
+inline constexpr const char *kCursorRotationOffset = "cursor_rotation_offset_deg";
 inline constexpr const char *kCursorShadow = "cursor_shadow";
 inline constexpr const char *kCursorFollowMode = "cursor_follow_mode";
 inline constexpr const char *kCursorSmooth = "cursor_smooth";
@@ -165,6 +166,10 @@ inline constexpr const char *kMonitorY = "monitor_y";
  * obs_data. Labels run A..J (see core::profile_label). */
 inline constexpr int kProfileCount = 10;
 inline constexpr const char *kProfileCurrent = "profile_current";
+/* Bumped when the default A..J seeds change. Existing sources are reseeded
+ * once when this value is older than kProfileSeedRevision. */
+inline constexpr const char *kProfileSeedVersion = "profile_seed_version";
+inline constexpr int kProfileSeedRevision = 2;
 inline constexpr const char *kProfileSlots[kProfileCount] = {
 	"profile_slot_0", "profile_slot_1", "profile_slot_2", "profile_slot_3", "profile_slot_4",
 	"profile_slot_5", "profile_slot_6", "profile_slot_7", "profile_slot_8", "profile_slot_9",

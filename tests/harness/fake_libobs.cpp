@@ -1,5 +1,8 @@
 #include "fake_libobs.hpp"
 
+#include <obs-frontend-api.h>
+#include <util/config-file.h>
+
 #include <cstdarg>
 #include <cstdio>
 #include <cstdlib>
@@ -21,8 +24,10 @@ struct RegisteredHotkey {
 	obs_hotkey_func func = nullptr;
 	void *data = nullptr;
 	bool active = true;
+	std::vector<obs_key_combination_t> bindings;
 };
 std::vector<RegisteredHotkey> g_hotkeys;
+std::map<std::string, std::string> g_profile_config;
 
 char g_effect_dummy = 0;
 char g_technique_dummy = 0;
@@ -96,6 +101,23 @@ void invoke_hotkey(int index, bool pressed)
 int hotkey_count()
 {
 	return static_cast<int>(g_hotkeys.size());
+}
+
+const std::vector<obs_key_combination_t> &hotkey_bindings(const char *name)
+{
+	static const std::vector<obs_key_combination_t> empty;
+	if (!name)
+		return empty;
+	for (auto it = g_hotkeys.rbegin(); it != g_hotkeys.rend(); ++it)
+		if (it->name == name)
+			return it->bindings;
+	return empty;
+}
+
+void set_profile_config_string(const char *section, const char *name, const char *value)
+{
+	if (section && name)
+		g_profile_config[std::string(section) + "/" + name] = value ? value : "";
 }
 
 bool hotkeys_active_from(int index)
@@ -291,6 +313,17 @@ obs_data_t *obs_data_from_json_value(const topscreen::core::json::Value &value)
 			if (obs_data_t *nested = obs_data_from_json_value(child))
 				data->objs[name] = nested;
 			break;
+		case topscreen::core::json::Value::Array_: {
+			auto *array = new obs_data_array();
+			if (child.array) {
+				for (const auto &item : *child.array) {
+					if (obs_data_t *entry = obs_data_from_json_value(item))
+						array->items.push_back(entry);
+				}
+			}
+			data->arrays[name] = array;
+			break;
+		}
 		default:
 			break;
 		}
@@ -477,6 +510,27 @@ obs_data_t *obs_data_get_obj(obs_data_t *data, const char *name)
 	auto it = data->objs.find(name);
 	return it == data->objs.end() ? nullptr : it->second;
 }
+
+obs_data_array_t *obs_data_get_array(obs_data_t *data, const char *name)
+{
+	if (!data || !name)
+		return nullptr;
+	auto it = data->arrays.find(name);
+	return it == data->arrays.end() ? nullptr : it->second;
+}
+
+size_t obs_data_array_count(obs_data_array_t *array)
+{
+	return array ? array->items.size() : 0;
+}
+
+obs_data_t *obs_data_array_item(obs_data_array_t *array, size_t idx)
+{
+	return array && idx < array->items.size() ? array->items[idx] : nullptr;
+}
+
+void obs_data_array_release(obs_data_array_t *) {}
+void obs_data_array_addref(obs_data_array_t *) {}
 
 /* Test-only JSON support: the profiles export/import test writes and reads a
  * real bundle, so the fake behaves like the OBS API for this subset. */
@@ -690,6 +744,35 @@ void obs_property_set_modified_callback(obs_property_t *prop, obs_property_modif
 
 void obs_property_set_long_description(obs_property_t *, const char *) {}
 
+// ---- config / frontend hotkeys ----
+struct config_data {
+	std::map<std::string, std::string> values;
+};
+
+config_t *obs_frontend_get_profile_config()
+{
+	static config_data config;
+	return &config;
+}
+
+const char *config_get_string(config_t *, const char *section, const char *name)
+{
+	if (!section || !name)
+		return nullptr;
+	const std::string key = std::string(section) + "/" + name;
+	auto it = g_profile_config.find(key);
+	return it == g_profile_config.end() ? nullptr : it->second.c_str();
+}
+
+obs_key_t obs_key_from_name(const char *name)
+{
+	if (!name || name[0] == '\0' || name[1] != '\0')
+		return OBS_KEY_NONE;
+	if (name[0] >= 'A' && name[0] <= 'Z')
+		return static_cast<obs_key_t>(OBS_KEY_A + (name[0] - 'A'));
+	return OBS_KEY_NONE;
+}
+
 // ---- obs_hotkey ----
 obs_hotkey_id register_hotkey(const char *name, obs_hotkey_func func, void *data)
 {
@@ -711,6 +794,38 @@ obs_hotkey_id obs_hotkey_register_frontend(const char *name, const char *, obs_h
 					    void *data)
 {
 	return register_hotkey(name, func, data);
+}
+
+void obs_hotkey_load_bindings(obs_hotkey_id id, obs_key_combination_t *combinations, size_t num)
+{
+	const size_t index = static_cast<size_t>(id) - 1;
+	if (index >= g_hotkeys.size())
+		return;
+	g_hotkeys[index].bindings.assign(combinations, combinations + num);
+}
+
+void obs_hotkey_load(obs_hotkey_id id, obs_data_array_t *data)
+{
+	const size_t index = static_cast<size_t>(id) - 1;
+	if (index >= g_hotkeys.size())
+		return;
+	auto &bindings = g_hotkeys[index].bindings;
+	bindings.clear();
+	const size_t count = obs_data_array_count(data);
+	for (size_t i = 0; i < count; ++i) {
+		obs_data_t *item = obs_data_array_item(data, i);
+		if (!item)
+			continue;
+		obs_key_combination_t combo = {};
+		combo.key = obs_key_from_name(obs_data_get_string(item, "key"));
+		if (obs_data_get_bool(item, "control"))
+			combo.modifiers |= INTERACT_CONTROL_KEY;
+		if (obs_data_get_bool(item, "shift"))
+			combo.modifiers |= INTERACT_SHIFT_KEY;
+		if (obs_data_get_bool(item, "alt"))
+			combo.modifiers |= INTERACT_ALT_KEY;
+		bindings.push_back(combo);
+	}
 }
 
 void obs_hotkey_unregister(obs_hotkey_id id)

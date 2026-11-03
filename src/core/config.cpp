@@ -87,6 +87,8 @@ void sanitize_config(Config *cfg)
 	if (cfg->cursor.follow_mode != static_cast<int>(CursorFollowMode::Exact))
 		cfg->cursor.follow_mode = static_cast<int>(CursorFollowMode::GlideAB);
 	cfg->cursor.size = bounded(cfg->cursor.size, 0.5, 4.0, def.cursor.size);
+	cfg->cursor.rotation_offset_deg =
+		bounded(cfg->cursor.rotation_offset_deg, -180.0, 180.0, 0.0);
 	cfg->cursor.smooth = bounded(cfg->cursor.smooth, 0.0, 1.0, def.cursor.smooth);
 	cfg->cursor.glide_ms = bounded(cfg->cursor.glide_ms, 50.0, 1200.0, def.cursor.glide_ms);
 	cfg->cursor.glide_sample_ms =

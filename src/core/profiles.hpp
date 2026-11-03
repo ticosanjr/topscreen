@@ -7,13 +7,19 @@ namespace topscreen::core {
 /**
  * Initial configuration of a profile slot (0..9, A..J).
  *
- * The slots are born with VISIBLE variations (click color, zoom and background),
- * so you can switch between profiles without having to save first.
+ * The slots are born with visible, usable variations so you can switch
+ * profiles without saving first.
  *
- *   A (0): default
- *   B (1): green/orange clicks + strong zoom (2.0)
- *   C (2): purple/cyan clicks + soft zoom (1.4) + vertical background
- *   D (3): yellow/white clicks + zoom off
+ *   A (0): balanced everyday default
+ *   B (1): clean/minimal (transparent, zoom off)
+ *   C (2): presentation/teaching (keys + highlighter)
+ *   D (3): streaming/gaming (solid, colorful clicks)
+ *   E (4): spotlight focus
+ *   F (5): magnifier lens
+ *   G (6): neon energy
+ *   H (7): cinematic wallpaper
+ *   I (8): maximum effects
+ *   J (9): full passthrough (master effects off)
  */
 Config make_profile_seed(int index);
 

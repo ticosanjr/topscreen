@@ -56,6 +56,7 @@ enum ActionBits : uint32_t {
 	A_TOGGLE_SPOTLIGHT = 1u << 14,
 	A_TOGGLE_MAGNIFIER = 1u << 15,
 	A_TOGGLE_CURSOR = 1u << 16,
+	A_RESET_PROFILES = 1u << 17,
 };
 
 /* Native cursor ownership is shared by every TopScreen filter attached to the
@@ -281,6 +282,7 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 	void toggle_spotlight() override { actions_.fetch_or(A_TOGGLE_SPOTLIGHT); }
 	void toggle_magnifier() override { actions_.fetch_or(A_TOGGLE_MAGNIFIER); }
 	void toggle_cursor() override { actions_.fetch_or(A_TOGGLE_CURSOR); }
+	void reset_profiles() { actions_.fetch_or(A_RESET_PROFILES); }
 	FilterControl *filter_control() override { return this; }
 
 	/* ---- FilterControl (UI thread: only queues / reads atomic) ---- */
@@ -364,6 +366,12 @@ void ts_filter_ctx::apply_profile(int index)
 	if (index < 0 || index >= kProfileCount)
 		return;
 
+	/* Monitor origin is machine-specific, not a look preset: switching
+	 * profiles must never move the pointer mapping to another monitor. */
+	const bool monitor_manual = cfg.monitor_manual;
+	const int monitor_x = cfg.monitor_x;
+	const int monitor_y = cfg.monitor_y;
+
 	obs_data_t *s = obs_source_get_settings(source);
 	obs_data_t *p = obs_data_get_obj(s, kProfileSlots[index]);
 	if (p) {
@@ -381,6 +389,10 @@ void ts_filter_ctx::apply_profile(int index)
 		obs_data_release(p);
 	}
 	obs_data_release(s);
+
+	cfg.monitor_manual = monitor_manual;
+	cfg.monitor_x = monitor_x;
+	cfg.monitor_y = monitor_y;
 
 	/* Session state: resets the manual zoom and reloads the sound if it changed. */
 	zoom.set_manual(1.0);
@@ -844,6 +856,25 @@ void ts_filter_ctx::process_actions()
 		mark_profile_dirty();
 		blog(LOG_INFO, "[TopScreen] magnifier: %s", cfg.magnifier.enabled ? "on" : "off");
 	}
+	if (act & A_RESET_PROFILES) {
+		obs_data_t *s = obs_source_get_settings(source);
+		for (int i = 0; i < kProfileCount; ++i) {
+			obs_data_t *p = obs_data_create();
+			const core::Config seed = core::make_profile_seed(i);
+			config_store(p, seed);
+			obs_data_set_obj(s, kProfileSlots[i], p);
+			obs_data_release(p);
+		}
+		obs_data_set_int(s, kProfileSeedVersion, kProfileSeedRevision);
+		obs_source_update(source, s);
+		obs_data_release(s);
+		profile_dirty_ = false;
+		apply_profile(current_profile_);
+		reconfigure_models();
+		push_settings();
+		refresh_properties();
+		blog(LOG_INFO, "[TopScreen] profiles restored to defaults (A..J)");
+	}
 	if (act & A_SAVE_PROFILE)
 		do_save_profile();
 	if (act & (A_EXPORT_PROFILES | A_IMPORT_PROFILES)) {
@@ -883,19 +914,31 @@ void *ts_filter_create(obs_data_t *settings, obs_source_t *source)
 	ctx->last_profile = ctx->current_profile_;
 	ctx->profile_cache_.store(ctx->current_profile_);
 
-	/* Guarantees the 10 profile slots (seeds visible variations into the empty ones). */
+	/* Guarantees the 10 profile slots. A source from an older build is
+	 * reseeded once (the user asked for the new A..J defaults); after the
+	 * version is current, later edits are preserved. */
+	bool reseeded = false;
+	bool seeded_any = false;
 	{
 		obs_data_t *s = obs_source_get_settings(source);
+		const int seed_version = static_cast<int>(obs_data_get_int(s, kProfileSeedVersion));
+		reseeded = seed_version < kProfileSeedRevision;
 		for (int i = 0; i < kProfileCount; ++i) {
-			if (obs_data_get_obj(s, kProfileSlots[i]))
+			if (!reseeded && obs_data_get_obj(s, kProfileSlots[i]))
 				continue;
 			obs_data_t *p = obs_data_create();
 			const core::Config seed = core::make_profile_seed(i);
 			config_store(p, seed);
 			obs_data_set_obj(s, kProfileSlots[i], p);
 			obs_data_release(p);
+			seeded_any = true;
 		}
-		obs_source_update(source, s);
+		if (reseeded) {
+			obs_data_set_int(s, kProfileSeedVersion, kProfileSeedRevision);
+			seeded_any = true;
+		}
+		if (seeded_any)
+			obs_source_update(source, s);
 		obs_data_release(s);
 	}
 
@@ -905,7 +948,7 @@ void *ts_filter_create(obs_data_t *settings, obs_source_t *source)
 	 * left "Profile B" selected with the default look.
 	 */
 	const bool picked = obs_data_has_user_value(settings, kProfileCurrent);
-	if (picked) {
+	if (picked || reseeded || seeded_any) {
 		ctx->apply_profile(ctx->current_profile_);
 		ctx->push_settings();
 	}
@@ -1184,6 +1227,15 @@ bool profiles_export_from_properties(void *filter)
 		return false;
 	}
 	ctx->export_profiles(path);
+	return true;
+}
+
+bool profiles_reset_from_properties(void *filter)
+{
+	auto *ctx = static_cast<ts_filter_ctx *>(filter);
+	if (!ctx || !ctx->source)
+		return false;
+	ctx->reset_profiles();
 	return true;
 }
 

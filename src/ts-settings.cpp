@@ -44,6 +44,7 @@ void config_defaults(obs_data_t *s)
 	obs_data_set_default_int(s, kCursorSecondaryStyle, def.cursor.secondary_style);
 	obs_data_set_default_bool(s, kCursorLinkDetection, def.cursor.link_detection);
 	obs_data_set_default_double(s, kCursorSize, def.cursor.size);
+	obs_data_set_default_double(s, kCursorRotationOffset, def.cursor.rotation_offset_deg);
 	obs_data_set_default_bool(s, kCursorShadow, def.cursor.shadow);
 	obs_data_set_default_int(s, kCursorFollowMode, def.cursor.follow_mode);
 	obs_data_set_default_double(s, kCursorSmooth, def.cursor.smooth);
@@ -274,6 +275,8 @@ void config_load(obs_data_t *s, Config *c, const Config *fallback)
 		static_cast<int>(read_int(s, kCursorSecondaryStyle, d.cursor.secondary_style));
 	c->cursor.link_detection = read_bool(s, kCursorLinkDetection, d.cursor.link_detection);
 	c->cursor.size = read_double(s, kCursorSize, d.cursor.size);
+	c->cursor.rotation_offset_deg =
+		read_double(s, kCursorRotationOffset, d.cursor.rotation_offset_deg);
 	c->cursor.shadow = read_bool(s, kCursorShadow, d.cursor.shadow);
 	c->cursor.follow_mode = static_cast<int>(read_int(s, kCursorFollowMode, d.cursor.follow_mode));
 	c->cursor.smooth = read_double(s, kCursorSmooth, d.cursor.smooth);
@@ -482,6 +485,7 @@ void config_store(obs_data_t *s, const Config &c)
 	obs_data_set_int(s, kCursorSecondaryStyle, c.cursor.secondary_style);
 	obs_data_set_bool(s, kCursorLinkDetection, c.cursor.link_detection);
 	obs_data_set_double(s, kCursorSize, c.cursor.size);
+	obs_data_set_double(s, kCursorRotationOffset, c.cursor.rotation_offset_deg);
 	obs_data_set_bool(s, kCursorShadow, c.cursor.shadow);
 	obs_data_set_int(s, kCursorFollowMode, c.cursor.follow_mode);
 	obs_data_set_double(s, kCursorSmooth, c.cursor.smooth);

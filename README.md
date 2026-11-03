@@ -18,7 +18,7 @@ hotkeys, and the result is consumed directly by OBS.
 1. In OBS, add a **Display Capture** and pick the screen.
 2. On the source, under **Filters**, add **TopScreen FX**.
 3. Adjust it in the filter's **Properties** and/or the **TopScreen dock**.
-4. Configure hotkeys in **Settings → Hotkeys → TopScreen**.
+4. Profile hotkeys **Ctrl+Shift+Alt+A…J** are applied by default; customize them in **Settings → Hotkeys → TopScreen**.
 
 The filter runs entirely on the GPU, inside the OBS process — no IPC, no encode,
 no frame copy.
@@ -36,21 +36,22 @@ presets, click sound, key overlay and dock.
 |------|--------|--------|
 | F0 | Plugin skeleton + passthrough filter | ✅ |
 | F1 | Background, corners, padding, shadow, presets + dock | ✅ |
-| F2 | Cursor (size/smoothing/sway/idle/loop) | ✅ |
+| F2 | Cursor styles, size, rotation offset, exact/glide and idle hide | ✅ |
 | F3 | L/R clicks + sound + hotkeys + presets | ✅ |
-| F4 | Auto + manual Zoom/Pan (spring) + pan + motion blur | ✅ |
-| F5 | Key overlay + spotlight + highlighter | 🟡 (webcam ⬜) |
+| F4 | Auto + manual Zoom/Pan (hotkeys), full-scene zoom | ✅ |
+| F5 | Key overlay + spotlight + magnifier + highlighter | 🟡 (webcam ⬜) |
 | F6 | Own capture source + own audio | ⬜ |
 | F7 | Wayland parity (portal + evdev) + CI | 🟡 (evdev ✅; portal ⬜) |
 
 The core has **automated tests** and the OBS layer is checked against the real
-OBS headers. See [`docs/TESTS.md`](docs/TESTS.md).
+OBS headers. See [`docs/TESTS.md`](docs/TESTS.md). Profiles **A–J** ship with
+ready-to-use looks (A–D everyday, E–I aggressive, J passthrough).
 
 ### Quick tests
 
 ```bash
-./tests/run.sh            # Linux: 244 core tests
-./tests/run-all.sh        # core + OBS headers + 56 integration tests
+./tests/run.sh            # Linux: 248 core tests
+./tests/run-all.sh        # core + OBS headers + 59 integration tests
 pwsh -File tests\run.ps1  # Windows (or PowerShell on any OS)
 ```
 

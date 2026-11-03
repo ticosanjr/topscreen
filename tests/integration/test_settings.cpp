@@ -78,6 +78,7 @@ TEST(settings_store_load_roundtrip)
 	a.keys.pos_x = 0.25;
 	a.highlight.color = 0x6600E0FFu;
 	a.cursor.size = 1.5;
+	a.cursor.rotation_offset_deg = -12.0;
 	a.cursor.secondary_style = static_cast<int>(core::CursorStyle::BibataHover);
 	a.cursor.link_detection = false;
 	a.cursor.follow_mode = static_cast<int>(core::CursorFollowMode::GlideSampled);
@@ -121,6 +122,7 @@ TEST(settings_store_load_roundtrip)
 	CHECK_NEAR(b.keys.pos_x, 0.25, 1e-9);
 	CHECK_EQ(b.highlight.color, a.highlight.color);
 	CHECK_NEAR(b.cursor.size, 1.5, 1e-9);
+	CHECK_NEAR(b.cursor.rotation_offset_deg, -12.0, 1e-9);
 	CHECK_EQ(b.cursor.secondary_style, a.cursor.secondary_style);
 	CHECK(!b.cursor.link_detection);
 	CHECK_EQ(b.cursor.follow_mode, static_cast<int>(core::CursorFollowMode::GlideAB));

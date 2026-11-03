@@ -2,9 +2,24 @@
 
 #include "ts-registry.hpp"
 
+#include <obs-frontend-api.h>
+#include <util/config-file.h>
+
 namespace topscreen {
 
 namespace {
+
+/* Profile hotkeys are the only ones with a built-in default:
+ * Ctrl+Shift+Alt+A .. Ctrl+Shift+Alt+J. */
+const obs_key_t kProfileDefaults[10] = {
+	OBS_KEY_A, OBS_KEY_B, OBS_KEY_C, OBS_KEY_D, OBS_KEY_E,
+	OBS_KEY_F, OBS_KEY_G, OBS_KEY_H, OBS_KEY_I, OBS_KEY_J,
+};
+
+bool is_profile_action(int action)
+{
+	return action >= HK_ProfileA && action <= HK_ProfileJ;
+}
 
 /* Localized description of each hotkey (literals for the translation test).
  * Every label starts with the literal ID ("TopScreen_ProfileA") so the OBS
@@ -84,6 +99,11 @@ void Hotkeys::register_all(HotkeyContext *ctx)
 			ids_[i] = 0;
 	}
 
+	/* OBS saves plugin frontend hotkeys in the profile config but does not
+	 * restore them for us. Load the user's bindings, then fill only the
+	 * missing profile hotkeys with the Ctrl+Shift+Alt+A..J defaults. */
+	load_saved_or_defaults();
+
 	/* Frontend hotkeys show up flat in Settings > Hotkeys (not grouped under
 	 * the filter instance: per-source registration is impossible for
 	 * filters, which OBS always marks private). */
@@ -92,6 +112,72 @@ void Hotkeys::register_all(HotkeyContext *ctx)
 	for (int i = 0; i < HK_Count; ++i)
 		blog(LOG_INFO, "[TopScreen]   hotkey id=%d %s (%s)", static_cast<int>(ids_[i]),
 		     kHotkeyNames[i], hotkey_description(i));
+}
+
+bool Hotkeys::apply_default_binding(int action)
+{
+	if (!is_profile_action(action) || !ids_[action])
+		return false;
+
+	obs_key_combination_t combo = {};
+	combo.modifiers = INTERACT_CONTROL_KEY | INTERACT_SHIFT_KEY | INTERACT_ALT_KEY;
+	combo.key = kProfileDefaults[action - HK_ProfileA];
+	obs_hotkey_load_bindings(ids_[action], &combo, 1);
+	return true;
+}
+
+void Hotkeys::load_saved_or_defaults()
+{
+	config_t *profile_config = obs_frontend_get_profile_config();
+	int defaults = 0;
+
+	for (int i = 0; i < HK_Count; ++i) {
+		if (!ids_[i])
+			continue;
+
+		bool saved = false;
+		if (profile_config) {
+			const char *json =
+				config_get_string(profile_config, "Hotkeys", kHotkeyNames[i]);
+			if (json && *json) {
+				obs_data_t *data = obs_data_create_from_json(json);
+				if (data) {
+					obs_data_array_t *bindings =
+						obs_data_get_array(data, "bindings");
+					if (bindings) {
+						/* A saved empty array is intentional:
+						 * the user cleared this hotkey. */
+						obs_hotkey_load(ids_[i], bindings);
+						obs_data_array_release(bindings);
+						saved = true;
+					}
+					obs_data_release(data);
+				} else {
+					blog(LOG_WARNING,
+					     "[TopScreen] invalid saved hotkey JSON for %s",
+					     kHotkeyNames[i]);
+				}
+			}
+		}
+
+		if (!saved && is_profile_action(i) && apply_default_binding(i))
+			++defaults;
+	}
+
+	if (defaults)
+		blog(LOG_INFO,
+		     "[TopScreen] applied default profile hotkeys Ctrl+Shift+Alt+A..J (%d)",
+		     defaults);
+}
+
+void Hotkeys::apply_default_profile_bindings()
+{
+	int applied = 0;
+	for (int i = HK_ProfileA; i <= HK_ProfileJ; ++i) {
+		if (apply_default_binding(i))
+			++applied;
+	}
+	blog(LOG_INFO, "[TopScreen] profile hotkeys restored to defaults (%d/10)", applied);
 }
 
 void Hotkeys::unregister_all(HotkeyContext *ctx)

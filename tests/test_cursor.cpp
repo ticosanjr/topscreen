@@ -87,6 +87,32 @@ TEST(cursor_custom_styles_keep_the_fixed_30_degree_tilt)
 	CHECK_NEAR(m.render().rotation, 0.5235987756, 1e-9);
 }
 
+TEST(cursor_rotation_offset_adds_to_the_style_baseline)
+{
+	constexpr double kPi = 3.14159265358979323846;
+	CursorModel m;
+	CursorConfig cfg;
+	cfg.follow_mode = static_cast<int>(CursorFollowMode::Exact);
+	cfg.style = static_cast<int>(CursorStyle::Bibata);
+	cfg.rotation_offset_deg = 15.0;
+	m.configure(cfg);
+	m.reset(0.5, 0.5, 0.0);
+	m.update(0.0);
+	CHECK_NEAR(m.render().rotation, 15.0 * kPi / 180.0, 1e-9);
+
+	/* Custom baseline is 30°, so -30° makes it upright. */
+	cfg.style = static_cast<int>(CursorStyle::CustomPurpleIris);
+	cfg.rotation_offset_deg = -30.0;
+	m.configure(cfg);
+	m.update(1.0);
+	CHECK_NEAR(m.render().rotation, 0.0, 1e-9);
+
+	cfg.rotation_offset_deg = 10.0;
+	m.configure(cfg);
+	m.update(2.0);
+	CHECK_NEAR(m.render().rotation, 40.0 * kPi / 180.0, 1e-9);
+}
+
 TEST(cursor_idle_reduces_opacity)
 {
 	CursorModel m;

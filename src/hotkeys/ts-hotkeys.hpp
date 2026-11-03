@@ -55,7 +55,13 @@ public:
 	void register_all(HotkeyContext *ctx);
 	void unregister_all(HotkeyContext *ctx);
 
+	/** Forces Ctrl+Shift+Alt+A..J on the ten profile actions (UI button). */
+	static void apply_default_profile_bindings();
+
 private:
+	static void load_saved_or_defaults();
+	static bool apply_default_binding(int action);
+
 	static std::atomic<int> refs_;
 	static HotkeyBinding bindings_[HK_Count];
 	static obs_hotkey_id ids_[HK_Count];

@@ -13,6 +13,10 @@
 #include <string>
 #include <vector>
 
+struct obs_data_array {
+	std::vector<obs_data_t *> items;
+};
+
 struct obs_data {
 	std::map<std::string, bool> bools;
 	std::map<std::string, long long> ints;
@@ -25,6 +29,7 @@ struct obs_data {
 	std::map<std::string, double> def_doubles;
 	std::map<std::string, std::string> def_strings;
 	std::map<std::string, obs_data_t *> objs;
+	std::map<std::string, obs_data_array_t *> arrays;
 };
 
 struct obs_property {
@@ -80,6 +85,12 @@ void invoke_hotkey(int index, bool pressed);
 int hotkey_count();
 /** True when every hotkey registered from `index` on has a callback and is active. */
 bool hotkeys_active_from(int index);
+
+/** Latest registered bindings for a hotkey name (empty when absent). */
+const std::vector<obs_key_combination_t> &hotkey_bindings(const char *name);
+
+/** Profile config value used by the frontend hotkey loader. */
+void set_profile_config_string(const char *section, const char *name, const char *value);
 
 /** Records a uniform upload (used to catch D3D11's "parameter not set"). */
 void note_uniform_set(const std::string &name);

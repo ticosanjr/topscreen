@@ -39,6 +39,7 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | Cursor | Show custom cursor | `cursor_enabled` | bool | — | `true` |
 | | Cursor style (grouped by theme) | `cursor_style` | int | **Bibata** 3 · 27 · 10 · 32 · 11 · 33 · 22 · 36; **Breeze** 2 · 26 · 21 · 35; **Adwaita** 4 · 28; **Yaru** 8 · 30; **DMZ** 7 · 29 · 19 · 34; **Google Dot** 5 · 20; **XCursor Pro** 9 · 31; **macOS** 0; **Windows** 1; **Effects** 12 Neon · 15 Onyx · 13 Dot; **Custom** 50 styles (see [`CURSORS.md`](CURSORS.md)) | `0` |
 | | Cursor size (1 = default) | `cursor_size` | double | 0.5–4 | `1.4` |
+| | Rotation offset (degrees) | `cursor_rotation_offset_deg` | double | −180–180 | `0` |
 | | Cursor shadow | `cursor_shadow` | bool | — | `true` |
 | | Smoothing (legacy, ignored) | `cursor_smooth` | double | — | `0` |
 | | Curve tilt (legacy, ignored) | `cursor_sway` | double | — | `0` |
@@ -154,6 +155,7 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Origin X (px) | `monitor_x` | int | −32768…32767 | `0` |
 | | Origin Y (px) | `monitor_y` | int | −32768…32767 | `0` |
 | Profiles | Current profile | `profile_current` | int | 0–9 (A–J) | `0` |
+| Profiles | Default seed revision | `profile_seed_version` | int | internal; bumped when A–J seeds change | `2` |
 | | Profile slots | `profile_slot_0`, `profile_slot_1`, … `profile_slot_5` … `profile_slot_9` (profiles A–J) | object | Full config (nested obs_data) | — |
 | | Export path (Properties fallback) | `profile_export_path` | string | Any `.json` path | `""` |
 | | Import path (Properties fallback) | `profile_import_path` | string | Any `.json` path | `""` |
@@ -187,6 +189,13 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 > Profiles: switching profile applies the whole slot; subsequent edits are written
 > to the active slot (auto-save, debounced by ~0.4 s) and the chosen profile is
 > re-applied when the source loads.
+>
+> Default slots: **A** balanced, **B** clean/minimal, **C** presentation,
+> **D** streaming, **E** spotlight, **F** magnifier, **G** neon, **H** cinematic,
+> **I** maximum, **J** full passthrough (master effects off). Sources from older
+> builds are reseeded once when `profile_seed_version` is bumped; use
+> **Restore default profiles A-J** to apply the seeds again. That button
+> overwrites edits in all ten slots.
 
 > Spotlight and Magnifier are mutually exclusive: enabling one disables the other. Both are full-screen focus effects and share the same transition/hotkey model.
 
@@ -211,7 +220,7 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 {
   "topscreen_profiles": 1,
   "plugin": "TopScreen",
-  "version": "1.1.3",
+  "version": "1.2.0",
   "current": 0,
   "profile_slot_0": { "effects_enabled": true },
   "profile_slot_1": { "effects_enabled": true },
@@ -232,6 +241,10 @@ referenced by path and are not embedded.
 
 Registered IDs (global frontend hotkeys, shown in **Settings → Hotkeys**;
 they act on the filter selected in the dock, or the first active one):
+
+> Default profile hotkeys: **Ctrl+Shift+Alt+A** through **Ctrl+Shift+Alt+J**.
+> Saved bindings always win; the defaults are applied only when no saved
+> binding exists. **Restore default profile hotkeys** forces all ten.
 
 | ID | Action |
 |----|------|

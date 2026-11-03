@@ -39,6 +39,8 @@ struct CursorConfig {
 	int secondary_style = -1;
 	bool link_detection = true;
 	double size = 1.4;     // size multiplier
+	/* Extra rotation added to the style baseline (0° bundled, 30° Custom). */
+	double rotation_offset_deg = 0.0;
 	bool shadow = true;
 	int follow_mode = static_cast<int>(CursorFollowMode::Exact);
 	double glide_ms = 180.0; // Glide: A->B easing duration

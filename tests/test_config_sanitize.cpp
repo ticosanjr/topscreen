@@ -47,6 +47,7 @@ TEST(config_sanitize_clamps_ranges_and_keeps_valid_values)
 	cfg.bg.padding_x = -12.0;
 	cfg.bg.shadow_offset_x = 500.0;
 	cfg.cursor.size = 9.0;
+	cfg.cursor.rotation_offset_deg = 999.0;
 	cfg.zoom.amount = 0.1;
 	cfg.cursor.follow_mode = 99;
 	cfg.cursor.glide_ms = 0.0;
@@ -66,6 +67,7 @@ TEST(config_sanitize_clamps_ranges_and_keeps_valid_values)
 	CHECK_NEAR(cfg.bg.padding_x, 0.0, 1e-9);
 	CHECK_NEAR(cfg.bg.shadow_offset_x, 100.0, 1e-9);
 	CHECK_NEAR(cfg.cursor.size, 4.0, 1e-9);
+	CHECK_NEAR(cfg.cursor.rotation_offset_deg, 180.0, 1e-9);
 	CHECK_NEAR(cfg.zoom.amount, 1.0, 1e-9);
 	CHECK_EQ(cfg.cursor.follow_mode, static_cast<int>(CursorFollowMode::GlideAB));
 	CHECK_NEAR(cfg.cursor.glide_ms, 50.0, 1e-9);

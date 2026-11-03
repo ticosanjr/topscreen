@@ -87,10 +87,10 @@ Places the screen "floating" over a background, with corners and shadow.
 | **Color 2 (gradient end)** | Second gradient color (gradient only) |
 | **Gradient angle (degrees)** | Direction of the two-color gradient (0–360°) |
 | **Gradient meeting point X/Y** | Moves the point where the two colors meet (0 = left/top, 1 = right/bottom) |
-| **Wallpaper preset** | **Transparent (use the scene below)**, **No wallpaper**, or one of the **18 images** that ship with the plugin. Choosing one applies it |
-| **Custom wallpaper file** | Button to choose a **file from your PC** (jpg/png/bmp/tga/gif/webp). Choosing one **clears** the wallpaper preset (they are mutually exclusive) |
+| **Wallpaper preset** | One of the **18 images** that ship with the plugin. Choosing one applies the Wallpaper background type |
+| **Local image file** | Choose a file from your PC (jpg/png/bmp/tga/gif/webp) in the **Local image** background type |
 | **Wallpaper blur radius (px)** | How far the background image spreads (0 = sharp) |
-| **Wallpaper diffusion** | No blur · Soft (fast) · **Gaussian (balanced)** · Creamy (wide) · Frosted glass (smoothest). The wallpaper is prefiltered once when the image or blur settings change, then sampled once per pixel |
+| **Wallpaper diffusion** | **Soft** is the only style. The wallpaper is prefiltered once when the image or blur settings change, then sampled once per pixel |
 | **Horizontal / vertical screen margin (px)** | Margin between the screen and the edge (separate X and Y) |
 | **Keep screen aspect ratio** | Avoids stretching the screen: it is scaled down proportionally (leave it on) |
 | **Screen corner radius (px)** | Radius of the captured screen corners |
@@ -104,7 +104,7 @@ Places the screen "floating" over a background, with corners and shadow.
 > The background appears **behind** the screen. **Solid** uses Color 1;
 > **Gradient** blends Color 1 → Color 2 through the meeting point and angle;
 > **Wallpaper** uses the image controls.
-> **Transparent** removes the background/padding and lets the scene below show through; the captured screen, corners, shadow, cursor, clicks and keys stay on top.
+> **Transparent** removes the background color/image and lets the scene below show through; padding, corners and the window shadow still shape the floating screen.
 
 ### Cursor
 | Option | What it does |
@@ -115,6 +115,7 @@ Places the screen "floating" over a background, with corners and shadow.
 | **Change cursor over links** | Automatic on **Windows and X11**. Wayland has no portable link-cursor signal, so the primary stays active |
 | **Cursor movement** | **Exact** or **Glide (A to B)** |
 | **Cursor size (1 = default)** | Cursor scale (1.0 = default) |
+| **Rotation offset (degrees)** | Extra rotation added to the style baseline: 0° for Bibata–Dot, 30° for Custom images |
 | **Glide duration** | A→B duration |
 | **Cursor shadow** | Shadow to make it stand out from the background |
 | **Hide cursor when idle** | Disappears when you stop moving |
@@ -200,12 +201,6 @@ Each button has its own independent effect.
 | **Centering (0 = follows mouse, 1 = centered)** | 0 = follows the mouse; 1 = keeps the mouse in the **center** (the view **anticipates** the edges — the corner appears before you get to it) |
 
 Zoom treats the whole scene as one image: the wallpaper, frame, shadow and captured screen magnify around the same focus. The cursor and key overlay stay readable and follow the physical pointer.
-
-### Movement (motion blur)
-| Option | What it does |
-|-------|-----------|
-| **Enable motion blur** | Radial blur during zoom |
-| **Motion blur intensity (0–1)** | Blur strength |
 
 ### Spotlight
 | Option | What it does |
@@ -341,7 +336,7 @@ section lists Highlighter before Keystrokes.
 
 ## 6. Hotkeys
 
-In **Settings → Hotkeys**, search for `TopScreen`: all 21 actions are labelled
+Default profile hotkeys are **Ctrl+Shift+Alt+A…J**. In **Settings → Hotkeys**, search for `TopScreen`: all 22 actions are labelled
 **`TopScreen_...`** (for example `TopScreen_ProfileA — Activate profile A`), so
 they are easy to spot. They are global hotkeys, so they
 act on the **target filter selected in the dock** (or the first active one
@@ -393,6 +388,12 @@ nothing is selected).
   the profile on every frame; switching profiles/saving/exporting flushes it.
 - The selected profile is re-applied **when OBS opens**, so the look comes back the same.
 - Hotkeys: **Activate profile A … J** and **Save to current profile**.
+- Default profile hotkeys are **Ctrl+Shift+Alt+A** through **Ctrl+Shift+Alt+J**.
+  Saved bindings win; defaults are applied only when no saved binding exists.
+  The Properties backup section has **Restore default profile hotkeys**.
+- **Restore default profiles A-J** overwrites all ten slots with the built-in
+  configurations. Existing sources are reseeded once when the profile seed
+  revision changes.
 
 ### Backup / transfer
 
@@ -416,16 +417,16 @@ They already ship with examples, so you can just switch and see the difference:
 
 | Profile | Example |
 |---|---|
-| **A** | default |
-| **B** | **green/orange** clicks + **zoom 2.0** |
-| **C** | **purple/cyan** clicks + zoom 1.4 and vertical gradient |
-| **D** | **yellow/white** clicks and **zoom off** |
-| **E** | **blue/orange** clicks + zoom 1.8, solid background |
-| **F** | **magenta/lime** clicks + zoom 2.5, vertical gradient |
-| **G** | white/pink clicks + gentle zoom 1.25, green highlighter |
-| **H** | teal/red clicks + zoom 3.0, click sound off |
-| **I** | violet/gold clicks, **neon cursor**, manual zoom |
-| **J** | green/black clicks, **wallpaper background**, crosshair cursor |
+| **A** | balanced everyday default |
+| **B** | clean/minimal: transparent, zoom off |
+| **C** | presentation/teaching: keys + highlighter |
+| **D** | streaming/gaming: solid background, colorful clicks |
+| **E** | spotlight focus |
+| **F** | magnifier lens |
+| **G** | neon energy |
+| **H** | cinematic wallpaper |
+| **I** | maximum effects |
+| **J** | full passthrough (master effects off) |
 
 ---
 
@@ -433,7 +434,7 @@ They already ship with examples, so you can just switch and see the difference:
 
 **Product demo (similar to "Screen Studio")**
 - Background = Two-color gradient (45°), screen margin 64, corner radius 18, shadow on
-- Cursor = size 1.6, smoothing 0.8, sway 0.4
+- Cursor = Bibata Ice, size 1.4, rotation offset 0°
 - Zoom = Automatic, intensity 1.6
 - Left click = Ripple; Right = Orb
 
@@ -478,10 +479,10 @@ TOPSCREEN_DEBUG_KEY=Ctrl obs
 ## 11. Performance
 
 - The effects run on the **GPU**, in the OBS process (no recording, no copy).
-- Higher cost: **shadow** (blur), **motion blur** and the full-frame spotlight
-  blur. If the PC is weak: reduce the **Shadow blur**, turn off **Movement**,
-  or reduce the spotlight **Blur outside**. Wallpaper diffusion is prefiltered
-  once, so it is much cheaper than the old per-pixel kernels.
+- Higher cost: **shadow** (blur) and the full-frame spotlight blur. If the PC is
+  weak: reduce the **Shadow blur** or the spotlight **Blur amount**. Wallpaper
+  diffusion is prefiltered once, so it is much cheaper than the old per-pixel
+  kernels.
 - High resolutions + a 60 Hz monitor are fine; 120/144 Hz monitors cost more.
 - In software rendering (no GPU, e.g. `llvmpipe`), everything works, but slower.
 

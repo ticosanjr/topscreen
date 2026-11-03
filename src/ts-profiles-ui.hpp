@@ -14,4 +14,7 @@ inline constexpr const char *kProfileImportPath = "profile_import_path";
 bool profiles_export_from_properties(void *filter);
 bool profiles_import_from_properties(void *filter);
 
+/** Queues a one-time restore of profiles A..J to the built-in seeds. */
+bool profiles_reset_from_properties(void *filter);
+
 } // namespace topscreen

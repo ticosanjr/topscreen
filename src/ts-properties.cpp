@@ -6,6 +6,7 @@
 #include "core/profiles.hpp"
 #include "core/sound_catalog.hpp"
 #include "core/types.hpp"
+#include "hotkeys/ts-hotkeys.hpp"
 #include "ts-profiles-ui.hpp"
 #include "ts-version.hpp"
 #include "ts-wallpapers.hpp"
@@ -156,7 +157,8 @@ bool cursor_options_changed(obs_properties_t *props, obs_property_t *p, obs_data
 	const bool glide = mode != static_cast<long long>(CursorFollowMode::Exact);
 	if (!on) {
 		for (const char *key : {kCursorStyle, kCursorSecondaryStyle,
-				       kCursorLinkDetection, kCursorSize, kCursorFollowMode,
+				       kCursorLinkDetection, kCursorSize,
+				       kCursorRotationOffset, kCursorFollowMode,
 				       kCursorGlideMs, kCursorShadow, kCursorHideIdle,
 				       kCursorIdleDelayMs}) {
 			if (obs_property_t *v = obs_properties_get(props, key))
@@ -171,6 +173,8 @@ bool cursor_options_changed(obs_properties_t *props, obs_property_t *p, obs_data
 	if (obs_property_t *v = obs_properties_get(props, kCursorLinkDetection))
 		obs_property_set_visible(v, true);
 	if (obs_property_t *v = obs_properties_get(props, kCursorSize))
+		obs_property_set_visible(v, true);
+	if (obs_property_t *v = obs_properties_get(props, kCursorRotationOffset))
 		obs_property_set_visible(v, true);
 	if (obs_property_t *v = obs_properties_get(props, kCursorFollowMode))
 		obs_property_set_visible(v, true);
@@ -313,6 +317,22 @@ bool import_profiles_clicked(obs_properties_t *props, obs_property_t *p, void *d
 	UNUSED_PARAMETER(props);
 	UNUSED_PARAMETER(p);
 	return profiles_import_from_properties(data);
+}
+
+bool reset_profiles_clicked(obs_properties_t *props, obs_property_t *p, void *data)
+{
+	UNUSED_PARAMETER(props);
+	UNUSED_PARAMETER(p);
+	return profiles_reset_from_properties(data);
+}
+
+bool default_hotkeys_clicked(obs_properties_t *props, obs_property_t *p, void *data)
+{
+	UNUSED_PARAMETER(props);
+	UNUSED_PARAMETER(p);
+	UNUSED_PARAMETER(data);
+	Hotkeys::apply_default_profile_bindings();
+	return false;
 }
 
 void add_click_group(obs_properties_t *props, const char *group_key, const char *title,
@@ -488,6 +508,14 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 	obs_properties_add_button2(backup, "profile_import_btn",
 				   obs_module_text("Profile.ImportButton"), import_profiles_clicked,
 				   data);
+	obs_property_t *reset_btn = obs_properties_add_button2(
+		backup, "profile_reset_btn", obs_module_text("Profile.ResetButton"),
+		reset_profiles_clicked, data);
+	set_tip(reset_btn, obs_module_text("Tooltip.ProfileReset"));
+	obs_property_t *hotkey_btn = obs_properties_add_button2(
+		backup, "profile_hotkeys_btn", obs_module_text("Profile.DefaultHotkeysButton"),
+		default_hotkeys_clicked, data);
+	set_tip(hotkey_btn, obs_module_text("Tooltip.ProfileDefaultHotkeys"));
 
 	obs_properties_add_group(props, "grp_profiles", obs_module_text("Group.Profiles"), OBS_GROUP_NORMAL, prof);
 
@@ -638,6 +666,10 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 	set_tip(link_detection, obs_module_text("Tooltip.CursorLinkDetection"));
 
 	obs_properties_add_float_slider(cur, kCursorSize, obs_module_text("Cursor.Size"), 0.5, 4.0, 0.05);
+	obs_property_t *rotation = obs_properties_add_float_slider(
+		cur, kCursorRotationOffset, obs_module_text("Cursor.RotationOffset"), -180.0,
+		180.0, 1.0);
+	set_tip(rotation, obs_module_text("Tooltip.CursorRotationOffset"));
 	obs_property_t *follow = obs_properties_add_list(
 		cur, kCursorFollowMode, obs_module_text("Cursor.FollowMode"), OBS_COMBO_TYPE_LIST,
 		OBS_COMBO_FORMAT_INT);
@@ -963,6 +995,7 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 	tip(kCursorFollowMode, obs_module_text("Tooltip.CursorFollowMode"));
 	tip(kCursorGlideMs, obs_module_text("Tooltip.CursorGlideMs"));
 	tip(kCursorSize, obs_module_text("Tooltip.CursorSize"));
+	tip(kCursorRotationOffset, obs_module_text("Tooltip.CursorRotationOffset"));
 	tip(kCursorHideIdle, obs_module_text("Tooltip.CursorHideIdle"));
 	tip(kClickLeftEffect, obs_module_text("Tooltip.ClickEffect"));
 	tip(kClickLeftSize, obs_module_text("Tooltip.ClickSize"));

@@ -42,6 +42,7 @@ TEST(preset_covers_all_keys)
             "cursor_secondary_style": 26,
             "cursor_link_detection": false,
             "cursor_size": 2.5,
+            "cursor_rotation_offset_deg": -12.5,
             "cursor_shadow": false,
             "cursor_follow_mode": 2,
             "cursor_smooth": 0.11,
@@ -190,6 +191,7 @@ TEST(preset_covers_all_keys)
 	CHECK_EQ(c.cursor.secondary_style, 26);
 	CHECK(!c.cursor.link_detection);
 	CHECK_NEAR(c.cursor.size, 2.5, 1e-9);
+	CHECK_NEAR(c.cursor.rotation_offset_deg, -12.5, 1e-9);
 	CHECK(!c.cursor.shadow);
 	CHECK_EQ(c.cursor.follow_mode, 3);
 	CHECK_NEAR(c.cursor.smooth, 0.11, 1e-9);

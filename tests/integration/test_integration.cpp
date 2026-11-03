@@ -24,8 +24,10 @@
 #include "core/types.hpp"
 #include "ts-filter.hpp"
 #include "ts-properties.hpp"
+#include "ts-profiles-ui.hpp"
 #include "render/ts-wallpaper.hpp"
 #include "ts-registry.hpp"
+#include "hotkeys/ts-hotkeys.hpp"
 
 using namespace topscreen;
 
@@ -659,22 +661,25 @@ TEST(integration_seeded_profiles_restore)
 	FilterControl *ctrl = registry_first();
 	REQUIRE(ctrl != nullptr);
 
-	/* Profile A (default): zoom 1.6 and white left click. */
+	/* Profile A (balanced): zoom 1.35 and white left click. */
 	ctrl->select_profile(0);
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
-	CHECK_NEAR(obs_data_get_double(filter->settings, core::keys::kZoomAmount), 1.6, 1e-6);
+	CHECK_NEAR(obs_data_get_double(filter->settings, core::keys::kZoomAmount), 1.35, 1e-6);
+	CHECK_EQ(obs_data_get_int(filter->settings, core::keys::kClickLeftColor),
+		 static_cast<long long>(0xFFFFFFFF));
 
-	/* Profile B: zoom 2.0 and GREEN left click (seeded). */
+	/* Profile B (clean): transparent background and zoom off. */
 	ctrl->select_profile(1);
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
-	CHECK_NEAR(obs_data_get_double(filter->settings, core::keys::kZoomAmount), 2.0, 1e-6);
-	CHECK_EQ(obs_data_get_int(filter->settings, core::keys::kClickLeftColor),
-		 static_cast<long long>(0xFF00FF00));
+	CHECK_EQ(obs_data_get_int(filter->settings, core::keys::kZoomMode),
+		 static_cast<long long>(core::ZoomMode::Off));
+	CHECK_EQ(obs_data_get_int(filter->settings, core::keys::kBgType),
+		 static_cast<long long>(core::BgMode::Transparent));
 
 	/* Going back to A must restore EVERYTHING. */
 	ctrl->select_profile(0);
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
-	CHECK_NEAR(obs_data_get_double(filter->settings, core::keys::kZoomAmount), 1.6, 1e-6);
+	CHECK_NEAR(obs_data_get_double(filter->settings, core::keys::kZoomAmount), 1.35, 1e-6);
 	CHECK_EQ(obs_data_get_int(filter->settings, core::keys::kClickLeftColor),
 		 static_cast<long long>(0xFFFFFFFF));
 
@@ -691,30 +696,31 @@ TEST(integration_profile_from_list_restores_everything)
 	REQUIRE(ctx != nullptr);
 	ts_filter_source_info.video_render(ctx, nullptr);
 
-	/* Profile B (seeded): zoom 2.0 + green left click. */
+	/* Profile B (seeded): transparent background + zoom off. */
 	set_profile_from_properties(filter, ctx, 1);
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
-	CHECK_NEAR(obs_data_get_double(filter->settings, core::keys::kZoomAmount), 2.0, 1e-6);
-	CHECK_EQ(obs_data_get_int(filter->settings, core::keys::kClickLeftColor),
-		 static_cast<long long>(0xFF00FF00));
+	CHECK_EQ(obs_data_get_int(filter->settings, core::keys::kZoomMode),
+		 static_cast<long long>(core::ZoomMode::Off));
+	CHECK_EQ(obs_data_get_int(filter->settings, core::keys::kBgType),
+		 static_cast<long long>(core::BgMode::Transparent));
 
 	/* The main keys must come along, otherwise the next reload undoes the profile. */
-	CHECK(obs_data_has_user_value(filter->settings, core::keys::kZoomAmount));
+	CHECK(obs_data_has_user_value(filter->settings, core::keys::kZoomMode));
 
 	/* Changing ANOTHER property must not undo the active profile. */
 	obs_data_set_bool(filter->settings, core::keys::kHighlightEnabled, false);
 	ts_filter_source_info.update(ctx, filter->settings);
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
-	CHECK_NEAR(obs_data_get_double(filter->settings, core::keys::kZoomAmount), 2.0, 1e-6);
-	CHECK_EQ(obs_data_get_int(filter->settings, core::keys::kClickLeftColor),
-		 static_cast<long long>(0xFF00FF00));
+	CHECK_EQ(obs_data_get_int(filter->settings, core::keys::kZoomMode),
+		 static_cast<long long>(core::ZoomMode::Off));
+	CHECK_EQ(obs_data_get_int(filter->settings, core::keys::kBgType),
+		 static_cast<long long>(core::BgMode::Transparent));
 
-	/* Profile C (seeded): purple/cyan + zoom 1.4. */
+	/* Profile C (seeded): presentation, zoom 1.25 + keys on. */
 	set_profile_from_properties(filter, ctx, 2);
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
-	CHECK_NEAR(obs_data_get_double(filter->settings, core::keys::kZoomAmount), 1.4, 1e-6);
-	CHECK_EQ(obs_data_get_int(filter->settings, core::keys::kClickLeftColor),
-		 static_cast<long long>(0xFFFF5C7C));
+	CHECK_NEAR(obs_data_get_double(filter->settings, core::keys::kZoomAmount), 1.25, 1e-6);
+	CHECK(obs_data_get_bool(filter->settings, core::keys::kKeysEnabled));
 
 	ts_filter_source_info.destroy(ctx);
 	CHECK(registry_first() == nullptr);
@@ -960,11 +966,11 @@ TEST(integration_profile_partial_slot_uses_seed)
 
 	CHECK_EQ(obs_data_get_string(filter->settings, core::keys::kBgImage),
 		 std::string("wallpapers/glacier.jpg"));
-	/* Profile D's seed: zoom off and yellow left click. */
+	/* Profile D's seed: auto zoom and gold left click. */
 	CHECK_EQ(obs_data_get_int(filter->settings, core::keys::kZoomMode),
-		 static_cast<long long>(core::ZoomMode::Off));
+		 static_cast<long long>(core::ZoomMode::Auto));
 	CHECK_EQ(obs_data_get_int(filter->settings, core::keys::kClickLeftColor),
-		 static_cast<long long>(0xFF00D6FF));
+		 static_cast<long long>(0xFF00D7FF));
 
 	ts_filter_source_info.destroy(ctx);
 }
@@ -999,16 +1005,16 @@ TEST(integration_profile_import_fills_missing_fields)
 	CHECK_EQ(obs_data_get_int(filter->settings, core::keys::kCursorStyle), 60);
 	CHECK_EQ(obs_data_get_string(filter->settings, core::keys::kBgImage),
 		 std::string("wallpapers/glacier.jpg"));
-	CHECK_NEAR(obs_data_get_double(filter->settings, core::keys::kBgPaddingX), 64.0, 1e-9);
+	CHECK_NEAR(obs_data_get_double(filter->settings, core::keys::kBgPaddingX), 36.0, 1e-9);
 	CHECK(!obs_data_get_bool(filter->settings, core::keys::kKeysShowSpecial));
 	CHECK(obs_data_get_bool(filter->settings, core::keys::kKeysShowShortcuts));
 	CHECK_EQ(obs_data_get_string(filter->settings, core::keys::kClickSoundFileLeft),
 		 std::string("sounds/click-soft.wav"));
 	/* Fields absent from the partial slot keep profile D's seed, not zeros. */
 	CHECK_EQ(obs_data_get_int(filter->settings, core::keys::kZoomMode),
-		 static_cast<long long>(core::ZoomMode::Off));
+		 static_cast<long long>(core::ZoomMode::Auto));
 	CHECK_EQ(obs_data_get_int(filter->settings, core::keys::kClickLeftColor),
-		 static_cast<long long>(0xFF00D6FF));
+		 static_cast<long long>(0xFF00D7FF));
 
 	ts_filter_source_info.destroy(ctx);
 }
@@ -1023,11 +1029,11 @@ TEST(integration_profile_keeps_user_edit)
 	REQUIRE(ctx != nullptr);
 	ts_filter_source_info.video_render(ctx, nullptr);
 
-	/* Goes to profile D (zoom off). */
+	/* Goes to profile D (gold left click). */
 	set_profile_from_properties(filter, ctx, 3);
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
-	CHECK_EQ(obs_data_get_int(filter->settings, core::keys::kZoomMode),
-		 static_cast<long long>(core::ZoomMode::Off));
+	CHECK_EQ(obs_data_get_int(filter->settings, core::keys::kClickLeftColor),
+		 static_cast<long long>(0xFF00D7FF));
 
 	/* User changes the left click color (a value that exists in no seed). */
 	obs_data_set_int(filter->settings, core::keys::kClickLeftColor,
@@ -1073,9 +1079,10 @@ TEST(integration_chosen_profile_survives_restart)
 	ts_filter_source_info.video_tick(ctx2, 1.0f / 60.0f);
 
 	/* The state must be that of profile B (not the default). */
-	CHECK_NEAR(obs_data_get_double(f2->settings, core::keys::kZoomAmount), 2.0, 1e-6);
-	CHECK_EQ(obs_data_get_int(f2->settings, core::keys::kClickLeftColor),
-		 static_cast<long long>(0xFF00FF00));
+	CHECK_EQ(obs_data_get_int(f2->settings, core::keys::kZoomMode),
+		 static_cast<long long>(core::ZoomMode::Off));
+	CHECK_EQ(obs_data_get_int(f2->settings, core::keys::kBgType),
+		 static_cast<long long>(core::BgMode::Transparent));
 
 	ts_filter_source_info.destroy(ctx2);
 }
@@ -1317,4 +1324,133 @@ TEST(integration_wallpaper_pipeline_polls_ready_texture)
 	}
 	CHECK(pipeline.has_texture());
 	pipeline.release();
+}
+
+
+/* The new A..J seeds overwrite existing slots once (revision 1 -> 2), then
+ * preserve later user edits. */
+TEST(integration_profile_seed_revision_overwrites_once)
+{
+	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
+
+	obs_source_t *parent = make_parent(1920, 1080);
+	obs_source_t *filter = fakeobs::make_source(&ts_filter_source_info, parent, 0, 0);
+	obs_data_set_int(filter->settings, core::keys::kProfileSeedVersion, 1);
+	obs_data_t *slot = obs_data_create();
+	obs_data_set_int(slot, core::keys::kClickLeftColor, 0x112233);
+	obs_data_set_obj(filter->settings, core::keys::kProfileSlots[0], slot);
+	obs_data_release(slot);
+
+	void *ctx = create_filter(filter);
+	REQUIRE(ctx != nullptr);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+
+	obs_data_t *seed_slot = obs_data_get_obj(filter->settings, core::keys::kProfileSlots[0]);
+	REQUIRE(seed_slot != nullptr);
+	CHECK_EQ(obs_data_get_int(seed_slot, core::keys::kClickLeftColor),
+		 static_cast<long long>(0xFFFFFFFF));
+	CHECK_EQ(obs_data_get_int(filter->settings, core::keys::kProfileSeedVersion), 2);
+
+	/* A later edit with the current revision must survive a restart. */
+	obs_data_set_int(seed_slot, core::keys::kClickLeftColor, 0x445566);
+	obs_data_t saved = *filter->settings;
+	ts_filter_source_info.destroy(ctx);
+
+	obs_source_t *f2 = fakeobs::make_source(&ts_filter_source_info, parent, 0, 0);
+	*f2->settings = saved;
+	void *ctx2 = ts_filter_source_info.create(f2->settings, f2);
+	REQUIRE(ctx2 != nullptr);
+	ts_filter_source_info.video_tick(ctx2, 1.0f / 60.0f);
+	CHECK_EQ(obs_data_get_int(f2->settings, core::keys::kClickLeftColor),
+		 static_cast<long long>(0x445566));
+	obs_data_t *kept_slot = obs_data_get_obj(f2->settings, core::keys::kProfileSlots[0]);
+	REQUIRE(kept_slot != nullptr);
+	CHECK_EQ(obs_data_get_int(kept_slot, core::keys::kClickLeftColor),
+		 static_cast<long long>(0x445566));
+	ts_filter_source_info.destroy(ctx2);
+}
+
+/* Saved frontend bindings win; only missing profile hotkeys get the default
+ * Ctrl+Shift+Alt+A..J. An explicitly empty binding stays empty. */
+TEST(integration_hotkey_saved_bindings_and_defaults)
+{
+	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
+	fakeobs::set_profile_config_string(
+		"Hotkeys", "TopScreen_ProfileA",
+		R"({"bindings":[{"key":"B","control":true,"shift":true,"alt":true}]})");
+	fakeobs::set_profile_config_string("Hotkeys", "TopScreen_ProfileC",
+					   R"({"bindings":[]})");
+
+	obs_source_t *parent = make_parent(1280, 720);
+	obs_source_t *filter = fakeobs::make_source(&ts_filter_source_info, parent, 0, 0);
+	void *ctx = create_filter(filter);
+	REQUIRE(ctx != nullptr);
+
+	const auto &saved_a = fakeobs::hotkey_bindings("TopScreen_ProfileA");
+	REQUIRE(saved_a.size() == 1);
+	CHECK_EQ(saved_a[0].key, OBS_KEY_B);
+	CHECK_EQ(saved_a[0].modifiers,
+		 static_cast<uint32_t>(INTERACT_CONTROL_KEY | INTERACT_SHIFT_KEY |
+				       INTERACT_ALT_KEY));
+
+	const auto &empty_c = fakeobs::hotkey_bindings("TopScreen_ProfileC");
+	CHECK(empty_c.empty());
+
+	const auto &default_j = fakeobs::hotkey_bindings("TopScreen_ProfileJ");
+	REQUIRE(default_j.size() == 1);
+	CHECK_EQ(default_j[0].key, OBS_KEY_J);
+	CHECK_EQ(default_j[0].modifiers,
+		 static_cast<uint32_t>(INTERACT_CONTROL_KEY | INTERACT_SHIFT_KEY |
+				       INTERACT_ALT_KEY));
+
+	/* Non-profile actions have no default. */
+	CHECK(fakeobs::hotkey_bindings("TopScreen_ToggleEffects").empty());
+
+	/* The UI button forces all ten profile defaults. */
+	Hotkeys::apply_default_profile_bindings();
+	const auto &forced_a = fakeobs::hotkey_bindings("TopScreen_ProfileA");
+	REQUIRE(forced_a.size() == 1);
+	CHECK_EQ(forced_a[0].key, OBS_KEY_A);
+	const auto &forced_c = fakeobs::hotkey_bindings("TopScreen_ProfileC");
+	REQUIRE(forced_c.size() == 1);
+	CHECK_EQ(forced_c[0].key, OBS_KEY_C);
+
+	ts_filter_source_info.destroy(ctx);
+}
+
+
+/* The Restore default profiles button rewrites all slots and applies the
+ * current one. */
+TEST(integration_profile_reset_button_restores_seeds)
+{
+	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
+
+	obs_source_t *parent = make_parent(1280, 720);
+	obs_source_t *filter = fakeobs::make_source(&ts_filter_source_info, parent, 0, 0);
+	void *ctx = create_filter(filter);
+	REQUIRE(ctx != nullptr);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+
+	FilterControl *ctrl = registry_first();
+	REQUIRE(ctrl != nullptr);
+	ctrl->select_profile(3);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+
+	obs_data_t *slot = obs_data_get_obj(filter->settings, core::keys::kProfileSlots[3]);
+	REQUIRE(slot != nullptr);
+	obs_data_set_int(slot, core::keys::kClickLeftColor, 0x112233);
+	obs_data_release(slot);
+
+	REQUIRE(profiles_reset_from_properties(ctx));
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+
+	obs_data_t *restored = obs_data_get_obj(filter->settings, core::keys::kProfileSlots[3]);
+	REQUIRE(restored != nullptr);
+	CHECK_EQ(obs_data_get_int(restored, core::keys::kClickLeftColor),
+		 static_cast<long long>(0xFF00D7FF));
+	CHECK_EQ(obs_data_get_int(filter->settings, core::keys::kClickLeftColor),
+		 static_cast<long long>(0xFF00D7FF));
+	CHECK_EQ(obs_data_get_int(filter->settings, core::keys::kProfileSeedVersion), 2);
+
+	ts_filter_source_info.destroy(ctx);
 }

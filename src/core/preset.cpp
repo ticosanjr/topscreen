@@ -134,6 +134,8 @@ bool Preset::apply(Config *cfg, std::string *error) const
 	cfg->cursor.link_detection =
 		read_bool(o, kCursorLinkDetection, cfg->cursor.link_detection);
 	cfg->cursor.size = read_number(o, kCursorSize, cfg->cursor.size);
+	cfg->cursor.rotation_offset_deg =
+		read_number(o, kCursorRotationOffset, cfg->cursor.rotation_offset_deg);
 	cfg->cursor.shadow = read_bool(o, kCursorShadow, cfg->cursor.shadow);
 	cfg->cursor.follow_mode = read_int(o, kCursorFollowMode, cfg->cursor.follow_mode);
 	cfg->cursor.smooth = read_number(o, kCursorSmooth, cfg->cursor.smooth);

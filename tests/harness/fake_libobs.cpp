@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
+#include <memory>
 
 #include "core/json.hpp"
 
@@ -976,13 +977,12 @@ gs_eparam_t *gs_effect_get_param_by_name(const gs_effect_t *, const char *name)
 {
 	/* Stable per-name pointers so the harness can tell which uniforms the
 	 * render path actually uploads (D3D11 aborts the draw otherwise). */
-	static std::vector<obs_param *> params;
-	for (obs_param *p : params)
+	static std::vector<std::unique_ptr<obs_param>> params;
+	for (const auto &p : params)
 		if (p->name == (name ? name : ""))
-			return reinterpret_cast<gs_eparam_t *>(p);
-	auto *p = new obs_param{name ? name : ""};
-	params.push_back(p);
-	return reinterpret_cast<gs_eparam_t *>(p);
+			return reinterpret_cast<gs_eparam_t *>(p.get());
+	params.push_back(std::make_unique<obs_param>(obs_param{name ? name : ""}));
+	return reinterpret_cast<gs_eparam_t *>(params.back().get());
 }
 
 namespace {

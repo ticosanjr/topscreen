@@ -44,6 +44,12 @@ private:
 	bool validate_params() const;
 	void load_cursor_atlas();
 	void release_cursor_atlas();
+	void upload_background(const core::Config &cfg, uint32_t w, uint32_t h, bool active);
+	void upload_cursor(const core::Config &cfg, const FrameState &st, bool active);
+	void upload_focus(const core::Config &cfg, const FrameState &st, bool active);
+	void upload_highlight(const FrameState &st, bool active);
+	void upload_clicks(const FrameState &st);
+	void upload_line(const FrameState &st, uint32_t w, bool active);
 
 
 	gs_effect_t *effect_ = nullptr;

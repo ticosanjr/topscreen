@@ -144,6 +144,10 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 	void do_import_profiles(const std::string &json_text);
 	void process_actions();
 	void reload_from_settings();
+	void update_input();
+	core::ContentArea update_content_area();
+	void update_pointer(const core::ContentArea &content);
+	void update_visual_state(const core::ContentArea &content);
 	void sync_parent_cursor(bool hide);
 	void restore_parent_cursor();
 	void start_zoom_spot(double zx0, double zy0, double zx1, double zy1, bool immediate_out,
@@ -730,6 +734,167 @@ void ts_filter_update(void *data, obs_data_t *settings)
 	ctx->pending_reload_.store(true);
 }
 
+void ts_filter_ctx::update_input()
+{
+	input.poll();
+	cursor.set_link(input.state().link);
+
+	/* Keys feed the overlay even without a cursor available. */
+	for (int i = 0; i < input.state().key_count; ++i)
+		keys.press(input.state().key_labels[i], input.state().key_modifier[i],
+				time_ms, input.state().key_modifiers[i]);
+}
+
+core::ContentArea ts_filter_ctx::update_content_area()
+{
+	/* Same content rectangle the compositor and the shader use. The cursor
+	 * tip is mapped into this area; the icon body may overhang into the
+	 * padding because the shader draws it in output coordinates. */
+	const double target_w = static_cast<double>(this->target_w);
+	const double target_h = static_cast<double>(this->target_h);
+	const bool bg_on = cfg.effects_enabled && cfg.bg.enabled;
+	core::ContentArea content{};
+	if (target_w > 0.0 && target_h > 0.0) {
+		content = core::content_area(
+			target_w, target_h, bg_on ? cfg.bg.padding_x : 0.0,
+			bg_on ? cfg.bg.padding_y : 0.0, cfg.bg.keep_aspect);
+		if (content.origin.x != logged_content_x_ ||
+		    content.origin.y != logged_content_y_ ||
+		    content.size.x != logged_content_w_ ||
+		    content.size.y != logged_content_h_) {
+			logged_content_x_ = content.origin.x;
+			logged_content_y_ = content.origin.y;
+			logged_content_w_ = content.size.x;
+			logged_content_h_ = content.size.y;
+			blog(LOG_INFO,
+			     "[TopScreen] cursor map: target=%ux%u content=%.1fx%.1f at (%.1f,%.1f) padding=%.1fx%.1f keep_aspect=%d",
+			     this->target_w, this->target_h, content.size.x, content.size.y,
+			     content.origin.x, content.origin.y,
+			     bg_on ? cfg.bg.padding_x : 0.0,
+			     bg_on ? cfg.bg.padding_y : 0.0,
+			     cfg.bg.keep_aspect ? 1 : 0);
+		}
+	}
+
+	return content;
+}
+
+void ts_filter_ctx::update_pointer(const core::ContentArea &content)
+{
+	const double target_w = static_cast<double>(this->target_w);
+	const double target_h = static_cast<double>(this->target_h);
+	if (input.available() && target_w > 0 && target_h > 0) {
+		const InputState &st = input.state();
+		const core::Monitor mon{monitor_origin_.x(), monitor_origin_.y(),
+					static_cast<double>(target_w),
+					static_cast<double>(target_h)};
+		/* Source/content pointer (0..1): clicks, zoom and the highlighter use
+		 * this coordinate system. */
+		const core::Vec2f n = core::screen_to_content(st.x, st.y, mon);
+		const double cx = core::clamp01(n.x);
+		const double cy = core::clamp01(n.y);
+
+		/* Cursor overlay in OUTPUT coordinates: the tip follows the same
+		 * captured pixel as the physical pointer (content area), while the
+		 * icon body is allowed to overhang into the wallpaper padding. */
+		const core::Vec2f cursor_pos =
+			core::pointer_to_content_output(cx, cy, content, target_w, target_h);
+
+		cursor.set_target(cursor_pos.x, cursor_pos.y, time_ms);
+		zoom.set_cursor(cx, cy, time_ms);
+
+		/* Drag highlighter (left button). A drag owns the zoom spot now, so a
+		 * hotkey toggle must not leave a stale "active" state behind. */
+		if (st.left_pressed) {
+			if (hotkey_highlight_active_.exchange(false))
+				zoom.spot_release(time_ms);
+			highlight.begin(cx, cy, time_ms);
+		} else if (st.left)
+			highlight.move(cx, cy, time_ms);
+		if (!st.left && prev_left) {
+			highlight.end(time_ms);
+
+			/* Released before the trigger (or QuickZoom-style tap-drag):
+			 * if the model still holds a request, run the in/out cycle now. */
+			double zx0 = 0.0, zy0 = 0.0, zx1 = 0.0, zy1 = 0.0;
+			if (highlight.take_zoom_request(&zx0, &zy0, &zx1, &zy1)) {
+				hotkey_highlight_active_.store(false);
+				start_zoom_spot(zx0, zy0, zx1, zy1, true);
+			}
+		} else if (st.left) {
+			/* While held: fire the zoom as soon as the model asks for it. */
+			double zx0 = 0.0, zy0 = 0.0, zx1 = 0.0, zy1 = 0.0;
+			if (highlight.take_zoom_request(&zx0, &zy0, &zx1, &zy1)) {
+				hotkey_highlight_active_.store(false);
+				start_zoom_spot(zx0, zy0, zx1, zy1, false);
+			}
+		}
+
+		/* Let go: glide back with the configured out animation. */
+		if (!st.left && prev_left) {
+			hotkey_highlight_active_.store(false);
+			zoom.spot_release(time_ms);
+		}
+
+		prev_left = st.left;
+
+		if (st.left_pressed) {
+			clicks.spawn(cx, cy, time_ms, false);
+			if (cfg.click_sound.enabled)
+				click_sound.play(false, cfg.click_sound.volume);
+		}
+		if (st.right_pressed) {
+			clicks.spawn(cx, cy, time_ms, true);
+			if (cfg.click_sound.enabled)
+				click_sound.play(true, cfg.click_sound.volume);
+		}
+	}
+}
+
+void ts_filter_ctx::update_visual_state(const core::ContentArea &content)
+{
+	const double target_w = static_cast<double>(this->target_w);
+	const double target_h = static_cast<double>(this->target_h);
+	clicks.tick(time_ms);
+	cursor.update(time_ms);
+	zoom.update(time_ms);
+	keys.tick(time_ms);
+	highlight.update(time_ms);
+
+	frame.cursor = cursor.render();
+	if (!cursor_hotkey_visible_)
+		frame.cursor.visible = false;
+
+	/* The spotlight center is drawn from the cursor overlay (output coords),
+	 * but its ZOOM focus is a source/content coordinate. Invert the content
+	 * mapping from the drawn cursor so the zoom follows the smoothed cursor
+	 * (Exact or Glide) instead of jumping to the raw pointer. */
+	double spot_x = 0.5;
+	double spot_y = 0.5;
+	if (content.size.x > 0.0 && content.size.y > 0.0) {
+		spot_x = core::clamp01((frame.cursor.x * target_w - content.origin.x) /
+				       content.size.x);
+		spot_y = core::clamp01((frame.cursor.y * target_h - content.origin.y) /
+				       content.size.y);
+	}
+	spotlight.update(time_ms, spot_x, spot_y);
+	frame.spotlight = spotlight.render();
+	magnifier.update(time_ms, frame.cursor.x, frame.cursor.y,
+			      target_w > 0.0 && target_h > 0.0 ? target_w / target_h : 1.0);
+	frame.magnifier = magnifier.render();
+	frame.zoom = zoom.render();
+	frame.click_count = clicks.collect(time_ms, frame.clicks, kShaderClickSlots);
+	frame.key_count =
+		keys.collect(time_ms, frame.keys, FrameState::kMaxKeys);
+	frame.highlight = highlight.render();
+
+	/* Publishes state to the dock (UI thread). */
+	effects_cache_.store(cfg.effects_enabled);
+	preset_cache_.store(presets.current());
+	profile_cache_.store(current_profile_);
+	input_tier_cache_.store(input.tier());
+}
+
 void ts_filter_tick(void *data, float seconds)
 {
 	auto *ctx = static_cast<ts_filter_ctx *>(data);
@@ -746,149 +911,10 @@ void ts_filter_tick(void *data, float seconds)
 		ctx->flush_profile_if_dirty();
 
 	ctx->monitor_origin_.tick(ctx->source, ctx->cfg, ctx->target_w, ctx->target_h);
-
-	ctx->input.poll();
-	ctx->cursor.set_link(ctx->input.state().link);
-
-	/* Keys feed the overlay even without a cursor available. */
-	for (int i = 0; i < ctx->input.state().key_count; ++i)
-		ctx->keys.press(ctx->input.state().key_labels[i], ctx->input.state().key_modifier[i],
-				ctx->time_ms, ctx->input.state().key_modifiers[i]);
-
-	/* Same content rectangle the compositor and the shader use. The cursor
-	 * tip is mapped into this area; the icon body may overhang into the
-	 * padding because the shader draws it in output coordinates. */
-	const double target_w = static_cast<double>(ctx->target_w);
-	const double target_h = static_cast<double>(ctx->target_h);
-	const bool bg_on = ctx->cfg.effects_enabled && ctx->cfg.bg.enabled;
-	core::ContentArea content{};
-	if (target_w > 0.0 && target_h > 0.0) {
-		content = core::content_area(
-			target_w, target_h, bg_on ? ctx->cfg.bg.padding_x : 0.0,
-			bg_on ? ctx->cfg.bg.padding_y : 0.0, ctx->cfg.bg.keep_aspect);
-		if (content.origin.x != ctx->logged_content_x_ ||
-		    content.origin.y != ctx->logged_content_y_ ||
-		    content.size.x != ctx->logged_content_w_ ||
-		    content.size.y != ctx->logged_content_h_) {
-			ctx->logged_content_x_ = content.origin.x;
-			ctx->logged_content_y_ = content.origin.y;
-			ctx->logged_content_w_ = content.size.x;
-			ctx->logged_content_h_ = content.size.y;
-			blog(LOG_INFO,
-			     "[TopScreen] cursor map: target=%ux%u content=%.1fx%.1f at (%.1f,%.1f) padding=%.1fx%.1f keep_aspect=%d",
-			     ctx->target_w, ctx->target_h, content.size.x, content.size.y,
-			     content.origin.x, content.origin.y,
-			     bg_on ? ctx->cfg.bg.padding_x : 0.0,
-			     bg_on ? ctx->cfg.bg.padding_y : 0.0,
-			     ctx->cfg.bg.keep_aspect ? 1 : 0);
-		}
-	}
-
-	if (ctx->input.available() && ctx->target_w > 0 && ctx->target_h > 0) {
-		const InputState &st = ctx->input.state();
-		const core::Monitor mon{ctx->monitor_origin_.x(), ctx->monitor_origin_.y(),
-					static_cast<double>(ctx->target_w),
-					static_cast<double>(ctx->target_h)};
-		/* Source/content pointer (0..1): clicks, zoom and the highlighter use
-		 * this coordinate system. */
-		const core::Vec2f n = core::screen_to_content(st.x, st.y, mon);
-		const double cx = core::clamp01(n.x);
-		const double cy = core::clamp01(n.y);
-
-		/* Cursor overlay in OUTPUT coordinates: the tip follows the same
-		 * captured pixel as the physical pointer (content area), while the
-		 * icon body is allowed to overhang into the wallpaper padding. */
-		const core::Vec2f cursor_pos =
-			core::pointer_to_content_output(cx, cy, content, target_w, target_h);
-
-		ctx->cursor.set_target(cursor_pos.x, cursor_pos.y, ctx->time_ms);
-		ctx->zoom.set_cursor(cx, cy, ctx->time_ms);
-
-		/* Drag highlighter (left button). A drag owns the zoom spot now, so a
-		 * hotkey toggle must not leave a stale "active" state behind. */
-		if (st.left_pressed) {
-			if (ctx->hotkey_highlight_active_.exchange(false))
-				ctx->zoom.spot_release(ctx->time_ms);
-			ctx->highlight.begin(cx, cy, ctx->time_ms);
-		} else if (st.left)
-			ctx->highlight.move(cx, cy, ctx->time_ms);
-		if (!st.left && ctx->prev_left) {
-			ctx->highlight.end(ctx->time_ms);
-
-			/* Released before the trigger (or QuickZoom-style tap-drag):
-			 * if the model still holds a request, run the in/out cycle now. */
-			double zx0 = 0.0, zy0 = 0.0, zx1 = 0.0, zy1 = 0.0;
-			if (ctx->highlight.take_zoom_request(&zx0, &zy0, &zx1, &zy1)) {
-				ctx->hotkey_highlight_active_.store(false);
-				ctx->start_zoom_spot(zx0, zy0, zx1, zy1, true);
-			}
-		} else if (st.left) {
-			/* While held: fire the zoom as soon as the model asks for it. */
-			double zx0 = 0.0, zy0 = 0.0, zx1 = 0.0, zy1 = 0.0;
-			if (ctx->highlight.take_zoom_request(&zx0, &zy0, &zx1, &zy1)) {
-				ctx->hotkey_highlight_active_.store(false);
-				ctx->start_zoom_spot(zx0, zy0, zx1, zy1, false);
-			}
-		}
-
-		/* Let go: glide back with the configured out animation. */
-		if (!st.left && ctx->prev_left) {
-			ctx->hotkey_highlight_active_.store(false);
-			ctx->zoom.spot_release(ctx->time_ms);
-		}
-
-		ctx->prev_left = st.left;
-
-		if (st.left_pressed) {
-			ctx->clicks.spawn(cx, cy, ctx->time_ms, false);
-			if (ctx->cfg.click_sound.enabled)
-				ctx->click_sound.play(false, ctx->cfg.click_sound.volume);
-		}
-		if (st.right_pressed) {
-			ctx->clicks.spawn(cx, cy, ctx->time_ms, true);
-			if (ctx->cfg.click_sound.enabled)
-				ctx->click_sound.play(true, ctx->cfg.click_sound.volume);
-		}
-	}
-
-	ctx->clicks.tick(ctx->time_ms);
-	ctx->cursor.update(ctx->time_ms);
-	ctx->zoom.update(ctx->time_ms);
-	ctx->keys.tick(ctx->time_ms);
-	ctx->highlight.update(ctx->time_ms);
-
-	ctx->frame.cursor = ctx->cursor.render();
-	if (!ctx->cursor_hotkey_visible_)
-		ctx->frame.cursor.visible = false;
-
-	/* The spotlight center is drawn from the cursor overlay (output coords),
-	 * but its ZOOM focus is a source/content coordinate. Invert the content
-	 * mapping from the drawn cursor so the zoom follows the smoothed cursor
-	 * (Exact or Glide) instead of jumping to the raw pointer. */
-	double spot_x = 0.5;
-	double spot_y = 0.5;
-	if (content.size.x > 0.0 && content.size.y > 0.0) {
-		spot_x = core::clamp01((ctx->frame.cursor.x * target_w - content.origin.x) /
-				       content.size.x);
-		spot_y = core::clamp01((ctx->frame.cursor.y * target_h - content.origin.y) /
-				       content.size.y);
-	}
-	ctx->spotlight.update(ctx->time_ms, spot_x, spot_y);
-	ctx->frame.spotlight = ctx->spotlight.render();
-	ctx->magnifier.update(ctx->time_ms, ctx->frame.cursor.x, ctx->frame.cursor.y,
-			      target_w > 0.0 && target_h > 0.0 ? target_w / target_h : 1.0);
-	ctx->frame.magnifier = ctx->magnifier.render();
-	ctx->frame.zoom = ctx->zoom.render();
-	ctx->frame.click_count = ctx->clicks.collect(ctx->time_ms, ctx->frame.clicks, kShaderClickSlots);
-	ctx->frame.key_count =
-		ctx->keys.collect(ctx->time_ms, ctx->frame.keys, FrameState::kMaxKeys);
-	ctx->frame.highlight = ctx->highlight.render();
-
-	/* Publishes state to the dock (UI thread). */
-	ctx->effects_cache_.store(ctx->cfg.effects_enabled);
-	ctx->preset_cache_.store(ctx->presets.current());
-	ctx->profile_cache_.store(ctx->current_profile_);
-	ctx->input_tier_cache_.store(ctx->input.tier());
+	ctx->update_input();
+	const core::ContentArea content = ctx->update_content_area();
+	ctx->update_pointer(content);
+	ctx->update_visual_state(content);
 }
 
 void ts_filter_render(void *data, gs_effect_t *effect)

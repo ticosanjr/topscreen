@@ -435,51 +435,9 @@ void Compositor::release()
 		pt = nullptr;
 }
 
-void Compositor::render(obs_source_t *filter, obs_source_t *target, uint32_t width, uint32_t height,
-			const core::Config &cfg, const FrameState &st)
+void Compositor::upload_background(const core::Config &cfg, uint32_t w, uint32_t h, bool active)
 {
-	if (!target) {
-		obs_source_skip_video_filter(filter);
-		return;
-	}
-
-	const uint32_t w = width;
-	const uint32_t h = height;
-	if (!w || !h) {
-		obs_source_skip_video_filter(filter);
-		return;
-	}
-
-	if (!ready_) {
-		obs_source_skip_video_filter(filter);
-		return;
-	}
-
-	if (!obs_source_process_filter_begin(filter, GS_RGBA, OBS_NO_DIRECT_RENDERING)) {
-		/* Nothing was drawn: without this the filter's output would be an
-		 * empty frame (the source looks invisible). Pass it through and
-		 * leave a trail in the log (warnings always show in the OBS log). */
-		if (!logged_begin_failure_) {
-			logged_begin_failure_ = true;
-			blog(LOG_WARNING, "[TopScreen] process_filter_begin failed (%.0fx%.0f): "
-					  "passing the source through without effects",
-			     static_cast<double>(w), static_cast<double>(h));
-		}
-		obs_source_skip_video_filter(filter);
-		return;
-	}
-
-	if (!logged_first_frame_) {
-		logged_first_frame_ = true;
-		blog(LOG_WARNING, "[TopScreen] first frame: target=%ux%u ready=%s technique=%s", w, h,
-		     ready_ ? "yes" : "no", use_passthrough_ ? "PassThrough" : "Draw");
-	}
-
-	const bool active = cfg.effects_enabled;
 	const bool bg = active && cfg.bg.enabled;
-
-	set_v2(p_target_size_, static_cast<float>(w), static_cast<float>(h));
-
 	set_v2(p_pad_, bg ? static_cast<float>(cfg.bg.padding_x) : 0.0f,
 	       bg ? static_cast<float>(cfg.bg.padding_y) : 0.0f);
 	set_f(p_radius_, bg ? static_cast<float>(cfg.bg.corner_radius) : 0.0f);
@@ -533,7 +491,10 @@ void Compositor::render(obs_source_t *filter, obs_source_t *target, uint32_t wid
 	set_f(p_shadow_blur_, static_cast<float>(cfg.bg.shadow_blur));
 	set_v2(p_shadow_offset_, static_cast<float>(cfg.bg.shadow_offset_x),
 	       static_cast<float>(cfg.bg.shadow_offset));
+}
 
+void Compositor::upload_cursor(const core::Config &cfg, const FrameState &st, bool active)
+{
 	float zoom = active ? static_cast<float>(st.zoom.zoom) : 1.0f;
 	if (zoom < 1.0f)
 		zoom = 1.0f;
@@ -585,8 +546,10 @@ void Compositor::render(obs_source_t *filter, obs_source_t *target, uint32_t wid
 			gs_effect_set_texture(p_cursor_tex_, has_atlas ? cursor_tex_ : dummy_tex_);
 	}
 
-	/* Zoom motion blur */
+}
 
+void Compositor::upload_focus(const core::Config &cfg, const FrameState &st, bool active)
+{
 	/* Spotlight. All uniforms are uploaded every frame for D3D11; the shader
 	 * fades/zooms based on st.spotlight.amount. */
 	const bool spot = active && st.spotlight.amount > 0.001;
@@ -626,7 +589,10 @@ void Compositor::render(obs_source_t *filter, obs_source_t *target, uint32_t wid
 	set_f(p_magnifier_shadow_blur_, static_cast<float>(cfg.magnifier.shadow_blur));
 	set_v2(p_magnifier_shadow_offset_, static_cast<float>(cfg.magnifier.shadow_offset_x),
 	       static_cast<float>(cfg.magnifier.shadow_offset_y));
+}
 
+void Compositor::upload_highlight(const FrameState &st, bool active)
+{
 	/* Drag highlighter: only the box mode paints the rectangle. The line is
 	 * drawn by its own overlay and the zoom gesture draws nothing. */
 	const bool hl = active && core::paints_box(st.highlight);
@@ -640,7 +606,10 @@ void Compositor::render(obs_source_t *filter, obs_source_t *target, uint32_t wid
 	}
 	set_c(p_highlight_color_, st.highlight.color);
 	set_f(p_highlight_alpha_, static_cast<float>(st.highlight.alpha));
+}
 
+void Compositor::upload_clicks(const FrameState &st)
+{
 	/* Clicks (up to kShaderClickSlots, explicit slots). Every slot is
 	 * uploaded on every frame, zeroed when unused: the D3D11 draw aborts if
 	 * a slot uniform was never set. */
@@ -665,7 +634,10 @@ void Compositor::render(obs_source_t *filter, obs_source_t *target, uint32_t wid
 			set_f(click_[i].type, 0.0f);
 		}
 	}
+}
 
+void Compositor::upload_line(const FrameState &st, uint32_t w, bool active)
+{
 	/* Freehand line (Line / Line + zoom): the trail is decimated into at most
 	 * 16 points and drawn by the SAME pass as everything else (segments in
 	 * the shader), so no separate effect/texture/draw call can fail on its
@@ -697,6 +669,56 @@ void Compositor::render(obs_source_t *filter, obs_source_t *target, uint32_t wid
 		     "[TopScreen] line highlight: %d of %d points drawn as %d shader segments (width %.1fpx)",
 		     line_count, src_pts, line_count - 1, static_cast<double>(line_w));
 	}
+}
+
+void Compositor::render(obs_source_t *filter, obs_source_t *target, uint32_t width, uint32_t height,
+			const core::Config &cfg, const FrameState &st)
+{
+	if (!target) {
+		obs_source_skip_video_filter(filter);
+		return;
+	}
+
+	const uint32_t w = width;
+	const uint32_t h = height;
+	if (!w || !h) {
+		obs_source_skip_video_filter(filter);
+		return;
+	}
+
+	if (!ready_) {
+		obs_source_skip_video_filter(filter);
+		return;
+	}
+
+	if (!obs_source_process_filter_begin(filter, GS_RGBA, OBS_NO_DIRECT_RENDERING)) {
+		/* Nothing was drawn: without this the filter's output would be an
+		 * empty frame (the source looks invisible). Pass it through and
+		 * leave a trail in the log (warnings always show in the OBS log). */
+		if (!logged_begin_failure_) {
+			logged_begin_failure_ = true;
+			blog(LOG_WARNING, "[TopScreen] process_filter_begin failed (%.0fx%.0f): "
+					  "passing the source through without effects",
+			     static_cast<double>(w), static_cast<double>(h));
+		}
+		obs_source_skip_video_filter(filter);
+		return;
+	}
+
+	if (!logged_first_frame_) {
+		logged_first_frame_ = true;
+		blog(LOG_WARNING, "[TopScreen] first frame: target=%ux%u ready=%s technique=%s", w, h,
+		     ready_ ? "yes" : "no", use_passthrough_ ? "PassThrough" : "Draw");
+	}
+
+	const bool active = cfg.effects_enabled;
+	set_v2(p_target_size_, static_cast<float>(w), static_cast<float>(h));
+	upload_background(cfg, w, h, active);
+	upload_cursor(cfg, st, active);
+	upload_focus(cfg, st, active);
+	upload_highlight(st, active);
+	upload_clicks(st);
+	upload_line(st, w, active);
 
 	if (use_passthrough_)
 		obs_source_process_filter_tech_end(filter, effect_, w, h, "PassThrough");

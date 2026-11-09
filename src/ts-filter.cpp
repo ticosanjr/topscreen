@@ -13,9 +13,10 @@
 #include "core/spotlight.hpp"
 #include "hotkeys/ts-hotkeys.hpp"
 #include "input/ts-input.hpp"
-#include "input/ts-monitor.hpp"
+#include "ts-monitor-origin.hpp"
 #include "render/ts-compositor.hpp"
 #include "render/ts-frame.hpp"
+#include "ts-parent-cursor.hpp"
 #include "ts-presets.hpp"
 #include "ts-profile-bundle.hpp"
 #include "ts-profile-store.hpp"
@@ -29,7 +30,6 @@
 #include <atomic>
 #include <cmath>
 #include <cstring>
-#include <map>
 #include <mutex>
 #include <string>
 
@@ -61,114 +61,6 @@ enum ActionBits : uint32_t {
 	A_RESET_PROFILES = 1u << 17,
 };
 
-/* Native cursor ownership is shared by every TopScreen filter attached to the
- * same capture. Each filter contributes one "hide" want while effects and its
- * own cursor are enabled; the capture is restored only when the last want goes
- * away. This avoids one filter restoring the cursor while another still draws
- * its own. */
-struct CursorEntry {
-	int users = 0;
-	int hidden_wants = 0;
-	bool has[2] = {false, false};
-	bool was[2] = {false, false};
-	bool logged_missing = false;
-};
-
-std::mutex cursor_mutex;
-std::map<obs_source_t *, CursorEntry> cursor_entries;
-
-const char *const kCursorKeys[] = {"capture_cursor", "show_cursor"};
-
-void capture_cursor_state(obs_source_t *parent, CursorEntry *entry)
-{
-	obs_properties_t *props = obs_source_properties(parent);
-	if (!props)
-		return;
-	for (int i = 0; i < 2; ++i)
-		entry->has[i] = obs_properties_get(props, kCursorKeys[i]) != nullptr;
-	obs_properties_destroy(props);
-
-	obs_data_t *s = obs_source_get_settings(parent);
-	if (s) {
-		for (int i = 0; i < 2; ++i) {
-			if (entry->has[i])
-				entry->was[i] = obs_data_get_bool(s, kCursorKeys[i]);
-		}
-		obs_data_release(s);
-	}
-
-	if (!entry->has[0] && !entry->has[1] && !entry->logged_missing) {
-		entry->logged_missing = true;
-		blog(LOG_INFO, "[TopScreen] parent source does not expose a native cursor option (%s)",
-		     obs_source_get_name(parent) ? obs_source_get_name(parent) : "?");
-	}
-}
-
-void apply_cursor_state(obs_source_t *parent, CursorEntry *entry)
-{
-	obs_data_t *s = obs_source_get_settings(parent);
-	if (!s)
-		return;
-
-	const bool hide = entry->hidden_wants > 0;
-	bool changed = false;
-	for (int i = 0; i < 2; ++i) {
-		if (!entry->has[i])
-			continue;
-		const bool want = hide ? false : entry->was[i];
-		const bool current = obs_data_get_bool(s, kCursorKeys[i]);
-		if (current == want)
-			continue;
-		obs_data_set_bool(s, kCursorKeys[i], want);
-		changed = true;
-		blog(LOG_INFO, "[TopScreen] capture native cursor %s (%s, was %s)",
-		     want ? "restored" : "disabled", kCursorKeys[i], current ? "on" : "off");
-	}
-	if (changed)
-		obs_source_update(parent, s);
-	obs_data_release(s);
-}
-
-void acquire_parent_cursor(obs_source_t *parent)
-{
-	std::lock_guard<std::mutex> lock(cursor_mutex);
-	CursorEntry &entry = cursor_entries[parent];
-	if (entry.users++ == 0)
-		capture_cursor_state(parent, &entry);
-}
-
-void set_parent_cursor_wanted(obs_source_t *parent, bool hide)
-{
-	std::lock_guard<std::mutex> lock(cursor_mutex);
-	auto it = cursor_entries.find(parent);
-	if (it == cursor_entries.end())
-		return;
-	CursorEntry &entry = it->second;
-	if (hide)
-		++entry.hidden_wants;
-	else if (entry.hidden_wants > 0)
-		--entry.hidden_wants;
-	apply_cursor_state(parent, &entry);
-}
-
-void release_parent_cursor(obs_source_t *parent, bool was_hiding)
-{
-	std::lock_guard<std::mutex> lock(cursor_mutex);
-	auto it = cursor_entries.find(parent);
-	if (it == cursor_entries.end())
-		return;
-	CursorEntry &entry = it->second;
-	if (was_hiding && entry.hidden_wants > 0)
-		--entry.hidden_wants;
-	if (entry.users > 0)
-		--entry.users;
-	if (entry.users == 0) {
-		entry.hidden_wants = 0;
-		apply_cursor_state(parent, &entry);
-		cursor_entries.erase(it);
-	}
-}
-
 /**
  * TopScreen filter instance.
  *
@@ -194,6 +86,7 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 	core::HighlighterModel highlight;
 	core::SpotlightModel spotlight;
 	core::MagnifierModel magnifier;
+	MonitorOrigin monitor_origin_;
 	FrameState frame;
 
 	uint32_t target_w = 0;
@@ -215,15 +108,6 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 	double profile_dirty_since_ms_ = 0.0;
 	static constexpr double kProfileSaveDebounceMs = 400.0;
 
-	/* Origin of the captured monitor in GLOBAL desktop coordinates: the input
-	 * reports global positions, so a monitor below/left of the primary one
-	 * needs its offset subtracted before normalizing. */
-	std::atomic<double> origin_x_{0.0};
-	std::atomic<double> origin_y_{0.0};
-	std::atomic<bool> origin_known_{false};
-	uint32_t origin_target_w_ = 0;
-	uint32_t origin_target_h_ = 0;
-	int origin_age_ticks_ = 0;
 	/* Last content rectangle logged, so the cursor mapping can be diagnosed
 	 * from the OBS log without spamming a line every frame. */
 	double logged_content_x_ = -1.0;
@@ -260,7 +144,6 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 	void do_import_profiles(const std::string &json_text);
 	void process_actions();
 	void reload_from_settings();
-	void refresh_monitor_origin(bool force);
 	void sync_parent_cursor(bool hide);
 	void restore_parent_cursor();
 	void start_zoom_spot(double zx0, double zy0, double zx1, double zy1, bool immediate_out,
@@ -306,8 +189,8 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 	int input_tier() const override { return input_tier_cache_.load(); }
 	void monitor_origin(double *x, double *y) const override
 	{
-		*x = origin_known_.load() ? origin_x_.load() : 0.0;
-		*y = origin_known_.load() ? origin_y_.load() : 0.0;
+		*x = monitor_origin_.x();
+		*y = monitor_origin_.y();
 	}
 
 	/* ---- FilterControl: profiles ---- */
@@ -479,91 +362,25 @@ void ts_filter_ctx::do_import_profiles(const std::string &json_text)
  * be turned into content coordinates. Re-resolved when the target size changes
  * and every ~10 s (monitor layouts can change while OBS runs).
  */
-void ts_filter_ctx::refresh_monitor_origin(bool force)
-{
-	if (target_w == 0 || target_h == 0)
-		return;
-
-	/* Manual wins: it is the escape hatch when the platform detection cannot
-	 * decide (identical monitors stacked below/above each other). */
-	if (cfg.monitor_manual) {
-		const double nx = static_cast<double>(cfg.monitor_x);
-		const double ny = static_cast<double>(cfg.monitor_y);
-		if (force || !origin_known_.load() || nx != origin_x_.load() ||
-		    ny != origin_y_.load()) {
-			origin_x_.store(nx);
-			origin_y_.store(ny);
-			origin_known_.store(true);
-			blog(LOG_INFO, "[TopScreen] monitor origin: (%.0f,%.0f) [manual]", nx, ny);
-		}
-		origin_age_ticks_ = 0;
-		return;
-	}
-
-	const bool size_changed = target_w != origin_target_w_ || target_h != origin_target_h_;
-	if (!force && !size_changed && origin_age_ticks_ < 600)
-		return;
-
-	origin_age_ticks_ = 0;
-	origin_target_w_ = target_w;
-	origin_target_h_ = target_h;
-
-	/* The capture settings expose the monitor index on Windows (same order as
-	 * EnumDisplayMonitors). X11's "screen" is an X screen, not a monitor, so
-	 * the hint is not trusted there. */
-	int hint = -1;
-	bool trust_hint = false;
-	std::string device;
-	if (obs_source_t *parent = obs_filter_get_parent(source)) {
-		obs_data_t *s = obs_source_get_settings(parent);
-		if (s) {
-			/* Newer OBS identifies the monitor by device name
-			 * (alt_id/id, e.g. "\\.\DISPLAY2"); older builds use an
-			 * integer index. Both are optional. */
-			for (const char *key : {"alt_id", "device_id", "id"}) {
-				const char *v = obs_data_get_string(s, key);
-				if (v && *v && std::strncmp(v, "\\\\", 2) == 0) {
-					device = v;
-					break;
-				}
-			}
-			if (obs_data_has_user_value(s, "monitor") ||
-			    obs_data_has_default_value(s, "monitor")) {
-				hint = static_cast<int>(obs_data_get_int(s, "monitor"));
-				trust_hint = true;
-			}
-			obs_data_release(s);
-		}
-	}
-
-	double ox = 0.0;
-	double oy = 0.0;
-	const bool known = ts_resolve_monitor_origin(device.c_str(), hint, trust_hint, target_w,
-						     target_h, &ox, &oy);
-	origin_x_.store(known ? ox : 0.0);
-	origin_y_.store(known ? oy : 0.0);
-	origin_known_.store(known);
-}
-
 void ts_filter_ctx::sync_parent_cursor(bool hide)
 {
 	obs_source_t *parent = obs_filter_get_parent(source);
 
 	if (parent != cursor_parent_) {
 		if (cursor_parent_ && cursor_acquired_)
-			release_parent_cursor(cursor_parent_, cursor_hiding_);
+			parent_cursor::release(cursor_parent_, cursor_hiding_);
 		cursor_parent_ = parent;
 		cursor_acquired_ = false;
 		cursor_hiding_ = false;
 		if (parent) {
-			acquire_parent_cursor(parent);
+			parent_cursor::acquire(parent);
 			cursor_acquired_ = true;
 		}
 	}
 
 	if (!cursor_acquired_ || hide == cursor_hiding_)
 		return;
-	set_parent_cursor_wanted(cursor_parent_, hide);
+	parent_cursor::set_wanted(cursor_parent_, hide);
 	cursor_hiding_ = hide;
 }
 
@@ -571,7 +388,7 @@ void ts_filter_ctx::restore_parent_cursor()
 {
 	obs_source_t *parent = obs_filter_get_parent(source);
 	if (parent && parent == cursor_parent_ && cursor_acquired_)
-		release_parent_cursor(cursor_parent_, cursor_hiding_);
+		parent_cursor::release(cursor_parent_, cursor_hiding_);
 	cursor_parent_ = nullptr;
 	cursor_acquired_ = false;
 	cursor_hiding_ = false;
@@ -928,10 +745,7 @@ void ts_filter_tick(void *data, float seconds)
 	    ctx->time_ms - ctx->profile_dirty_since_ms_ >= ts_filter_ctx::kProfileSaveDebounceMs)
 		ctx->flush_profile_if_dirty();
 
-	if (ctx->target_w > 0 && ctx->target_h > 0) {
-		++ctx->origin_age_ticks_;
-		ctx->refresh_monitor_origin(false);
-	}
+	ctx->monitor_origin_.tick(ctx->source, ctx->cfg, ctx->target_w, ctx->target_h);
 
 	ctx->input.poll();
 	ctx->cursor.set_link(ctx->input.state().link);
@@ -972,8 +786,7 @@ void ts_filter_tick(void *data, float seconds)
 
 	if (ctx->input.available() && ctx->target_w > 0 && ctx->target_h > 0) {
 		const InputState &st = ctx->input.state();
-		const core::Monitor mon{ctx->origin_known_.load() ? ctx->origin_x_.load() : 0.0,
-					ctx->origin_known_.load() ? ctx->origin_y_.load() : 0.0,
+		const core::Monitor mon{ctx->monitor_origin_.x(), ctx->monitor_origin_.y(),
 					static_cast<double>(ctx->target_w),
 					static_cast<double>(ctx->target_h)};
 		/* Source/content pointer (0..1): clicks, zoom and the highlighter use

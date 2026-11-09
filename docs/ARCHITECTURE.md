@@ -48,6 +48,8 @@ covered by tests) and the **OBS layer** (thin, it only wires the core to libobs)
 |--------|---------|------------------|
 | Plugin | `src/plugin-main.cpp` | `OBS_DECLARE_MODULE`, source registration, dock |
 | Filter | `src/ts-filter.cpp` | `obs_source_info`, lifecycle, tick/render, hotkeys |
+| Parent cursor | `src/ts-parent-cursor.{hpp,cpp}` | Process-wide native-cursor lease shared by filters |
+| Monitor origin | `src/ts-monitor-origin.{hpp,cpp}` | Global desktop offset of the captured monitor |
 | Settings | `src/ts-settings.{hpp,cpp}` | obs_data ↔ `core::Config` mapping |
 | Properties | `src/ts-properties.{hpp,cpp}` | Native UI (obs_properties), split into one builder per section |
 | Presets | `src/ts-presets.{hpp,cpp}` | Loads `data/presets/*.json` |

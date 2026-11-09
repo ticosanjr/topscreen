@@ -72,10 +72,11 @@ That is where all the math and the state logic live — what actually must be ri
 | `test_json.cpp` | `core/json.*` | object/array/nested, numbers, escapes (`\uXXXX`), errors, **depth and size limits** (user-provided profile files) |
 | `test_file.cpp` | `core/file.hpp` | reading a file with a **UTF-8 name** (accents) through the native path helper and enforcing a caller-provided size cap |
 | `test_preset.cpp` | `core/preset.*` | parse + apply, missing fields kept, errors, **legacy `bg_mode` 1/2/3 migration** and `bg_type` precedence, **real files** `data/presets/*.json` use the modern background key |
+| `test_config_limits.cpp` | `core/config_limits.hpp` | every UI/sanitize range is ordered with a positive step and every `Config` default sits inside its matching range |
 | `test_config_sanitize.cpp` | `core/config.*` | NaN/infinity fallback, out-of-range clamping (cursor size/rotation, click effects and magnifier), angle wrapping, spotlight/magnifier exclusivity, valid values untouched, preset apply sanitizes imported data |
 | `test_shader_params.cpp` | `data/effects/topscreen.effect` | presence of the uniforms the compositor looks up by name + `Draw` technique (catches silent divergence); **line slots**: every consecutive `line_p` pair has its own segment and `line_count`/`line_width` are declared (the CPU decimates to those 32 points) |
 | `test_preset_all_keys.cpp` | `core/preset.*` | all config keys are mapped (guarantees a complete preset) |
-| `test_locale_keys.cpp` | `data/locale/*.ini` | every key used in `obs_module_text()` exists in `en-US.ini`; no orphan keys; labels are non-empty, not raw keys and have no stray whitespace |
+| `test_locale_keys.cpp` | `data/locale/*.ini` | every key used in `obs_module_text()` exists in `en-US.ini`; no orphan keys; labels are non-empty, not raw keys and have no stray whitespace; `pt-BR.ini` mirrors the exact en-US key set |
 | `test_profiles.cpp` | `core/profiles.*` | distinct A–J seeds (colors + zoom), labels, index wrap |
 | `test_profiles_io.cpp` | `core/profiles_io.*` | backup format validation: full bundle, marker/plugin, missing `current` defaults to 0, missing/empty slots accepted, slot object type, malformed JSON, extra keys accepted |
 | `test_wallpapers.cpp` | `src/ts-wallpapers.*` | label/path/stem resolution, case-insensitivity, all 18 built-ins, transparent sentinel, invalid input |
@@ -89,7 +90,7 @@ That is where all the math and the state logic live — what actually must be ri
 | `test_magnifier.cpp` | `core/magnifier.*` | activation/deactivation transitions, local zoom, follow cursor and fixed center |
 | `test_highlight_modes.cpp` | `core/highlighter.*`, `core/zoom.*` | trail dedupe/cap, line decimation into the shader slots (first/last kept, monotonic), a pinned predicate matrix for the 5 drag modes (box/line/zoom/box+zoom/line+zoom), zoom request timing, hold-to-release glide, stroke bounding box as the zoom selection for the line modes, box+zoom and line+zoom draw *and* zoom |
 | `test_docs.cpp` | `docs/` × code | every key in `keys.hpp` is documented; hotkeys from the code are in the reference; `CMakeLists.txt` and `buildspec.json` versions agree |
-| `test_cursor_catalog.cpp` | `core/cursor_catalog.hpp` + `data/locale/en-US.ini` | one entry per active `CursorStyle` (29 built-in + 50 custom), retired IDs excluded from the menu, families contiguous and ordered, unique label keys present in the locale, no forbidden source words, style clamping and safe retired fallbacks |
+| `test_cursor_catalog.cpp` | `core/cursor_catalog.hpp` + locale | one entry per active `CursorStyle` (29 built-in + 50 custom), retired IDs excluded from the menu and unique, families contiguous and ordered, unique label keys present in the locale, no forbidden source words, style clamping and active retired fallbacks |
 | `test_hotkeys.cpp` | `hotkeys/ts-hotkey-actions.hpp` + locale | every id starts with `TopScreen_`, no duplicates, every displayed description starts with the literal id, raw `Hotkey.*` fallback becomes the literal id |
 | `test_cursor_atlas.cpp` | `core/cursor_atlas.*` + `data/cursors/` | TSAT v1/v2, row-major grid, hotspots and **real atlas** (106 cells = `CursorStyle::Count`); built-in link hands plus every active custom cell must be populated, and all retired cells transparent |
 | `test_image.cpp` | `core/image.*` + `data/wallpapers/` | image decode (reads a **real wallpaper** 1920x1080), invalid cases and the **decompression-bomb pixel cap** |
@@ -100,7 +101,7 @@ That is where all the math and the state logic live — what actually must be ri
 ## Current numbers
 
 ```
-238 tests | 6838 checks | 0 failures   (core)
+242 tests | 8577 checks | 0 failures   (core)
 58 tests | 784 checks   | 0 failures   (integration with fake libobs, LeakSanitizer clean)
 ```
 

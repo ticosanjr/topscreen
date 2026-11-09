@@ -160,3 +160,35 @@ TEST(cursor_style_resolve_retires_old_profiles_safely)
 		 static_cast<int>(CursorStyle::CustomPurpleIris));
 	CHECK_EQ(cursor_style_resolve(999), static_cast<int>(CursorStyle::CustomPurpleIris));
 }
+
+TEST(cursor_retired_styles_are_valid_and_have_active_fallbacks)
+{
+	std::set<int> retired;
+	for (int style : kRetiredCursorStyles) {
+		REQUIRE(style >= 0);
+		REQUIRE(style < static_cast<int>(CursorStyle::Count));
+		++tst::checks();
+		if (!retired.insert(style).second)
+			tst::fail(__FILE__, __LINE__, "duplicate retired cursor style");
+
+		++tst::checks();
+		for (const auto &entry : kCursorCatalog) {
+			if (entry.style == style) {
+				tst::fail(__FILE__, __LINE__,
+					  "retired cursor style is still in the catalog");
+				break;
+			}
+		}
+
+		const int fallback = cursor_style_fallback(style);
+		++tst::checks();
+		if (fallback < 0 || fallback >= static_cast<int>(CursorStyle::Count))
+			tst::fail(__FILE__, __LINE__, "cursor fallback is out of range");
+		++tst::checks();
+		if (cursor_style_is_retired(fallback))
+			tst::fail(__FILE__, __LINE__, "cursor fallback is itself retired");
+		++tst::checks();
+		if (cursor_style_resolve(style) != fallback)
+			tst::fail(__FILE__, __LINE__, "retired style does not resolve to its fallback");
+	}
+}

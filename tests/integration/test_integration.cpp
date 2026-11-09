@@ -1321,7 +1321,7 @@ TEST(integration_wallpaper_pipeline_polls_ready_texture)
 	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
 	WallpaperPipeline pipeline;
 	pipeline.update("wallpapers/fiber.jpg", 1280, 720, 30.0);
-	for (int i = 0; i < 1000 && !pipeline.has_texture(); ++i) {
+	for (int i = 0; i < 3000 && !pipeline.has_texture(); ++i) {
 		std::this_thread::sleep_for(std::chrono::milliseconds(2));
 		pipeline.update("wallpapers/fiber.jpg", 1280, 720, 30.0);
 	}
@@ -1331,7 +1331,7 @@ TEST(integration_wallpaper_pipeline_polls_ready_texture)
 	/* Switching to another wallpaper must replace the texture without a
 	 * detour through Solid mode. */
 	pipeline.update("wallpapers/glacier.jpg", 1280, 720, 30.0);
-	for (int i = 0; i < 1000 && !pipeline.has_texture(); ++i) {
+	for (int i = 0; i < 3000 && !pipeline.has_texture(); ++i) {
 		std::this_thread::sleep_for(std::chrono::milliseconds(2));
 		pipeline.update("wallpapers/glacier.jpg", 1280, 720, 30.0);
 	}

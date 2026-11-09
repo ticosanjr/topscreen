@@ -45,12 +45,12 @@ presets, click sound, key overlay and dock.
 
 The core has **automated tests** and the OBS layer is checked against the real
 OBS headers. See [`docs/TESTS.md`](docs/TESTS.md). Profiles **A–J** ship with
-ready-to-use looks (A–D everyday, E–I aggressive, J passthrough).
+ready-to-use looks (A–D everyday, E–I aggressive, J passthrough). The UI is available in English and Brazilian Portuguese.
 
 ### Quick tests
 
 ```bash
-./tests/run.sh            # Linux: 238 core tests
+./tests/run.sh            # Linux: 242 core tests
 ./tests/run-all.sh        # core + OBS headers + 58 integration tests
 pwsh -File tests\run.ps1  # Windows (or PowerShell on any OS)
 ```

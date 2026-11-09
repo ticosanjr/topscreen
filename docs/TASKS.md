@@ -16,7 +16,7 @@ Status: ✅ done · 🟡 partial · ⬜ pending.
 | T0.2 | `plugin-main.cpp` with `OBS_DECLARE_MODULE` + source registration | ✅ |
 | T0.3 | The filter's `obs_source_info` (create/destroy/update/render/defaults/properties) | ✅ |
 | T0.4 | Shader effect (`data/effects/topscreen.effect`) | ✅ |
-| T0.5 | `en-US.ini` locale | ✅ |
+| T0.5 | `en-US.ini` + `pt-BR.ini` locales | ✅ |
 | T0.6 | `docs/BUILD.md` with Win/Linux step by step | ✅ |
 
 ## F1 — Background, corners, padding, shadow
@@ -104,9 +104,9 @@ Status: ✅ done · 🟡 partial · ⬜ pending.
 | T7.2 | evdev backend (libevdev) | ✅ (direct /dev/input read + tested decoder) |
 | T7.3 | `uaccess` udev rule + detection in the dock | ✅ (rule ready + log warning) |
 | T7.4 | Graceful degradation + tier report | ✅ (readable tier in the dock + log warnings) |
-| T7.5 | CI: Win + Linux build against OBS | 🟡 (tests CI + header check ✅; plugin build best-effort) |
-| T7.6 | Portable packaging + release | ✅ (packages in `releases/`, published as GitHub Release `v1.2.2`; Windows cross-build without the Qt dock) |
-| T7.7 | Final i18n + icon + screenshots | ⬜ |
+| T7.5 | CI: Win + Linux build against OBS | ✅ (release workflow builds both; header check covers OBS 30.0.2 and 31.1.1) |
+| T7.6 | Portable packaging + release | ✅ (packages in `releases/`, published as GitHub Release `v1.2.3`; Windows package includes the Qt dock) |
+| T7.7 | Final i18n + icon + screenshots | 🟡 (en-US + pt-BR ✅; icon/screenshots ⬜) |
 | T7.8 | Automated release archive verification (`scripts/verify-release.sh`) | ✅ |
 
 ## Infrastructure / documentation

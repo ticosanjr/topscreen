@@ -13,7 +13,7 @@
 #   tools/check-obs-headers.sh
 #
 # Variables:
-#   OBS_REF             OBS reference (default: master)
+#   OBS_REF             OBS reference (default: the obs-studio version in buildspec.json)
 #   TOPSCREEN_CHECK_DIR working/cache directory (default: $TMPDIR/topscreen-obscheck)
 #   CXX                 compiler (default: g++)
 #
@@ -21,7 +21,11 @@ set -uo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 WORK="${TOPSCREEN_CHECK_DIR:-${TMPDIR:-/tmp}/topscreen-obscheck}"
-OBS_REF="${OBS_REF:-master}"
+DEFAULT_OBS_REF="$(
+    sed -n '/"obs-studio"/,/}/p' "$ROOT/buildspec.json" |
+        sed -n 's/.*"version": "\([^"]*\)".*/\1/p' | head -1
+)"
+OBS_REF="${OBS_REF:-${DEFAULT_OBS_REF:-master}}"
 CXX="${CXX:-g++}"
 QT_STUB="$ROOT/tools/qt-stub"
 

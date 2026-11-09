@@ -166,3 +166,31 @@ TEST(locale_labels_are_human_readable)
 			tst::fail(__FILE__, __LINE__, "label has leading/trailing whitespace: " + key);
 	}
 }
+
+/* The Brazilian Portuguese translation must cover exactly the same keys as
+ * en-US and must not contain empty labels. */
+TEST(locale_pt_br_mirrors_en_us)
+{
+	const std::string en_path = std::string(TOPSCREEN_TEST_DATA_DIR) + "/locale/en-US.ini";
+	const std::string pt_path = std::string(TOPSCREEN_TEST_DATA_DIR) + "/locale/pt-BR.ini";
+	const auto en = ini_keys(en_path);
+	const auto pt = ini_keys(pt_path);
+	const auto pt_values = ini_values(pt_path);
+	REQUIRE(!en.empty());
+	REQUIRE(!pt.empty());
+
+	for (const auto &key : en) {
+		++tst::checks();
+		if (pt.find(key) == pt.end())
+			tst::fail(__FILE__, __LINE__, "key missing from pt-BR.ini: " + key);
+	}
+	for (const auto &key : pt) {
+		++tst::checks();
+		if (en.find(key) == en.end())
+			tst::fail(__FILE__, __LINE__, "key in pt-BR.ini is not in en-US.ini: " + key);
+		++tst::checks();
+		const auto it = pt_values.find(key);
+		if (it == pt_values.end() || it->second.empty())
+			tst::fail(__FILE__, __LINE__, "empty pt-BR label for key: " + key);
+	}
+}

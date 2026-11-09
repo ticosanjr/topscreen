@@ -5,6 +5,8 @@
 #   scripts/verify-release.sh              # checks the version from CMakeLists.txt
 #   scripts/verify-release.sh 0.3.0        # checks an explicit version
 #   scripts/verify-release.sh --dir DIR    # reads archives from DIR
+#   scripts/verify-release.sh --skip-build-match
+#                                          # allow a package built elsewhere (CI)
 #
 # It checks the archive structure, the binary version string, architecture,
 # required data files/locale keys, Windows launchers and (when present) that
@@ -15,11 +17,13 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="$ROOT/releases"
 VER=""
+SKIP_BUILD_MATCH=0
 
 while [ $# -gt 0 ]; do
 	case "$1" in
 	--dir) OUT="$2"; shift 2 ;;
-	-h | --help) sed -n '2,12p' "$0"; exit 0 ;;
+	--skip-build-match) SKIP_BUILD_MATCH=1; shift ;;
+	-h | --help) sed -n '2,16p' "$0"; exit 0 ;;
 	-*) echo "unknown option: $1" >&2; exit 2 ;;
 	*) VER="$1"; shift ;;
 	esac
@@ -82,7 +86,7 @@ check_binary "$WIN/bin/64bit/topscreen.dll" Windows
 
 for tree in "$LIN" "$WIN"; do
 	for rel in effects/topscreen.effect effects/text.effect locale/en-US.ini \
-		sounds/click-soft.wav sounds/click-mouse-right.wav; do
+		locale/pt-BR.ini sounds/click-soft.wav sounds/click-mouse-right.wav; do
 		[ -s "$tree/data/$rel" ] && ok "data: $rel" ||
 			fail "missing/empty data file: $tree/data/$rel"
 	done
@@ -98,15 +102,19 @@ for f in install.bat uninstall.bat; do
 	[ -s "$WIN/$f" ] && ok "Windows launcher: $f" || fail "missing Windows launcher: $f"
 done
 
-if [ -f "$ROOT/build/topscreen.so" ]; then
-	cmp -s "$ROOT/build/topscreen.so" "$LIN/bin/64bit/topscreen.so" &&
-		ok "Linux package matches build/topscreen.so" ||
-		fail "Linux package differs from build/topscreen.so"
-fi
-if [ -f "$ROOT/build/topscreen.dll" ]; then
-	cmp -s "$ROOT/build/topscreen.dll" "$WIN/bin/64bit/topscreen.dll" &&
-		ok "Windows package matches build/topscreen.dll" ||
-		fail "Windows package differs from build/topscreen.dll"
+if [ "$SKIP_BUILD_MATCH" -eq 0 ]; then
+	if [ -f "$ROOT/build/topscreen.so" ]; then
+		cmp -s "$ROOT/build/topscreen.so" "$LIN/bin/64bit/topscreen.so" &&
+			ok "Linux package matches build/topscreen.so" ||
+			fail "Linux package differs from build/topscreen.so"
+	fi
+	if [ -f "$ROOT/build/topscreen.dll" ]; then
+		cmp -s "$ROOT/build/topscreen.dll" "$WIN/bin/64bit/topscreen.dll" &&
+			ok "Windows package matches build/topscreen.dll" ||
+			fail "Windows package differs from build/topscreen.dll"
+	fi
+else
+	ok "package/build byte comparison skipped"
 fi
 
 echo

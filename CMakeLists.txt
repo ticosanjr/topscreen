@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 
-project(TopScreen VERSION 1.2.2 LANGUAGES C CXX)
+project(TopScreen VERSION 1.2.3 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -133,6 +133,8 @@ if(TOPSCREEN_BUILD_PLUGIN)
         src/plugin-main.cpp
         src/ts-filter.cpp
         src/ts-settings.cpp
+        src/ts-monitor-origin.cpp
+        src/ts-parent-cursor.cpp
         src/ts-profile-bundle.cpp
         src/ts-profile-store.cpp
         src/ts-properties.cpp

@@ -39,33 +39,43 @@ from older versions never linger.
 
 ## Cutting a release
 
-The canonical release is built locally, attached to a GitHub Release with `gh`,
-and mirrored in `releases/`:
+The release version is built and validated locally, then the **tag** triggers
+the `Release` workflow, which builds the final Linux and Windows packages. The
+Windows CI package includes the Qt dock; use its artifacts for the GitHub
+Release.
 
 ```bash
 VERSION=$(sed -n 's/^project(TopScreen VERSION \([0-9.]*\).*/\1/p' CMakeLists.txt)
 
-./scripts/build-install.sh              # Linux .so (with the Qt dock)
-./scripts/build-windows-cross.sh        # Windows .dll (without the Qt dock)
-./scripts/package.sh                    # archives + auto-prune to the newest 3
+./scripts/build-install.sh              # local Linux .so (with the Qt dock)
+./scripts/package.sh                    # local fallback archives + auto-prune
 ./scripts/verify-release.sh             # structure, version, arch, data, SHA-256
 ./tests/run-all.sh                      # core + OBS headers + integration
 
 git add -A
 git commit -m "release: $VERSION"
 git push origin main
-
-# Without GitHub Actions: keep the tag-triggered workflow from repacking it.
-gh workflow disable "Release"
 git tag -a "v$VERSION" -m "TopScreen $VERSION"
 git push origin "v$VERSION"
+
+# Wait for the tag-triggered Release workflow and download its artifacts.
+gh run list --workflow "Release" --limit 1
+RUN=<run-id>
+CI_DIR="/tmp/topscreen-release-$VERSION"
+mkdir -p "$CI_DIR"
+gh run download "$RUN" -n pkg-linux -D "$CI_DIR"
+gh run download "$RUN" -n pkg-windows -D "$CI_DIR"
+./scripts/verify-release.sh --dir "$CI_DIR" --skip-build-match
+
 gh release create "v$VERSION" --verify-tag \
   --title "TopScreen $VERSION" \
   --notes-file /tmp/topscreen-release-notes.md \
-  "releases/topscreen-$VERSION-linux.tar.gz" \
-  "releases/topscreen-$VERSION-windows.zip"
-gh workflow enable "Release"
+  "$CI_DIR/topscreen-$VERSION-linux.tar.gz" \
+  "$CI_DIR/topscreen-$VERSION-windows.zip"
 ```
+
+`--skip-build-match` skips the byte comparison against the local `build/`
+binary, because the CI artifacts were built in a different environment.
 
 `scripts/package.sh` automatically calls `scripts/prune-releases.sh`, which
 keeps only the newest **three** versions in `releases/`. Release archives are
@@ -78,15 +88,15 @@ gh release list --limit 100
 gh release delete <old-tag> --yes
 ```
 
-The `Release` workflow remains available for a CI-built release with the Qt dock
-on Windows; when Actions minutes are unavailable, use the local cross-build
-above. It produces the full filter **without the Qt dock**. GitHub Releases and
-the archives in `releases/` carry the same bytes.
+The `Release` workflow is the canonical source of release packages. It builds
+the full filter, including the **Qt dock** on Windows. If Actions minutes are
+unavailable, the local cross-build below is a fallback; it produces the Windows
+DLL **without the Qt dock**.
 
 | Platform | Build environment |
 |----------|-------------------|
 | Linux | `ubuntu-24.04` + distro `libobs-dev` 30.0.2, `obs-frontend-api` and Qt6 (dock included) |
-| Windows | official OBS **sources** of the same version as the runtime (headers) + import libraries generated from `obs.dll` and `obs-frontend-api.dll`, plus Qt6 from obs-deps: CI-built packages include the **Qt dock** like Linux; local cross-builds (0.2.18–1.2.2) do not |
+| Windows | official OBS **sources** of the same version as the runtime (headers) + import libraries generated from `obs.dll` and `obs-frontend-api.dll`, plus Qt6 from obs-deps: CI-built packages include the **Qt dock** like Linux; local cross-builds (0.2.18–1.2.3) do not |
 
 > The local Linux build uses the distro OBS 30.0.2. The Windows cross-build script
 > pins OBS **31.1.1** (`OBS_VERSION` in `scripts/build-windows-cross.sh`); use the
@@ -100,7 +110,8 @@ If the GitHub Actions minutes are unavailable, the Windows DLL can be
 cross-built from Linux with `scripts/build-windows-cross.sh` (portable
 LLVM-MinGW + the official OBS headers and runtime). It produces the full filter
 **without the Qt dock**, which then goes into `releases/` via
-`scripts/package.sh`.
+`scripts/package.sh`. Verify that fallback with the normal
+`scripts/verify-release.sh` (without `--skip-build-match`).
 
 ## Quick install
 

@@ -20,6 +20,9 @@ fi
 OBS="$WORK/obs-src"
 SIMDE="$WORK/simde-src"
 STUB="$WORK/stub"
+# OBS 31 moved the frontend API; 30 keeps it under UI/obs-frontend-api.
+FRONTEND="$OBS/frontend/api"
+[ -d "$FRONTEND" ] || FRONTEND="$OBS/UI/obs-frontend-api"
 
 if [ ! -d "$OBS/libobs" ]; then
     echo "OBS headers missing in $WORK. Run tools/check-obs-headers.sh first."
@@ -33,7 +36,7 @@ SRC_FILES=$(find "$ROOT/src" -name '*.cpp' ! -name 'plugin-main.cpp' ! -path '*/
 echo "Compiling integration ..."
 # shellcheck disable=SC2086
 "$CXX" -std=c++20 -O1 -g -Wall -Wextra -Wno-missing-field-initializers ${CXXFLAGS:-} \
-    -I "$ROOT/src" -I "$ROOT/tests" -I "$ROOT/third_party" -I "$STUB" -I "$OBS/libobs" -I "$OBS/frontend/api" -I "$SIMDE" \
+    -I "$ROOT/src" -I "$ROOT/tests" -I "$ROOT/third_party" -I "$STUB" -I "$OBS/libobs" -I "$FRONTEND" -I "$SIMDE" \
     -DTOPSCREEN_VERSION='"0.0.0-test"' -DTOPSCREEN_INTEGRATION \
     -DTOPSCREEN_TEST_DATA_DIR="\"$ROOT/data\"" \
     "$ROOT/tests/test_main.cpp" \

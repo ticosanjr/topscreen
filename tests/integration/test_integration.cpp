@@ -64,7 +64,15 @@ void *create_filter(obs_source_t *filter)
 {
 	/* In real OBS, the obs_data passed to create IS the source's own. */
 	ts_filter_source_info.get_defaults(filter->settings);
-	return ts_filter_source_info.create(filter->settings, filter);
+	void *ctx = ts_filter_source_info.create(filter->settings, filter);
+	fakeobs::attach_filter_ctx(filter, ctx);
+	return ctx;
+}
+
+void destroy_filter(void *ctx)
+{
+	ts_filter_source_info.destroy(ctx);
+	fakeobs::detach_filter_ctx(ctx);
 }
 
 /* Simulates the profile list in Properties: writes profile_current and calls update. */
@@ -134,7 +142,7 @@ TEST(integration_filter_lifecycle)
 	CHECK_EQ(static_cast<int>(obs_data_get_int(filter->settings, core::keys::kBgType)), 0);
 	CHECK_EQ(static_cast<int>(obs_data_get_int(filter->settings, core::keys::kBgMode)), 0);
 
-	ts_filter_source_info.destroy(ctx);
+	destroy_filter(ctx);
 	CHECK(registry_first() == nullptr);
 }
 
@@ -167,7 +175,7 @@ TEST(integration_all_presets_and_toggle_background)
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
 	CHECK(!obs_data_get_bool(filter->settings, core::keys::kBgEnabled) != !before);
 
-	ts_filter_source_info.destroy(ctx);
+	destroy_filter(ctx);
 }
 
 TEST(integration_hotkeys_all_actions)
@@ -244,10 +252,12 @@ TEST(integration_hotkeys_all_actions)
 
 	fakeobs::invoke_hotkey(fakeobs::find_hotkey("TopScreen_ProfileSave"), true);
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
-	CHECK(obs_data_get_obj(filter->settings, core::keys::kProfileSlots[ctrl->current_profile()]) !=
-	      nullptr);
+	obs_data_t *saved_slot =
+		obs_data_get_obj(filter->settings, core::keys::kProfileSlots[ctrl->current_profile()]);
+	CHECK(saved_slot != nullptr);
+	obs_data_release(saved_slot);
 
-	ts_filter_source_info.destroy(ctx);
+	destroy_filter(ctx);
 }
 
 TEST(integration_key_overlay)
@@ -273,7 +283,7 @@ TEST(integration_key_overlay)
 
 	TS_UNSETENV("TOPSCREEN_DEBUG_KEY");
 
-	ts_filter_source_info.destroy(ctx);
+	destroy_filter(ctx);
 	CHECK(registry_first() == nullptr);
 }
 
@@ -325,7 +335,7 @@ TEST(integration_profiles_save_and_switch)
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
 	CHECK(ctrl->current_profile() >= 0 && ctrl->current_profile() < ctrl->profile_count());
 
-	ts_filter_source_info.destroy(ctx);
+	destroy_filter(ctx);
 	CHECK(registry_first() == nullptr);
 }
 
@@ -412,7 +422,7 @@ TEST(integration_profiles_io_roundtrip)
 	CHECK(ctrl->effects_enabled()); /* B: on restored */
 
 	std::remove(path.c_str());
-	ts_filter_source_info.destroy(ctx);
+	destroy_filter(ctx);
 }
 
 TEST(integration_registry_target_selection)
@@ -456,11 +466,11 @@ TEST(integration_registry_target_selection)
 	CHECK(a->effects_enabled());
 
 	/* Deleting the selected filter falls back to the remaining one. */
-	ts_filter_source_info.destroy(ctx2);
+	destroy_filter(ctx2);
 	CHECK(registry_first() == a);
 	CHECK(dynamic_cast<FilterControl *>(hotkey_target_first()) == a);
 
-	ts_filter_source_info.destroy(ctx1);
+	destroy_filter(ctx1);
 	CHECK(registry_first() == nullptr);
 	CHECK(hotkey_target_first() == nullptr);
 }
@@ -508,7 +518,7 @@ TEST(integration_profile_autosave_is_debounced)
 	CHECK_EQ(ctrl->current_profile(), 0);
 	CHECK_EQ(ctrl->effects_enabled(), before);
 
-	ts_filter_source_info.destroy(ctx);
+	destroy_filter(ctx);
 }
 
 TEST(integration_monitor_origin_from_environment)
@@ -533,7 +543,7 @@ TEST(integration_monitor_origin_from_environment)
 	CHECK_NEAR(x, 0.0, 1e-9);
 	CHECK_NEAR(y, 1080.0, 1e-9);
 
-	ts_filter_source_info.destroy(ctx);
+	destroy_filter(ctx);
 
 	/* Without the override and without a resolvable monitor list, the origin
 	 * stays at (0,0): the previous behaviour is preserved. */
@@ -551,7 +561,7 @@ TEST(integration_monitor_origin_from_environment)
 	CHECK_NEAR(x2, 0.0, 1e-9);
 	CHECK_NEAR(y2, 0.0, 1e-9);
 
-	ts_filter_source_info.destroy(ctx2);
+	destroy_filter(ctx2);
 }
 
 TEST(integration_monitor_origin_manual_overrides_environment)
@@ -582,7 +592,7 @@ TEST(integration_monitor_origin_manual_overrides_environment)
 	CHECK_NEAR(x, -1920.0, 1e-9);
 	CHECK_NEAR(y, 0.0, 1e-9);
 
-	ts_filter_source_info.destroy(ctx);
+	destroy_filter(ctx);
 	TS_UNSETENV("TOPSCREEN_MONITOR_ORIGIN");
 }
 
@@ -619,7 +629,7 @@ TEST(integration_registers_all_hotkeys)
 	 * list an entry that never fires). */
 	CHECK(fakeobs::hotkeys_active_from(before));
 
-	ts_filter_source_info.destroy(ctx);
+	destroy_filter(ctx);
 	CHECK(!fakeobs::hotkeys_active_from(before));
 }
 
@@ -643,10 +653,10 @@ TEST(integration_hotkeys_shared_between_filters)
 	CHECK(fakeobs::hotkeys_active_from(before));
 
 	/* Destroying one filter keeps the shared hotkeys working. */
-	ts_filter_source_info.destroy(ctx1);
+	destroy_filter(ctx1);
 	CHECK(fakeobs::hotkeys_active_from(before));
 
-	ts_filter_source_info.destroy(ctx2);
+	destroy_filter(ctx2);
 	CHECK(!fakeobs::hotkeys_active_from(before));
 }
 
@@ -685,7 +695,7 @@ TEST(integration_seeded_profiles_restore)
 	CHECK_EQ(obs_data_get_int(filter->settings, core::keys::kClickLeftColor),
 		 static_cast<long long>(0xFFFFFFFF));
 
-	ts_filter_source_info.destroy(ctx);
+	destroy_filter(ctx);
 }
 
 TEST(integration_profile_from_list_restores_everything)
@@ -724,7 +734,7 @@ TEST(integration_profile_from_list_restores_everything)
 	CHECK_NEAR(obs_data_get_double(filter->settings, core::keys::kZoomAmount), 1.25, 1e-6);
 	CHECK(obs_data_get_bool(filter->settings, core::keys::kKeysEnabled));
 
-	ts_filter_source_info.destroy(ctx);
+	destroy_filter(ctx);
 	CHECK(registry_first() == nullptr);
 }
 
@@ -763,7 +773,7 @@ TEST(integration_profile_switch_refreshes_properties)
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
 	CHECK(fakeobs::property_update_calls() > 0);
 
-	ts_filter_source_info.destroy(ctx);
+	destroy_filter(ctx);
 }
 
 TEST(integration_hotkey_highlight_toggles_zoom)
@@ -824,7 +834,7 @@ TEST(integration_hotkey_highlight_toggles_zoom)
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
 	CHECK(!ctrl->hotkey_highlight_active());
 
-	ts_filter_source_info.destroy(ctx);
+	destroy_filter(ctx);
 }
 
 TEST(integration_hotkey_toggles_spotlight)
@@ -848,7 +858,7 @@ TEST(integration_hotkey_toggles_spotlight)
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
 	CHECK(!obs_data_get_bool(filter->settings, core::keys::kSpotlightEnabled));
 
-	ts_filter_source_info.destroy(ctx);
+	destroy_filter(ctx);
 }
 
 TEST(integration_hotkey_toggles_magnifier_and_blocks_spotlight)
@@ -879,7 +889,7 @@ TEST(integration_hotkey_toggles_magnifier_and_blocks_spotlight)
 	CHECK(obs_data_get_bool(filter->settings, core::keys::kSpotlightEnabled));
 	CHECK(!obs_data_get_bool(filter->settings, core::keys::kMagnifierEnabled));
 
-	ts_filter_source_info.destroy(ctx);
+	destroy_filter(ctx);
 }
 
 TEST(integration_hotkey_highlight_ignored_with_effects_off)
@@ -899,7 +909,7 @@ TEST(integration_hotkey_highlight_ignored_with_effects_off)
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
 	CHECK(!ctrl->hotkey_highlight_active());
 
-	ts_filter_source_info.destroy(ctx);
+	destroy_filter(ctx);
 }
 
 TEST(integration_profile_switch_reloads_click_sounds)
@@ -943,7 +953,7 @@ TEST(integration_profile_switch_reloads_click_sounds)
 	CHECK(ctrl->loaded_sound_path(false).ends_with("sounds/click-hard.wav"));
 	CHECK(ctrl->loaded_sound_path(true).ends_with("sounds/click-bubble.wav"));
 
-	ts_filter_source_info.destroy(ctx);
+	destroy_filter(ctx);
 }
 
 TEST(integration_profile_partial_slot_uses_seed)
@@ -974,7 +984,7 @@ TEST(integration_profile_partial_slot_uses_seed)
 	CHECK_EQ(obs_data_get_int(filter->settings, core::keys::kClickLeftColor),
 		 static_cast<long long>(0xFF00D7FF));
 
-	ts_filter_source_info.destroy(ctx);
+	destroy_filter(ctx);
 }
 
 TEST(integration_profile_import_fills_missing_fields)
@@ -1018,7 +1028,7 @@ TEST(integration_profile_import_fills_missing_fields)
 	CHECK_EQ(obs_data_get_int(filter->settings, core::keys::kClickLeftColor),
 		 static_cast<long long>(0xFF00D7FF));
 
-	ts_filter_source_info.destroy(ctx);
+	destroy_filter(ctx);
 }
 
 TEST(integration_profile_keeps_user_edit)
@@ -1054,7 +1064,7 @@ TEST(integration_profile_keeps_user_edit)
 	CHECK_EQ(obs_data_get_int(filter->settings, core::keys::kClickLeftColor),
 		 static_cast<long long>(0xFF112233));
 
-	ts_filter_source_info.destroy(ctx);
+	destroy_filter(ctx);
 }
 
 TEST(integration_chosen_profile_survives_restart)
@@ -1070,13 +1080,15 @@ TEST(integration_chosen_profile_survives_restart)
 	/* Chooses profile B and "closes OBS". */
 	set_profile_from_properties(filter, ctx, 1);
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
-	ts_filter_source_info.destroy(ctx);
+	destroy_filter(ctx);
 
 	/* "Reopens OBS": the saved collection has profile_current + the slots. */
-	obs_data_t saved = *filter->settings;
+	const std::string saved = obs_data_get_json(filter->settings);
 	obs_source_t *f2 = fakeobs::make_source(&ts_filter_source_info, parent, 0, 0);
-	*f2->settings = saved;
-	void *ctx2 = ts_filter_source_info.create(f2->settings, f2);
+	obs_data_release(f2->settings);
+	f2->settings = obs_data_create_from_json(saved.c_str());
+	REQUIRE(f2->settings != nullptr);
+	void *ctx2 = create_filter(f2);
 	REQUIRE(ctx2 != nullptr);
 	ts_filter_source_info.video_tick(ctx2, 1.0f / 60.0f);
 
@@ -1086,7 +1098,7 @@ TEST(integration_chosen_profile_survives_restart)
 	CHECK_EQ(obs_data_get_int(f2->settings, core::keys::kBgType),
 		 static_cast<long long>(core::BgMode::Transparent));
 
-	ts_filter_source_info.destroy(ctx2);
+	destroy_filter(ctx2);
 }
 
 TEST(integration_render_does_not_crash_without_effect)
@@ -1108,7 +1120,7 @@ TEST(integration_render_does_not_crash_without_effect)
 	/* Did not try to touch the parent's cursor (render exited early). */
 	CHECK(obs_data_get_bool(parent->settings, "capture_cursor"));
 
-	ts_filter_source_info.destroy(ctx);
+	destroy_filter(ctx);
 }
 
 TEST(integration_restores_parent_cursor_on_destroy)
@@ -1122,7 +1134,7 @@ TEST(integration_restores_parent_cursor_on_destroy)
 	ts_filter_source_info.video_render(ctx, nullptr);
 	CHECK(!obs_data_get_bool(parent->settings, "capture_cursor"));
 
-	ts_filter_source_info.destroy(ctx);
+	destroy_filter(ctx);
 	CHECK(obs_data_get_bool(parent->settings, "capture_cursor"));
 }
 
@@ -1137,7 +1149,7 @@ TEST(integration_keeps_parent_cursor_off_if_it_was_off)
 
 	ts_filter_source_info.video_render(ctx, nullptr);
 	CHECK(!obs_data_get_bool(parent->settings, "capture_cursor"));
-	ts_filter_source_info.destroy(ctx);
+	destroy_filter(ctx);
 	CHECK(!obs_data_get_bool(parent->settings, "capture_cursor"));
 }
 
@@ -1166,7 +1178,7 @@ TEST(integration_native_cursor_follows_cursor_setting)
 	ts_filter_source_info.video_render(ctx, nullptr);
 	CHECK(!obs_data_get_bool(parent->settings, "capture_cursor"));
 
-	ts_filter_source_info.destroy(ctx);
+	destroy_filter(ctx);
 	CHECK(obs_data_get_bool(parent->settings, "capture_cursor"));
 }
 
@@ -1187,10 +1199,10 @@ TEST(integration_shared_parent_cursor_refcount)
 
 	/* The first filter must not restore the cursor while the second still
 	 * draws its own. */
-	ts_filter_source_info.destroy(ctx1);
+	destroy_filter(ctx1);
 	CHECK(!obs_data_get_bool(parent->settings, "capture_cursor"));
 
-	ts_filter_source_info.destroy(ctx2);
+	destroy_filter(ctx2);
 	CHECK(obs_data_get_bool(parent->settings, "capture_cursor"));
 }
 
@@ -1220,7 +1232,7 @@ TEST(integration_disables_parent_show_cursor)
 	REQUIRE(ctx != nullptr);
 	ts_filter_source_info.video_render(ctx, nullptr);
 	CHECK(!obs_data_get_bool(parent->settings, "show_cursor"));
-	ts_filter_source_info.destroy(ctx);
+	destroy_filter(ctx);
 	CHECK(obs_data_get_bool(parent->settings, "show_cursor"));
 }
 
@@ -1259,7 +1271,7 @@ TEST(integration_wallpaper_prefilter_stress)
 
 	CHECK_EQ(obs_data_get_string(filter->settings, core::keys::kBgImage),
 		 std::string("wallpapers/fiber.jpg"));
-	ts_filter_source_info.destroy(ctx);
+	destroy_filter(ctx);
 }
 
 TEST(integration_properties_parent_groups)
@@ -1301,7 +1313,7 @@ TEST(integration_properties_parent_groups)
 	REQUIRE(props != nullptr);
 	CHECK(fakeobs::property_visible(obs_properties_get(props, "grp_bg_image")));
 	obs_properties_destroy(props);
-	ts_filter_source_info.destroy(ctx);
+	destroy_filter(ctx);
 }
 
 TEST(integration_wallpaper_pipeline_polls_ready_texture)
@@ -1354,12 +1366,15 @@ TEST(integration_profile_seed_revision_overwrites_once)
 
 	/* A later edit with the current revision must survive a restart. */
 	obs_data_set_int(seed_slot, core::keys::kClickLeftColor, 0x445566);
-	obs_data_t saved = *filter->settings;
-	ts_filter_source_info.destroy(ctx);
+	obs_data_release(seed_slot);
+	const std::string saved = obs_data_get_json(filter->settings);
+	destroy_filter(ctx);
 
 	obs_source_t *f2 = fakeobs::make_source(&ts_filter_source_info, parent, 0, 0);
-	*f2->settings = saved;
-	void *ctx2 = ts_filter_source_info.create(f2->settings, f2);
+	obs_data_release(f2->settings);
+	f2->settings = obs_data_create_from_json(saved.c_str());
+	REQUIRE(f2->settings != nullptr);
+	void *ctx2 = create_filter(f2);
 	REQUIRE(ctx2 != nullptr);
 	ts_filter_source_info.video_tick(ctx2, 1.0f / 60.0f);
 	CHECK_EQ(obs_data_get_int(f2->settings, core::keys::kClickLeftColor),
@@ -1368,7 +1383,8 @@ TEST(integration_profile_seed_revision_overwrites_once)
 	REQUIRE(kept_slot != nullptr);
 	CHECK_EQ(obs_data_get_int(kept_slot, core::keys::kClickLeftColor),
 		 static_cast<long long>(0x445566));
-	ts_filter_source_info.destroy(ctx2);
+	obs_data_release(kept_slot);
+	destroy_filter(ctx2);
 }
 
 /* Saved frontend bindings win; only missing profile hotkeys get the default
@@ -1429,7 +1445,7 @@ TEST(integration_hotkey_saved_bindings_and_defaults)
 	CHECK(fakeobs::profile_config_string("Hotkeys", "TopScreen_ProfileJ")
 		      .find("OBS_KEY_J") != std::string::npos);
 
-	ts_filter_source_info.destroy(ctx);
+	destroy_filter(ctx);
 }
 
 
@@ -1465,6 +1481,7 @@ TEST(integration_profile_reset_button_restores_seeds)
 	CHECK_EQ(obs_data_get_int(filter->settings, core::keys::kClickLeftColor),
 		 static_cast<long long>(0xFF00D7FF));
 	CHECK_EQ(obs_data_get_int(filter->settings, core::keys::kProfileSeedVersion), 2);
+	obs_data_release(restored);
 
-	ts_filter_source_info.destroy(ctx);
+	destroy_filter(ctx);
 }

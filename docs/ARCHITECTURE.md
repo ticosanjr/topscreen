@@ -49,14 +49,14 @@ covered by tests) and the **OBS layer** (thin, it only wires the core to libobs)
 | Plugin | `src/plugin-main.cpp` | `OBS_DECLARE_MODULE`, source registration, dock |
 | Filter | `src/ts-filter.cpp` | `obs_source_info`, lifecycle, tick/render, hotkeys |
 | Settings | `src/ts-settings.{hpp,cpp}` | obs_data ↔ `core::Config` mapping |
-| Properties | `src/ts-properties.{hpp,cpp}` | Native UI (obs_properties) |
+| Properties | `src/ts-properties.{hpp,cpp}` | Native UI (obs_properties), split into one builder per section |
 | Presets | `src/ts-presets.{hpp,cpp}` | Loads `data/presets/*.json` |
 | Compositor | `src/render/ts-compositor.{hpp,cpp}` | Shader effect + parameter upload |
 | Frame | `src/render/ts-frame.hpp` | Per-frame state (cursor/zoom/clicks) |
-| Input | `src/input/ts-input.*` + `ts-input-platform.cpp` | Cursor/button/key state |
+| Input | `src/input/ts-input.*` + `ts-input-{win,linux,none}.cpp` | Cursor/button/key state (one backend per platform) |
 | Hotkeys | `src/hotkeys/ts-hotkeys.{hpp,cpp}` | Hotkey registration + callbacks |
 | Text | `src/render/ts-text.{hpp,cpp}` + `src/core/font_atlas.*` | Key overlay (font atlas + band) |
-| Profiles | `src/core/profiles.{hpp,cpp}` | A–J profile slots + initial seeds |
+| Profiles | `src/core/profiles.{hpp,cpp}` + `ts-profile-store.*` + `ts-profile-bundle.*` | A–J seeds, slot store, export/import bundle |
 | Audio | `src/audio/ts-click-sound.{hpp,cpp}` | Click sound (F3/F6) |
 | UI | `src/ui/ts-dock.{hpp,cpp}` | Qt dock (optional) |
 

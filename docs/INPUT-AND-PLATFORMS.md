@@ -59,10 +59,10 @@ The TopScreen dock detects availability and reports what is missing.
 
 | Backend | File | State |
 |---------|---------|--------|
-| Windows | `src/input/ts-input-platform.cpp` | ✅ cursor + buttons (WinAPI) |
-| X11 | `src/input/ts-input-platform.cpp` | ✅ cursor + buttons (Xlib, `TOPSCREEN_HAVE_X11`) |
-| evdev | `src/input/ts-input-platform.cpp` | ✅ keyboard via `/dev/input` (Tier 3) |
-| Portal | `src/input/ts-input-platform.cpp` | ⬜ Tier 2 (F7) |
+| Windows | `src/input/ts-input-win.cpp` | ✅ cursor + buttons (WinAPI) |
+| X11 | `src/input/ts-input-linux.cpp` | ✅ cursor + buttons (Xlib, `TOPSCREEN_HAVE_X11`) |
+| evdev | `src/input/ts-input-linux.cpp` | ✅ keyboard via `/dev/input` (Tier 3) |
+| Portal | `src/input/ts-input-linux.cpp` | ⬜ Tier 2 (F7) |
 
 ## Technical notes
 

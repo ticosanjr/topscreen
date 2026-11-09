@@ -9,6 +9,7 @@
 #include <cstring>
 #include <fstream>
 #include <memory>
+#include <unordered_map>
 
 #include "core/json.hpp"
 
@@ -19,6 +20,8 @@ namespace {
 
 std::string g_data_dir;
 const obs_source_info *g_registered = nullptr;
+std::vector<obs_source_t *> g_sources;
+std::unordered_map<void *, obs_source_t *> g_filter_ctx;
 
 struct RegisteredHotkey {
 	std::string name;
@@ -31,6 +34,29 @@ std::vector<RegisteredHotkey> g_hotkeys;
 std::map<std::string, std::string> g_profile_config;
 obs_frontend_event_cb g_frontend_callback = nullptr;
 void *g_frontend_callback_data = nullptr;
+
+void cleanup_sources()
+{
+	/* Tests create filters and do not always destroy them. Destroying the
+	 * remaining plugin contexts here keeps the leak sanitizer meaningful. */
+	for (auto &entry : g_filter_ctx) {
+		obs_source_t *source = entry.second;
+		if (source && source->info && source->data && source->info->destroy)
+			source->info->destroy(source->data);
+	}
+	g_filter_ctx.clear();
+
+	for (obs_source_t *source : g_sources) {
+		if (!source)
+			continue;
+		if (source->settings)
+			obs_data_release(source->settings);
+		delete source;
+	}
+	g_sources.clear();
+	g_hotkeys.clear();
+	g_profile_config.clear();
+}
 
 char g_effect_dummy = 0;
 char g_technique_dummy = 0;
@@ -57,6 +83,11 @@ obs_property_t *add_prop(obs_properties_t *props, const char *name)
 
 namespace fakeobs {
 
+void cleanup()
+{
+	cleanup_sources();
+}
+
 void set_data_dir(const std::string &dir)
 {
 	g_data_dir = dir;
@@ -70,7 +101,28 @@ obs_source_t *make_source(const obs_source_info *info, obs_source_t *parent, uin
 	s->base_w = w;
 	s->base_h = h;
 	s->settings = obs_data_create();
+	g_sources.push_back(s);
 	return s;
+}
+
+void attach_filter_ctx(obs_source_t *source, void *ctx)
+{
+	if (!source || !ctx)
+		return;
+	source->data = ctx;
+	g_filter_ctx[ctx] = source;
+}
+
+void detach_filter_ctx(void *ctx)
+{
+	if (!ctx)
+		return;
+	auto it = g_filter_ctx.find(ctx);
+	if (it == g_filter_ctx.end())
+		return;
+	if (it->second)
+		it->second->data = nullptr;
+	g_filter_ctx.erase(it);
 }
 
 void set_source_name(obs_source_t *source, const std::string &name)
@@ -421,7 +473,22 @@ obs_data_t *obs_data_create(void)
 	return new obs_data();
 }
 
-void obs_data_release(obs_data_t *) {}
+void obs_data_addref(obs_data_t *data)
+{
+	if (data)
+		++data->refs;
+}
+
+void obs_data_release(obs_data_t *data)
+{
+	if (!data || --data->refs > 0)
+		return;
+	for (auto &entry : data->objs)
+		obs_data_release(entry.second);
+	for (auto &entry : data->arrays)
+		obs_data_array_release(entry.second);
+	delete data;
+}
 
 bool obs_data_get_bool(obs_data_t *data, const char *name)
 {
@@ -533,8 +600,14 @@ bool obs_data_has_default_value(obs_data_t *data, const char *name)
 
 void obs_data_set_obj(obs_data_t *data, const char *name, obs_data_t *obj)
 {
-	if (data && name)
-		data->objs[name] = obj;
+	if (!data || !name)
+		return;
+	if (obj)
+		obs_data_addref(obj);
+	auto it = data->objs.find(name);
+	if (it != data->objs.end() && it->second != obj)
+		obs_data_release(it->second);
+	data->objs[name] = obj;
 }
 
 obs_data_t *obs_data_get_obj(obs_data_t *data, const char *name)
@@ -542,7 +615,10 @@ obs_data_t *obs_data_get_obj(obs_data_t *data, const char *name)
 	if (!data || !name)
 		return nullptr;
 	auto it = data->objs.find(name);
-	return it == data->objs.end() ? nullptr : it->second;
+	if (it == data->objs.end())
+		return nullptr;
+	obs_data_addref(it->second);
+	return it->second;
 }
 
 obs_data_array_t *obs_data_get_array(obs_data_t *data, const char *name)
@@ -550,13 +626,22 @@ obs_data_array_t *obs_data_get_array(obs_data_t *data, const char *name)
 	if (!data || !name)
 		return nullptr;
 	auto it = data->arrays.find(name);
-	return it == data->arrays.end() ? nullptr : it->second;
+	if (it == data->arrays.end())
+		return nullptr;
+	obs_data_array_addref(it->second);
+	return it->second;
 }
 
 void obs_data_set_array(obs_data_t *data, const char *name, obs_data_array_t *array)
 {
-	if (data && name)
-		data->arrays[name] = array;
+	if (!data || !name)
+		return;
+	if (array)
+		obs_data_array_addref(array);
+	auto it = data->arrays.find(name);
+	if (it != data->arrays.end() && it->second != array)
+		obs_data_array_release(it->second);
+	data->arrays[name] = array;
 }
 
 const char *obs_data_get_json(obs_data_t *data)
@@ -575,11 +660,26 @@ size_t obs_data_array_count(obs_data_array_t *array)
 
 obs_data_t *obs_data_array_item(obs_data_array_t *array, size_t idx)
 {
-	return array && idx < array->items.size() ? array->items[idx] : nullptr;
+	if (!array || idx >= array->items.size())
+		return nullptr;
+	obs_data_addref(array->items[idx]);
+	return array->items[idx];
 }
 
-void obs_data_array_release(obs_data_array_t *) {}
-void obs_data_array_addref(obs_data_array_t *) {}
+void obs_data_array_addref(obs_data_array_t *array)
+{
+	if (array)
+		++array->refs;
+}
+
+void obs_data_array_release(obs_data_array_t *array)
+{
+	if (!array || --array->refs > 0)
+		return;
+	for (obs_data_t *item : array->items)
+		obs_data_release(item);
+	delete array;
+}
 
 /* Test-only JSON support: the profiles export/import test writes and reads a
  * real bundle, so the fake behaves like the OBS API for this subset. */
@@ -611,7 +711,10 @@ bool obs_data_save_json_pretty_safe(obs_data_t *data, const char *file, const ch
 // ---- obs_source ----
 obs_data_t *obs_source_get_settings(const obs_source_t *source)
 {
-	return source ? source->settings : nullptr;
+	if (!source)
+		return nullptr;
+	obs_data_addref(source->settings);
+	return source->settings;
 }
 
 void obs_source_update_properties(obs_source_t *)
@@ -684,6 +787,8 @@ void obs_properties_destroy(obs_properties_t *props)
 		return;
 	for (auto &kv : props->items)
 		delete kv.second;
+	for (auto &kv : props->groups)
+		obs_properties_destroy(kv.second);
 	delete props;
 }
 
@@ -943,6 +1048,7 @@ void obs_hotkey_load(obs_hotkey_id id, obs_data_array_t *data)
 		if (obs_data_get_bool(item, "alt"))
 			combo.modifiers |= INTERACT_ALT_KEY;
 		bindings.push_back(combo);
+		obs_data_release(item);
 	}
 }
 

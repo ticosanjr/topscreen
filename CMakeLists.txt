@@ -133,6 +133,7 @@ if(TOPSCREEN_BUILD_PLUGIN)
         src/plugin-main.cpp
         src/ts-filter.cpp
         src/ts-settings.cpp
+        src/ts-profile-bundle.cpp
         src/ts-profile-store.cpp
         src/ts-properties.cpp
         src/ts-presets.cpp
@@ -143,7 +144,9 @@ if(TOPSCREEN_BUILD_PLUGIN)
         src/render/ts-text.cpp
         src/input/ts-input.cpp
         src/input/ts-monitor.cpp
-        src/input/ts-input-platform.cpp
+        src/input/ts-input-win.cpp
+        src/input/ts-input-linux.cpp
+        src/input/ts-input-none.cpp
         src/hotkeys/ts-hotkeys.cpp
         src/audio/ts-click-sound.cpp
         ${TOPSCREEN_CORE_SOURCES}

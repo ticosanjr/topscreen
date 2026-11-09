@@ -2,6 +2,10 @@
 
 #include <exception>
 
+#if defined(TOPSCREEN_INTEGRATION)
+#include "harness/fake_libobs.hpp"
+#endif
+
 int main()
 {
 	int failed = 0;
@@ -29,5 +33,10 @@ int main()
 
 	std::printf("\nTotal: %zu tests | %d checks | %d failures\n", reg.size(), tst::checks(),
 		    tst::failures());
+
+#if defined(TOPSCREEN_INTEGRATION)
+	/* Destroy filters/settings kept alive by tests before the leak checker. */
+	fakeobs::cleanup();
+#endif
 	return failed == 0 ? 0 : 1;
 }

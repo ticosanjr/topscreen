@@ -50,7 +50,7 @@ private:
 	void *platform_ = nullptr;
 };
 
-/* ---- Backend interface (implemented in ts-input-platform.cpp) ---- */
+/* ---- Backend interface (implemented in ts-input-{win,linux,none}.cpp) ---- */
 void *ts_input_platform_start(obs_source_t *source);
 void ts_input_platform_stop(void *state);
 void ts_input_platform_poll(void *state, InputState *out);

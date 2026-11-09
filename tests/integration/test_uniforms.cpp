@@ -65,6 +65,7 @@ obs_source_t *make_capture(uint32_t w, uint32_t h)
 	obs_source_t *s = fakeobs::make_source(&info, nullptr, w, h);
 	obs_data_t *set = obs_source_get_settings(s);
 	obs_data_set_bool(set, "capture_cursor", true);
+	obs_data_release(set);
 	return s;
 }
 

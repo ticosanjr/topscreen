@@ -34,7 +34,7 @@ echo "Compiling integration ..."
 # shellcheck disable=SC2086
 "$CXX" -std=c++20 -O1 -g -Wall -Wextra -Wno-missing-field-initializers ${CXXFLAGS:-} \
     -I "$ROOT/src" -I "$ROOT/tests" -I "$ROOT/third_party" -I "$STUB" -I "$OBS/libobs" -I "$OBS/frontend/api" -I "$SIMDE" \
-    -DTOPSCREEN_VERSION='"0.0.0-test"' \
+    -DTOPSCREEN_VERSION='"0.0.0-test"' -DTOPSCREEN_INTEGRATION \
     -DTOPSCREEN_TEST_DATA_DIR="\"$ROOT/data\"" \
     "$ROOT/tests/test_main.cpp" \
     "$ROOT"/tests/integration/*.cpp \

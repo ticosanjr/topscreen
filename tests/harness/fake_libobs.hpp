@@ -16,6 +16,7 @@
 
 struct obs_data_array {
 	std::vector<obs_data_t *> items;
+	int refs = 1;
 };
 
 struct obs_data {
@@ -31,6 +32,7 @@ struct obs_data {
 	std::map<std::string, std::string> def_strings;
 	std::map<std::string, obs_data_t *> objs;
 	std::map<std::string, obs_data_array_t *> arrays;
+	int refs = 1;
 };
 
 struct obs_property {
@@ -70,6 +72,16 @@ void set_data_dir(const std::string &dir);
 
 /** Creates a fake source (without registering). */
 obs_source_t *make_source(const obs_source_info *info, obs_source_t *parent, uint32_t w, uint32_t h);
+
+/** Associates a plugin context with its fake source so it can be destroyed at exit. */
+void attach_filter_ctx(obs_source_t *source, void *ctx);
+
+/** Marks a plugin context as already destroyed (safe to call with any pointer). */
+void detach_filter_ctx(void *ctx);
+
+/** Destroys every remaining plugin context/source created by the tests. */
+void cleanup();
+
 
 /** Sets the name returned by obs_source_get_name() (default: "fake-parent"). */
 void set_source_name(obs_source_t *source, const std::string &name);

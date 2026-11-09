@@ -17,6 +17,7 @@
 #include "render/ts-compositor.hpp"
 #include "render/ts-frame.hpp"
 #include "ts-presets.hpp"
+#include "ts-profile-bundle.hpp"
 #include "ts-profile-store.hpp"
 #include "ts-profiles-ui.hpp"
 #include "ts-properties.hpp"
@@ -428,65 +429,35 @@ void ts_filter_ctx::do_save_profile()
 
 void ts_filter_ctx::do_export_profiles(const std::string &path)
 {
-	if (path.empty()) {
-		profile_io_result_.store(2);
-		blog(LOG_WARNING, "[TopScreen] profiles export: empty path");
-		return;
-	}
-
 	/* Make sure the active profile carries the edits that are on screen. */
 	store_profile_slot(current_profile_);
 	profile_dirty_ = false;
 
 	obs_data_t *s = obs_source_get_settings(source);
-	obs_data_t *bundle = obs_data_create();
-	obs_data_set_int(bundle, "topscreen_profiles", 1);
-	obs_data_set_string(bundle, "plugin", "TopScreen");
-	obs_data_set_string(bundle, "version", kVersion);
-	obs_data_set_int(bundle, "current", current_profile_);
-	for (int i = 0; i < kProfileCount; ++i) {
-		/* Normalize every slot: older sources can miss fields added in a
-		 * newer version, and the exported bundle must always be complete. */
-		profile_store::store_slot(bundle, i, profile_store::load_slot(s, i));
-	}
+	std::string error;
+	const bool ok = profile_bundle::export_to_file(s, current_profile_, path, &error);
 	obs_data_release(s);
-
-	const bool ok = obs_data_save_json_pretty_safe(bundle, path.c_str(), "tmp", "bak");
-	obs_data_release(bundle);
 
 	profile_io_result_.store(ok ? 1 : 2);
 	if (ok)
 		blog(LOG_INFO, "[TopScreen] profiles exported: %s", path.c_str());
 	else
-		blog(LOG_WARNING, "[TopScreen] failed to export profiles: %s", path.c_str());
+		blog(LOG_WARNING, "[TopScreen] failed to export profiles: %s", error.c_str());
 }
 
 void ts_filter_ctx::do_import_profiles(const std::string &json_text)
 {
+	obs_data_t *s = obs_source_get_settings(source);
 	core::ProfileBundleInfo info;
 	std::string error;
-	if (!core::profile_bundle_validate(json_text, &info, &error)) {
+	const bool ok = profile_bundle::import_from_text(json_text, s, &info, &error);
+	obs_data_release(s);
+
+	if (!ok) {
 		profile_io_result_.store(4);
 		blog(LOG_WARNING, "[TopScreen] profiles import rejected: %s", error.c_str());
 		return;
 	}
-
-	obs_data_t *bundle = obs_data_create_from_json(json_text.c_str());
-	if (!bundle) {
-		profile_io_result_.store(4);
-		blog(LOG_WARNING, "[TopScreen] profiles import: could not parse the JSON");
-		return;
-	}
-
-	obs_data_t *s = obs_source_get_settings(source);
-	for (int i = 0; i < kProfileCount; ++i) {
-		/* Missing slots keep the seed; missing fields keep the seed's value
-		 * instead of becoming 0/false. This keeps old/new bundles valid. */
-		profile_store::store_slot(s, i, profile_store::load_slot(bundle, i));
-	}
-	obs_data_set_int(s, kProfileCurrent, info.current);
-	obs_data_release(s);
-	obs_data_release(bundle);
 
 	/* The imported slots replace everything; a pending debounce write must
 	 * not overwrite the freshly imported active profile. */

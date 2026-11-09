@@ -101,7 +101,7 @@ That is where all the math and the state logic live — what actually must be ri
 
 ```
 238 tests | 6842 checks | 0 failures   (core)
-58 tests | 782 checks   | 0 failures   (integration with fake libobs)
+58 tests | 784 checks   | 0 failures   (integration with fake libobs, LeakSanitizer clean)
 ```
 
 ## What the integration layer covers

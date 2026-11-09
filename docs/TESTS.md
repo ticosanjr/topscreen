@@ -101,7 +101,7 @@ That is where all the math and the state logic live — what actually must be ri
 
 ```
 248 tests | 6970 checks | 0 failures   (core)
-59 tests | 803 checks   | 0 failures   (integration with fake libobs)
+59 tests | 807 checks   | 0 failures   (integration with fake libobs)
 ```
 
 ## What the integration layer covers

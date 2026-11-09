@@ -35,7 +35,7 @@ covered by tests) and the **OBS layer** (thin, it only wires the core to libobs)
 | Spring | `spring.{hpp,cpp}` | Critically damped spring (with stable substeps) |
 | Geometry | `geometry.{hpp,cpp}` | Rounded-corner SDF, mask, zoom transform, focus clamp |
 | Coordinates | `coord.{hpp,cpp}` | Screen↔content mapping, monitor |
-| Cursor | `cursor.{hpp,cpp}` | Smoothing, sway, idle, loop |
+| Cursor | `cursor.{hpp,cpp}` | Exact/A→B glide, rotation offset, idle fade |
 | Clicks | `click_fx.{hpp,cpp}` | Queue of L/R click animations |
 | Zoom | `zoom.{hpp,cpp}` | Auto/manual, pan, idle timeout |
 | JSON | `json.{hpp,cpp}` | Dependency-free JSON parser |
@@ -70,9 +70,8 @@ OBS frame (GPU texture)
  2. Rounded corners → SDF mask with anti-aliasing
  3. Shadow / inset  → mip pyramid (cheap blur)
  4. Zoom / Pan      → UV transform (spring)  ← affects 1..3 together
- 5. Cursor          → scalable sprite (+shadow, +sway)
+ 5. Cursor          → scalable sprite (+shadow, +rotation)
  6. Click FX        → ripple/orb/ring (L and R independent)
- 7. Motion blur     → only on fast movement
  8. Keystroke HUD   → SDF text
  9. Spotlight / Dim → optional single pass
 ```

@@ -11,24 +11,15 @@ shader combines them in **one draw**. The integration test
 ## Wallpaper blur / diffusion
 
 The wallpaper is decoded once and kept in memory (capped at 4096 px on the long
-edge). When the image, blur amount, diffusion mode or target size changes, a
+edge). When the image, blur amount, or target size changes, a
 worker thread builds a prefiltered texture while the previous texture stays on
-screen. Large radii are downscaled first, then filtered; Gaussian/Creamy/Frosted
-use two box passes for a smoother gradient. The shader now takes **one filtered
+screen. Large radii are downscaled first, then filtered with the Soft kernel. The shader now takes **one filtered
 sample** per pixel instead of the old 9/25 taps, so the cost never blocks normal
 playback.
 
-The diffusion selector still changes the effective spread:
-
-| Mode | Prefilter |
-|------|-----------|
-| Soft | narrower box kernel |
-| Gaussian | balanced kernel |
-| Creamy | wider kernel |
-| Frosted glass | widest kernel, with a softer upscale |
-
-All modes use the same one-sample shader path, including the magnifier lens and
-the full-frame spotlight blur. The worker and CPU image cache are shared by all TopScreen filters; only the
+The Soft prefilter uses one box-blur kernel. The shader takes one filtered
+sample per pixel, including the magnifier lens and the full-frame spotlight
+blur. The worker and CPU image cache are shared by all TopScreen filters; only the
 final texture upload happens on the render thread. The
 spotlight blur itself still uses nine scene taps, but its shadow is applied once
 after the blur instead of once per tap.
@@ -57,7 +48,7 @@ Windows continues to use the asynchronous `PlaySoundW` path.
 
 ## Cursor follow modes
 
-`Exact` and `Spring` keep the previous cost (one spring update per frame).
+`Exact` resets the cursor position; `Glide A→B` runs one cubic interpolation per frame.
 `GlideSampled` updates the destination at a configurable interval (default
 90 ms) and `GlideAB` uses one eased segment per accepted target. Both reuse the
 same cursor state and add no GPU work.

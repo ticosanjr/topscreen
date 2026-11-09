@@ -211,7 +211,6 @@ Zoom treats the whole scene as one image: the wallpaper, frame, shadow and captu
 | **Square corner radius (px)** | Rounded corners for the square shape |
 | **Darken outside (0 = off, 1 = black)** | How much the outside area is darkened |
 | **Border** | Enables a colored ring around the spotlight, with color and width |
-| **Outer halo shadow** | Soft halo around the spotlight, with halo color, opacity, blur and X/Y offset |
 | **Blur outside** | Blurs the whole frame, including the wallpaper, outside the spotlight |
 | **Zoom when active (x)** | Extra multiplicative zoom while the spotlight is on |
 | **Drop/zoom in / out (ms)** | Durations of the activation/deactivation animation |
@@ -219,7 +218,7 @@ Zoom treats the whole scene as one image: the wallpaper, frame, shadow and captu
 
 The spotlight mask, blur, dim, border, halo and zoom affect the whole frame,
 including the wallpaper. Click effects and highlights stay crisp on top. Assign `TopScreen_ToggleSpotlight` in **Settings → Hotkeys** to toggle it
-instantly. Activating it drops the shape in, zooms in around the cursor and fades
+instantly. Activating it fades the shape in, zooms in around the cursor and fades
 the border/shadow/dim in; deactivating reverses the animation. The spotlight
 mask and zoom focus keep following the mouse while it is active. The global
 **Effects enabled** master still applies.

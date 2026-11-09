@@ -133,6 +133,7 @@ if(TOPSCREEN_BUILD_PLUGIN)
         src/plugin-main.cpp
         src/ts-filter.cpp
         src/ts-settings.cpp
+        src/ts-profile-store.cpp
         src/ts-properties.cpp
         src/ts-presets.cpp
         src/ts-registry.cpp

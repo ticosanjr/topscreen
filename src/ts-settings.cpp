@@ -11,145 +11,139 @@ using namespace topscreen::core::keys;
 
 namespace topscreen {
 
+#define TS_SIMPLE_FIELDS(X) \
+	X(BOOL, kEffectsEnabled, effects_enabled) \
+	X(BOOL, kBgEnabled, bg.enabled) \
+	X(COLOR, kBgColorA, bg.color_a) \
+	X(COLOR, kBgColorB, bg.color_b) \
+	X(DOUBLE, kBgGradientAngle, bg.gradient_angle) \
+	X(DOUBLE, kBgGradientCenterX, bg.gradient_center_x) \
+	X(DOUBLE, kBgGradientCenterY, bg.gradient_center_y) \
+	X(STRING, kBgImage, bg.image) \
+	X(STRING, kBgImageFile, bg.image_file) \
+	X(DOUBLE, kBgImageBlur, bg.image_blur) \
+	X(DOUBLE, kBgPaddingX, bg.padding_x) \
+	X(DOUBLE, kBgPaddingY, bg.padding_y) \
+	X(DOUBLE, kBgCornerRadius, bg.corner_radius) \
+	X(BOOL, kBgShadow, bg.shadow) \
+	X(DOUBLE, kBgShadowAlpha, bg.shadow_alpha) \
+	X(DOUBLE, kBgShadowBlur, bg.shadow_blur) \
+	X(DOUBLE, kBgShadowOffsetX, bg.shadow_offset_x) \
+	X(DOUBLE, kBgShadowOffset, bg.shadow_offset) \
+	X(BOOL, kBgKeepAspect, bg.keep_aspect) \
+	X(BOOL, kCursorEnabled, cursor.enabled) \
+	X(INT, kCursorStyle, cursor.style) \
+	X(INT, kCursorSecondaryStyle, cursor.secondary_style) \
+	X(BOOL, kCursorLinkDetection, cursor.link_detection) \
+	X(DOUBLE, kCursorSize, cursor.size) \
+	X(DOUBLE, kCursorRotationOffset, cursor.rotation_offset_deg) \
+	X(BOOL, kCursorShadow, cursor.shadow) \
+	X(INT, kCursorFollowMode, cursor.follow_mode) \
+	X(DOUBLE, kCursorGlideMs, cursor.glide_ms) \
+	X(BOOL, kCursorHideIdle, cursor.hide_idle) \
+	X(DOUBLE, kCursorIdleDelayMs, cursor.idle_delay_ms) \
+	X(INT, kZoomMode, zoom.mode) \
+	X(DOUBLE, kZoomAmount, zoom.amount) \
+	X(DOUBLE, kZoomDurationMs, zoom.duration_ms) \
+	X(DOUBLE, kZoomIdleTimeoutMs, zoom.idle_timeout_ms) \
+	X(DOUBLE, kZoomPanAmount, zoom.pan_amount) \
+	X(DOUBLE, kZoomCenterAmount, zoom.center_amount) \
+	X(INT, kClickLeftEffect, click_left.effect) \
+	X(DOUBLE, kClickLeftSize, click_left.size) \
+	X(COLOR, kClickLeftColor, click_left.color) \
+	X(DOUBLE, kClickLeftDurationMs, click_left.duration_ms) \
+	X(INT, kClickLeftEasing, click_left.easing) \
+	X(INT, kClickRightEffect, click_right.effect) \
+	X(DOUBLE, kClickRightSize, click_right.size) \
+	X(COLOR, kClickRightColor, click_right.color) \
+	X(DOUBLE, kClickRightDurationMs, click_right.duration_ms) \
+	X(INT, kClickRightEasing, click_right.easing) \
+	X(BOOL, kClickSoundEnabled, click_sound.enabled) \
+	X(STRING, kClickSoundFileLeft, click_sound.file_left) \
+	X(STRING, kClickSoundFileRight, click_sound.file_right) \
+	X(DOUBLE, kClickSoundVolume, click_sound.volume) \
+	X(BOOL, kClickSoundLeft, click_sound.left) \
+	X(BOOL, kClickSoundRight, click_sound.right) \
+	X(BOOL, kSpotlightEnabled, spotlight.enabled) \
+	X(DOUBLE, kSpotlightRadius, spotlight.radius) \
+	X(DOUBLE, kSpotlightDim, spotlight.dim) \
+	X(INT, kSpotlightShape, spotlight.shape) \
+	X(DOUBLE, kSpotlightCornerRadius, spotlight.corner_radius) \
+	X(BOOL, kSpotlightBorderEnabled, spotlight.border_enabled) \
+	X(COLOR, kSpotlightBorderColor, spotlight.border_color) \
+	X(DOUBLE, kSpotlightBorderWidth, spotlight.border_width) \
+	X(BOOL, kSpotlightBlurEnabled, spotlight.blur_enabled) \
+	X(INT, kSpotlightOutsideMode, spotlight.outside_mode) \
+	X(DOUBLE, kSpotlightBlurAmount, spotlight.blur_amount) \
+	X(DOUBLE, kSpotlightZoomAmount, spotlight.zoom_amount) \
+	X(DOUBLE, kSpotlightInMs, spotlight.in_ms) \
+	X(DOUBLE, kSpotlightOutMs, spotlight.out_ms) \
+	X(BOOL, kSpotlightShowCursor, spotlight.show_cursor) \
+	X(BOOL, kMagnifierEnabled, magnifier.enabled) \
+	X(INT, kMagnifierShape, magnifier.shape) \
+	X(DOUBLE, kMagnifierRadius, magnifier.radius) \
+	X(DOUBLE, kMagnifierCornerRadius, magnifier.corner_radius) \
+	X(DOUBLE, kMagnifierZoom, magnifier.zoom_amount) \
+	X(BOOL, kMagnifierBorderEnabled, magnifier.border_enabled) \
+	X(COLOR, kMagnifierBorderColor, magnifier.border_color) \
+	X(DOUBLE, kMagnifierBorderWidth, magnifier.border_width) \
+	X(BOOL, kMagnifierShadowEnabled, magnifier.shadow_enabled) \
+	X(COLOR, kMagnifierShadowColor, magnifier.shadow_color) \
+	X(DOUBLE, kMagnifierShadowAlpha, magnifier.shadow_alpha) \
+	X(DOUBLE, kMagnifierShadowBlur, magnifier.shadow_blur) \
+	X(DOUBLE, kMagnifierShadowOffsetX, magnifier.shadow_offset_x) \
+	X(DOUBLE, kMagnifierShadowOffsetY, magnifier.shadow_offset_y) \
+	X(BOOL, kMagnifierFollowCursor, magnifier.follow_cursor) \
+	X(DOUBLE, kMagnifierCenterX, magnifier.center_x) \
+	X(DOUBLE, kMagnifierCenterY, magnifier.center_y) \
+	X(DOUBLE, kMagnifierInMs, magnifier.in_ms) \
+	X(DOUBLE, kMagnifierOutMs, magnifier.out_ms) \
+	X(BOOL, kMagnifierShowCursor, magnifier.show_cursor) \
+	X(BOOL, kKeysEnabled, keys.enabled) \
+	X(BOOL, kKeysModifiersOnly, keys.modifiers_only) \
+	X(BOOL, kKeysShowSpecial, keys.show_special) \
+	X(BOOL, kKeysShowShortcuts, keys.show_shortcuts) \
+	X(DOUBLE, kKeysTtlMs, keys.ttl_ms) \
+	X(INT, kKeysMax, keys.max_keys) \
+	X(DOUBLE, kKeysPosX, keys.pos_x) \
+	X(DOUBLE, kKeysPosY, keys.pos_y) \
+	X(DOUBLE, kKeysSize, keys.size) \
+	X(STRING, kKeysFont, keys.font) \
+	X(COLOR, kKeysColor, keys.color) \
+	X(BOOL, kKeysShadow, keys.shadow) \
+	X(BOOL, kKeysBand, keys.band) \
+	X(COLOR, kKeysBandColor, keys.band_color) \
+	X(BOOL, kHighlightEnabled, highlight.enabled) \
+	X(BOOL, kHighlightHotkeyEnabled, highlight.hotkey_enabled) \
+	X(DOUBLE, kHighlightHoldMs, highlight.hold_ms) \
+	X(DOUBLE, kHighlightFadeMs, highlight.fade_ms) \
+	X(COLOR, kHighlightColor, highlight.color) \
+	X(DOUBLE, kHighlightOpacity, highlight.opacity) \
+	X(INT, kHighlightMode, highlight.mode) \
+	X(DOUBLE, kHighlightThickness, highlight.thickness) \
+	X(DOUBLE, kHighlightZoomDelayMs, highlight.zoom_delay_ms) \
+	X(DOUBLE, kHighlightZoomMax, highlight.zoom_max) \
+	X(DOUBLE, kHighlightZoomInMs, highlight.zoom_in_ms) \
+	X(DOUBLE, kHighlightZoomHoldMs, highlight.zoom_hold_ms) \
+	X(DOUBLE, kHighlightZoomOutMs, highlight.zoom_out_ms) \
+	X(BOOL, kMonitorManual, monitor_manual) \
+	X(INT, kMonitorX, monitor_x) \
+	X(INT, kMonitorY, monitor_y)
+
+#define TS_DEF_BOOL(k, m) obs_data_set_default_bool(s, k, def.m)
+#define TS_DEF_INT(k, m) obs_data_set_default_int(s, k, def.m)
+#define TS_DEF_DOUBLE(k, m) obs_data_set_default_double(s, k, def.m)
+#define TS_DEF_COLOR(k, m) obs_data_set_default_int(s, k, static_cast<long long>(def.m))
+#define TS_DEF_STRING(k, m) obs_data_set_default_string(s, k, def.m.c_str())
+
 void config_defaults(obs_data_t *s)
 {
 	const Config def;
-
-	obs_data_set_default_bool(s, kEffectsEnabled, def.effects_enabled);
-
-	obs_data_set_default_bool(s, kBgEnabled, def.bg.enabled);
+#define X(kind, key, member) TS_DEF_##kind(key, member);
+	TS_SIMPLE_FIELDS(X)
+#undef X
 	obs_data_set_default_int(s, kBgType, def.bg.mode);
 	obs_data_set_default_int(s, kBgMode, legacy_bg_mode_value(def.bg.mode));
-	obs_data_set_default_int(s, kBgColorA, static_cast<long long>(def.bg.color_a));
-	obs_data_set_default_int(s, kBgColorB, static_cast<long long>(def.bg.color_b));
-	obs_data_set_default_double(s, kBgGradientAngle, def.bg.gradient_angle);
-	obs_data_set_default_double(s, kBgGradientCenterX, def.bg.gradient_center_x);
-	obs_data_set_default_double(s, kBgGradientCenterY, def.bg.gradient_center_y);
-	obs_data_set_default_string(s, kBgImage, def.bg.image.c_str());
-	obs_data_set_default_string(s, kBgImageFile, def.bg.image_file.c_str());
-	obs_data_set_default_double(s, kBgImageBlur, def.bg.image_blur);
-	obs_data_set_default_double(s, kBgPaddingX, def.bg.padding_x);
-	obs_data_set_default_double(s, kBgPaddingY, def.bg.padding_y);
-	obs_data_set_default_double(s, kBgCornerRadius, def.bg.corner_radius);
-	obs_data_set_default_bool(s, kBgShadow, def.bg.shadow);
-	obs_data_set_default_double(s, kBgShadowAlpha, def.bg.shadow_alpha);
-	obs_data_set_default_double(s, kBgShadowBlur, def.bg.shadow_blur);
-	obs_data_set_default_double(s, kBgShadowOffsetX, def.bg.shadow_offset_x);
-	obs_data_set_default_double(s, kBgShadowOffset, def.bg.shadow_offset);
-	obs_data_set_default_bool(s, kBgKeepAspect, def.bg.keep_aspect);
-
-	obs_data_set_default_bool(s, kCursorEnabled, def.cursor.enabled);
-	obs_data_set_default_int(s, kCursorStyle, def.cursor.style);
-	obs_data_set_default_int(s, kCursorSecondaryStyle, def.cursor.secondary_style);
-	obs_data_set_default_bool(s, kCursorLinkDetection, def.cursor.link_detection);
-	obs_data_set_default_double(s, kCursorSize, def.cursor.size);
-	obs_data_set_default_double(s, kCursorRotationOffset, def.cursor.rotation_offset_deg);
-	obs_data_set_default_bool(s, kCursorShadow, def.cursor.shadow);
-	obs_data_set_default_int(s, kCursorFollowMode, def.cursor.follow_mode);
-	obs_data_set_default_double(s, kCursorGlideMs, def.cursor.glide_ms);
-	obs_data_set_default_bool(s, kCursorHideIdle, def.cursor.hide_idle);
-	obs_data_set_default_double(s, kCursorIdleDelayMs, def.cursor.idle_delay_ms);
-
-	obs_data_set_default_int(s, kZoomMode, def.zoom.mode);
-	obs_data_set_default_double(s, kZoomAmount, def.zoom.amount);
-	obs_data_set_default_double(s, kZoomDurationMs, def.zoom.duration_ms);
-	obs_data_set_default_double(s, kZoomIdleTimeoutMs, def.zoom.idle_timeout_ms);
-	obs_data_set_default_double(s, kZoomPanAmount, def.zoom.pan_amount);
-	obs_data_set_default_double(s, kZoomCenterAmount, def.zoom.center_amount);
-
-	obs_data_set_default_int(s, kClickLeftEffect, def.click_left.effect);
-	obs_data_set_default_double(s, kClickLeftSize, def.click_left.size);
-	obs_data_set_default_int(s, kClickLeftColor, static_cast<long long>(def.click_left.color));
-	obs_data_set_default_double(s, kClickLeftDurationMs, def.click_left.duration_ms);
-	obs_data_set_default_int(s, kClickLeftEasing, def.click_left.easing);
-
-	obs_data_set_default_int(s, kClickRightEffect, def.click_right.effect);
-	obs_data_set_default_double(s, kClickRightSize, def.click_right.size);
-	obs_data_set_default_int(s, kClickRightColor, static_cast<long long>(def.click_right.color));
-	obs_data_set_default_double(s, kClickRightDurationMs, def.click_right.duration_ms);
-	obs_data_set_default_int(s, kClickRightEasing, def.click_right.easing);
-
-	obs_data_set_default_bool(s, kClickSoundEnabled, def.click_sound.enabled);
-	obs_data_set_default_string(s, kClickSoundFileLeft, def.click_sound.file_left.c_str());
-	obs_data_set_default_string(s, kClickSoundFileRight, def.click_sound.file_right.c_str());
-	obs_data_set_default_double(s, kClickSoundVolume, def.click_sound.volume);
-	obs_data_set_default_bool(s, kClickSoundLeft, def.click_sound.left);
-	obs_data_set_default_bool(s, kClickSoundRight, def.click_sound.right);
-
-
-	obs_data_set_default_bool(s, kSpotlightEnabled, def.spotlight.enabled);
-	obs_data_set_default_double(s, kSpotlightRadius, def.spotlight.radius);
-	obs_data_set_default_double(s, kSpotlightDim, def.spotlight.dim);
-	obs_data_set_default_int(s, kSpotlightShape, def.spotlight.shape);
-	obs_data_set_default_double(s, kSpotlightCornerRadius, def.spotlight.corner_radius);
-	obs_data_set_default_bool(s, kSpotlightBorderEnabled, def.spotlight.border_enabled);
-	obs_data_set_default_int(s, kSpotlightBorderColor,
-				 static_cast<long long>(def.spotlight.border_color));
-	obs_data_set_default_double(s, kSpotlightBorderWidth, def.spotlight.border_width);
-	obs_data_set_default_bool(s, kSpotlightBlurEnabled, def.spotlight.blur_enabled);
-	obs_data_set_default_int(s, kSpotlightOutsideMode, def.spotlight.outside_mode);
-	obs_data_set_default_double(s, kSpotlightBlurAmount, def.spotlight.blur_amount);
-	obs_data_set_default_double(s, kSpotlightZoomAmount, def.spotlight.zoom_amount);
-	obs_data_set_default_double(s, kSpotlightInMs, def.spotlight.in_ms);
-	obs_data_set_default_double(s, kSpotlightOutMs, def.spotlight.out_ms);
-	obs_data_set_default_bool(s, kSpotlightShowCursor, def.spotlight.show_cursor);
-
-	obs_data_set_default_bool(s, kMagnifierEnabled, def.magnifier.enabled);
-	obs_data_set_default_int(s, kMagnifierShape, def.magnifier.shape);
-	obs_data_set_default_double(s, kMagnifierRadius, def.magnifier.radius);
-	obs_data_set_default_double(s, kMagnifierCornerRadius, def.magnifier.corner_radius);
-	obs_data_set_default_double(s, kMagnifierZoom, def.magnifier.zoom_amount);
-	obs_data_set_default_bool(s, kMagnifierBorderEnabled, def.magnifier.border_enabled);
-	obs_data_set_default_int(s, kMagnifierBorderColor, static_cast<long long>(def.magnifier.border_color));
-	obs_data_set_default_double(s, kMagnifierBorderWidth, def.magnifier.border_width);
-	obs_data_set_default_bool(s, kMagnifierShadowEnabled, def.magnifier.shadow_enabled);
-	obs_data_set_default_int(s, kMagnifierShadowColor, static_cast<long long>(def.magnifier.shadow_color));
-	obs_data_set_default_double(s, kMagnifierShadowAlpha, def.magnifier.shadow_alpha);
-	obs_data_set_default_double(s, kMagnifierShadowBlur, def.magnifier.shadow_blur);
-	obs_data_set_default_double(s, kMagnifierShadowOffsetX, def.magnifier.shadow_offset_x);
-	obs_data_set_default_double(s, kMagnifierShadowOffsetY, def.magnifier.shadow_offset_y);
-	obs_data_set_default_bool(s, kMagnifierFollowCursor, def.magnifier.follow_cursor);
-	obs_data_set_default_double(s, kMagnifierCenterX, def.magnifier.center_x);
-	obs_data_set_default_double(s, kMagnifierCenterY, def.magnifier.center_y);
-	obs_data_set_default_double(s, kMagnifierInMs, def.magnifier.in_ms);
-	obs_data_set_default_double(s, kMagnifierOutMs, def.magnifier.out_ms);
-	obs_data_set_default_bool(s, kMagnifierShowCursor, def.magnifier.show_cursor);
-
-	obs_data_set_default_bool(s, kKeysEnabled, def.keys.enabled);
-	obs_data_set_default_bool(s, kKeysModifiersOnly, def.keys.modifiers_only);
-	obs_data_set_default_bool(s, kKeysShowSpecial, def.keys.show_special);
-	obs_data_set_default_bool(s, kKeysShowShortcuts, def.keys.show_shortcuts);
-	obs_data_set_default_double(s, kKeysTtlMs, def.keys.ttl_ms);
-	obs_data_set_default_int(s, kKeysMax, def.keys.max_keys);
-	obs_data_set_default_double(s, kKeysPosX, def.keys.pos_x);
-	obs_data_set_default_double(s, kKeysPosY, def.keys.pos_y);
-	obs_data_set_default_double(s, kKeysSize, def.keys.size);
-	obs_data_set_default_string(s, kKeysFont, def.keys.font.c_str());
-	obs_data_set_default_int(s, kKeysColor, static_cast<long long>(def.keys.color));
-	obs_data_set_default_bool(s, kKeysShadow, def.keys.shadow);
-	obs_data_set_default_bool(s, kKeysBand, def.keys.band);
-	obs_data_set_default_int(s, kKeysBandColor, static_cast<long long>(def.keys.band_color));
-
-	obs_data_set_default_bool(s, kHighlightEnabled, def.highlight.enabled);
-	obs_data_set_default_bool(s, kHighlightHotkeyEnabled, def.highlight.hotkey_enabled);
-	obs_data_set_default_double(s, kHighlightHoldMs, def.highlight.hold_ms);
-	obs_data_set_default_double(s, kHighlightFadeMs, def.highlight.fade_ms);
-	obs_data_set_default_int(s, kHighlightColor, static_cast<long long>(def.highlight.color));
-	obs_data_set_default_double(s, kHighlightOpacity, def.highlight.opacity);
-	obs_data_set_default_int(s, kHighlightMode, def.highlight.mode);
-	obs_data_set_default_double(s, kHighlightThickness, def.highlight.thickness);
-	obs_data_set_default_double(s, kHighlightZoomDelayMs, def.highlight.zoom_delay_ms);
-	obs_data_set_default_double(s, kHighlightZoomMax, def.highlight.zoom_max);
-	obs_data_set_default_double(s, kHighlightZoomInMs, def.highlight.zoom_in_ms);
-	obs_data_set_default_double(s, kHighlightZoomHoldMs, def.highlight.zoom_hold_ms);
-	obs_data_set_default_double(s, kHighlightZoomOutMs, def.highlight.zoom_out_ms);
-
-	obs_data_set_default_bool(s, kMonitorManual, def.monitor_manual);
-	obs_data_set_default_int(s, kMonitorX, def.monitor_x);
-	obs_data_set_default_int(s, kMonitorY, def.monitor_y);
-
-	/* Active profile (slot index). Default does not become a "user value", so
-	 * a new source keeps being treated as "no profile chosen". */
 	obs_data_set_default_int(s, kProfileCurrent, 0);
 }
 
@@ -187,19 +181,27 @@ std::string read_string(obs_data_t *s, const char *k, const std::string &d)
 
 } // namespace
 
+#define TS_LOAD_BOOL(k, m) c->m = read_bool(s, k, d.m)
+#define TS_LOAD_INT(k, m) c->m = static_cast<int>(read_int(s, k, d.m))
+#define TS_LOAD_DOUBLE(k, m) c->m = read_double(s, k, d.m)
+#define TS_LOAD_COLOR(k, m) c->m = static_cast<uint32_t>(read_int(s, k, d.m))
+#define TS_LOAD_STRING(k, m) c->m = read_string(s, k, d.m)
+
+#define TS_STORE_BOOL(k, m) obs_data_set_bool(s, k, c.m)
+#define TS_STORE_INT(k, m) obs_data_set_int(s, k, c.m)
+#define TS_STORE_DOUBLE(k, m) obs_data_set_double(s, k, c.m)
+#define TS_STORE_COLOR(k, m) obs_data_set_int(s, k, static_cast<long long>(c.m))
+#define TS_STORE_STRING(k, m) obs_data_set_string(s, k, c.m.c_str())
+
 void config_load(obs_data_t *s, Config *c, const Config *fallback)
 {
 	const Config d = fallback ? *fallback : Config();
 
-	c->effects_enabled = read_bool(s, kEffectsEnabled, d.effects_enabled);
+#define X(kind, key, member) TS_LOAD_##kind(key, member);
+	TS_SIMPLE_FIELDS(X)
+#undef X
 
-	c->bg.enabled = read_bool(s, kBgEnabled, d.bg.enabled);
 	const long long legacy_mode = read_int(s, kBgMode, legacy_bg_mode_value(d.bg.mode));
-	c->bg.color_a = static_cast<uint32_t>(read_int(s, kBgColorA, d.bg.color_a));
-	c->bg.color_b = static_cast<uint32_t>(read_int(s, kBgColorB, d.bg.color_b));
-	c->bg.image = read_string(s, kBgImage, d.bg.image);
-	c->bg.image_file = read_string(s, kBgImageFile, d.bg.image_file);
-
 	const bool has_type = obs_data_has_user_value(s, kBgType);
 	int mode = static_cast<int>(d.bg.mode);
 	if (has_type) {
@@ -220,69 +222,20 @@ void config_load(obs_data_t *s, Config *c, const Config *fallback)
 	c->bg.mode = std::clamp(mode, static_cast<int>(BgMode::Solid),
 				static_cast<int>(BgMode::Transparent));
 
-	c->bg.gradient_angle = read_double(s, kBgGradientAngle, d.bg.gradient_angle);
-	c->bg.gradient_center_x = read_double(s, kBgGradientCenterX, d.bg.gradient_center_x);
-	c->bg.gradient_center_y = read_double(s, kBgGradientCenterY, d.bg.gradient_center_y);
 	if (!has_type && !obs_data_has_user_value(s, kBgGradientAngle))
 		c->bg.gradient_angle =
 			bg_gradient_angle_from_legacy(static_cast<int>(legacy_mode),
 						      c->bg.gradient_angle);
 
-	c->bg.image_blur = read_double(s, kBgImageBlur, d.bg.image_blur);
-	c->bg.padding_x = read_double(s, kBgPaddingX, d.bg.padding_x);
-	c->bg.padding_y = read_double(s, kBgPaddingY, d.bg.padding_y);
 	/* migration of the old 'bg_padding' key: only applies if the user never
-	 * wrote the new keys (the defaults always exist, so has_key
-	 * alone would never allow migrating). */
+	 * wrote the new keys (the defaults always exist, so has_key alone would
+	 * never allow migrating). */
 	if (!obs_data_has_user_value(s, kBgPaddingX) && !obs_data_has_user_value(s, kBgPaddingY) &&
 	    obs_data_has_user_value(s, "bg_padding")) {
 		c->bg.padding_x = obs_data_get_double(s, "bg_padding");
 		c->bg.padding_y = c->bg.padding_x;
 	}
-	c->bg.corner_radius = read_double(s, kBgCornerRadius, d.bg.corner_radius);
-	c->bg.shadow = read_bool(s, kBgShadow, d.bg.shadow);
-	c->bg.shadow_alpha = read_double(s, kBgShadowAlpha, d.bg.shadow_alpha);
-	c->bg.shadow_blur = read_double(s, kBgShadowBlur, d.bg.shadow_blur);
-	c->bg.shadow_offset_x = read_double(s, kBgShadowOffsetX, d.bg.shadow_offset_x);
-	c->bg.shadow_offset = read_double(s, kBgShadowOffset, d.bg.shadow_offset);
-	c->bg.keep_aspect = read_bool(s, kBgKeepAspect, d.bg.keep_aspect);
 
-	c->cursor.enabled = read_bool(s, kCursorEnabled, d.cursor.enabled);
-	c->cursor.style = cursor_style_clamp(static_cast<int>(read_int(s, kCursorStyle, d.cursor.style)));
-	c->cursor.secondary_style =
-		static_cast<int>(read_int(s, kCursorSecondaryStyle, d.cursor.secondary_style));
-	c->cursor.link_detection = read_bool(s, kCursorLinkDetection, d.cursor.link_detection);
-	c->cursor.size = read_double(s, kCursorSize, d.cursor.size);
-	c->cursor.rotation_offset_deg =
-		read_double(s, kCursorRotationOffset, d.cursor.rotation_offset_deg);
-	c->cursor.shadow = read_bool(s, kCursorShadow, d.cursor.shadow);
-	c->cursor.follow_mode = static_cast<int>(read_int(s, kCursorFollowMode, d.cursor.follow_mode));
-	c->cursor.glide_ms = read_double(s, kCursorGlideMs, d.cursor.glide_ms);
-	c->cursor.hide_idle = read_bool(s, kCursorHideIdle, d.cursor.hide_idle);
-	c->cursor.idle_delay_ms = read_double(s, kCursorIdleDelayMs, d.cursor.idle_delay_ms);
-
-	c->zoom.mode = static_cast<int>(read_int(s, kZoomMode, d.zoom.mode));
-	c->zoom.amount = read_double(s, kZoomAmount, d.zoom.amount);
-	c->zoom.duration_ms = read_double(s, kZoomDurationMs, d.zoom.duration_ms);
-	c->zoom.idle_timeout_ms = read_double(s, kZoomIdleTimeoutMs, d.zoom.idle_timeout_ms);
-	c->zoom.pan_amount = read_double(s, kZoomPanAmount, d.zoom.pan_amount);
-	c->zoom.center_amount = read_double(s, kZoomCenterAmount, d.zoom.center_amount);
-
-	c->click_left.effect = static_cast<int>(read_int(s, kClickLeftEffect, d.click_left.effect));
-	c->click_left.size = read_double(s, kClickLeftSize, d.click_left.size);
-	c->click_left.color = static_cast<uint32_t>(read_int(s, kClickLeftColor, d.click_left.color));
-	c->click_left.duration_ms = read_double(s, kClickLeftDurationMs, d.click_left.duration_ms);
-	c->click_left.easing = static_cast<int>(read_int(s, kClickLeftEasing, d.click_left.easing));
-
-	c->click_right.effect = static_cast<int>(read_int(s, kClickRightEffect, d.click_right.effect));
-	c->click_right.size = read_double(s, kClickRightSize, d.click_right.size);
-	c->click_right.color = static_cast<uint32_t>(read_int(s, kClickRightColor, d.click_right.color));
-	c->click_right.duration_ms = read_double(s, kClickRightDurationMs, d.click_right.duration_ms);
-	c->click_right.easing = static_cast<int>(read_int(s, kClickRightEasing, d.click_right.easing));
-
-	c->click_sound.enabled = read_bool(s, kClickSoundEnabled, d.click_sound.enabled);
-	c->click_sound.file_left = read_string(s, kClickSoundFileLeft, d.click_sound.file_left);
-	c->click_sound.file_right = read_string(s, kClickSoundFileRight, d.click_sound.file_right);
 	/* Migration from the single legacy 'click_sound_file' key. */
 	if (!obs_data_has_user_value(s, kClickSoundFileLeft) &&
 	    !obs_data_has_user_value(s, kClickSoundFileRight) &&
@@ -293,11 +246,7 @@ void config_load(obs_data_t *s, Config *c, const Config *fallback)
 			c->click_sound.file_right = old;
 		}
 	}
-	c->click_sound.volume = read_double(s, kClickSoundVolume, d.click_sound.volume);
-	/* Legacy per-side enable booleans predate the Mute list entries. When
-	 * an old source/profile had a side disabled, clear its file so the new
-	 * model (empty path = mute) keeps the same silence. New settings always
-	 * write the file keys, so an explicit Mute ("") is trusted as-is. */
+	/* Legacy per-side enable booleans predate the Mute list entries. */
 	const bool legacy_left = read_bool(s, kClickSoundLeft, true);
 	const bool legacy_right = read_bool(s, kClickSoundRight, true);
 	if (!legacy_left)
@@ -307,238 +256,22 @@ void config_load(obs_data_t *s, Config *c, const Config *fallback)
 	c->click_sound.left = !c->click_sound.file_left.empty();
 	c->click_sound.right = !c->click_sound.file_right.empty();
 
-
-	c->spotlight.enabled = read_bool(s, kSpotlightEnabled, d.spotlight.enabled);
-	c->spotlight.radius = read_double(s, kSpotlightRadius, d.spotlight.radius);
-	c->spotlight.dim = read_double(s, kSpotlightDim, d.spotlight.dim);
-	c->spotlight.shape = static_cast<int>(read_int(s, kSpotlightShape, d.spotlight.shape));
-	c->spotlight.corner_radius =
-		read_double(s, kSpotlightCornerRadius, d.spotlight.corner_radius);
-	c->spotlight.border_enabled =
-		read_bool(s, kSpotlightBorderEnabled, d.spotlight.border_enabled);
-	c->spotlight.border_color =
-		static_cast<uint32_t>(read_int(s, kSpotlightBorderColor, d.spotlight.border_color));
-	c->spotlight.border_width =
-		read_double(s, kSpotlightBorderWidth, d.spotlight.border_width);
-	c->spotlight.blur_enabled =
-		read_bool(s, kSpotlightBlurEnabled, d.spotlight.blur_enabled);
-	c->spotlight.outside_mode =
-		static_cast<int>(read_int(s, kSpotlightOutsideMode, d.spotlight.outside_mode));
 	/* Very old profiles only had the blur toggle; map it once when the new
 	 * explicit mode key was never written. */
 	if (!obs_data_has_user_value(s, kSpotlightOutsideMode) &&
 	    c->spotlight.blur_enabled)
 		c->spotlight.outside_mode = 1;
-	c->spotlight.blur_amount =
-		read_double(s, kSpotlightBlurAmount, d.spotlight.blur_amount);
-	c->spotlight.zoom_amount =
-		read_double(s, kSpotlightZoomAmount, d.spotlight.zoom_amount);
-	c->spotlight.in_ms = read_double(s, kSpotlightInMs, d.spotlight.in_ms);
-	c->spotlight.out_ms = read_double(s, kSpotlightOutMs, d.spotlight.out_ms);
-	c->spotlight.show_cursor = read_bool(s, kSpotlightShowCursor, d.spotlight.show_cursor);
-
-	c->magnifier.enabled = read_bool(s, kMagnifierEnabled, d.magnifier.enabled);
-	c->magnifier.shape = static_cast<int>(read_int(s, kMagnifierShape, d.magnifier.shape));
-	c->magnifier.radius = read_double(s, kMagnifierRadius, d.magnifier.radius);
-	c->magnifier.corner_radius =
-		read_double(s, kMagnifierCornerRadius, d.magnifier.corner_radius);
-	c->magnifier.zoom_amount = read_double(s, kMagnifierZoom, d.magnifier.zoom_amount);
-	c->magnifier.border_enabled =
-		read_bool(s, kMagnifierBorderEnabled, d.magnifier.border_enabled);
-	c->magnifier.border_color = static_cast<uint32_t>(
-		read_int(s, kMagnifierBorderColor, d.magnifier.border_color));
-	c->magnifier.border_width =
-		read_double(s, kMagnifierBorderWidth, d.magnifier.border_width);
-	c->magnifier.shadow_enabled =
-		read_bool(s, kMagnifierShadowEnabled, d.magnifier.shadow_enabled);
-	c->magnifier.shadow_color = static_cast<uint32_t>(
-		read_int(s, kMagnifierShadowColor, d.magnifier.shadow_color));
-	c->magnifier.shadow_alpha =
-		read_double(s, kMagnifierShadowAlpha, d.magnifier.shadow_alpha);
-	c->magnifier.shadow_blur =
-		read_double(s, kMagnifierShadowBlur, d.magnifier.shadow_blur);
-	c->magnifier.shadow_offset_x =
-		read_double(s, kMagnifierShadowOffsetX, d.magnifier.shadow_offset_x);
-	c->magnifier.shadow_offset_y =
-		read_double(s, kMagnifierShadowOffsetY, d.magnifier.shadow_offset_y);
-	c->magnifier.follow_cursor =
-		read_bool(s, kMagnifierFollowCursor, d.magnifier.follow_cursor);
-	c->magnifier.center_x = read_double(s, kMagnifierCenterX, d.magnifier.center_x);
-	c->magnifier.center_y = read_double(s, kMagnifierCenterY, d.magnifier.center_y);
-	c->magnifier.in_ms = read_double(s, kMagnifierInMs, d.magnifier.in_ms);
-	c->magnifier.out_ms = read_double(s, kMagnifierOutMs, d.magnifier.out_ms);
-	c->magnifier.show_cursor = read_bool(s, kMagnifierShowCursor, d.magnifier.show_cursor);
-
-	c->keys.enabled = read_bool(s, kKeysEnabled, d.keys.enabled);
-	c->keys.modifiers_only = read_bool(s, kKeysModifiersOnly, d.keys.modifiers_only);
-	c->keys.show_special = read_bool(s, kKeysShowSpecial, d.keys.show_special);
-	c->keys.show_shortcuts = read_bool(s, kKeysShowShortcuts, d.keys.show_shortcuts);
-	c->keys.ttl_ms = read_double(s, kKeysTtlMs, d.keys.ttl_ms);
-	c->keys.max_keys = static_cast<int>(read_int(s, kKeysMax, d.keys.max_keys));
-	c->keys.pos_x = read_double(s, kKeysPosX, d.keys.pos_x);
-	c->keys.pos_y = read_double(s, kKeysPosY, d.keys.pos_y);
-	c->keys.size = read_double(s, kKeysSize, d.keys.size);
-	c->keys.font = read_string(s, kKeysFont, d.keys.font);
-	c->keys.color = static_cast<uint32_t>(read_int(s, kKeysColor, d.keys.color));
-	c->keys.shadow = read_bool(s, kKeysShadow, d.keys.shadow);
-	c->keys.band = read_bool(s, kKeysBand, d.keys.band);
-	c->keys.band_color = static_cast<uint32_t>(read_int(s, kKeysBandColor, d.keys.band_color));
-
-	c->highlight.enabled = read_bool(s, kHighlightEnabled, d.highlight.enabled);
-	c->highlight.hotkey_enabled =
-		read_bool(s, kHighlightHotkeyEnabled, d.highlight.hotkey_enabled);
-	c->highlight.hold_ms = read_double(s, kHighlightHoldMs, d.highlight.hold_ms);
-	c->highlight.fade_ms = read_double(s, kHighlightFadeMs, d.highlight.fade_ms);
-	c->highlight.color = static_cast<uint32_t>(read_int(s, kHighlightColor, d.highlight.color));
-	c->highlight.opacity = read_double(s, kHighlightOpacity, d.highlight.opacity);
-	c->highlight.mode = static_cast<int>(read_int(s, kHighlightMode, d.highlight.mode));
-	c->highlight.thickness = read_double(s, kHighlightThickness, d.highlight.thickness);
-	c->highlight.zoom_delay_ms = read_double(s, kHighlightZoomDelayMs, d.highlight.zoom_delay_ms);
-	c->highlight.zoom_max = read_double(s, kHighlightZoomMax, d.highlight.zoom_max);
-	c->highlight.zoom_in_ms = read_double(s, kHighlightZoomInMs, d.highlight.zoom_in_ms);
-	c->highlight.zoom_hold_ms = read_double(s, kHighlightZoomHoldMs, d.highlight.zoom_hold_ms);
-	c->highlight.zoom_out_ms = read_double(s, kHighlightZoomOutMs, d.highlight.zoom_out_ms);
-
-	c->monitor_manual = read_bool(s, kMonitorManual, d.monitor_manual);
-	c->monitor_x = static_cast<int>(read_int(s, kMonitorX, d.monitor_x));
-	c->monitor_y = static_cast<int>(read_int(s, kMonitorY, d.monitor_y));
 
 	sanitize_config(c);
 }
 
 void config_store(obs_data_t *s, const Config &c)
 {
-	obs_data_set_bool(s, kEffectsEnabled, c.effects_enabled);
-
-	obs_data_set_bool(s, kBgEnabled, c.bg.enabled);
+#define X(kind, key, member) TS_STORE_##kind(key, member);
+	TS_SIMPLE_FIELDS(X)
+#undef X
 	obs_data_set_int(s, kBgType, c.bg.mode);
 	obs_data_set_int(s, kBgMode, legacy_bg_mode_value(c.bg.mode));
-	obs_data_set_int(s, kBgColorA, static_cast<long long>(c.bg.color_a));
-	obs_data_set_int(s, kBgColorB, static_cast<long long>(c.bg.color_b));
-	obs_data_set_double(s, kBgGradientAngle, c.bg.gradient_angle);
-	obs_data_set_double(s, kBgGradientCenterX, c.bg.gradient_center_x);
-	obs_data_set_double(s, kBgGradientCenterY, c.bg.gradient_center_y);
-	obs_data_set_string(s, kBgImage, c.bg.image.c_str());
-	obs_data_set_string(s, kBgImageFile, c.bg.image_file.c_str());
-	obs_data_set_double(s, kBgImageBlur, c.bg.image_blur);
-	obs_data_set_double(s, kBgPaddingX, c.bg.padding_x);
-	obs_data_set_double(s, kBgPaddingY, c.bg.padding_y);
-	obs_data_set_double(s, kBgCornerRadius, c.bg.corner_radius);
-	obs_data_set_bool(s, kBgShadow, c.bg.shadow);
-	obs_data_set_double(s, kBgShadowAlpha, c.bg.shadow_alpha);
-	obs_data_set_double(s, kBgShadowBlur, c.bg.shadow_blur);
-	obs_data_set_double(s, kBgShadowOffsetX, c.bg.shadow_offset_x);
-	obs_data_set_double(s, kBgShadowOffset, c.bg.shadow_offset);
-	obs_data_set_bool(s, kBgKeepAspect, c.bg.keep_aspect);
-
-	obs_data_set_bool(s, kCursorEnabled, c.cursor.enabled);
-	obs_data_set_int(s, kCursorStyle, c.cursor.style);
-	obs_data_set_int(s, kCursorSecondaryStyle, c.cursor.secondary_style);
-	obs_data_set_bool(s, kCursorLinkDetection, c.cursor.link_detection);
-	obs_data_set_double(s, kCursorSize, c.cursor.size);
-	obs_data_set_double(s, kCursorRotationOffset, c.cursor.rotation_offset_deg);
-	obs_data_set_bool(s, kCursorShadow, c.cursor.shadow);
-	obs_data_set_int(s, kCursorFollowMode, c.cursor.follow_mode);
-	obs_data_set_double(s, kCursorGlideMs, c.cursor.glide_ms);
-	obs_data_set_bool(s, kCursorHideIdle, c.cursor.hide_idle);
-	obs_data_set_double(s, kCursorIdleDelayMs, c.cursor.idle_delay_ms);
-
-	obs_data_set_int(s, kZoomMode, c.zoom.mode);
-	obs_data_set_double(s, kZoomAmount, c.zoom.amount);
-	obs_data_set_double(s, kZoomDurationMs, c.zoom.duration_ms);
-	obs_data_set_double(s, kZoomIdleTimeoutMs, c.zoom.idle_timeout_ms);
-	obs_data_set_double(s, kZoomPanAmount, c.zoom.pan_amount);
-	obs_data_set_double(s, kZoomCenterAmount, c.zoom.center_amount);
-
-	obs_data_set_int(s, kClickLeftEffect, c.click_left.effect);
-	obs_data_set_double(s, kClickLeftSize, c.click_left.size);
-	obs_data_set_int(s, kClickLeftColor, static_cast<long long>(c.click_left.color));
-	obs_data_set_double(s, kClickLeftDurationMs, c.click_left.duration_ms);
-	obs_data_set_int(s, kClickLeftEasing, c.click_left.easing);
-
-	obs_data_set_int(s, kClickRightEffect, c.click_right.effect);
-	obs_data_set_double(s, kClickRightSize, c.click_right.size);
-	obs_data_set_int(s, kClickRightColor, static_cast<long long>(c.click_right.color));
-	obs_data_set_double(s, kClickRightDurationMs, c.click_right.duration_ms);
-	obs_data_set_int(s, kClickRightEasing, c.click_right.easing);
-
-	obs_data_set_bool(s, kClickSoundEnabled, c.click_sound.enabled);
-	obs_data_set_string(s, kClickSoundFileLeft, c.click_sound.file_left.c_str());
-	obs_data_set_string(s, kClickSoundFileRight, c.click_sound.file_right.c_str());
-	obs_data_set_double(s, kClickSoundVolume, c.click_sound.volume);
-	obs_data_set_bool(s, kClickSoundLeft, c.click_sound.left);
-	obs_data_set_bool(s, kClickSoundRight, c.click_sound.right);
-
-
-	obs_data_set_bool(s, kSpotlightEnabled, c.spotlight.enabled);
-	obs_data_set_double(s, kSpotlightRadius, c.spotlight.radius);
-	obs_data_set_double(s, kSpotlightDim, c.spotlight.dim);
-	obs_data_set_int(s, kSpotlightShape, c.spotlight.shape);
-	obs_data_set_double(s, kSpotlightCornerRadius, c.spotlight.corner_radius);
-	obs_data_set_bool(s, kSpotlightBorderEnabled, c.spotlight.border_enabled);
-	obs_data_set_int(s, kSpotlightBorderColor, static_cast<long long>(c.spotlight.border_color));
-	obs_data_set_double(s, kSpotlightBorderWidth, c.spotlight.border_width);
-	obs_data_set_bool(s, kSpotlightBlurEnabled, c.spotlight.blur_enabled);
-	obs_data_set_int(s, kSpotlightOutsideMode, c.spotlight.outside_mode);
-	obs_data_set_double(s, kSpotlightBlurAmount, c.spotlight.blur_amount);
-	obs_data_set_double(s, kSpotlightZoomAmount, c.spotlight.zoom_amount);
-	obs_data_set_double(s, kSpotlightInMs, c.spotlight.in_ms);
-	obs_data_set_double(s, kSpotlightOutMs, c.spotlight.out_ms);
-	obs_data_set_bool(s, kSpotlightShowCursor, c.spotlight.show_cursor);
-
-	obs_data_set_bool(s, kMagnifierEnabled, c.magnifier.enabled);
-	obs_data_set_int(s, kMagnifierShape, c.magnifier.shape);
-	obs_data_set_double(s, kMagnifierRadius, c.magnifier.radius);
-	obs_data_set_double(s, kMagnifierCornerRadius, c.magnifier.corner_radius);
-	obs_data_set_double(s, kMagnifierZoom, c.magnifier.zoom_amount);
-	obs_data_set_bool(s, kMagnifierBorderEnabled, c.magnifier.border_enabled);
-	obs_data_set_int(s, kMagnifierBorderColor, c.magnifier.border_color);
-	obs_data_set_double(s, kMagnifierBorderWidth, c.magnifier.border_width);
-	obs_data_set_bool(s, kMagnifierShadowEnabled, c.magnifier.shadow_enabled);
-	obs_data_set_int(s, kMagnifierShadowColor, c.magnifier.shadow_color);
-	obs_data_set_double(s, kMagnifierShadowAlpha, c.magnifier.shadow_alpha);
-	obs_data_set_double(s, kMagnifierShadowBlur, c.magnifier.shadow_blur);
-	obs_data_set_double(s, kMagnifierShadowOffsetX, c.magnifier.shadow_offset_x);
-	obs_data_set_double(s, kMagnifierShadowOffsetY, c.magnifier.shadow_offset_y);
-	obs_data_set_bool(s, kMagnifierFollowCursor, c.magnifier.follow_cursor);
-	obs_data_set_double(s, kMagnifierCenterX, c.magnifier.center_x);
-	obs_data_set_double(s, kMagnifierCenterY, c.magnifier.center_y);
-	obs_data_set_double(s, kMagnifierInMs, c.magnifier.in_ms);
-	obs_data_set_double(s, kMagnifierOutMs, c.magnifier.out_ms);
-	obs_data_set_bool(s, kMagnifierShowCursor, c.magnifier.show_cursor);
-
-	obs_data_set_bool(s, kKeysEnabled, c.keys.enabled);
-	obs_data_set_bool(s, kKeysModifiersOnly, c.keys.modifiers_only);
-	obs_data_set_bool(s, kKeysShowSpecial, c.keys.show_special);
-	obs_data_set_bool(s, kKeysShowShortcuts, c.keys.show_shortcuts);
-	obs_data_set_double(s, kKeysTtlMs, c.keys.ttl_ms);
-	obs_data_set_int(s, kKeysMax, c.keys.max_keys);
-	obs_data_set_double(s, kKeysPosX, c.keys.pos_x);
-	obs_data_set_double(s, kKeysPosY, c.keys.pos_y);
-	obs_data_set_double(s, kKeysSize, c.keys.size);
-	obs_data_set_string(s, kKeysFont, c.keys.font.c_str());
-	obs_data_set_int(s, kKeysColor, static_cast<long long>(c.keys.color));
-	obs_data_set_bool(s, kKeysShadow, c.keys.shadow);
-	obs_data_set_bool(s, kKeysBand, c.keys.band);
-	obs_data_set_int(s, kKeysBandColor, static_cast<long long>(c.keys.band_color));
-
-	obs_data_set_bool(s, kHighlightEnabled, c.highlight.enabled);
-	obs_data_set_bool(s, kHighlightHotkeyEnabled, c.highlight.hotkey_enabled);
-	obs_data_set_double(s, kHighlightHoldMs, c.highlight.hold_ms);
-	obs_data_set_double(s, kHighlightFadeMs, c.highlight.fade_ms);
-	obs_data_set_int(s, kHighlightColor, static_cast<long long>(c.highlight.color));
-	obs_data_set_double(s, kHighlightOpacity, c.highlight.opacity);
-	obs_data_set_int(s, kHighlightMode, c.highlight.mode);
-	obs_data_set_double(s, kHighlightThickness, c.highlight.thickness);
-	obs_data_set_double(s, kHighlightZoomDelayMs, c.highlight.zoom_delay_ms);
-	obs_data_set_double(s, kHighlightZoomMax, c.highlight.zoom_max);
-	obs_data_set_double(s, kHighlightZoomInMs, c.highlight.zoom_in_ms);
-	obs_data_set_double(s, kHighlightZoomHoldMs, c.highlight.zoom_hold_ms);
-	obs_data_set_double(s, kHighlightZoomOutMs, c.highlight.zoom_out_ms);
-
-	obs_data_set_bool(s, kMonitorManual, c.monitor_manual);
-	obs_data_set_int(s, kMonitorX, c.monitor_x);
-	obs_data_set_int(s, kMonitorY, c.monitor_y);
 }
 
 } // namespace topscreen

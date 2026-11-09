@@ -1,6 +1,7 @@
 #include "test_framework.hpp"
 
 #include "core/cursor_catalog.hpp"
+#include "hotkeys/ts-hotkey-actions.hpp"
 
 #include <filesystem>
 #include <fstream>
@@ -127,6 +128,10 @@ TEST(locale_en_has_no_orphan_keys)
 	 * obs_module_text("...") call), so add them explicitly. */
 	for (const auto &entry : topscreen::core::kCursorCatalog)
 		code.insert(entry.label_key);
+	/* Hotkey descriptions live in the action table, not inside an
+	 * obs_module_text("...") call. */
+	for (int i = 0; i < topscreen::kHotkeyCount; ++i)
+		code.insert(topscreen::kHotkeyLabelKeys[i]);
 
 	CHECK(!code.empty());
 	CHECK(!en.empty());

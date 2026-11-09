@@ -17,6 +17,7 @@
 #include "render/ts-compositor.hpp"
 #include "render/ts-frame.hpp"
 #include "ts-presets.hpp"
+#include "ts-profile-store.hpp"
 #include "ts-profiles-ui.hpp"
 #include "ts-properties.hpp"
 #include "ts-registry.hpp"
@@ -373,21 +374,10 @@ void ts_filter_ctx::apply_profile(int index)
 	const int monitor_y = cfg.monitor_y;
 
 	obs_data_t *s = obs_source_get_settings(source);
-	obs_data_t *p = obs_data_get_obj(s, kProfileSlots[index]);
-	if (p) {
-		/* Old/partial slots: fields absent from the slot keep that profile's
-		 * seed instead of falling back to the global defaults. */
-		const core::Config seed = core::make_profile_seed(index);
-		config_load(p, &cfg, &seed);
-		obs_data_release(p);
-	} else {
-		/* Empty slot (legacy source): capture the current state instead of doing
-		 * nothing, otherwise switching profiles would look like "not working". */
-		p = obs_data_create();
-		config_store(p, cfg);
-		obs_data_set_obj(s, kProfileSlots[index], p);
-		obs_data_release(p);
-	}
+	/* Old/partial slots: fields absent from the slot keep that profile's seed
+	 * instead of falling back to the global defaults. Missing slots are filled
+	 * by ensure_slots() before activation. */
+	cfg = profile_store::load_slot(s, index);
 	obs_data_release(s);
 
 	cfg.monitor_manual = monitor_manual;
@@ -411,13 +401,7 @@ void ts_filter_ctx::store_profile_slot(int index)
 		return;
 
 	obs_data_t *s = obs_source_get_settings(source);
-	obs_data_t *p = obs_data_get_obj(s, kProfileSlots[index]);
-	if (!p) {
-		p = obs_data_create();
-		obs_data_set_obj(s, kProfileSlots[index], p);
-	}
-	config_store(p, cfg);
-	obs_data_release(p);
+	profile_store::store_slot(s, index, cfg);
 	obs_data_release(s);
 }
 
@@ -461,19 +445,9 @@ void ts_filter_ctx::do_export_profiles(const std::string &path)
 	obs_data_set_string(bundle, "version", kVersion);
 	obs_data_set_int(bundle, "current", current_profile_);
 	for (int i = 0; i < kProfileCount; ++i) {
-		obs_data_t *slot = obs_data_get_obj(s, kProfileSlots[i]);
 		/* Normalize every slot: older sources can miss fields added in a
 		 * newer version, and the exported bundle must always be complete. */
-		const core::Config seed = core::make_profile_seed(i);
-		core::Config normalized = seed;
-		if (slot) {
-			config_load(slot, &normalized, &seed);
-			obs_data_release(slot);
-		}
-		obs_data_t *out_slot = obs_data_create();
-		config_store(out_slot, normalized);
-		obs_data_set_obj(bundle, kProfileSlots[i], out_slot);
-		obs_data_release(out_slot);
+		profile_store::store_slot(bundle, i, profile_store::load_slot(s, i));
 	}
 	obs_data_release(s);
 
@@ -506,21 +480,9 @@ void ts_filter_ctx::do_import_profiles(const std::string &json_text)
 
 	obs_data_t *s = obs_source_get_settings(source);
 	for (int i = 0; i < kProfileCount; ++i) {
-		obs_data_t *slot = obs_data_get_obj(bundle, kProfileSlots[i]);
-		/* Start from the slot's seed and overlay the fields the imported file
-		 * actually has. Missing slots keep the seed; missing fields keep the
-		 * seed's value instead of becoming 0/false. This keeps old/new bundles
-		 * valid across added or removed settings. */
-		const core::Config seed = core::make_profile_seed(i);
-		core::Config normalized = seed;
-		if (slot) {
-			config_load(slot, &normalized, &seed);
-			obs_data_release(slot);
-		}
-		obs_data_t *out_slot = obs_data_create();
-		config_store(out_slot, normalized);
-		obs_data_set_obj(s, kProfileSlots[i], out_slot);
-		obs_data_release(out_slot);
+		/* Missing slots keep the seed; missing fields keep the seed's value
+		 * instead of becoming 0/false. This keeps old/new bundles valid. */
+		profile_store::store_slot(s, i, profile_store::load_slot(bundle, i));
 	}
 	obs_data_set_int(s, kProfileCurrent, info.current);
 	obs_data_release(s);
@@ -858,14 +820,7 @@ void ts_filter_ctx::process_actions()
 	}
 	if (act & A_RESET_PROFILES) {
 		obs_data_t *s = obs_source_get_settings(source);
-		for (int i = 0; i < kProfileCount; ++i) {
-			obs_data_t *p = obs_data_create();
-			const core::Config seed = core::make_profile_seed(i);
-			config_store(p, seed);
-			obs_data_set_obj(s, kProfileSlots[i], p);
-			obs_data_release(p);
-		}
-		obs_data_set_int(s, kProfileSeedVersion, kProfileSeedRevision);
+		profile_store::reset_slots(s, kProfileSeedRevision);
 		obs_source_update(source, s);
 		obs_data_release(s);
 		profile_dirty_ = false;
@@ -917,27 +872,11 @@ void *ts_filter_create(obs_data_t *settings, obs_source_t *source)
 	/* Guarantees the 10 profile slots. A source from an older build is
 	 * reseeded once (the user asked for the new A..J defaults); after the
 	 * version is current, later edits are preserved. */
-	bool reseeded = false;
-	bool seeded_any = false;
+	bool settings_changed = false;
 	{
 		obs_data_t *s = obs_source_get_settings(source);
-		const int seed_version = static_cast<int>(obs_data_get_int(s, kProfileSeedVersion));
-		reseeded = seed_version < kProfileSeedRevision;
-		for (int i = 0; i < kProfileCount; ++i) {
-			if (!reseeded && obs_data_get_obj(s, kProfileSlots[i]))
-				continue;
-			obs_data_t *p = obs_data_create();
-			const core::Config seed = core::make_profile_seed(i);
-			config_store(p, seed);
-			obs_data_set_obj(s, kProfileSlots[i], p);
-			obs_data_release(p);
-			seeded_any = true;
-		}
-		if (reseeded) {
-			obs_data_set_int(s, kProfileSeedVersion, kProfileSeedRevision);
-			seeded_any = true;
-		}
-		if (seeded_any)
+		settings_changed = profile_store::ensure_slots(s, kProfileSeedRevision);
+		if (settings_changed)
 			obs_source_update(source, s);
 		obs_data_release(s);
 	}
@@ -948,7 +887,7 @@ void *ts_filter_create(obs_data_t *settings, obs_source_t *source)
 	 * left "Profile B" selected with the default look.
 	 */
 	const bool picked = obs_data_has_user_value(settings, kProfileCurrent);
-	if (picked || reseeded || seeded_any) {
+	if (picked || settings_changed) {
 		ctx->apply_profile(ctx->current_profile_);
 		ctx->push_settings();
 	}

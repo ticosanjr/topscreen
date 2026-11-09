@@ -56,6 +56,32 @@ inline constexpr const char *kHotkeyNames[HK_Count] = {
 	"TopScreen_ToggleCursor",
 };
 
+/** Locale keys, index = HotkeyAction. */
+inline constexpr const char *kHotkeyLabelKeys[HK_Count] = {
+	"Hotkey.ToggleEffects",
+	"Hotkey.ToggleBackground",
+	"Hotkey.ZoomIn",
+	"Hotkey.ZoomOut",
+	"Hotkey.ResetZoom",
+	"Hotkey.NextPreset",
+	"Hotkey.PrevPreset",
+	"Hotkey.ProfileA",
+	"Hotkey.ProfileB",
+	"Hotkey.ProfileC",
+	"Hotkey.ProfileD",
+	"Hotkey.ProfileE",
+	"Hotkey.ProfileF",
+	"Hotkey.ProfileG",
+	"Hotkey.ProfileH",
+	"Hotkey.ProfileI",
+	"Hotkey.ProfileJ",
+	"Hotkey.ProfileSave",
+	"Hotkey.ToggleHighlight",
+	"Hotkey.ToggleSpotlight",
+	"Hotkey.ToggleMagnifier",
+	"Hotkey.ToggleCursor",
+};
+
 inline constexpr int kHotkeyCount = HK_Count;
 
 /**

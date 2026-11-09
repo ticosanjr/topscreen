@@ -3,6 +3,7 @@
 #include "ts-registry.hpp"
 
 #include <obs-frontend-api.h>
+
 #include <util/config-file.h>
 
 namespace topscreen {
@@ -21,61 +22,57 @@ bool is_profile_action(int action)
 	return action >= HK_ProfileA && action <= HK_ProfileJ;
 }
 
-/* Localized description of each hotkey (literals for the translation test).
- * Every label starts with the literal ID ("TopScreen_ProfileA") so the OBS
- * hotkey list is searchable by the same prefix as the registered ID. */
+/* Localized description of each hotkey. The label key is derived from the
+ * stable ID ("TopScreen_ProfileA" -> "Hotkey.ProfileA"), so adding an action
+ * only needs the enum + name table in ts-hotkey-actions.hpp. */
 const char *hotkey_description(int action)
 {
-	switch (action) {
-	case HK_ToggleEffects:
-		return hotkey_label_or_id(obs_module_text("Hotkey.ToggleEffects"), kHotkeyNames[action]);
-	case HK_ToggleBackground:
-		return hotkey_label_or_id(obs_module_text("Hotkey.ToggleBackground"), kHotkeyNames[action]);
-	case HK_ZoomIn:
-		return hotkey_label_or_id(obs_module_text("Hotkey.ZoomIn"), kHotkeyNames[action]);
-	case HK_ZoomOut:
-		return hotkey_label_or_id(obs_module_text("Hotkey.ZoomOut"), kHotkeyNames[action]);
-	case HK_ResetZoom:
-		return hotkey_label_or_id(obs_module_text("Hotkey.ResetZoom"), kHotkeyNames[action]);
-	case HK_NextPreset:
-		return hotkey_label_or_id(obs_module_text("Hotkey.NextPreset"), kHotkeyNames[action]);
-	case HK_PrevPreset:
-		return hotkey_label_or_id(obs_module_text("Hotkey.PrevPreset"), kHotkeyNames[action]);
-	case HK_ProfileA:
-		return hotkey_label_or_id(obs_module_text("Hotkey.ProfileA"), kHotkeyNames[action]);
-	case HK_ProfileB:
-		return hotkey_label_or_id(obs_module_text("Hotkey.ProfileB"), kHotkeyNames[action]);
-	case HK_ProfileC:
-		return hotkey_label_or_id(obs_module_text("Hotkey.ProfileC"), kHotkeyNames[action]);
-	case HK_ProfileD:
-		return hotkey_label_or_id(obs_module_text("Hotkey.ProfileD"), kHotkeyNames[action]);
-	case HK_ProfileE:
-		return hotkey_label_or_id(obs_module_text("Hotkey.ProfileE"), kHotkeyNames[action]);
-	case HK_ProfileF:
-		return hotkey_label_or_id(obs_module_text("Hotkey.ProfileF"), kHotkeyNames[action]);
-	case HK_ProfileG:
-		return hotkey_label_or_id(obs_module_text("Hotkey.ProfileG"), kHotkeyNames[action]);
-	case HK_ProfileH:
-		return hotkey_label_or_id(obs_module_text("Hotkey.ProfileH"), kHotkeyNames[action]);
-	case HK_ProfileI:
-		return hotkey_label_or_id(obs_module_text("Hotkey.ProfileI"), kHotkeyNames[action]);
-	case HK_ProfileJ:
-		return hotkey_label_or_id(obs_module_text("Hotkey.ProfileJ"), kHotkeyNames[action]);
-	case HK_ProfileSave:
-		return hotkey_label_or_id(obs_module_text("Hotkey.ProfileSave"), kHotkeyNames[action]);
-	case HK_ToggleHighlight:
-		return hotkey_label_or_id(obs_module_text("Hotkey.ToggleHighlight"), kHotkeyNames[action]);
-	case HK_ToggleSpotlight:
-		return hotkey_label_or_id(obs_module_text("Hotkey.ToggleSpotlight"), kHotkeyNames[action]);
-	case HK_ToggleMagnifier:
-		return hotkey_label_or_id(obs_module_text("Hotkey.ToggleMagnifier"), kHotkeyNames[action]);
-	case HK_ToggleCursor:
-		return hotkey_label_or_id(obs_module_text("Hotkey.ToggleCursor"), kHotkeyNames[action]);
-	default:
+	if (action < 0 || action >= HK_Count)
 		return "";
-	}
+
+	return hotkey_label_or_id(obs_module_text(kHotkeyLabelKeys[action]), kHotkeyNames[action]);
 }
 
+using HotkeyInvoke = void (*)(HotkeyContext *);
+
+void invoke_toggle_effects(HotkeyContext *t) { t->toggle_effects(); }
+void invoke_toggle_background(HotkeyContext *t) { t->toggle_background(); }
+void invoke_zoom_in(HotkeyContext *t) { t->zoom_in(); }
+void invoke_zoom_out(HotkeyContext *t) { t->zoom_out(); }
+void invoke_reset_zoom(HotkeyContext *t) { t->reset_zoom(); }
+void invoke_next_preset(HotkeyContext *t) { t->next_preset(); }
+void invoke_prev_preset(HotkeyContext *t) { t->prev_preset(); }
+template <int Index> void invoke_profile(HotkeyContext *t) { t->select_profile(Index); }
+void invoke_profile_save(HotkeyContext *t) { t->save_profile(); }
+void invoke_toggle_highlight(HotkeyContext *t) { t->toggle_highlight(); }
+void invoke_toggle_spotlight(HotkeyContext *t) { t->toggle_spotlight(); }
+void invoke_toggle_magnifier(HotkeyContext *t) { t->toggle_magnifier(); }
+void invoke_toggle_cursor(HotkeyContext *t) { t->toggle_cursor(); }
+
+const HotkeyInvoke kHotkeyInvoke[HK_Count] = {
+	invoke_toggle_effects,
+	invoke_toggle_background,
+	invoke_zoom_in,
+	invoke_zoom_out,
+	invoke_reset_zoom,
+	invoke_next_preset,
+	invoke_prev_preset,
+	invoke_profile<0>,
+	invoke_profile<1>,
+	invoke_profile<2>,
+	invoke_profile<3>,
+	invoke_profile<4>,
+	invoke_profile<5>,
+	invoke_profile<6>,
+	invoke_profile<7>,
+	invoke_profile<8>,
+	invoke_profile<9>,
+	invoke_profile_save,
+	invoke_toggle_highlight,
+	invoke_toggle_spotlight,
+	invoke_toggle_magnifier,
+	invoke_toggle_cursor,
+};
 } // namespace
 
 namespace {
@@ -273,76 +270,10 @@ void ts_hotkey_callback(void *data, obs_hotkey_id id, obs_hotkey_t *key, bool pr
 	blog(LOG_INFO, "[TopScreen] hotkey fired: %s",
 	     binding->action < HK_Count ? kHotkeyNames[binding->action] : "?");
 
-	switch (binding->action) {
-	case HK_ToggleEffects:
-		target->toggle_effects();
-		break;
-	case HK_ToggleBackground:
-		target->toggle_background();
-		break;
-	case HK_ZoomIn:
-		target->zoom_in();
-		break;
-	case HK_ZoomOut:
-		target->zoom_out();
-		break;
-	case HK_ResetZoom:
-		target->reset_zoom();
-		break;
-	case HK_NextPreset:
-		target->next_preset();
-		break;
-	case HK_PrevPreset:
-		target->prev_preset();
-		break;
-	case HK_ProfileA:
-		target->select_profile(0);
-		break;
-	case HK_ProfileB:
-		target->select_profile(1);
-		break;
-	case HK_ProfileC:
-		target->select_profile(2);
-		break;
-	case HK_ProfileD:
-		target->select_profile(3);
-		break;
-	case HK_ProfileE:
-		target->select_profile(4);
-		break;
-	case HK_ProfileF:
-		target->select_profile(5);
-		break;
-	case HK_ProfileG:
-		target->select_profile(6);
-		break;
-	case HK_ProfileH:
-		target->select_profile(7);
-		break;
-	case HK_ProfileI:
-		target->select_profile(8);
-		break;
-	case HK_ProfileJ:
-		target->select_profile(9);
-		break;
-	case HK_ProfileSave:
-		target->save_profile();
-		break;
-	case HK_ToggleHighlight:
-		target->toggle_highlight();
-		break;
-	case HK_ToggleSpotlight:
-		target->toggle_spotlight();
-		break;
-	case HK_ToggleMagnifier:
-		target->toggle_magnifier();
-		break;
-	case HK_ToggleCursor:
-		target->toggle_cursor();
-		break;
-	default:
-		break;
-	}
+	const int action = binding->action;
+	if (action < 0 || action >= HK_Count)
+		return;
+	kHotkeyInvoke[action](target);
 }
 
 } // namespace topscreen

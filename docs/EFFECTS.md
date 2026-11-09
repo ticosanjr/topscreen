@@ -51,9 +51,7 @@ Mode: `auto` reacts on its own · `hotkey` only by hotkey · `always` always on.
 
 | Feature | Mode | Status | Notes |
 |---------|------|--------|-------------|
-| Motion blur (from zoom) | auto | ✅ | radial blur with 3 samples |
-| Motion blur (from cursor) | auto | ⬜ | |
-| Spotlight following the cursor | hotkey | ✅ | round/square, drop/zoom, border, halo shadow and outside blur |
+| Spotlight following the cursor | hotkey | ✅ | round/square, fade/zoom, border and Dim/Blur outside |
 | Magnifier lens | hotkey | ✅ | round/square, local-only zoom, border/shadow, follow or fixed center |
 
 ## Text and highlight

@@ -337,7 +337,7 @@ bool default_hotkeys_clicked(obs_properties_t *props, obs_property_t *p, void *d
 
 void add_click_group(obs_properties_t *props, const char *group_key, const char *title,
 		     const char *effect_key, const char *size_key, const char *color_key,
-		     const char *duration_key, const char *easing_key)
+		     const char *duration_key)
 {
 	obs_properties_t *g = obs_properties_create();
 
@@ -690,9 +690,9 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 
 	/* ---------------- Clicks ---------------- */
 	add_click_group(pointer, "grp_click_left", obs_module_text("Group.ClickLeft"), kClickLeftEffect,
-			kClickLeftSize, kClickLeftColor, kClickLeftDurationMs, kClickLeftEasing);
+			kClickLeftSize, kClickLeftColor, kClickLeftDurationMs);
 	add_click_group(pointer, "grp_click_right", obs_module_text("Group.ClickRight"), kClickRightEffect,
-			kClickRightSize, kClickRightColor, kClickRightDurationMs, kClickRightEasing);
+			kClickRightSize, kClickRightColor, kClickRightDurationMs);
 	if (obs_property_t *p = obs_properties_get(props, kClickLeftEffect))
 		obs_property_set_modified_callback(p, click_left_effect_changed);
 	if (obs_property_t *p = obs_properties_get(props, kClickRightEffect))

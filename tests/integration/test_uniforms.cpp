@@ -3,10 +3,12 @@
 
 #include <obs-module.h>
 
+#include <algorithm>
 #include <fstream>
 #include <set>
 #include <sstream>
 #include <string>
+#include <vector>
 
 #include "ts-filter.hpp"
 #include "ts-registry.hpp"

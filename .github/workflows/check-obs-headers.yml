@@ -15,8 +15,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install X11 headers
-        run: sudo apt-get update && sudo apt-get install -y libx11-dev
+      - name: Install X11 and Qt6 headers
+        run: sudo apt-get update && sudo apt-get install -y libx11-dev qt6-base-dev
 
       - name: Compile against OBS headers
         run: |

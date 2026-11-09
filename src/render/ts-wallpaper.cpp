@@ -19,8 +19,7 @@ namespace topscreen {
 
 namespace {
 
-std::string make_key(const std::string &path, uint32_t target_w, uint32_t target_h, double blur,
-		     int blur_type)
+std::string make_key(const std::string &path, uint32_t target_w, uint32_t target_h, double blur)
 {
 	std::string key = path;
 	key += '\n';
@@ -29,13 +28,11 @@ std::string make_key(const std::string &path, uint32_t target_w, uint32_t target
 	key += std::to_string(target_h);
 	key += '\n';
 	key += std::to_string(static_cast<int>(blur * 100.0));
-	key += '\n';
-	key += std::to_string(blur_type);
 	return key;
 }
 
 core::Image compute_wallpaper(const std::string &path, uint32_t target_w, uint32_t target_h,
-			      double blur, int blur_type)
+			      double blur)
 {
 	std::vector<uint8_t> bytes;
 	if (path.empty() || !core::read_file_bytes(path.c_str(), &bytes))
@@ -48,8 +45,8 @@ core::Image compute_wallpaper(const std::string &path, uint32_t target_w, uint32
 
 	/* Bound the CPU cache for custom 8K images. */
 	core::Image limited = core::image_limit_max(decoded, 4096);
-	if (blur > 0.01 && blur_type > 0)
-		return core::image_prefilter(limited, target_w, target_h, blur, blur_type);
+	if (blur > 0.01)
+		return core::image_prefilter(limited, target_w, target_h, blur);
 	return limited;
 }
 
@@ -69,7 +66,7 @@ public:
 	}
 
 	void request(const std::string &key, const std::string &path, uint32_t target_w,
-		     uint32_t target_h, double blur, int blur_type,
+		     uint32_t target_h, double blur,
 		     const std::shared_ptr<WallpaperRequestResult> &result)
 	{
 		{
@@ -85,7 +82,7 @@ public:
 			waiting.push_back(result);
 			if (waiting.size() > 1)
 				return;
-			jobs_.push_back(Job{key, path, target_w, target_h, blur, blur_type});
+			jobs_.push_back(Job{key, path, target_w, target_h, blur});
 		}
 		cv_.notify_one();
 	}
@@ -97,7 +94,6 @@ private:
 		uint32_t target_w = 0;
 		uint32_t target_h = 0;
 		double blur = 0.0;
-		int blur_type = 0;
 	};
 
 	WallpaperCache()
@@ -138,8 +134,7 @@ private:
 
 			core::Image image;
 			try {
-				image = compute_wallpaper(job.path, job.target_w, job.target_h,
-							  job.blur, job.blur_type);
+				image = compute_wallpaper(job.path, job.target_w, job.target_h, job.blur);
 			} catch (...) {
 				blog(LOG_WARNING, "[TopScreen] wallpaper cache job failed");
 			}
@@ -226,6 +221,10 @@ void WallpaperPipeline::release()
 	actual_key_.clear();
 	failed_key_.clear();
 	pending_.reset();
+	cached_key_.clear();
+	cached_w_ = 0;
+	cached_h_ = 0;
+	cached_blur_ = -1.0;
 	aspect_ = 1.0f;
 }
 
@@ -281,8 +280,7 @@ bool WallpaperPipeline::poll_pending()
 	return true;
 }
 
-void WallpaperPipeline::update(const char *raw, uint32_t target_w, uint32_t target_h, double blur,
-			       int blur_type)
+void WallpaperPipeline::update(const char *raw, uint32_t target_w, uint32_t target_h, double blur)
 {
 	const char *requested = raw ? raw : "";
 	if (requested_ != requested) {
@@ -294,14 +292,26 @@ void WallpaperPipeline::update(const char *raw, uint32_t target_w, uint32_t targ
 		pending_.reset();
 		pending_key_.clear();
 		failed_key_.clear();
+		cached_key_.clear();
 	}
 
 	if (resolved_.empty()) {
-		release();
+		if (texture_ || !requested_.empty() || pending_ || !actual_key_.empty() ||
+		    !failed_key_.empty())
+			release();
 		return;
 	}
 
-	const std::string key = make_key(resolved_, target_w, target_h, blur, blur_type);
+	/* Building the cache key formats several numbers; do it only when the
+	 * path/size/blur actually change, not on every rendered frame. */
+	if (cached_key_.empty() || target_w != cached_w_ || target_h != cached_h_ ||
+	    blur != cached_blur_) {
+		cached_key_ = make_key(resolved_, target_w, target_h, blur);
+		cached_w_ = target_w;
+		cached_h_ = target_h;
+		cached_blur_ = blur;
+	}
+	const std::string &key = cached_key_;
 	if (actual_key_ == key || failed_key_ == key)
 		return;
 
@@ -317,7 +327,7 @@ void WallpaperPipeline::update(const char *raw, uint32_t target_w, uint32_t targ
 	auto result = std::make_shared<WallpaperRequestResult>();
 	pending_ = result;
 	pending_key_ = key;
-	WallpaperCache::instance().request(key, resolved_, target_w, target_h, blur, blur_type, result);
+	WallpaperCache::instance().request(key, resolved_, target_w, target_h, blur, result);
 	poll_pending();
 }
 

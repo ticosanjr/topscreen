@@ -34,7 +34,7 @@ Image make_test_image(int w, int h)
 TEST(image_filter_no_blur_returns_source_pixels)
 {
 	const Image src = make_test_image(8, 6);
-	const Image out = image_prefilter(src, 8, 6, 0.0, 0);
+	const Image out = image_prefilter(src, 8, 6, 0.0);
 	CHECK_EQ(out.width, 8);
 	CHECK_EQ(out.height, 6);
 	CHECK(out.pixels == src.pixels);
@@ -43,7 +43,7 @@ TEST(image_filter_no_blur_returns_source_pixels)
 TEST(image_filter_blur_preserves_dimensions_and_alpha)
 {
 	const Image src = make_test_image(1200, 600);
-	const Image out = image_prefilter(src, 1200, 600, 8.0, 2);
+	const Image out = image_prefilter(src, 1200, 600, 8.0);
 	CHECK_EQ(out.width, 600);
 	CHECK_EQ(out.height, 300);
 	REQUIRE(out.pixels.size() == out.width * out.height * 4u);
@@ -77,7 +77,7 @@ TEST(image_filter_is_thread_safe)
 	for (int t = 0; t < 4; ++t) {
 		workers.emplace_back([&src, &failures] {
 			for (int i = 0; i < 2; ++i) {
-				const Image out = image_prefilter(src, 1200, 600, 8.0, 2);
+				const Image out = image_prefilter(src, 1200, 600, 8.0);
 				if (out.width != 600 || out.height != 300 ||
 				    out.pixels.size() != 600u * 300u * 4u)
 					++failures;

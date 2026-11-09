@@ -62,7 +62,6 @@ void sanitize_config(Config *cfg)
 	cfg->bg.gradient_center_y =
 		bounded(cfg->bg.gradient_center_y, 0.0, 1.0, def.bg.gradient_center_y);
 	cfg->bg.image_blur = bounded(cfg->bg.image_blur, 0.0, 60.0, def.bg.image_blur);
-	cfg->bg.image_blur_type = 1; // Soft is the only mode
 	cfg->bg.padding_x = bounded(cfg->bg.padding_x, 0.0, 400.0, def.bg.padding_x);
 	cfg->bg.padding_y = bounded(cfg->bg.padding_y, 0.0, 400.0, def.bg.padding_y);
 	cfg->bg.corner_radius =
@@ -89,16 +88,9 @@ void sanitize_config(Config *cfg)
 	cfg->cursor.size = bounded(cfg->cursor.size, 0.5, 4.0, def.cursor.size);
 	cfg->cursor.rotation_offset_deg =
 		bounded(cfg->cursor.rotation_offset_deg, -180.0, 180.0, 0.0);
-	cfg->cursor.smooth = bounded(cfg->cursor.smooth, 0.0, 1.0, def.cursor.smooth);
 	cfg->cursor.glide_ms = bounded(cfg->cursor.glide_ms, 50.0, 1200.0, def.cursor.glide_ms);
-	cfg->cursor.glide_sample_ms =
-		bounded(cfg->cursor.glide_sample_ms, 20.0, 500.0, def.cursor.glide_sample_ms);
-	cfg->cursor.sway = bounded(cfg->cursor.sway, 0.0, 1.0, def.cursor.sway);
 	cfg->cursor.idle_delay_ms =
 		bounded(cfg->cursor.idle_delay_ms, 0.0, 5000.0, def.cursor.idle_delay_ms);
-	cfg->cursor.loop_ms = bounded(cfg->cursor.loop_ms, 1000.0, 20000.0, def.cursor.loop_ms);
-	cfg->cursor.offset_x = bounded(cfg->cursor.offset_x, -100.0, 100.0, def.cursor.offset_x);
-	cfg->cursor.offset_y = bounded(cfg->cursor.offset_y, -100.0, 100.0, def.cursor.offset_y);
 
 	/* Zoom */
 	if (cfg->zoom.mode == static_cast<int>(ZoomMode::Manual))
@@ -121,10 +113,6 @@ void sanitize_config(Config *cfg)
 	cfg->click_sound.volume =
 		bounded(cfg->click_sound.volume, 0.0, 1.0, def.click_sound.volume);
 
-	/* Motion blur */
-	cfg->motion_blur.amount =
-		bounded(cfg->motion_blur.amount, 0.0, 1.0, def.motion_blur.amount);
-
 	/* Spotlight */
 	cfg->spotlight.shape = bounded_int(cfg->spotlight.shape,
 					   static_cast<int>(SpotlightShape::Circle),
@@ -135,16 +123,6 @@ void sanitize_config(Config *cfg)
 	cfg->spotlight.dim = bounded(cfg->spotlight.dim, 0.0, 1.0, def.spotlight.dim);
 	cfg->spotlight.border_width =
 		bounded(cfg->spotlight.border_width, 0.5, 40.0, def.spotlight.border_width);
-	cfg->spotlight.shadow_alpha =
-		bounded(cfg->spotlight.shadow_alpha, 0.0, 1.0, def.spotlight.shadow_alpha);
-	cfg->spotlight.shadow_blur =
-		bounded(cfg->spotlight.shadow_blur, 0.0, 200.0, def.spotlight.shadow_blur);
-	cfg->spotlight.shadow_offset_x =
-		bounded(cfg->spotlight.shadow_offset_x, -100.0, 100.0,
-			def.spotlight.shadow_offset_x);
-	cfg->spotlight.shadow_offset_y =
-		bounded(cfg->spotlight.shadow_offset_y, -100.0, 100.0,
-			def.spotlight.shadow_offset_y);
 	cfg->spotlight.blur_amount =
 		bounded(cfg->spotlight.blur_amount, 0.0, 60.0, def.spotlight.blur_amount);
 	cfg->spotlight.outside_mode = bounded_int(cfg->spotlight.outside_mode, 0, 1);
@@ -156,7 +134,6 @@ void sanitize_config(Config *cfg)
 		bounded(cfg->spotlight.zoom_amount, 1.0, 4.0, def.spotlight.zoom_amount);
 	cfg->spotlight.in_ms = bounded(cfg->spotlight.in_ms, 0.0, 2000.0, def.spotlight.in_ms);
 	cfg->spotlight.out_ms = bounded(cfg->spotlight.out_ms, 0.0, 2000.0, def.spotlight.out_ms);
-	cfg->spotlight.drop_px = bounded(cfg->spotlight.drop_px, 0.0, 200.0, def.spotlight.drop_px);
 
 	/* Magnifier */
 	cfg->magnifier.shape = bounded_int(cfg->magnifier.shape,
@@ -188,8 +165,6 @@ void sanitize_config(Config *cfg)
 		bounded(cfg->magnifier.in_ms, 0.0, 2000.0, def.magnifier.in_ms);
 	cfg->magnifier.out_ms =
 		bounded(cfg->magnifier.out_ms, 0.0, 2000.0, def.magnifier.out_ms);
-	cfg->magnifier.drop_px =
-		bounded(cfg->magnifier.drop_px, 0.0, 200.0, def.magnifier.drop_px);
 
 	/* The two full-screen focus effects are mutually exclusive by design. */
 	if (cfg->magnifier.enabled)
@@ -203,13 +178,12 @@ void sanitize_config(Config *cfg)
 	cfg->keys.size = bounded(cfg->keys.size, 0.4, 4.0, def.keys.size);
 
 	/* Highlighter */
+	/* PressZoom (legacy value 5) was removed: migrate to plain Zoom. */
+	if (cfg->highlight.mode == 5)
+		cfg->highlight.mode = static_cast<int>(HighlightMode::Zoom);
 	cfg->highlight.mode = bounded_int(cfg->highlight.mode,
 					  static_cast<int>(HighlightMode::Box),
-					  static_cast<int>(HighlightMode::PressZoom));
-	/* PressZoom was removed from the UI: migrate old profiles to the plain
-	 * hold-to-zoom gesture (always IN, drag still works). */
-	if (cfg->highlight.mode == static_cast<int>(HighlightMode::PressZoom))
-		cfg->highlight.mode = static_cast<int>(HighlightMode::Zoom);
+					  static_cast<int>(HighlightMode::LineZoom));
 	cfg->highlight.hold_ms = bounded(cfg->highlight.hold_ms, 0.0, 5000.0,
 					 def.highlight.hold_ms);
 	cfg->highlight.fade_ms = bounded(cfg->highlight.fade_ms, 0.0, 2000.0,
@@ -218,7 +192,6 @@ void sanitize_config(Config *cfg)
 					 def.highlight.opacity);
 	cfg->highlight.thickness = bounded(cfg->highlight.thickness, 0.001, 0.05,
 					   def.highlight.thickness);
-	cfg->highlight.zoom_dir = 0; // fixed IN direction
 	cfg->highlight.zoom_delay_ms = bounded(cfg->highlight.zoom_delay_ms, 0.0, 5000.0,
 					       def.highlight.zoom_delay_ms);
 	cfg->highlight.zoom_max = bounded(cfg->highlight.zoom_max, 1.2, 8.0,
@@ -229,8 +202,6 @@ void sanitize_config(Config *cfg)
 					      def.highlight.zoom_hold_ms);
 	cfg->highlight.zoom_out_ms = bounded(cfg->highlight.zoom_out_ms, 100.0, 8000.0,
 					     def.highlight.zoom_out_ms);
-	cfg->highlight.press_delay_ms = bounded(cfg->highlight.press_delay_ms, 0.0, 3000.0,
-						def.highlight.press_delay_ms);
 }
 
 } // namespace topscreen::core

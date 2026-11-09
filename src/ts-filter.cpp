@@ -1160,7 +1160,6 @@ void ts_filter_tick(void *data, float seconds)
 	ctx->frame.key_count =
 		ctx->keys.collect(ctx->time_ms, ctx->frame.keys, FrameState::kMaxKeys);
 	ctx->frame.highlight = ctx->highlight.render();
-	ctx->frame.zoom_blur = 0.0;
 
 	/* Publishes state to the dock (UI thread). */
 	ctx->effects_cache_.store(ctx->cfg.effects_enabled);

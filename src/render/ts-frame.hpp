@@ -19,7 +19,6 @@ struct FrameState {
 	int click_count = 0;
 	core::KeyRender keys[kMaxKeys];
 	int key_count = 0;
-	double zoom_blur = 0.0; // 0..1 (zoom motion blur)
 	core::HighlightRender highlight;
 	core::SpotlightRender spotlight;
 	core::MagnifierRender magnifier;

@@ -13,7 +13,6 @@ SpotlightConfig cfg()
 	c.zoom_amount = 2.0;
 	c.in_ms = 100.0;
 	c.out_ms = 100.0;
-	c.drop_px = 20.0;
 	return c;
 }
 
@@ -29,7 +28,6 @@ TEST(spotlight_starts_inactive)
 	const SpotlightRender r = m.render();
 	CHECK_NEAR(r.amount, 0.0, 1e-9);
 	CHECK_NEAR(r.zoom, 1.0, 1e-9);
-	CHECK_NEAR(r.drop, 0.0, 1e-9);
 	CHECK(!m.active());
 }
 
@@ -43,20 +41,17 @@ TEST(spotlight_animates_in_with_drop_and_zoom)
 
 	SpotlightRender r = m.render();
 	CHECK_NEAR(r.amount, 0.0, 1e-9);
-	CHECK_NEAR(r.drop, -20.0, 1e-9);
 	CHECK_NEAR(r.focus_x, 0.2, 1e-9);
 	CHECK_NEAR(r.focus_y, 0.3, 1e-9);
 
 	m.update(50.0, 0.2, 0.3);
 	r = m.render();
 	CHECK(r.amount > 0.0 && r.amount < 1.0);
-	CHECK(r.drop < 0.0 && r.drop > -20.0);
 	CHECK(r.zoom > 1.0 && r.zoom < 2.0);
 
 	m.update(100.0, 0.2, 0.3);
 	r = m.render();
 	CHECK_NEAR(r.amount, 1.0, 1e-9);
-	CHECK_NEAR(r.drop, 0.0, 1e-9);
 	CHECK_NEAR(r.zoom, 2.0, 1e-9);
 	CHECK(m.active());
 }
@@ -73,7 +68,6 @@ TEST(spotlight_animates_out_with_drop_and_zoom)
 
 	SpotlightRender r = m.render();
 	CHECK(r.amount > 0.0 && r.amount < 1.0);
-	CHECK(r.drop > 0.0 && r.drop < 20.0);
 	CHECK(r.zoom > 1.0 && r.zoom < 2.0);
 
 	m.update(200.0, 0.5, 0.5);

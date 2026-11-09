@@ -105,7 +105,6 @@ TEST(magnifier_animates_out)
 	cfg.enabled = true;
 	cfg.in_ms = 0.0;
 	cfg.out_ms = 100.0;
-	cfg.drop_px = 20.0;
 
 	MagnifierModel m;
 	m.configure(cfg);
@@ -115,11 +114,9 @@ TEST(magnifier_animates_out)
 	m.update(50.0, 0.5, 0.5);
 	const MagnifierRender mid = m.render();
 	CHECK(mid.amount > 0.0 && mid.amount < 1.0);
-	CHECK_NEAR(mid.drop, 0.0, 1e-9);
 	CHECK_NEAR(mid.zoom, 1.0 + (2.0 - 1.0) * mid.amount, 1e-9);
 
 	m.update(100.0, 0.5, 0.5);
 	CHECK(!m.active());
 	CHECK_NEAR(m.render().amount, 0.0, 1e-9);
-	CHECK_NEAR(m.render().drop, 0.0, 1e-9);
 }

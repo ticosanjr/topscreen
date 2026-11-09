@@ -1239,7 +1239,6 @@ TEST(integration_wallpaper_prefilter_stress)
 			 static_cast<int>(core::BgMode::Wallpaper));
 	obs_data_set_string(filter->settings, core::keys::kBgImage, "wallpapers/fiber.jpg");
 	obs_data_set_double(filter->settings, core::keys::kBgImageBlur, 30.0);
-	obs_data_set_int(filter->settings, core::keys::kBgImageBlurType, 2);
 	ts_filter_source_info.update(ctx, filter->settings);
 
 	/* Rapid setting changes while the shared cache worker is decoding and
@@ -1307,20 +1306,20 @@ TEST(integration_wallpaper_pipeline_polls_ready_texture)
 {
 	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
 	WallpaperPipeline pipeline;
-	pipeline.update("wallpapers/fiber.jpg", 1280, 720, 30.0, 2);
+	pipeline.update("wallpapers/fiber.jpg", 1280, 720, 30.0);
 	for (int i = 0; i < 1000 && !pipeline.has_texture(); ++i) {
 		std::this_thread::sleep_for(std::chrono::milliseconds(2));
-		pipeline.update("wallpapers/fiber.jpg", 1280, 720, 30.0, 2);
+		pipeline.update("wallpapers/fiber.jpg", 1280, 720, 30.0);
 	}
 	CHECK(pipeline.has_texture());
 	CHECK(pipeline.aspect() > 1.0f);
 
 	/* Switching to another wallpaper must replace the texture without a
 	 * detour through Solid mode. */
-	pipeline.update("wallpapers/glacier.jpg", 1280, 720, 30.0, 2);
+	pipeline.update("wallpapers/glacier.jpg", 1280, 720, 30.0);
 	for (int i = 0; i < 1000 && !pipeline.has_texture(); ++i) {
 		std::this_thread::sleep_for(std::chrono::milliseconds(2));
-		pipeline.update("wallpapers/glacier.jpg", 1280, 720, 30.0, 2);
+		pipeline.update("wallpapers/glacier.jpg", 1280, 720, 30.0);
 	}
 	CHECK(pipeline.has_texture());
 	pipeline.release();

@@ -26,7 +26,6 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Wallpaper preset | `bg_image` | string | "" (none) or `wallpapers/*.jpg` (18); only used by the Wallpaper type | `""` |
 | | Local image file | `bg_image_file` | string | file path; only used by the Local image type | `""` |
 | | Wallpaper blur radius (px) | `bg_image_blur` | double | 0–60 | `0` |
-| | Wallpaper blur style (legacy) | `bg_image_blur_type` | int | Soft is forced (`1`); other values are ignored | `1` |
 | | Horizontal screen margin (px) | `bg_padding_x` | double | 0–400 | `64` |
 | | Vertical screen margin (px) | `bg_padding_y` | double | 0–400 | `64` |
 | | Keep screen aspect ratio | `bg_keep_aspect` | bool | — | `true` |
@@ -41,19 +40,12 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Cursor size (1 = default) | `cursor_size` | double | 0.5–4 | `1.4` |
 | | Rotation offset (degrees) | `cursor_rotation_offset_deg` | double | −180–180 | `0` |
 | | Cursor shadow | `cursor_shadow` | bool | — | `true` |
-| | Smoothing (legacy, ignored) | `cursor_smooth` | double | — | `0` |
-| | Curve tilt (legacy, ignored) | `cursor_sway` | double | — | `0` |
 | | Hide cursor when idle | `cursor_hide_idle` | bool | — | `true` |
 | | Idle delay before hiding (ms) | `cursor_idle_delay_ms` | double | 0–5000 | `1200` |
-| | Return cursor to start (legacy, ignored) | `cursor_loop` | bool | — | `false` |
-| | Loop idle time (legacy, ignored) | `cursor_loop_ms` | double | — | `4000` |
-| | Pointer correction X (legacy, ignored) | `cursor_offset_x` | double | — | `0` |
-| | Pointer correction Y (legacy, ignored) | `cursor_offset_y` | double | — | `0` |
 | | Secondary cursor (links) | `cursor_secondary_style` | int | -1 = same as primary; otherwise a cursor style ID | `-1` |
 | | Change cursor over links | `cursor_link_detection` | bool | Windows/X11 only | `true` |
-| | Cursor movement | `cursor_follow_mode` | int | 0 exact · 1 glide A→B (legacy spring/sampled map to A→B) | `0` |
+| | Cursor movement | `cursor_follow_mode` | int | 0 exact · 3 glide A→B (legacy 1/2 map to 3) | `0` |
 | | Glide duration (ms) | `cursor_glide_ms` | double | 50–1200 | `180` |
-| | Glide sample interval (legacy, ignored) | `cursor_glide_sample_ms` | double | — | `90` |
 | Zoom | Zoom mode | `zoom_mode` | int | 0 off · 1 auto; manual zoom is always available through the hotkeys | `1` |
 | | Zoom intensity (1 = no zoom) | `zoom_amount` | double | 1–4 | `1.6` |
 | | Zoom transition time (ms) | `zoom_duration_ms` | double | 100–2000 | `450` |
@@ -77,8 +69,6 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Click sound volume (0–1) | `click_sound_volume` | double | 0–1 (honored by paplay) | `0.6` |
 | | Play on left click (legacy) | `click_sound_left` | bool | derived from the left file; Mute is an empty path | `true` |
 | | Play on right click (legacy) | `click_sound_right` | bool | derived from the right file; Mute is an empty path | `true` |
-| Movement | Motion blur (removed) | `motion_blur_enabled` | bool | legacy, ignored | `false` |
-| | Motion blur intensity (legacy) | `motion_blur_amount` | double | 0–1, ignored | `0.35` |
 | Spotlight | Enable spotlight | `spotlight_enabled` | bool | — | `false` |
 | | Spotlight shape | `spotlight_shape` | int | 0 circle, 1 square | `0` |
 | | Radius (fraction of screen) | `spotlight_radius` | double | 0.05–1 | `0.30` |
@@ -87,19 +77,12 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Enable border | `spotlight_border_enabled` | bool | — | `false` |
 | | Border color | `spotlight_border_color` | color | — | `0xFFFFFFFF` |
 | | Border width (px) | `spotlight_border_width` | double | px | `4` |
-| | Halo shadow (removed) | `spotlight_shadow_enabled` | bool | legacy, ignored | `false` |
-| | Halo color (legacy) | `spotlight_shadow_color` | color | ignored | `0xFF000000` |
-| | Halo opacity (legacy) | `spotlight_shadow_alpha` | double | ignored | `0.55` |
-| | Halo blur (legacy) | `spotlight_shadow_blur` | double | ignored | `30` |
-| | Halo offset X (legacy) | `spotlight_shadow_offset_x` | double | ignored | `0` |
-| | Halo offset Y (legacy) | `spotlight_shadow_offset_y` | double | ignored | `12` |
 | | Outside effect (0 dim, 1 blur) | `spotlight_outside_mode` | int | 0–1 | `0` |
 | | Enable blur outside (legacy) | `spotlight_blur_enabled` | bool | — | `false` |
 | | Outside blur amount (px) | `spotlight_blur_amount` | double | px | `16` |
 | | Zoom when active (x) | `spotlight_zoom_amount` | double | 1–4 | `1.35` |
 | | Drop/zoom in (ms) | `spotlight_in_ms` | double | ms | `250` |
 | | Drop/zoom out (ms) | `spotlight_out_ms` | double | ms | `300` |
-| | Vertical drop distance (removed) | `spotlight_drop_px` | double | legacy, ignored | `24` |
 | | Show cursor during spotlight | `spotlight_show_cursor` | bool | — | `true` |
 | Magnifier | Enable magnifier lens | `magnifier_enabled` | bool | — | `false` |
 | | Lens shape | `magnifier_shape` | int | 0 circle · 1 square | `0` |
@@ -120,7 +103,6 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Lens shadow offset Y (px) | `magnifier_shadow_offset_y` | double | -100–100 | `12` |
 | | Zoom in (ms) | `magnifier_in_ms` | double | 0–2000 | `250` |
 | | Zoom out (ms) | `magnifier_out_ms` | double | 0–2000 | `300` |
-| | Vertical drop distance (removed) | `magnifier_drop_px` | double | legacy, ignored | `24` |
 | | Show cursor during magnifier | `magnifier_show_cursor` | bool | — | `true` |
 | Keys | Show typed keys | `keys_enabled` | bool | — | `true` |
 | | Modifiers only | `keys_modifiers_only` | bool | — | `false` |
@@ -144,9 +126,7 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | Mark appearance | Line thickness (fraction of the screen) | `highlight_thickness` | double | 0.001–0.05 | `0.004` |
 | Mark timing | Mark stays on screen (ms) | `highlight_hold_ms` | double | 0–5000 | `900` |
 | Mark timing | Mark fade-out (ms) | `highlight_fade_ms` | double | 0–2000 | `300` |
-| Zoom | Zoom direction (legacy, fixed IN) | `highlight_zoom_dir` | int | forced to `0` (in) | `0` |
 | Zoom | Hold-to-zoom delay (ms) | `highlight_zoom_delay_ms` | double | 0–5000 | `1200` |
-| Zoom | PressZoom delay (legacy, ignored) | `highlight_press_delay_ms` | double | PressZoom was removed | `400` |
 | Zoom | Maximum zoom (x) | `highlight_zoom_max` | double | 1.2–8 | `2.5` |
 | Zoom | Zoom-in duration (ms) | `highlight_zoom_in_ms` | double | 50–2000 | `250` |
 | Zoom | Return duration (ms) | `highlight_zoom_out_ms` | double | 100–8000 | `1200` |
@@ -300,14 +280,11 @@ table above; missing keys keep the current value.
     "bg_shadow_offset": 12,
     "cursor_enabled": true,
     "cursor_size": 1.6,
-    "cursor_smooth": 0.8,
-    "cursor_sway": 0.4,
     "zoom_mode": 1,
     "zoom_amount": 1.6,
     "click_left_effect": 0,
     "click_right_effect": 1,
     "click_sound_enabled": false,
-    "motion_blur_enabled": true,
     "spotlight_enabled": false,
     "keys_enabled": true,
     "keys_ttl_ms": 2000,

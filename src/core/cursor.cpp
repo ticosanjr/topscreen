@@ -21,32 +21,31 @@ double glide_duration(double ms)
 
 } // namespace
 
-double CursorModel::stiffness() const
-{
-	/* smooth 0 -> soft spring, smooth 1 -> stiff spring. */
-	const double s = clamp01(cfg_.smooth);
-	return 20.0 + s * 380.0;
-}
-
 void CursorModel::configure(const CursorConfig &cfg)
 {
 	const int previous_mode = cfg_.follow_mode;
 	cfg_ = cfg;
-	cfg_.follow_mode = std::clamp(cfg_.follow_mode, 0, 3);
+	cfg_.follow_mode = cfg_.follow_mode == static_cast<int>(CursorFollowMode::Exact)
+				   ? static_cast<int>(CursorFollowMode::Exact)
+				   : static_cast<int>(CursorFollowMode::GlideAB);
 	if (cfg_.follow_mode != previous_mode) {
 		glide_active_ = false;
 		target_dirty_ = true;
 	}
 	cfg_.glide_ms = glide_duration(cfg_.glide_ms);
-	cfg_.glide_sample_ms = glide_duration(cfg_.glide_sample_ms);
-	sx_.set_stiffness(stiffness());
-	sy_.set_stiffness(stiffness());
+	resolved_style_ = cursor_style_resolve(cfg_.style);
+	resolved_link_style_ =
+		cfg_.secondary_style >= 0 ? cursor_style_resolve(cfg_.secondary_style) : -1;
+	style_rotation_ = cursor_style_keeps_tilt(resolved_style_) ? 30.0 : 0.0;
+	link_rotation_ =
+		resolved_link_style_ >= 0 && cursor_style_keeps_tilt(resolved_link_style_) ? 30.0
+										      : 0.0;
 }
 
 void CursorModel::reset(double x, double y, double now_ms)
 {
-	sx_.reset(x);
-	sy_.reset(y);
+	x_ = x;
+	y_ = y;
 	pointer_x_ = x;
 	pointer_y_ = y;
 	target_x_ = x;
@@ -59,7 +58,6 @@ void CursorModel::reset(double x, double y, double now_ms)
 	glide_to_y_ = y;
 	glide_active_ = false;
 	target_dirty_ = false;
-	next_sample_ms_ = now_ms;
 	last_move_ms_ = now_ms;
 	last_update_ms_ = now_ms;
 	started_ = true;
@@ -82,8 +80,8 @@ void CursorModel::set_target(double x, double y, double now_ms)
 
 void CursorModel::start_glide(double now_ms)
 {
-	glide_from_x_ = sx_.value();
-	glide_from_y_ = sy_.value();
+	glide_from_x_ = x_;
+	glide_from_y_ = y_;
 	glide_to_x_ = target_x_;
 	glide_to_y_ = target_y_;
 	const double dx = glide_to_x_ - glide_from_x_;
@@ -115,12 +113,12 @@ void CursorModel::step_glide(double now_ms)
 			 e * e * glide_to_x_;
 	const double y = u * u * glide_from_y_ + 2.0 * u * e * glide_ctrl_y_ +
 			 e * e * glide_to_y_;
-	sx_.reset(x);
-	sy_.reset(y);
+	x_ = x;
+	y_ = y;
 
 	if (t >= 1.0) {
-		sx_.reset(glide_to_x_);
-		sy_.reset(glide_to_y_);
+		x_ = glide_to_x_;
+		y_ = glide_to_y_;
 		glide_active_ = false;
 	}
 }
@@ -130,14 +128,11 @@ void CursorModel::update(double now_ms)
 	if (!started_)
 		return;
 
-	double dt = (now_ms - last_update_ms_) / 1000.0;
 	last_update_ms_ = now_ms;
-	if (dt < 0.0)
-		dt = 0.0;
 
 	if (cfg_.follow_mode == static_cast<int>(CursorFollowMode::Exact)) {
-		sx_.reset(target_x_);
-		sy_.reset(target_y_);
+		x_ = target_x_;
+		y_ = target_y_;
 		glide_active_ = false;
 	} else {
 		/* Only Glide A→B remains; legacy Spring/Sampled values were mapped
@@ -153,18 +148,16 @@ void CursorModel::update(double now_ms)
 CursorRender CursorModel::render() const
 {
 	CursorRender out;
-	out.x = sx_.value();
-	out.y = sy_.value();
+	out.x = x_;
+	out.y = y_;
 	out.size = cfg_.size;
-	out.style = cursor_style_resolve(cfg_.style);
-
-	if (cfg_.link_detection && link_ && cfg_.secondary_style >= 0)
-		out.style = cursor_style_resolve(cfg_.secondary_style);
+	const bool use_link = cfg_.link_detection && link_ && resolved_link_style_ >= 0;
+	out.style = use_link ? resolved_link_style_ : resolved_style_;
 
 	/* Bundled cursors (Bibata through Dot) are drawn upright; only the
 	 * user-supplied Custom images keep the fixed 30° tilt. The profile can
 	 * add an extra rotation offset on top of that baseline. */
-	const double base_deg = cursor_style_keeps_tilt(out.style) ? 30.0 : 0.0;
+	const double base_deg = use_link ? link_rotation_ : style_rotation_;
 	out.rotation = (base_deg + cfg_.rotation_offset_deg) * kPi / 180.0;
 
 	if (!cfg_.enabled) {

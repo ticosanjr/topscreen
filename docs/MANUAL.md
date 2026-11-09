@@ -215,7 +215,6 @@ Zoom treats the whole scene as one image: the wallpaper, frame, shadow and captu
 | **Blur outside** | Blurs the whole frame, including the wallpaper, outside the spotlight |
 | **Zoom when active (x)** | Extra multiplicative zoom while the spotlight is on |
 | **Drop/zoom in / out (ms)** | Durations of the activation/deactivation animation |
-| **Vertical drop distance (px)** | Vertical distance the spotlight drops in/out |
 | **Show cursor during spotlight** | Keep the recorded cursor visible while the spotlight is active |
 
 The spotlight mask, blur, dim, border, halo and zoom affect the whole frame,
@@ -235,7 +234,6 @@ mask and zoom focus keep following the mouse while it is active. The global
 | **Follow cursor / fixed center** | Lens follows the pointer or stays at a fixed X/Y position |
 | **Border / shadow** | Optional ring and soft halo around the lens |
 | **Zoom in / out (ms)** | Activation/deactivation transition |
-| **Vertical drop distance (px)** | Drop-in/out animation distance |
 | **Show cursor during magnifier** | Keep the recorded cursor visible while the lens is active |
 
 The lens magnifies both the wallpaper and the captured screen inside its shape.

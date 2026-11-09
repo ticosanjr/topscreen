@@ -81,20 +81,16 @@ TEST(settings_store_load_roundtrip)
 	a.cursor.rotation_offset_deg = -12.0;
 	a.cursor.secondary_style = static_cast<int>(core::CursorStyle::BibataHover);
 	a.cursor.link_detection = false;
-	a.cursor.follow_mode = static_cast<int>(core::CursorFollowMode::GlideSampled);
+	a.cursor.follow_mode = static_cast<int>(core::CursorFollowMode::GlideAB);
 	a.cursor.glide_ms = 210.0;
-	a.cursor.glide_sample_ms = 70.0;
 	a.spotlight.shape = static_cast<int>(core::SpotlightShape::Square);
 	a.spotlight.border_enabled = true;
 	a.spotlight.border_color = 0xFF112233u;
-	a.spotlight.shadow_enabled = true;
-	a.spotlight.shadow_blur = 42.0;
 	a.spotlight.blur_enabled = true;
 	a.spotlight.outside_mode = 1;
 	a.spotlight.blur_amount = 21.0;
 	a.spotlight.zoom_amount = 1.7;
 	a.spotlight.in_ms = 120.0;
-	a.spotlight.drop_px = 18.0;
 	a.magnifier.radius = 0.33;
 	a.magnifier.zoom_amount = 2.2;
 	a.magnifier.follow_cursor = false;
@@ -127,18 +123,14 @@ TEST(settings_store_load_roundtrip)
 	CHECK(!b.cursor.link_detection);
 	CHECK_EQ(b.cursor.follow_mode, static_cast<int>(core::CursorFollowMode::GlideAB));
 	CHECK_NEAR(b.cursor.glide_ms, 210.0, 1e-9);
-	CHECK_NEAR(b.cursor.glide_sample_ms, 70.0, 1e-9);
 	CHECK_EQ(b.spotlight.shape, a.spotlight.shape);
 	CHECK(b.spotlight.border_enabled);
 	CHECK_EQ(b.spotlight.border_color, a.spotlight.border_color);
-	CHECK(b.spotlight.shadow_enabled);
-	CHECK_NEAR(b.spotlight.shadow_blur, 42.0, 1e-9);
 	CHECK(b.spotlight.blur_enabled);
 	CHECK_EQ(b.spotlight.outside_mode, 1);
 	CHECK_NEAR(b.spotlight.blur_amount, 21.0, 1e-9);
 	CHECK_NEAR(b.spotlight.zoom_amount, 1.7, 1e-9);
 	CHECK_NEAR(b.spotlight.in_ms, 120.0, 1e-9);
-	CHECK_NEAR(b.spotlight.drop_px, 18.0, 1e-9);
 	CHECK_NEAR(b.magnifier.radius, 0.33, 1e-9);
 	CHECK_NEAR(b.magnifier.zoom_amount, 2.2, 1e-9);
 	CHECK(!b.magnifier.follow_cursor);
@@ -345,21 +337,6 @@ TEST(settings_migrates_old_bg_padding)
 
 /* A deliberate Smoothing=0.7 + Sway=0.3 choice is valid and must survive a
  * reload (the old migration used to reset it to 0). */
-TEST(settings_cursor_smooth_sway_are_preserved)
-{
-	obs_data_t *s = obs_data_create();
-	config_defaults(s);
-	obs_data_set_double(s, core::keys::kCursorSmooth, 0.7);
-	obs_data_set_double(s, core::keys::kCursorSway, 0.3);
-
-	core::Config c;
-	config_load(s, &c);
-	CHECK_NEAR(c.cursor.smooth, 0.7, 1e-9);
-	CHECK_NEAR(c.cursor.sway, 0.3, 1e-9);
-
-	obs_data_release(s);
-}
-
 /* Properties: profile group at the top + main keys present. */
 TEST(properties_creates_expected_groups)
 {
@@ -426,8 +403,6 @@ TEST(properties_highlight_groups_follow_the_mode)
 		CHECK(fakeobs::property_visible(obs_properties_get(p, "grp_hl_zoom")));
 		CHECK(fakeobs::property_visible(
 			obs_properties_get(p, core::keys::kHighlightZoomDelayMs)));
-		CHECK(!fakeobs::property_visible(
-			obs_properties_get(p, core::keys::kHighlightPressDelayMs)));
 		obs_properties_destroy(p);
 		obs_data_release(s);
 	}

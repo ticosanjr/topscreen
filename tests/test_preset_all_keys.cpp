@@ -27,7 +27,6 @@ TEST(preset_covers_all_keys)
             "bg_image": "wallpapers/fiber.jpg",
             "bg_image_file": "/tmp/my-image.jpg",
             "bg_image_blur": 9,
-            "bg_image_blur_type": 3,
             "bg_padding_x": 11,
             "bg_padding_y": 12,
             "bg_corner_radius": 12,
@@ -45,16 +44,9 @@ TEST(preset_covers_all_keys)
             "cursor_rotation_offset_deg": -12.5,
             "cursor_shadow": false,
             "cursor_follow_mode": 2,
-            "cursor_smooth": 0.11,
             "cursor_glide_ms": 240,
-            "cursor_glide_sample_ms": 75,
-            "cursor_sway": 0.22,
             "cursor_hide_idle": false,
             "cursor_idle_delay_ms": 333,
-            "cursor_loop": true,
-            "cursor_loop_ms": 4444,
-            "cursor_offset_x": 5,
-            "cursor_offset_y": -7,
             "zoom_mode": 2,
             "zoom_amount": 3.3,
             "zoom_duration_ms": 222,
@@ -78,8 +70,6 @@ TEST(preset_covers_all_keys)
             "click_sound_volume": 0.42,
             "click_sound_left": false,
             "click_sound_right": true,
-            "motion_blur_enabled": false,
-            "motion_blur_amount": 0.66,
             "spotlight_enabled": false,
             "spotlight_radius": 0.44,
             "spotlight_dim": 0.33,
@@ -88,18 +78,11 @@ TEST(preset_covers_all_keys)
             "spotlight_border_enabled": true,
             "spotlight_border_color": 4278255360,
             "spotlight_border_width": 6,
-            "spotlight_shadow_enabled": true,
-            "spotlight_shadow_color": 4278190080,
-            "spotlight_shadow_alpha": 0.6,
-            "spotlight_shadow_blur": 24,
-            "spotlight_shadow_offset_x": 3,
-            "spotlight_shadow_offset_y": 7,
             "spotlight_blur_enabled": true,
             "spotlight_blur_amount": 18,
             "spotlight_zoom_amount": 1.75,
             "spotlight_in_ms": 180,
             "spotlight_out_ms": 230,
-            "spotlight_drop_px": 30,
             "spotlight_show_cursor": false,
             "magnifier_enabled": true,
             "magnifier_shape": 1,
@@ -120,7 +103,6 @@ TEST(preset_covers_all_keys)
             "magnifier_center_y": 0.6,
             "magnifier_in_ms": 190,
             "magnifier_out_ms": 240,
-            "magnifier_drop_px": 31,
             "magnifier_show_cursor": false,
             "keys_enabled": false,
             "keys_modifiers_only": true,
@@ -143,13 +125,11 @@ TEST(preset_covers_all_keys)
             "highlight_color": 12345,
             "highlight_mode": 2,
             "highlight_thickness": 0.012,
-            "highlight_zoom_dir": 3,
             "highlight_zoom_delay_ms": 1500,
             "highlight_zoom_max": 3.5,
             "highlight_zoom_in_ms": 120,
             "highlight_zoom_hold_ms": 400,
             "highlight_zoom_out_ms": 2000,
-            "highlight_press_delay_ms": 650,
             "monitor_manual": true,
             "monitor_x": -1920,
             "monitor_y": 1080
@@ -175,7 +155,6 @@ TEST(preset_covers_all_keys)
 	CHECK_EQ(c.bg.image, std::string("wallpapers/fiber.jpg"));
 	CHECK_EQ(c.bg.image_file, std::string("/tmp/my-image.jpg"));
 	CHECK_NEAR(c.bg.image_blur, 9.0, 1e-9);
-	CHECK_EQ(c.bg.image_blur_type, 1);
 	CHECK_NEAR(c.bg.padding_x, 11.0, 1e-9);
 	CHECK_NEAR(c.bg.padding_y, 12.0, 1e-9);
 	CHECK_NEAR(c.bg.corner_radius, 12.0, 1e-9);
@@ -194,16 +173,9 @@ TEST(preset_covers_all_keys)
 	CHECK_NEAR(c.cursor.rotation_offset_deg, -12.5, 1e-9);
 	CHECK(!c.cursor.shadow);
 	CHECK_EQ(c.cursor.follow_mode, 3);
-	CHECK_NEAR(c.cursor.smooth, 0.11, 1e-9);
 	CHECK_NEAR(c.cursor.glide_ms, 240.0, 1e-9);
-	CHECK_NEAR(c.cursor.glide_sample_ms, 75.0, 1e-9);
-	CHECK_NEAR(c.cursor.sway, 0.22, 1e-9);
 	CHECK(!c.cursor.hide_idle);
 	CHECK_NEAR(c.cursor.idle_delay_ms, 333.0, 1e-9);
-	CHECK(c.cursor.loop);
-	CHECK_NEAR(c.cursor.loop_ms, 4444.0, 1e-9);
-	CHECK_NEAR(c.cursor.offset_x, 5.0, 1e-9);
-	CHECK_NEAR(c.cursor.offset_y, -7.0, 1e-9);
 
 	CHECK_EQ(c.zoom.mode, 0);
 	CHECK_NEAR(c.zoom.amount, 3.3, 1e-9);
@@ -231,8 +203,6 @@ TEST(preset_covers_all_keys)
 	CHECK(!c.click_sound.left);
 	CHECK(c.click_sound.right);
 
-	CHECK(!c.motion_blur.enabled);
-	CHECK_NEAR(c.motion_blur.amount, 0.66, 1e-9);
 
 	CHECK(!c.spotlight.enabled); /* magnifier wins in the mutual-exclusion pass */
 	CHECK_NEAR(c.spotlight.radius, 0.44, 1e-9);
@@ -242,18 +212,11 @@ TEST(preset_covers_all_keys)
 	CHECK(c.spotlight.border_enabled);
 	CHECK_EQ(c.spotlight.border_color, 4278255360u);
 	CHECK_NEAR(c.spotlight.border_width, 6.0, 1e-9);
-	CHECK(c.spotlight.shadow_enabled);
-	CHECK_EQ(c.spotlight.shadow_color, 4278190080u);
-	CHECK_NEAR(c.spotlight.shadow_alpha, 0.6, 1e-9);
-	CHECK_NEAR(c.spotlight.shadow_blur, 24.0, 1e-9);
-	CHECK_NEAR(c.spotlight.shadow_offset_x, 3.0, 1e-9);
-	CHECK_NEAR(c.spotlight.shadow_offset_y, 7.0, 1e-9);
 	CHECK(c.spotlight.blur_enabled);
 	CHECK_NEAR(c.spotlight.blur_amount, 18.0, 1e-9);
 	CHECK_NEAR(c.spotlight.zoom_amount, 1.75, 1e-9);
 	CHECK_NEAR(c.spotlight.in_ms, 180.0, 1e-9);
 	CHECK_NEAR(c.spotlight.out_ms, 230.0, 1e-9);
-	CHECK_NEAR(c.spotlight.drop_px, 30.0, 1e-9);
 	CHECK(!c.spotlight.show_cursor);
 
 	CHECK(c.magnifier.enabled);
@@ -275,7 +238,6 @@ TEST(preset_covers_all_keys)
 	CHECK_NEAR(c.magnifier.center_y, 0.6, 1e-9);
 	CHECK_NEAR(c.magnifier.in_ms, 190.0, 1e-9);
 	CHECK_NEAR(c.magnifier.out_ms, 240.0, 1e-9);
-	CHECK_NEAR(c.magnifier.drop_px, 31.0, 1e-9);
 	CHECK(!c.magnifier.show_cursor);
 
 	CHECK(!c.keys.enabled);
@@ -301,13 +263,11 @@ TEST(preset_covers_all_keys)
 
 	CHECK_EQ(c.highlight.mode, 2);
 	CHECK_NEAR(c.highlight.thickness, 0.012, 1e-9);
-	CHECK_EQ(c.highlight.zoom_dir, 0);
 	CHECK_NEAR(c.highlight.zoom_delay_ms, 1500.0, 1e-9);
 	CHECK_NEAR(c.highlight.zoom_max, 3.5, 1e-9);
 	CHECK_NEAR(c.highlight.zoom_in_ms, 120.0, 1e-9);
 	CHECK_NEAR(c.highlight.zoom_hold_ms, 400.0, 1e-9);
 	CHECK_NEAR(c.highlight.zoom_out_ms, 2000.0, 1e-9);
-	CHECK_NEAR(c.highlight.press_delay_ms, 650.0, 1e-9);
 
 	CHECK(c.monitor_manual);
 	CHECK_EQ(c.monitor_x, -1920);

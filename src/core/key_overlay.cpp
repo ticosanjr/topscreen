@@ -4,23 +4,6 @@
 
 namespace topscreen::core {
 
-std::string format_combo(const std::vector<std::string> &modifiers, const std::string &key)
-{
-	std::string out;
-	for (const auto &m : modifiers) {
-		if (m.empty())
-			continue;
-		if (!out.empty())
-			out += " + ";
-		out += m;
-	}
-	if (!key.empty()) {
-		if (!out.empty())
-			out += " + ";
-		out += key;
-	}
-	return out;
-}
 
 bool is_special_key_label(std::string_view label)
 {

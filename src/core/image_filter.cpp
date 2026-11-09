@@ -137,15 +137,12 @@ Image image_limit_max(const Image &src, int max_dim)
 	return image_resize_rgba(src, w, h);
 }
 
-Image image_prefilter(const Image &src, uint32_t target_w, uint32_t target_h, double blur,
-		      int blur_type)
+Image image_prefilter(const Image &src, uint32_t target_w, uint32_t target_h, double blur)
 {
-	if (src.empty() || blur <= 0.01 || blur_type <= 0)
+	if (src.empty() || blur <= 0.01)
 		return src;
 
-	const float spread = blur_type < 1.5 ? 0.70f
-			     : (blur_type >= 3.5 ? 0.66f
-						 : (blur_type >= 2.5 ? 0.62f : 0.50f));
+	const float spread = 0.70f;
 	int bw = src.width;
 	int bh = src.height;
 	if (blur >= 4.0 && bw > 960) {
@@ -162,13 +159,8 @@ Image image_prefilter(const Image &src, uint32_t target_w, uint32_t target_h, do
 		return out;
 
 	std::vector<uint8_t> tmp(out.pixels.size());
-	const bool smooth = blur_type >= 2 && radius >= 2;
-	const int passes = smooth ? 2 : 1;
-	const int pass_radius = smooth ? std::max(1, radius / 2) : radius;
-	for (int pass = 0; pass < passes; ++pass) {
-		box_blur_pass(out.pixels.data(), tmp.data(), bw, bh, pass_radius, true);
-		box_blur_pass(tmp.data(), out.pixels.data(), bw, bh, pass_radius, false);
-	}
+	box_blur_pass(out.pixels.data(), tmp.data(), bw, bh, radius, true);
+	box_blur_pass(tmp.data(), out.pixels.data(), bw, bh, radius, false);
 	return out;
 }
 

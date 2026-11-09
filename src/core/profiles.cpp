@@ -27,9 +27,6 @@ Config make_profile_seed(int index)
 	 *   A-D: everyday presets (balanced, clean, teaching, streaming)
 	 *   E-I: progressively more aggressive looks
 	 *   J:   full passthrough (master effects off) */
-	c.motion_blur.enabled = false;
-	c.spotlight.drop_px = 0.0;
-	c.magnifier.drop_px = 0.0;
 
 	switch (profile_index(index)) {
 	case 0: /* A: balanced default */
@@ -354,8 +351,7 @@ Config make_profile_seed(int index)
 		c.highlight.enabled = false;
 		c.spotlight.enabled = false;
 		c.magnifier.enabled = false;
-		c.motion_blur.enabled = false;
-		break;
+			break;
 
 	default:
 		break;

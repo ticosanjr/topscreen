@@ -44,7 +44,6 @@ uniform float2 cursor_cell_off;   // uv of the selected cell in the atlas
 uniform float2 cursor_cell_scale; // cell size in uv
 uniform float2 cursor_hotspot;    // 0..1 (hotspot inside the icon)
 
-uniform float  zoom_blur;        // 0..1 (zoom motion blur)
 uniform float  spotlight_enabled;
 uniform float  spotlight_amount; // 0..1 activation animation
 uniform float  spotlight_shape;  // 0 circle, 1 square
@@ -54,17 +53,10 @@ uniform float  spotlight_dim;    // 0..1
 uniform float  spotlight_border_enabled;
 uniform float4 spotlight_border_color;
 uniform float  spotlight_border_width; // px
-uniform float  spotlight_shadow_enabled;
-uniform float4 spotlight_shadow_color;
-uniform float  spotlight_shadow_alpha;
-uniform float  spotlight_shadow_blur; // px
-uniform float2 spotlight_shadow_offset;
-uniform float  spotlight_blur_enabled; // legacy
 uniform float  spotlight_outside_mode; // 0 dim, 1 blur
 uniform float  spotlight_blur;   // px
 uniform float  spotlight_zoom;   // multiplicative scene zoom
 uniform float2 spotlight_focus;  // source uv under the cursor
-uniform float  spotlight_drop;   // vertical drop offset (px)
 
 uniform float  magnifier_enabled;
 uniform float  magnifier_amount;
@@ -74,7 +66,6 @@ uniform float  magnifier_corner;
 uniform float  magnifier_zoom;
 uniform float2 magnifier_focus;  // lens canvas center (output uv)
 uniform float2 magnifier_sample; // magnification anchor / pointer (output uv)
-uniform float  magnifier_drop;
 uniform float  magnifier_border_enabled;
 uniform float4 magnifier_border_color;
 uniform float  magnifier_border_width;
@@ -300,7 +291,7 @@ float spotlight_sd(float2 px)
 // Signed distance to the magnifier lens, in pixels. Positive = outside.
 float magnifier_sd(float2 px)
 {
-	float2 cpx = magnifier_focus * target_size + float2(0.0, magnifier_drop);
+	float2 cpx = magnifier_focus * target_size;
 	float  rad = max(magnifier_radius, 0.001) * min(target_size.x, target_size.y);
 	if (magnifier_shape > 0.5) {
 		float cr = clamp(magnifier_corner, 0.0, rad);
@@ -520,23 +511,11 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 
 	if (mask > 0.0) {
 		float2 cs = content_size();
-		float2 source_target = scene_px / max(target_size, float2(1.0, 1.0));
 		float2 content_uv = (scene_px - content_origin()) / cs;
 		// Distorts the captured image only; background and overlays stay sharp.
 		content_uv += ripple_offset(content_uv);
 
-		float4 screen;
-		if (zoom_blur > 0.001) {
-			// Radial motion blur (approx. of the zoom movement)
-			float2 d_target = (source_target - scene_focus_target()) * zoom_blur * 0.03;
-			float2 d = d_target * target_size / max(cs, float2(1.0, 1.0));
-			screen = image.Sample(def_sampler, content_uv - d);
-			screen += image.Sample(def_sampler, content_uv);
-			screen += image.Sample(def_sampler, content_uv + d);
-			screen *= (1.0 / 3.0);
-		} else {
-			screen = image.Sample(def_sampler, content_uv);
-		}
+		float4 screen = image.Sample(def_sampler, content_uv);
 
 		if (bg_transparent > 0.5)
 			col = float4(screen.rgb, mask * screen.a);
@@ -551,8 +530,7 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 	if (magnifier_enabled > 0.5 && magnifier_amount > 0.001) {
 		float lens_sd = magnifier_sd(px);
 		float lens_mask = (1.0 - smoothstep(-1.0, 1.0, lens_sd)) * magnifier_amount;
-		float2 lens_center = magnifier_focus * target_size +
-				     float2(0.0, magnifier_drop);
+		float2 lens_center = magnifier_focus * target_size;
 
 		/* The halo lives OUTSIDE the lens, so it must be painted before the
 		 * lens coverage test. (Inside the lens the sampled lens replaces it.) */
@@ -582,8 +560,7 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 			/* Magnification is anchored at the pointer, not at the clamped
 			 * canvas: the content under the cursor stays under the cursor
 			 * even when the lens aperture stops at the screen edge. */
-			float2 sample_center = magnifier_sample * target_size +
-					       float2(0.0, magnifier_drop);
+			float2 sample_center = magnifier_sample * target_size;
 			float2 lens_px = sample_center +
 					 (px - sample_center) / max(magnifier_zoom, 1.0001);
 
@@ -885,7 +862,7 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 
 	}
 
-	// Spotlight: dim, halo shadow, border, drop and zoom animation. It is
+	// Spotlight: dim, border and zoom animation. It is
 	// applied after the whole frame (wallpaper included), not only content.
 	{
 		if (spotlight_enabled > 0.5 && spot_amount > 0.001) {

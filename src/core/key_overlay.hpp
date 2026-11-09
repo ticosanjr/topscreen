@@ -65,7 +65,6 @@ struct KeyRender {
 };
 
 /** Formats a combo: {"Ctrl","Shift"} + "K" => "Ctrl + Shift + K". */
-std::string format_combo(const std::vector<std::string> &modifiers, const std::string &key);
 
 /** Named non-character keys filtered by the special-key option. */
 bool is_special_key_label(std::string_view label);

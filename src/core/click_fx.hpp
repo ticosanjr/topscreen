@@ -33,7 +33,7 @@ struct ClickRender {
  */
 class ClickFxModel {
 public:
-	static constexpr int kMaxSlots = 8;
+	static constexpr int kMaxSlots = 4;
 
 	void set_left(const ClickConfig &cfg) { left_ = cfg; }
 	void set_right(const ClickConfig &cfg) { right_ = cfg; }

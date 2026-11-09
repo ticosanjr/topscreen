@@ -17,10 +17,8 @@ Image image_limit_max(const Image &src, int max_dim);
  *
  * Large blurs are produced at half resolution, then filtered once with a
  * separable box kernel. The shader later takes one sample from the resulting
- * texture. `blur_type` follows the UI order: 0 none, 1 soft, 2 gaussian,
- * 3 creamy, 4 frosted.
+ * texture. This is the single Soft style exposed by the UI.
  */
-Image image_prefilter(const Image &src, uint32_t target_w, uint32_t target_h, double blur,
-		      int blur_type);
+Image image_prefilter(const Image &src, uint32_t target_w, uint32_t target_h, double blur);
 
 } // namespace topscreen::core

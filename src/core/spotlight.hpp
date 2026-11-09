@@ -10,12 +10,11 @@ struct SpotlightRender {
 	double zoom = 1.0;   // multiplicative zoom factor
 	double focus_x = 0.5;
 	double focus_y = 0.5;
-	double drop = 0.0; // vertical offset in px (negative while dropping in)
 };
 
 /**
- * Animates the spotlight toggle: fade/drop/zoom in on activation and the
- * reverse on deactivation. The mask itself follows the cursor and is rendered
+ * Animates the spotlight toggle: fade/zoom in on activation and the reverse
+ * on deactivation. The mask itself follows the cursor and is rendered
  * by the shader.
  */
 class SpotlightModel {

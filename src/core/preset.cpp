@@ -116,7 +116,6 @@ bool Preset::apply(Config *cfg, std::string *error) const
 			cfg->bg.mode = static_cast<int>(BgMode::LocalImage);
 	}
 	cfg->bg.image_blur = read_number(o, kBgImageBlur, cfg->bg.image_blur);
-	cfg->bg.image_blur_type = read_int(o, kBgImageBlurType, cfg->bg.image_blur_type);
 	cfg->bg.padding_x = read_number(o, kBgPaddingX, cfg->bg.padding_x);
 	cfg->bg.padding_y = read_number(o, kBgPaddingY, cfg->bg.padding_y);
 	cfg->bg.corner_radius = read_number(o, kBgCornerRadius, cfg->bg.corner_radius);
@@ -138,17 +137,9 @@ bool Preset::apply(Config *cfg, std::string *error) const
 		read_number(o, kCursorRotationOffset, cfg->cursor.rotation_offset_deg);
 	cfg->cursor.shadow = read_bool(o, kCursorShadow, cfg->cursor.shadow);
 	cfg->cursor.follow_mode = read_int(o, kCursorFollowMode, cfg->cursor.follow_mode);
-	cfg->cursor.smooth = read_number(o, kCursorSmooth, cfg->cursor.smooth);
 	cfg->cursor.glide_ms = read_number(o, kCursorGlideMs, cfg->cursor.glide_ms);
-	cfg->cursor.glide_sample_ms =
-		read_number(o, kCursorGlideSampleMs, cfg->cursor.glide_sample_ms);
-	cfg->cursor.sway = read_number(o, kCursorSway, cfg->cursor.sway);
 	cfg->cursor.hide_idle = read_bool(o, kCursorHideIdle, cfg->cursor.hide_idle);
 	cfg->cursor.idle_delay_ms = read_number(o, kCursorIdleDelayMs, cfg->cursor.idle_delay_ms);
-	cfg->cursor.loop = read_bool(o, kCursorLoop, cfg->cursor.loop);
-	cfg->cursor.loop_ms = read_number(o, kCursorLoopMs, cfg->cursor.loop_ms);
-	cfg->cursor.offset_x = read_number(o, kCursorOffsetX, cfg->cursor.offset_x);
-	cfg->cursor.offset_y = read_number(o, kCursorOffsetY, cfg->cursor.offset_y);
 
 	/* Zoom */
 	cfg->zoom.mode = read_int(o, kZoomMode, cfg->zoom.mode);
@@ -196,10 +187,6 @@ bool Preset::apply(Config *cfg, std::string *error) const
 	cfg->click_sound.left = !cfg->click_sound.file_left.empty();
 	cfg->click_sound.right = !cfg->click_sound.file_right.empty();
 
-	/* Motion blur */
-	cfg->motion_blur.enabled = read_bool(o, kMotionBlurEnabled, cfg->motion_blur.enabled);
-	cfg->motion_blur.amount = read_number(o, kMotionBlurAmount, cfg->motion_blur.amount);
-
 	/* Spotlight */
 	cfg->spotlight.enabled = read_bool(o, kSpotlightEnabled, cfg->spotlight.enabled);
 	cfg->spotlight.radius = read_number(o, kSpotlightRadius, cfg->spotlight.radius);
@@ -213,18 +200,6 @@ bool Preset::apply(Config *cfg, std::string *error) const
 		read_number(o, kSpotlightBorderColor, cfg->spotlight.border_color));
 	cfg->spotlight.border_width =
 		read_number(o, kSpotlightBorderWidth, cfg->spotlight.border_width);
-	cfg->spotlight.shadow_enabled =
-		read_bool(o, kSpotlightShadowEnabled, cfg->spotlight.shadow_enabled);
-	cfg->spotlight.shadow_color = static_cast<uint32_t>(
-		read_number(o, kSpotlightShadowColor, cfg->spotlight.shadow_color));
-	cfg->spotlight.shadow_alpha =
-		read_number(o, kSpotlightShadowAlpha, cfg->spotlight.shadow_alpha);
-	cfg->spotlight.shadow_blur =
-		read_number(o, kSpotlightShadowBlur, cfg->spotlight.shadow_blur);
-	cfg->spotlight.shadow_offset_x =
-		read_number(o, kSpotlightShadowOffsetX, cfg->spotlight.shadow_offset_x);
-	cfg->spotlight.shadow_offset_y =
-		read_number(o, kSpotlightShadowOffsetY, cfg->spotlight.shadow_offset_y);
 	cfg->spotlight.blur_enabled =
 		read_bool(o, kSpotlightBlurEnabled, cfg->spotlight.blur_enabled);
 	cfg->spotlight.outside_mode = read_int(o, kSpotlightOutsideMode, cfg->spotlight.outside_mode);
@@ -237,7 +212,6 @@ bool Preset::apply(Config *cfg, std::string *error) const
 		read_number(o, kSpotlightZoomAmount, cfg->spotlight.zoom_amount);
 	cfg->spotlight.in_ms = read_number(o, kSpotlightInMs, cfg->spotlight.in_ms);
 	cfg->spotlight.out_ms = read_number(o, kSpotlightOutMs, cfg->spotlight.out_ms);
-	cfg->spotlight.drop_px = read_number(o, kSpotlightDropPx, cfg->spotlight.drop_px);
 	cfg->spotlight.show_cursor = read_bool(o, kSpotlightShowCursor, cfg->spotlight.show_cursor);
 
 	/* Magnifier */
@@ -271,7 +245,6 @@ bool Preset::apply(Config *cfg, std::string *error) const
 	cfg->magnifier.center_y = read_number(o, kMagnifierCenterY, cfg->magnifier.center_y);
 	cfg->magnifier.in_ms = read_number(o, kMagnifierInMs, cfg->magnifier.in_ms);
 	cfg->magnifier.out_ms = read_number(o, kMagnifierOutMs, cfg->magnifier.out_ms);
-	cfg->magnifier.drop_px = read_number(o, kMagnifierDropPx, cfg->magnifier.drop_px);
 	cfg->magnifier.show_cursor = read_bool(o, kMagnifierShowCursor, cfg->magnifier.show_cursor);
 
 	/* Keys */
@@ -301,13 +274,11 @@ bool Preset::apply(Config *cfg, std::string *error) const
 
 	cfg->highlight.mode = read_int(o, kHighlightMode, cfg->highlight.mode);
 	cfg->highlight.thickness = read_number(o, kHighlightThickness, cfg->highlight.thickness);
-	cfg->highlight.zoom_dir = read_int(o, kHighlightZoomDir, cfg->highlight.zoom_dir);
 	cfg->highlight.zoom_delay_ms = read_number(o, kHighlightZoomDelayMs, cfg->highlight.zoom_delay_ms);
 	cfg->highlight.zoom_max = read_number(o, kHighlightZoomMax, cfg->highlight.zoom_max);
 	cfg->highlight.zoom_in_ms = read_number(o, kHighlightZoomInMs, cfg->highlight.zoom_in_ms);
 	cfg->highlight.zoom_hold_ms = read_number(o, kHighlightZoomHoldMs, cfg->highlight.zoom_hold_ms);
 	cfg->highlight.zoom_out_ms = read_number(o, kHighlightZoomOutMs, cfg->highlight.zoom_out_ms);
-	cfg->highlight.press_delay_ms = read_number(o, kHighlightPressDelayMs, cfg->highlight.press_delay_ms);
 
 	cfg->monitor_manual = read_bool(o, kMonitorManual, cfg->monitor_manual);
 	cfg->monitor_x = static_cast<int>(read_int(o, kMonitorX, cfg->monitor_x));

@@ -107,7 +107,6 @@ MagnifierRender MagnifierModel::render() const
 	out.focus_y = focus_y_;
 	out.sample_x = sample_x_;
 	out.sample_y = sample_y_;
-	out.drop = 0.0;
 	return out;
 }
 

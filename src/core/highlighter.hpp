@@ -13,7 +13,6 @@ enum class HighlightMode : int {
 	Zoom = 2, // no drawing: hold to zoom, release to glide back
 	BoxZoom = 3, // draws the box AND zooms while held
 	LineZoom = 4, // draws the freehand line AND zooms while held
-	PressZoom = 5, // no drawing: press-and-hold (no drag) zooms at the press point
 };
 
 struct HighlighterConfig {
@@ -28,18 +27,12 @@ struct HighlighterConfig {
 	double thickness = 0.004; // line mode: stroke width (content units 0..1)
 	double min_span = 0.02;      // minimum drag (avoids marking clicks)
 
-	/* Zoom mode: 0 in, 1 out, 2 punch in, 3 punch out. */
-	int zoom_dir = 0;
 	/* Zoom mode timings/limits. */
 	double zoom_max = 2.5;
 	double zoom_delay_ms = 1200.0; // hold this long before the zoom kicks in
 	double zoom_in_ms = 250.0;
 	double zoom_hold_ms = 600.0;
 	double zoom_out_ms = 1200.0;
-
-	/* PressZoom: how long the button must stay down before the zoom starts.
-	 * Short by design: the gesture is "press, wait a moment, zoom". */
-	double press_delay_ms = 400.0;
 };
 
 /**
@@ -62,14 +55,7 @@ inline bool mode_wants_zoom(int mode)
 {
 	return mode == static_cast<int>(HighlightMode::Zoom) ||
 	       mode == static_cast<int>(HighlightMode::BoxZoom) ||
-	       mode == static_cast<int>(HighlightMode::LineZoom) ||
-	       mode == static_cast<int>(HighlightMode::PressZoom);
-}
-
-/** PressZoom: a pure press-and-hold gesture (dragging is ignored). */
-inline bool mode_is_press_zoom(int mode)
-{
-	return mode == static_cast<int>(HighlightMode::PressZoom);
+	       mode == static_cast<int>(HighlightMode::LineZoom);
 }
 
 /** Modes that leave a visible mark (a box or a line). The pure zoom mode

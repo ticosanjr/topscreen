@@ -9,15 +9,6 @@ using namespace topscreen::core;
 static_assert(std::is_trivially_copyable_v<KeyLabel>);
 static_assert(std::is_trivially_copyable_v<KeyRender>);
 
-TEST(key_format_combo)
-{
-	CHECK_EQ(format_combo({}, "K"), std::string("K"));
-	CHECK_EQ(format_combo({"Ctrl"}, "K"), std::string("Ctrl + K"));
-	CHECK_EQ(format_combo({"Ctrl", "Shift"}, "K"), std::string("Ctrl + Shift + K"));
-	CHECK_EQ(format_combo({"Ctrl"}, ""), std::string("Ctrl"));
-	CHECK_EQ(format_combo({}, ""), std::string(""));
-	CHECK_EQ(format_combo({"Ctrl", "", "Alt"}, "X"), std::string("Ctrl + Alt + X"));
-}
 
 TEST(key_press_and_collect)
 {

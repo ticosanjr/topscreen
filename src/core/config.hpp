@@ -23,7 +23,6 @@ struct BackgroundConfig {
 	std::string image;             // wallpaper path/relative ("" = none)
 	std::string image_file;        // PC image (takes priority over `image`)
 	double image_blur = 0.0;       // wallpaper blur (px)
-	int image_blur_type = 1;       // Soft is the only supported blur
 	double padding_x = 64.0;
 	double padding_y = 64.0;
 	double corner_radius = 18.0;
@@ -44,12 +43,6 @@ struct ClickSoundConfig {
 	bool right = true; // deprecated; Mute is selected by an empty file
 };
 
-/** Motion blur (radial, tied to the zoom/cursor movement). */
-struct MotionBlurConfig {
-	bool enabled = true;
-	double amount = 0.35; // 0..1
-};
-
 /** Spotlight: darkens outside a shape that follows the cursor. */
 enum class SpotlightShape : int {
 	Circle = 0,
@@ -67,13 +60,6 @@ struct SpotlightConfig {
 	uint32_t border_color = 0xFFFFFFFFu;
 	double border_width = 4.0; // px
 
-	bool shadow_enabled = false;
-	uint32_t shadow_color = 0xFF000000u;
-	double shadow_alpha = 0.55;
-	double shadow_blur = 30.0; // px
-	double shadow_offset_x = 0.0;
-	double shadow_offset_y = 12.0;
-
 	bool blur_enabled = false; // legacy; outside_mode is authoritative
 	int outside_mode = 0;      // 0 dim, 1 blur
 	double blur_amount = 16.0; // px
@@ -81,7 +67,6 @@ struct SpotlightConfig {
 	double zoom_amount = 1.35; // multiplicative over the current zoom
 	double in_ms = 250.0;
 	double out_ms = 300.0;
-	double drop_px = 24.0;
 	bool show_cursor = true;
 };
 
@@ -109,7 +94,6 @@ struct MagnifierConfig {
 
 	double in_ms = 250.0;
 	double out_ms = 300.0;
-	double drop_px = 24.0;
 	bool show_cursor = true;
 };
 
@@ -121,7 +105,6 @@ struct Config {	bool effects_enabled = true;
 	ClickConfig click_left;
 	ClickConfig click_right;
 	ClickSoundConfig click_sound;
-	MotionBlurConfig motion_blur;
 	SpotlightConfig spotlight;
 	MagnifierConfig magnifier;
 	KeyOverlayConfig keys;
@@ -145,21 +128,6 @@ struct Config {	bool effects_enabled = true;
  * unchanged; only out-of-range input is clamped.
  */
 void sanitize_config(Config *cfg);
-
-/**
- * Chooses the effective wallpaper path.
- *
- * Rule: the "PC Image" wins if filled in; otherwise the built-in wallpaper.
- * (The interface keeps the two mutually exclusive.)
- */
-inline const char *resolve_bg_path(const char *wallpaper, const char *image_file)
-{
-	if (image_file && *image_file)
-		return image_file;
-	if (wallpaper && *wallpaper)
-		return wallpaper;
-	return "";
-}
 
 /**
  * Legacy background migration.

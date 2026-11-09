@@ -50,8 +50,8 @@ ready-to-use looks (A–D everyday, E–I aggressive, J passthrough).
 ### Quick tests
 
 ```bash
-./tests/run.sh            # Linux: 248 core tests
-./tests/run-all.sh        # core + OBS headers + 59 integration tests
+./tests/run.sh            # Linux: 238 core tests
+./tests/run-all.sh        # core + OBS headers + 58 integration tests
 pwsh -File tests\run.ps1  # Windows (or PowerShell on any OS)
 ```
 

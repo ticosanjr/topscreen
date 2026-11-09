@@ -87,9 +87,6 @@ public:
 
 	ZoomRender render() const;
 
-	/** Current zoom velocity (for motion blur). */
-	double zoom_velocity() const { return zoom_.velocity(); }
-
 private:
 	double stiffness() const;
 

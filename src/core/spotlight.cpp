@@ -73,10 +73,6 @@ SpotlightRender SpotlightModel::render() const
 	out.zoom = 1.0 + (zoom - 1.0) * out.amount;
 	out.focus_x = cursor_x_;
 	out.focus_y = cursor_y_;
-	const double direction = target_ ? -1.0 : 1.0;
-	out.drop = (!target_ && out.amount <= 0.001)
-			   ? 0.0
-			   : (1.0 - out.amount) * cfg_.drop_px * direction;
 	return out;
 }
 

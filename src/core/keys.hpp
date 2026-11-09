@@ -21,7 +21,6 @@ inline constexpr const char *kBgGradientCenterY = "bg_gradient_center_y";
 inline constexpr const char *kBgImage = "bg_image";
 inline constexpr const char *kBgImageFile = "bg_image_file";
 inline constexpr const char *kBgImageBlur = "bg_image_blur";
-inline constexpr const char *kBgImageBlurType = "bg_image_blur_type";
 inline constexpr const char *kBgPaddingX = "bg_padding_x";
 inline constexpr const char *kBgPaddingY = "bg_padding_y";
 inline constexpr const char *kBgCornerRadius = "bg_corner_radius";
@@ -40,16 +39,9 @@ inline constexpr const char *kCursorSize = "cursor_size";
 inline constexpr const char *kCursorRotationOffset = "cursor_rotation_offset_deg";
 inline constexpr const char *kCursorShadow = "cursor_shadow";
 inline constexpr const char *kCursorFollowMode = "cursor_follow_mode";
-inline constexpr const char *kCursorSmooth = "cursor_smooth";
 inline constexpr const char *kCursorGlideMs = "cursor_glide_ms";
-inline constexpr const char *kCursorGlideSampleMs = "cursor_glide_sample_ms";
-inline constexpr const char *kCursorSway = "cursor_sway";
 inline constexpr const char *kCursorHideIdle = "cursor_hide_idle";
 inline constexpr const char *kCursorIdleDelayMs = "cursor_idle_delay_ms";
-inline constexpr const char *kCursorLoop = "cursor_loop";
-inline constexpr const char *kCursorLoopMs = "cursor_loop_ms";
-inline constexpr const char *kCursorOffsetX = "cursor_offset_x";
-inline constexpr const char *kCursorOffsetY = "cursor_offset_y";
 
 inline constexpr const char *kZoomMode = "zoom_mode";
 inline constexpr const char *kZoomAmount = "zoom_amount";
@@ -78,8 +70,6 @@ inline constexpr const char *kClickSoundVolume = "click_sound_volume";
 inline constexpr const char *kClickSoundLeft = "click_sound_left";
 inline constexpr const char *kClickSoundRight = "click_sound_right";
 
-inline constexpr const char *kMotionBlurEnabled = "motion_blur_enabled";
-inline constexpr const char *kMotionBlurAmount = "motion_blur_amount";
 
 inline constexpr const char *kSpotlightEnabled = "spotlight_enabled";
 inline constexpr const char *kSpotlightRadius = "spotlight_radius";
@@ -89,19 +79,12 @@ inline constexpr const char *kSpotlightCornerRadius = "spotlight_corner_radius";
 inline constexpr const char *kSpotlightBorderEnabled = "spotlight_border_enabled";
 inline constexpr const char *kSpotlightBorderColor = "spotlight_border_color";
 inline constexpr const char *kSpotlightBorderWidth = "spotlight_border_width";
-inline constexpr const char *kSpotlightShadowEnabled = "spotlight_shadow_enabled";
-inline constexpr const char *kSpotlightShadowColor = "spotlight_shadow_color";
-inline constexpr const char *kSpotlightShadowAlpha = "spotlight_shadow_alpha";
-inline constexpr const char *kSpotlightShadowBlur = "spotlight_shadow_blur";
-inline constexpr const char *kSpotlightShadowOffsetX = "spotlight_shadow_offset_x";
-inline constexpr const char *kSpotlightShadowOffsetY = "spotlight_shadow_offset_y";
 inline constexpr const char *kSpotlightBlurEnabled = "spotlight_blur_enabled";
 inline constexpr const char *kSpotlightOutsideMode = "spotlight_outside_mode";
 inline constexpr const char *kSpotlightBlurAmount = "spotlight_blur_amount";
 inline constexpr const char *kSpotlightZoomAmount = "spotlight_zoom_amount";
 inline constexpr const char *kSpotlightInMs = "spotlight_in_ms";
 inline constexpr const char *kSpotlightOutMs = "spotlight_out_ms";
-inline constexpr const char *kSpotlightDropPx = "spotlight_drop_px";
 inline constexpr const char *kSpotlightShowCursor = "spotlight_show_cursor";
 
 inline constexpr const char *kMagnifierEnabled = "magnifier_enabled";
@@ -123,7 +106,6 @@ inline constexpr const char *kMagnifierCenterX = "magnifier_center_x";
 inline constexpr const char *kMagnifierCenterY = "magnifier_center_y";
 inline constexpr const char *kMagnifierInMs = "magnifier_in_ms";
 inline constexpr const char *kMagnifierOutMs = "magnifier_out_ms";
-inline constexpr const char *kMagnifierDropPx = "magnifier_drop_px";
 inline constexpr const char *kMagnifierShowCursor = "magnifier_show_cursor";
 
 inline constexpr const char *kKeysEnabled = "keys_enabled";
@@ -150,12 +132,10 @@ inline constexpr const char *kHighlightOpacity = "highlight_opacity";
 inline constexpr const char *kHighlightMode = "highlight_mode";
 inline constexpr const char *kHighlightThickness = "highlight_thickness";
 inline constexpr const char *kHighlightZoomMax = "highlight_zoom_max";
-inline constexpr const char *kHighlightZoomDir = "highlight_zoom_dir";
 inline constexpr const char *kHighlightZoomDelayMs = "highlight_zoom_delay_ms";
 inline constexpr const char *kHighlightZoomInMs = "highlight_zoom_in_ms";
 inline constexpr const char *kHighlightZoomHoldMs = "highlight_zoom_hold_ms";
 inline constexpr const char *kHighlightZoomOutMs = "highlight_zoom_out_ms";
-inline constexpr const char *kHighlightPressDelayMs = "highlight_press_delay_ms";
 
 /* Monitor origin (multi-monitor input mapping). */
 inline constexpr const char *kMonitorManual = "monitor_manual";

@@ -33,8 +33,7 @@ public:
 	WallpaperPipeline(const WallpaperPipeline &) = delete;
 	WallpaperPipeline &operator=(const WallpaperPipeline &) = delete;
 
-	void update(const char *raw, uint32_t target_w, uint32_t target_h, double blur,
-		    int blur_type);
+	void update(const char *raw, uint32_t target_w, uint32_t target_h, double blur);
 	void release();
 
 	gs_texture_t *texture() const { return texture_; }
@@ -54,6 +53,10 @@ private:
 	std::string pending_key_;
 	std::string actual_key_;
 	std::string failed_key_;
+	std::string cached_key_;
+	uint32_t cached_w_ = 0;
+	uint32_t cached_h_ = 0;
+	double cached_blur_ = -1.0;
 	std::shared_ptr<WallpaperRequestResult> pending_;
 };
 

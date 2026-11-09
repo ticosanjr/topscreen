@@ -17,7 +17,6 @@ struct MagnifierRender {
 	 * even when the canvas is clamped. */
 	double sample_x = 0.5;
 	double sample_y = 0.5;
-	double drop = 0.0; // vertical offset in px (negative while dropping in)
 };
 
 /**

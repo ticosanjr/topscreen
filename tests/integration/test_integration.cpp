@@ -5,6 +5,7 @@
 
 #include <chrono>
 #include <cstdio>
+#include <filesystem>
 #include <cstdlib>
 #include <thread>
 #include <string>
@@ -371,7 +372,8 @@ TEST(integration_profiles_io_roundtrip)
 	CHECK(ctrl->effects_enabled());
 
 	/* Export while profile A is active. */
-	const std::string path = "/tmp/opencode/topscreen-profiles-test.json";
+	const std::string path =
+		(std::filesystem::temp_directory_path() / "topscreen-profiles-test.json").string();
 	ctrl->select_profile(0);
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
 	ctrl->export_profiles(path);

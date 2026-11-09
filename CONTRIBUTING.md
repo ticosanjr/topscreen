@@ -45,7 +45,7 @@ Thanks for your interest! This project is a live-effects plugin for OBS.
 - Formatting: `.clang-format` (run `clang-format -i`).
 - C++20, 4 spaces, `namespace topscreen` (+ `::core` for the core).
 - Names: `snake_case` for functions/variables, `PascalCase` for types.
-- Comments in Portuguese (the project text is PT-BR; code/identifiers in English).
+- Comments and identifiers in English.
 
 ## Adding a setting
 

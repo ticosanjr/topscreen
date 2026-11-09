@@ -78,6 +78,10 @@ const char *hotkey_description(int action)
 
 } // namespace
 
+namespace {
+void frontend_profile_event(enum obs_frontend_event event, void *data);
+}
+
 std::atomic<int> Hotkeys::refs_{0};
 HotkeyBinding Hotkeys::bindings_[HK_Count];
 obs_hotkey_id Hotkeys::ids_[HK_Count] = {0};
@@ -103,6 +107,7 @@ void Hotkeys::register_all(HotkeyContext *ctx)
 	 * restore them for us. Load the user's bindings, then fill only the
 	 * missing profile hotkeys with the Ctrl+Shift+Alt+A..J defaults. */
 	load_saved_or_defaults();
+	obs_frontend_add_event_callback(frontend_profile_event, nullptr);
 
 	/* Frontend hotkeys show up flat in Settings > Hotkeys (not grouped under
 	 * the filter instance: per-source registration is impossible for
@@ -160,14 +165,55 @@ void Hotkeys::load_saved_or_defaults()
 			}
 		}
 
-		if (!saved && is_profile_action(i) && apply_default_binding(i))
-			++defaults;
+		if (!saved) {
+			/* No saved entry in this OBS profile: clear the old binding
+			 * first (important after a profile switch), then apply the
+			 * profile default when applicable. */
+			obs_hotkey_load_bindings(ids_[i], nullptr, 0);
+			if (is_profile_action(i) && apply_default_binding(i))
+				++defaults;
+		}
 	}
 
 	if (defaults)
 		blog(LOG_INFO,
 		     "[TopScreen] applied default profile hotkeys Ctrl+Shift+Alt+A..J (%d)",
 		     defaults);
+}
+
+void Hotkeys::reload_saved_bindings()
+{
+	load_saved_or_defaults();
+}
+
+void Hotkeys::save_bindings_to_profile()
+{
+	config_t *profile_config = obs_frontend_get_profile_config();
+	if (!profile_config)
+		return;
+
+	int saved = 0;
+	for (int i = 0; i < HK_Count; ++i) {
+		if (!ids_[i])
+			continue;
+		obs_data_array_t *array = obs_hotkey_save(ids_[i]);
+		if (!array)
+			continue;
+		obs_data_t *data = obs_data_create();
+		obs_data_set_array(data, "bindings", array);
+		const char *json = obs_data_get_json(data);
+		if (json) {
+			config_set_string(profile_config, "Hotkeys", kHotkeyNames[i], json);
+			++saved;
+		}
+		obs_data_release(data);
+		obs_data_array_release(array);
+	}
+	if (saved) {
+		config_save_safe(profile_config, "tmp", nullptr);
+		blog(LOG_INFO, "[TopScreen] hotkey bindings saved to the OBS profile (%d)",
+		     saved);
+	}
 }
 
 void Hotkeys::apply_default_profile_bindings()
@@ -177,14 +223,29 @@ void Hotkeys::apply_default_profile_bindings()
 		if (apply_default_binding(i))
 			++applied;
 	}
+	/* Persist the forced defaults; otherwise OBS would reload the old saved
+	 * bindings after a restart and undo the button. */
+	save_bindings_to_profile();
 	blog(LOG_INFO, "[TopScreen] profile hotkeys restored to defaults (%d/10)", applied);
 }
+
+namespace {
+void frontend_profile_event(enum obs_frontend_event event, void *data)
+{
+	UNUSED_PARAMETER(data);
+	if (event == OBS_FRONTEND_EVENT_PROFILE_CHANGED) {
+		Hotkeys::reload_saved_bindings();
+		blog(LOG_INFO, "[TopScreen] OBS profile changed: hotkey bindings reloaded");
+	}
+}
+} // namespace
 
 void Hotkeys::unregister_all(HotkeyContext *ctx)
 {
 	hotkey_target_remove(ctx);
 	if (refs_.fetch_sub(1) != 1)
 		return; /* other filters still use them */
+	obs_frontend_remove_event_callback(frontend_profile_event, nullptr);
 	for (int i = 0; i < HK_Count; ++i) {
 		if (ids_[i])
 			obs_hotkey_unregister(ids_[i]);

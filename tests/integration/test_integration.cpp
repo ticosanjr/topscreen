@@ -1377,7 +1377,7 @@ TEST(integration_hotkey_saved_bindings_and_defaults)
 	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
 	fakeobs::set_profile_config_string(
 		"Hotkeys", "TopScreen_ProfileA",
-		R"({"bindings":[{"key":"B","control":true,"shift":true,"alt":true}]})");
+		R"({"bindings":[{"key":"OBS_KEY_B","control":true,"shift":true,"alt":true}]})");
 	fakeobs::set_profile_config_string("Hotkeys", "TopScreen_ProfileC",
 					   R"({"bindings":[]})");
 
@@ -1406,7 +1406,16 @@ TEST(integration_hotkey_saved_bindings_and_defaults)
 	/* Non-profile actions have no default. */
 	CHECK(fakeobs::hotkey_bindings("TopScreen_ToggleEffects").empty());
 
-	/* The UI button forces all ten profile defaults. */
+	/* A profile switch reloads the saved bindings from the new OBS profile. */
+	fakeobs::set_profile_config_string(
+		"Hotkeys", "TopScreen_ProfileA",
+		R"({"bindings":[{"key":"OBS_KEY_C","control":true,"shift":true,"alt":true}]})");
+	fakeobs::fire_frontend_event(OBS_FRONTEND_EVENT_PROFILE_CHANGED);
+	const auto &switched_a = fakeobs::hotkey_bindings("TopScreen_ProfileA");
+	REQUIRE(switched_a.size() == 1);
+	CHECK_EQ(switched_a[0].key, OBS_KEY_C);
+
+	/* The UI button forces all ten profile defaults and persists them. */
 	Hotkeys::apply_default_profile_bindings();
 	const auto &forced_a = fakeobs::hotkey_bindings("TopScreen_ProfileA");
 	REQUIRE(forced_a.size() == 1);
@@ -1414,6 +1423,10 @@ TEST(integration_hotkey_saved_bindings_and_defaults)
 	const auto &forced_c = fakeobs::hotkey_bindings("TopScreen_ProfileC");
 	REQUIRE(forced_c.size() == 1);
 	CHECK_EQ(forced_c[0].key, OBS_KEY_C);
+	CHECK(fakeobs::profile_config_string("Hotkeys", "TopScreen_ProfileA")
+		      .find("OBS_KEY_A") != std::string::npos);
+	CHECK(fakeobs::profile_config_string("Hotkeys", "TopScreen_ProfileJ")
+		      .find("OBS_KEY_J") != std::string::npos);
 
 	ts_filter_source_info.destroy(ctx);
 }

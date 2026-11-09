@@ -390,7 +390,9 @@ nothing is selected).
 - Hotkeys: **Activate profile A … J** and **Save to current profile**.
 - Default profile hotkeys are **Ctrl+Shift+Alt+A** through **Ctrl+Shift+Alt+J**.
   Saved bindings win; defaults are applied only when no saved binding exists.
-  The Properties backup section has **Restore default profile hotkeys**.
+  Bindings reload when the OBS profile changes. The Properties backup section
+  has **Restore default profile hotkeys**, which persists the defaults to the
+  active OBS profile.
 - **Restore default profiles A-J** overwrites all ten slots with the built-in
   configurations. Existing sources are reseeded once when the profile seed
   revision changes.

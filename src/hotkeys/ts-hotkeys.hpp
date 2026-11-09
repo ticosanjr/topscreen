@@ -58,8 +58,12 @@ public:
 	/** Forces Ctrl+Shift+Alt+A..J on the ten profile actions (UI button). */
 	static void apply_default_profile_bindings();
 
+	/** Reloads bindings from the active OBS profile (profile switch). */
+	static void reload_saved_bindings();
+
 private:
 	static void load_saved_or_defaults();
+	static void save_bindings_to_profile();
 	static bool apply_default_binding(int action);
 
 	static std::atomic<int> refs_;

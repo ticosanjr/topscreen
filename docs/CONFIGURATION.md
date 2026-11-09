@@ -155,7 +155,7 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Origin X (px) | `monitor_x` | int | −32768…32767 | `0` |
 | | Origin Y (px) | `monitor_y` | int | −32768…32767 | `0` |
 | Profiles | Current profile | `profile_current` | int | 0–9 (A–J) | `0` |
-| Profiles | Default seed revision | `profile_seed_version` | int | internal; bumped when A–J seeds change | `2` |
+| Profiles | Default seed revision | `profile_seed_version` | int | internal; absent = 0 (one-time reseed), current = 2 | — |
 | | Profile slots | `profile_slot_0`, `profile_slot_1`, … `profile_slot_5` … `profile_slot_9` (profiles A–J) | object | Full config (nested obs_data) | — |
 | | Export path (Properties fallback) | `profile_export_path` | string | Any `.json` path | `""` |
 | | Import path (Properties fallback) | `profile_import_path` | string | Any `.json` path | `""` |
@@ -244,7 +244,9 @@ they act on the filter selected in the dock, or the first active one):
 
 > Default profile hotkeys: **Ctrl+Shift+Alt+A** through **Ctrl+Shift+Alt+J**.
 > Saved bindings always win; the defaults are applied only when no saved
-> binding exists. **Restore default profile hotkeys** forces all ten.
+> binding exists. Bindings are reloaded when the OBS profile changes.
+> **Restore default profile hotkeys** forces all ten and writes them to the
+> active OBS profile, so they survive a restart.
 
 | ID | Action |
 |----|------|

@@ -7,6 +7,7 @@
 // define the structs here.
 
 #include <obs-module.h>
+#include <obs-frontend-api.h>
 
 #include <cstdint>
 #include <map>
@@ -91,6 +92,12 @@ const std::vector<obs_key_combination_t> &hotkey_bindings(const char *name);
 
 /** Profile config value used by the frontend hotkey loader. */
 void set_profile_config_string(const char *section, const char *name, const char *value);
+
+/** Simulates an OBS frontend event (e.g. profile changed). */
+void fire_frontend_event(enum obs_frontend_event event);
+
+/** Reads a value from the fake OBS profile config. */
+std::string profile_config_string(const char *section, const char *name);
 
 /** Records a uniform upload (used to catch D3D11's "parameter not set"). */
 void note_uniform_set(const std::string &name);

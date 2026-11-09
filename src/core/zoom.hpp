@@ -1,6 +1,5 @@
 #pragma once
 
-#include "easing.hpp"
 #include "spring.hpp"
 #include "types.hpp"
 
@@ -13,7 +12,6 @@ struct ZoomConfig {
 	double idle_timeout_ms = 1500.0; // no focus -> returns to normal
 	double pan_amount = 1.0;     // how much the focus "follows" the cursor (0..1)
 	double center_amount = 1.0;  // how much the cursor stays at the CENTER (0..1)
-	int easing = EASE_IN_OUT_CUBIC;
 };
 
 struct ZoomRender {

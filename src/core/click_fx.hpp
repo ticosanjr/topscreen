@@ -1,6 +1,5 @@
 #pragma once
 
-#include "easing.hpp"
 #include "types.hpp"
 
 #include <cstdint>
@@ -12,7 +11,6 @@ struct ClickConfig {
 	double size = 1.0;
 	double duration_ms = 650.0;
 	uint32_t color = 0xFFFFFFFF; // 0xAABBGGRR
-	int easing = EASE_OUT_CUBIC;
 };
 
 struct ClickRender {

@@ -1,5 +1,7 @@
 #include "click_fx.hpp"
 
+#include "easing.hpp"
+
 namespace topscreen::core {
 
 void ClickFxModel::spawn(double x, double y, double now_ms, bool right)
@@ -72,7 +74,7 @@ int ClickFxModel::collect(double now_ms, ClickRender *out, int max) const
 		r.x = s.x;
 		r.y = s.y;
 		r.progress = p;
-		r.eased = ease_apply(s.cfg.easing, p);
+		r.eased = ease_in_out_cubic(p);
 		r.size = s.cfg.size;
 		r.color = s.cfg.color;
 		r.effect = s.cfg.effect;

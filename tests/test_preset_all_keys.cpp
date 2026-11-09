@@ -57,12 +57,10 @@ TEST(preset_covers_all_keys)
             "click_left_size": 1.7,
             "click_left_color": 999,
             "click_left_duration_ms": 123,
-            "click_left_easing": 1,
             "click_right_effect": 7,
             "click_right_size": 0.4,
             "click_right_color": 888,
             "click_right_duration_ms": 321,
-            "click_right_easing": 3,
             "click_sound_enabled": false,
             "click_sound_file": "x.wav",
             "click_sound_file_left": "l.wav",
@@ -188,13 +186,11 @@ TEST(preset_covers_all_keys)
 	CHECK_NEAR(c.click_left.size, 1.7, 1e-9);
 	CHECK_EQ(c.click_left.color, 999u);
 	CHECK_NEAR(c.click_left.duration_ms, 123.0, 1e-9);
-	CHECK_EQ(c.click_left.easing, 3);
 
 	CHECK_EQ(c.click_right.effect, 7);
 	CHECK_NEAR(c.click_right.size, 0.4, 1e-9);
 	CHECK_EQ(c.click_right.color, 888u);
 	CHECK_NEAR(c.click_right.duration_ms, 321.0, 1e-9);
-	CHECK_EQ(c.click_right.easing, 3);
 
 	CHECK(!c.click_sound.enabled);
 	CHECK_EQ(c.click_sound.file_left, std::string()); /* legacy left=false -> mute */

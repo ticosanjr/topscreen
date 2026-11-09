@@ -40,7 +40,7 @@ covered by tests) and the **OBS layer** (thin, it only wires the core to libobs)
 | Zoom | `zoom.{hpp,cpp}` | Auto/manual, pan, idle timeout |
 | JSON | `json.{hpp,cpp}` | Dependency-free JSON parser |
 | Preset | `preset.{hpp,cpp}` | Preset parse + apply |
-| Config | `config.hpp`, `keys.hpp` | `Config` and key names (single source) |
+| Config | `config.hpp`, `config_limits.hpp`, `keys.hpp` | `Config`, shared UI/sanitize ranges and key names |
 
 ### OBS layer
 

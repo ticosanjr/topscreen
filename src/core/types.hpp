@@ -168,7 +168,7 @@ enum class ClickEffect : int {
 enum class ZoomMode : int {
 	Off = 0,
 	Auto = 1,
-	Manual = 2,
+	/* Retired value 2 (Manual) is migrated to Off by sanitize_config(). */
 };
 
 } // namespace topscreen::core

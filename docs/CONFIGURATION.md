@@ -56,12 +56,10 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Effect size (1 = default) | `click_left_size` | double | 0.1–4 | `1.0` |
 | | Effect color | `click_left_color` | color | — | `0xFFFFFFFF` |
 | | Effect duration (ms) | `click_left_duration_ms` | double | 100–2000 | `650` |
-| | Animation curve (legacy, ignored) | `click_left_easing` | int | In-out cubic is forced | `3` |
 | Right click | Click effect | `click_right_effect` | int | same | `1` |
 | | Effect size (1 = default) | `click_right_size` | double | 0.1–4 | `1.2` |
 | | Effect color | `click_right_color` | color | — | `0xFF7C5CFF` |
 | | Effect duration (ms) | `click_right_duration_ms` | double | 100–2000 | `700` |
-| | Animation curve (legacy, ignored) | `click_right_easing` | int | In-out cubic is forced | `3` |
 | Click sound | Enable click sound | `click_sound_enabled` | bool | — | `true` |
 | | Left click sound | `click_sound_file_left` | string | bundled `sounds/*.wav`; `""` = Mute | `sounds/click-soft.wav` |
 | | Right click sound | `click_sound_file_right` | string | bundled `sounds/*.wav`; `""` = Mute | `sounds/click-mouse-right.wav` |
@@ -200,7 +198,7 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 {
   "topscreen_profiles": 1,
   "plugin": "TopScreen",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "current": 0,
   "profile_slot_0": { "effects_enabled": true },
   "profile_slot_1": { "effects_enabled": true },

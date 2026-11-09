@@ -193,7 +193,7 @@ Each button has its own independent effect.
 ### Zoom
 | Option | What it does |
 |-------|-----------|
-| **Zoom mode** | `Off`, `Automatic` (follows clicks/cursor) or `Manual` |
+| **Zoom mode** | `Off` or `Automatic` (follows clicks/cursor); manual zoom stays available through the hotkeys |
 | **Zoom intensity (1 = no zoom)** | How much it magnifies (1.0 = no zoom) |
 | **Zoom transition time (ms)** | Animation duration |
 | **Return to normal after idle (ms)** | After stopping, returns to normal |

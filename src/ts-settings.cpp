@@ -52,12 +52,10 @@ namespace topscreen {
 	X(DOUBLE, kClickLeftSize, click_left.size) \
 	X(COLOR, kClickLeftColor, click_left.color) \
 	X(DOUBLE, kClickLeftDurationMs, click_left.duration_ms) \
-	X(INT, kClickLeftEasing, click_left.easing) \
 	X(INT, kClickRightEffect, click_right.effect) \
 	X(DOUBLE, kClickRightSize, click_right.size) \
 	X(COLOR, kClickRightColor, click_right.color) \
 	X(DOUBLE, kClickRightDurationMs, click_right.duration_ms) \
-	X(INT, kClickRightEasing, click_right.easing) \
 	X(BOOL, kClickSoundEnabled, click_sound.enabled) \
 	X(STRING, kClickSoundFileLeft, click_sound.file_left) \
 	X(STRING, kClickSoundFileRight, click_sound.file_right) \

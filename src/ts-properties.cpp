@@ -1,5 +1,6 @@
 #include "ts-properties.hpp"
 
+#include "core/config_limits.hpp"
 #include "core/easing.hpp"
 #include "core/cursor_catalog.hpp"
 #include "core/keys.hpp"
@@ -43,6 +44,25 @@ void set_tip(obs_property_t *prop, const char *description)
 {
 	if (prop)
 		obs_property_set_long_description(prop, description);
+}
+
+obs_property_t *add_range_slider(obs_properties_t *props, const char *key, const char *text,
+				 const limits::Range &range)
+{
+	return obs_properties_add_float_slider(props, key, text, range.min, range.max,
+					       range.step);
+}
+
+obs_property_t *add_range_int_slider(obs_properties_t *props, const char *key, const char *text,
+				     const limits::IntRange &range)
+{
+	return obs_properties_add_int_slider(props, key, text, range.min, range.max, range.step);
+}
+
+obs_property_t *add_range_int(obs_properties_t *props, const char *key, const char *text,
+			      const limits::IntRange &range)
+{
+	return obs_properties_add_int(props, key, text, range.min, range.max, range.step);
 }
 
 bool setting_bool(obs_data_t *settings, const char *key, bool fallback)
@@ -364,9 +384,13 @@ void add_click_group(obs_properties_t *props, const char *group_key, const char 
 	obs_property_list_add_int(effect, obs_module_text("Click.Effect.WaterRippleClear"),
 				  static_cast<int>(ClickEffect::WaterRippleClear));
 
-	obs_properties_add_float_slider(g, size_key, obs_module_text("Click.Size"), 0.1, 4.0, 0.05);
+	add_range_slider(
+		g, size_key, obs_module_text("Click.Size"),
+		limits::kClickSizeRange);
 	obs_properties_add_color(g, color_key, obs_module_text("Click.Color"));
-	obs_properties_add_float_slider(g, duration_key, obs_module_text("Click.DurationMs"), 100.0, 2000.0, 10.0);
+	add_range_slider(
+		g, duration_key, obs_module_text("Click.DurationMs"),
+		limits::kClickDurationRange);
 
 	obs_properties_add_group(props, group_key, title, OBS_GROUP_NORMAL, g);
 }
@@ -542,17 +566,17 @@ void add_background_section(obs_properties_t *props, obs_properties_t *capture, 
 
 	obs_properties_add_color(bg, kBgColorA, obs_module_text("Background.ColorA"));
 	obs_properties_add_color(bg, kBgColorB, obs_module_text("Background.ColorB"));
-	obs_property_t *gangle = obs_properties_add_float_slider(
-		bg, kBgGradientAngle, obs_module_text("Background.GradientAngle"), 0.0, 360.0,
-		1.0);
+	obs_property_t *gangle = add_range_slider(
+		bg, kBgGradientAngle, obs_module_text("Background.GradientAngle"),
+		limits::kBgGradientAngleRange);
 	set_tip(gangle, obs_module_text("Tooltip.GradientAngle"));
-	obs_property_t *gcenterx = obs_properties_add_float_slider(
-		bg, kBgGradientCenterX, obs_module_text("Background.GradientCenterX"), 0.0, 1.0,
-		0.01);
+	obs_property_t *gcenterx = add_range_slider(
+		bg, kBgGradientCenterX, obs_module_text("Background.GradientCenterX"),
+		limits::kUnitRange);
 	set_tip(gcenterx, obs_module_text("Tooltip.GradientCenter"));
-	obs_property_t *gcentery = obs_properties_add_float_slider(
-		bg, kBgGradientCenterY, obs_module_text("Background.GradientCenterY"), 0.0, 1.0,
-		0.01);
+	obs_property_t *gcentery = add_range_slider(
+		bg, kBgGradientCenterY, obs_module_text("Background.GradientCenterY"),
+		limits::kUnitRange);
 	set_tip(gcentery, obs_module_text("Tooltip.GradientCenter"));
 
 	obs_properties_t *bgimg = obs_properties_create();
@@ -571,31 +595,42 @@ void add_background_section(obs_properties_t *props, obs_properties_t *capture, 
 		kImageFilter, nullptr);
 	set_tip(fp, obs_module_text("Tooltip.WallpaperFile"));
 	obs_property_set_modified_callback(fp, bg_file_modified);
-	obs_property_t *blur_amount = obs_properties_add_float_slider(
-		bgimg, kBgImageBlur, obs_module_text("Background.ImageBlur"), 0.0, 60.0, 1.0);
+	obs_property_t *blur_amount = add_range_slider(
+		bgimg, kBgImageBlur, obs_module_text("Background.ImageBlur"),
+		limits::kBgImageBlurRange);
 	set_tip(blur_amount, obs_module_text("Tooltip.WallpaperBlur"));
 	obs_properties_add_group(bg, "grp_bg_image", obs_module_text("Background.ImageGroup"),
 				 OBS_GROUP_NORMAL, bgimg);
 
-	obs_properties_add_float_slider(bg, kBgPaddingX, obs_module_text("Background.PaddingX"), 0.0, 400.0, 1.0);
-	obs_properties_add_float_slider(bg, kBgPaddingY, obs_module_text("Background.PaddingY"), 0.0, 400.0, 1.0);
+	add_range_slider(
+		bg, kBgPaddingX, obs_module_text("Background.PaddingX"),
+		limits::kBgPaddingRange);
+	add_range_slider(
+		bg, kBgPaddingY, obs_module_text("Background.PaddingY"),
+		limits::kBgPaddingRange);
 	obs_properties_add_bool(bg, kBgKeepAspect, obs_module_text("Background.KeepAspect"));
-	obs_properties_add_float_slider(bg, kBgCornerRadius, obs_module_text("Background.CornerRadius"), 0.0, 200.0,
-					1.0);
+	add_range_slider(
+		bg, kBgCornerRadius, obs_module_text("Background.CornerRadius"),
+		limits::kCornerRadiusRange);
 
 	/* Window shadow (sub-group with clear names) */
 	obs_properties_t *sh = obs_properties_create();
 	obs_property_t *shadow_on =
 		obs_properties_add_bool(sh, kBgShadow, obs_module_text("Shadow.Enabled"));
 	obs_property_set_modified_callback(shadow_on, background_shadow_changed);
-	obs_property_t *shadow_alpha = obs_properties_add_float_slider(
-		sh, kBgShadowAlpha, obs_module_text("Shadow.Opacity"), 0.0, 1.0, 0.01);
+	obs_property_t *shadow_alpha = add_range_slider(
+		sh, kBgShadowAlpha, obs_module_text("Shadow.Opacity"),
+		limits::kUnitRange);
 	set_tip(shadow_alpha, obs_module_text("Tooltip.ShadowOpacity"));
-	obs_properties_add_float_slider(sh, kBgShadowBlur, obs_module_text("Shadow.Blur"), 0.0, 200.0, 1.0);
-	obs_properties_add_float_slider(sh, kBgShadowOffsetX, obs_module_text("Shadow.OffsetX"), -100.0, 100.0,
-					1.0);
-	obs_properties_add_float_slider(sh, kBgShadowOffset, obs_module_text("Shadow.Offset"), -100.0, 100.0,
-					1.0);
+	add_range_slider(
+		sh, kBgShadowBlur, obs_module_text("Shadow.Blur"),
+		limits::kShadowBlurRange);
+	add_range_slider(
+		sh, kBgShadowOffsetX, obs_module_text("Shadow.OffsetX"),
+		limits::kShadowOffsetRange);
+	add_range_slider(
+		sh, kBgShadowOffset, obs_module_text("Shadow.Offset"),
+		limits::kShadowOffsetRange);
 	obs_properties_add_group(bg, "grp_shadow", obs_module_text("Group.Shadow"), OBS_GROUP_NORMAL, sh);
 	obs_properties_add_group(capture, "grp_bg", obs_module_text("Group.Background"), OBS_GROUP_NORMAL, bg);
 	background_enabled_changed(props, nullptr, settings);
@@ -612,16 +647,22 @@ void add_zoom_section(obs_properties_t *props, obs_properties_t *capture, obs_da
 	obs_property_list_add_int(zmode, obs_module_text("Zoom.Mode.Auto"), static_cast<int>(ZoomMode::Auto));
 	obs_property_set_modified_callback(zmode, zoom_mode_changed);
 
-	obs_properties_add_float_slider(zoom, kZoomAmount, obs_module_text("Zoom.Amount"), 1.0, 4.0, 0.05);
-	obs_properties_add_float_slider(zoom, kZoomDurationMs, obs_module_text("Zoom.DurationMs"), 100.0, 2000.0,
-					10.0);
-	obs_properties_add_float_slider(zoom, kZoomIdleTimeoutMs, obs_module_text("Zoom.IdleTimeoutMs"), 200.0,
-					10000.0, 50.0);
-	obs_property_t *pan = obs_properties_add_float_slider(
-		zoom, kZoomPanAmount, obs_module_text("Zoom.PanAmount"), 0.0, 1.0, 0.01);
+	add_range_slider(
+		zoom, kZoomAmount, obs_module_text("Zoom.Amount"),
+		limits::kZoomAmountRange);
+	add_range_slider(
+		zoom, kZoomDurationMs, obs_module_text("Zoom.DurationMs"),
+		limits::kZoomDurationRange);
+	add_range_slider(
+		zoom, kZoomIdleTimeoutMs, obs_module_text("Zoom.IdleTimeoutMs"),
+		limits::kZoomIdleTimeoutRange);
+	obs_property_t *pan = add_range_slider(
+		zoom, kZoomPanAmount, obs_module_text("Zoom.PanAmount"),
+		limits::kUnitRange);
 	set_tip(pan, obs_module_text("Tooltip.ZoomPan"));
-	obs_property_t *center = obs_properties_add_float_slider(
-		zoom, kZoomCenterAmount, obs_module_text("Zoom.CenterAmount"), 0.0, 1.0, 0.01);
+	obs_property_t *center = add_range_slider(
+		zoom, kZoomCenterAmount, obs_module_text("Zoom.CenterAmount"),
+		limits::kUnitRange);
 	set_tip(center, obs_module_text("Tooltip.ZoomCentering"));
 	obs_properties_add_group(capture, "grp_zoom", obs_module_text("Group.Zoom"), OBS_GROUP_NORMAL, zoom);
 	zoom_mode_changed(props, nullptr, settings);
@@ -653,10 +694,12 @@ void add_cursor_section(obs_properties_t *props, obs_properties_t *pointer, obs_
 		obs_properties_add_bool(cur, kCursorLinkDetection, obs_module_text("Cursor.LinkDetection"));
 	set_tip(link_detection, obs_module_text("Tooltip.CursorLinkDetection"));
 
-	obs_properties_add_float_slider(cur, kCursorSize, obs_module_text("Cursor.Size"), 0.5, 4.0, 0.05);
-	obs_property_t *rotation = obs_properties_add_float_slider(
-		cur, kCursorRotationOffset, obs_module_text("Cursor.RotationOffset"), -180.0,
-		180.0, 1.0);
+	add_range_slider(
+		cur, kCursorSize, obs_module_text("Cursor.Size"),
+		limits::kCursorSizeRange);
+	obs_property_t *rotation = add_range_slider(
+		cur, kCursorRotationOffset, obs_module_text("Cursor.RotationOffset"),
+		limits::kCursorRotationRange);
 	set_tip(rotation, obs_module_text("Tooltip.CursorRotationOffset"));
 	obs_property_t *follow = obs_properties_add_list(
 		cur, kCursorFollowMode, obs_module_text("Cursor.FollowMode"), OBS_COMBO_TYPE_LIST,
@@ -666,12 +709,15 @@ void add_cursor_section(obs_properties_t *props, obs_properties_t *pointer, obs_
 	obs_property_list_add_int(follow, obs_module_text("Cursor.Follow.GlideAB"),
 				  static_cast<int>(CursorFollowMode::GlideAB));
 	obs_property_set_modified_callback(follow, cursor_options_changed);
-	obs_properties_add_float_slider(cur, kCursorGlideMs, obs_module_text("Cursor.GlideMs"), 50.0, 1200.0, 10.0);
+	add_range_slider(
+		cur, kCursorGlideMs, obs_module_text("Cursor.GlideMs"),
+		limits::kCursorGlideRange);
 	obs_properties_add_bool(cur, kCursorShadow, obs_module_text("Cursor.Shadow"));
 	obs_property_t *hide_idle =
 		obs_properties_add_bool(cur, kCursorHideIdle, obs_module_text("Cursor.HideIdle"));
-	obs_properties_add_float_slider(cur, kCursorIdleDelayMs, obs_module_text("Cursor.IdleDelayMs"), 0.0,
-					5000.0, 50.0);
+	add_range_slider(
+		cur, kCursorIdleDelayMs, obs_module_text("Cursor.IdleDelayMs"),
+		limits::kCursorIdleDelayRange);
 	obs_property_set_modified_callback(hide_idle, cursor_options_changed);
 	obs_properties_add_group(pointer, "grp_cursor", obs_module_text("Group.Cursor"), OBS_GROUP_NORMAL, cur);
 	cursor_options_changed(props, nullptr, settings);
@@ -712,8 +758,9 @@ void add_click_sound_section(obs_properties_t *props, obs_properties_t *pointer,
 		obs_property_list_add_string(sndleft, s.label, s.path);
 		obs_property_list_add_string(sndright, s.label, s.path);
 	}
-	obs_properties_add_float_slider(snd, kClickSoundVolume, obs_module_text("ClickSound.Volume"), 0.0, 1.0,
-					0.01);
+	add_range_slider(
+		snd, kClickSoundVolume, obs_module_text("ClickSound.Volume"),
+		limits::kUnitRange);
 	obs_properties_add_group(pointer, "grp_sound", obs_module_text("Group.ClickSound"), OBS_GROUP_NORMAL, snd);
 	click_sound_changed(props, nullptr, settings);
 }
@@ -736,21 +783,25 @@ void add_spotlight_section(obs_properties_t *props, obs_properties_t *focus, obs
 				  static_cast<int>(core::SpotlightShape::Square));
 	obs_property_set_modified_callback(sshape, spotlight_options_changed);
 
-	obs_properties_add_float_slider(spot, kSpotlightRadius, obs_module_text("Spotlight.Radius"),
-					0.05, 1.0, 0.01);
-	obs_properties_add_float_slider(spot, kSpotlightCornerRadius,
-					obs_module_text("Spotlight.CornerRadius"), 0.0, 200.0, 1.0);
+	add_range_slider(
+		spot, kSpotlightRadius, obs_module_text("Spotlight.Radius"),
+		limits::kRadiusRange);
+	add_range_slider(
+		spot, kSpotlightCornerRadius, obs_module_text("Spotlight.CornerRadius"),
+		limits::kCornerRadiusRange);
 	obs_property_t *omode = obs_properties_add_list(
 		spot, kSpotlightOutsideMode, obs_module_text("Spotlight.OutsideMode"),
 		OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
 	obs_property_list_add_int(omode, obs_module_text("Spotlight.Outside.Dim"), 0);
 	obs_property_list_add_int(omode, obs_module_text("Spotlight.Outside.Blur"), 1);
 	obs_property_set_modified_callback(omode, spotlight_options_changed);
-	obs_property_t *dim = obs_properties_add_float_slider(
-		spot, kSpotlightDim, obs_module_text("Spotlight.Dim"), 0.0, 1.0, 0.01);
+	obs_property_t *dim = add_range_slider(
+		spot, kSpotlightDim, obs_module_text("Spotlight.Dim"),
+		limits::kUnitRange);
 	set_tip(dim, obs_module_text("Tooltip.SpotlightDim"));
-	obs_properties_add_float_slider(spot, kSpotlightBlurAmount,
-					obs_module_text("Spotlight.BlurAmount"), 0.0, 60.0, 1.0);
+	add_range_slider(
+		spot, kSpotlightBlurAmount, obs_module_text("Spotlight.BlurAmount"),
+		limits::kBgImageBlurRange);
 
 	obs_properties_t *sborder = obs_properties_create();
 	obs_property_t *spot_border_on = obs_properties_add_bool(
@@ -758,18 +809,22 @@ void add_spotlight_section(obs_properties_t *props, obs_properties_t *focus, obs
 	obs_property_set_modified_callback(spot_border_on, spotlight_border_changed);
 	obs_properties_add_color(sborder, kSpotlightBorderColor,
 				 obs_module_text("Spotlight.BorderColor"));
-	obs_properties_add_float_slider(sborder, kSpotlightBorderWidth,
-					obs_module_text("Spotlight.BorderWidth"), 0.5, 40.0, 0.5);
+	add_range_slider(
+		sborder, kSpotlightBorderWidth, obs_module_text("Spotlight.BorderWidth"),
+		limits::kBorderWidthRange);
 	obs_properties_add_group(spot, "grp_spotlight_border", obs_module_text("Spotlight.BorderGroup"),
 				 OBS_GROUP_NORMAL, sborder);
 
 	obs_properties_t *sanim = obs_properties_create();
-	obs_properties_add_float_slider(sanim, kSpotlightZoomAmount,
-					obs_module_text("Spotlight.ZoomAmount"), 1.0, 4.0, 0.05);
-	obs_properties_add_float_slider(sanim, kSpotlightInMs, obs_module_text("Spotlight.InMs"),
-					0.0, 2000.0, 10.0);
-	obs_properties_add_float_slider(sanim, kSpotlightOutMs, obs_module_text("Spotlight.OutMs"),
-					0.0, 2000.0, 10.0);
+	add_range_slider(
+		sanim, kSpotlightZoomAmount, obs_module_text("Spotlight.ZoomAmount"),
+		limits::kZoomAmountRange);
+	add_range_slider(
+		sanim, kSpotlightInMs, obs_module_text("Spotlight.InMs"),
+		limits::kInOutMsRange);
+	add_range_slider(
+		sanim, kSpotlightOutMs, obs_module_text("Spotlight.OutMs"),
+		limits::kInOutMsRange);
 	obs_properties_add_group(spot, "grp_spotlight_animation",
 				 obs_module_text("Spotlight.AnimationGroup"), OBS_GROUP_NORMAL,
 				 sanim);
@@ -795,27 +850,33 @@ void add_magnifier_section(obs_properties_t *props, obs_properties_t *focus, obs
 	obs_property_list_add_int(mshape, obs_module_text("Magnifier.Shape.Square"),
 				  static_cast<int>(SpotlightShape::Square));
 	obs_property_set_modified_callback(mshape, magnifier_options_changed);
-	obs_properties_add_float_slider(mag, kMagnifierRadius, obs_module_text("Magnifier.Radius"),
-					0.05, 1.0, 0.01);
-	obs_properties_add_float_slider(mag, kMagnifierZoom, obs_module_text("Magnifier.Zoom"),
-					1.0, 4.0, 0.05);
-	obs_properties_add_float_slider(mag, kMagnifierCornerRadius,
-					obs_module_text("Magnifier.CornerRadius"), 0.0, 200.0, 1.0);
+	add_range_slider(
+		mag, kMagnifierRadius, obs_module_text("Magnifier.Radius"),
+		limits::kRadiusRange);
+	add_range_slider(
+		mag, kMagnifierZoom, obs_module_text("Magnifier.Zoom"),
+		limits::kZoomAmountRange);
+	add_range_slider(
+		mag, kMagnifierCornerRadius, obs_module_text("Magnifier.CornerRadius"),
+		limits::kCornerRadiusRange);
 	obs_property_t *magnifier_follow =
 		obs_properties_add_bool(mag, kMagnifierFollowCursor, obs_module_text("Magnifier.FollowCursor"));
 	obs_property_set_modified_callback(magnifier_follow, magnifier_options_changed);
-	obs_properties_add_float_slider(mag, kMagnifierCenterX, obs_module_text("Magnifier.CenterX"),
-					0.0, 1.0, 0.01);
-	obs_properties_add_float_slider(mag, kMagnifierCenterY, obs_module_text("Magnifier.CenterY"),
-					0.0, 1.0, 0.01);
+	add_range_slider(
+		mag, kMagnifierCenterX, obs_module_text("Magnifier.CenterX"),
+		limits::kUnitRange);
+	add_range_slider(
+		mag, kMagnifierCenterY, obs_module_text("Magnifier.CenterY"),
+		limits::kUnitRange);
 	obs_properties_t *mborder = obs_properties_create();
 	obs_property_t *mag_border_on = obs_properties_add_bool(
 		mborder, kMagnifierBorderEnabled, obs_module_text("Magnifier.BorderEnabled"));
 	obs_property_set_modified_callback(mag_border_on, magnifier_border_changed);
 	obs_properties_add_color(mborder, kMagnifierBorderColor,
 				 obs_module_text("Magnifier.BorderColor"));
-	obs_properties_add_float_slider(mborder, kMagnifierBorderWidth,
-					obs_module_text("Magnifier.BorderWidth"), 0.5, 40.0, 0.5);
+	add_range_slider(
+		mborder, kMagnifierBorderWidth, obs_module_text("Magnifier.BorderWidth"),
+		limits::kBorderWidthRange);
 	obs_properties_add_group(mag, "grp_magnifier_border", obs_module_text("Magnifier.BorderGroup"),
 				 OBS_GROUP_NORMAL, mborder);
 	obs_properties_t *mshadow = obs_properties_create();
@@ -824,20 +885,26 @@ void add_magnifier_section(obs_properties_t *props, obs_properties_t *focus, obs
 	obs_property_set_modified_callback(mag_shadow_on, magnifier_shadow_changed);
 	obs_properties_add_color(mshadow, kMagnifierShadowColor,
 				 obs_module_text("Magnifier.ShadowColor"));
-	obs_properties_add_float_slider(mshadow, kMagnifierShadowAlpha,
-					obs_module_text("Magnifier.ShadowAlpha"), 0.0, 1.0, 0.01);
-	obs_properties_add_float_slider(mshadow, kMagnifierShadowBlur,
-					obs_module_text("Magnifier.ShadowBlur"), 0.0, 200.0, 1.0);
-	obs_properties_add_float_slider(mshadow, kMagnifierShadowOffsetX,
-					obs_module_text("Magnifier.ShadowOffsetX"), -100.0, 100.0, 1.0);
-	obs_properties_add_float_slider(mshadow, kMagnifierShadowOffsetY,
-					obs_module_text("Magnifier.ShadowOffsetY"), -100.0, 100.0, 1.0);
+	add_range_slider(
+		mshadow, kMagnifierShadowAlpha, obs_module_text("Magnifier.ShadowAlpha"),
+		limits::kUnitRange);
+	add_range_slider(
+		mshadow, kMagnifierShadowBlur, obs_module_text("Magnifier.ShadowBlur"),
+		limits::kShadowBlurRange);
+	add_range_slider(
+		mshadow, kMagnifierShadowOffsetX, obs_module_text("Magnifier.ShadowOffsetX"),
+		limits::kShadowOffsetRange);
+	add_range_slider(
+		mshadow, kMagnifierShadowOffsetY, obs_module_text("Magnifier.ShadowOffsetY"),
+		limits::kShadowOffsetRange);
 	obs_properties_add_group(mag, "grp_magnifier_shadow", obs_module_text("Magnifier.ShadowGroup"),
 				 OBS_GROUP_NORMAL, mshadow);
-	obs_properties_add_float_slider(mag, kMagnifierInMs, obs_module_text("Magnifier.InMs"),
-					0.0, 2000.0, 10.0);
-	obs_properties_add_float_slider(mag, kMagnifierOutMs, obs_module_text("Magnifier.OutMs"),
-					0.0, 2000.0, 10.0);
+	add_range_slider(
+		mag, kMagnifierInMs, obs_module_text("Magnifier.InMs"),
+		limits::kInOutMsRange);
+	add_range_slider(
+		mag, kMagnifierOutMs, obs_module_text("Magnifier.OutMs"),
+		limits::kInOutMsRange);
 	obs_properties_add_group(focus, "grp_magnifier", obs_module_text("Group.Magnifier"),
 				 OBS_GROUP_NORMAL, mag);
 	obs_property_set_modified_callback(mag_enabled, magnifier_options_changed);
@@ -876,37 +943,44 @@ void add_highlight_section(obs_properties_t *props, obs_properties_t *overlays, 
 	/* Look (box + line). */
 	obs_properties_t *hl_look = obs_properties_create();
 	obs_properties_add_color(hl_look, kHighlightColor, obs_module_text("Highlight.Color"));
-	obs_properties_add_float_slider(hl_look, kHighlightOpacity, obs_module_text("Highlight.Opacity"),
-					0.0, 1.0, 0.01);
-	obs_properties_add_float_slider(hl_look, kHighlightThickness,
-					obs_module_text("Highlight.Thickness"), 0.001, 0.05, 0.001);
+	add_range_slider(
+		hl_look, kHighlightOpacity, obs_module_text("Highlight.Opacity"),
+		limits::kUnitRange);
+	add_range_slider(
+		hl_look, kHighlightThickness, obs_module_text("Highlight.Thickness"),
+		limits::kHighlightThicknessRange);
 	obs_properties_add_group(hl, "grp_hl_look", obs_module_text("Highlight.Look"), OBS_GROUP_NORMAL,
 				 hl_look);
 
 	/* Timing (box + line): how long the mark stays and fades. */
 	obs_properties_t *hl_timing = obs_properties_create();
-	obs_properties_add_float_slider(hl_timing, kHighlightHoldMs, obs_module_text("Highlight.HoldMs"),
-					0.0, 5000.0, 50.0);
-	obs_properties_add_float_slider(hl_timing, kHighlightFadeMs, obs_module_text("Highlight.FadeMs"),
-					0.0, 2000.0, 50.0);
+	add_range_slider(
+		hl_timing, kHighlightHoldMs, obs_module_text("Highlight.HoldMs"),
+		limits::kHighlightHoldRange);
+	add_range_slider(
+		hl_timing, kHighlightFadeMs, obs_module_text("Highlight.FadeMs"),
+		limits::kHighlightFadeRange);
 	obs_properties_add_group(hl, "grp_hl_timing", obs_module_text("Highlight.Timing"), OBS_GROUP_NORMAL,
 				 hl_timing);
 
 	/* Zoom gesture: one fixed IN sequence with ease-in-out cubic. */
 	obs_properties_t *hl_zoom = obs_properties_create();
-	obs_property_t *zoom_delay = obs_properties_add_float_slider(
-		hl_zoom, kHighlightZoomDelayMs, obs_module_text("Highlight.ZoomDelayMs"), 0.0,
-		5000.0, 50.0);
+	obs_property_t *zoom_delay = add_range_slider(
+		hl_zoom, kHighlightZoomDelayMs, obs_module_text("Highlight.ZoomDelayMs"),
+		limits::kHighlightHoldRange);
 	set_tip(zoom_delay, obs_module_text("Tooltip.HighlightZoomDelay"));
-	obs_properties_add_float_slider(hl_zoom, kHighlightZoomMax, obs_module_text("Highlight.ZoomMax"),
-					1.2, 8.0, 0.1);
-	obs_properties_add_float_slider(hl_zoom, kHighlightZoomInMs,
-					obs_module_text("Highlight.ZoomInMs"), 50.0, 2000.0, 10.0);
-	obs_properties_add_float_slider(hl_zoom, kHighlightZoomHoldMs,
-					obs_module_text("Highlight.ZoomHoldMs"), 0.0, 5000.0,
-					50.0);
-	obs_properties_add_float_slider(hl_zoom, kHighlightZoomOutMs, obs_module_text("Highlight.ZoomOutMs"),
-					100.0, 8000.0, 50.0);
+	add_range_slider(
+		hl_zoom, kHighlightZoomMax, obs_module_text("Highlight.ZoomMax"),
+		limits::kHighlightZoomMaxRange);
+	add_range_slider(
+		hl_zoom, kHighlightZoomInMs, obs_module_text("Highlight.ZoomInMs"),
+		limits::kHighlightZoomInRange);
+	add_range_slider(
+		hl_zoom, kHighlightZoomHoldMs, obs_module_text("Highlight.ZoomHoldMs"),
+		limits::kHighlightHoldRange);
+	add_range_slider(
+		hl_zoom, kHighlightZoomOutMs, obs_module_text("Highlight.ZoomOutMs"),
+		limits::kHighlightZoomOutRange);
 	obs_properties_add_group(hl, "grp_hl_zoom", obs_module_text("Highlight.ZoomGroup"), OBS_GROUP_NORMAL,
 				 hl_zoom);
 
@@ -927,11 +1001,21 @@ void add_keys_section(obs_properties_t *props, obs_properties_t *overlays, obs_d
 	obs_properties_add_bool(keys, kKeysModifiersOnly, obs_module_text("Keys.ModifiersOnly"));
 	obs_properties_add_bool(keys, kKeysShowSpecial, obs_module_text("Keys.ShowSpecial"));
 	obs_properties_add_bool(keys, kKeysShowShortcuts, obs_module_text("Keys.ShowShortcuts"));
-	obs_properties_add_float_slider(keys, kKeysTtlMs, obs_module_text("Keys.TtlMs"), 500.0, 8000.0, 50.0);
-	obs_properties_add_int_slider(keys, kKeysMax, obs_module_text("Keys.Max"), 1, 12, 1);
-	obs_properties_add_float_slider(keys, kKeysPosX, obs_module_text("Keys.PosX"), 0.0, 1.0, 0.01);
-	obs_properties_add_float_slider(keys, kKeysPosY, obs_module_text("Keys.PosY"), 0.0, 1.0, 0.01);
-	obs_properties_add_float_slider(keys, kKeysSize, obs_module_text("Keys.Size"), 0.4, 4.0, 0.05);
+	add_range_slider(
+		keys, kKeysTtlMs, obs_module_text("Keys.TtlMs"),
+		limits::kKeysTtlRange);
+	add_range_int_slider(
+		keys, kKeysMax, obs_module_text("Keys.Max"),
+		limits::kKeysMaxRange);
+	add_range_slider(
+		keys, kKeysPosX, obs_module_text("Keys.PosX"),
+		limits::kUnitRange);
+	add_range_slider(
+		keys, kKeysPosY, obs_module_text("Keys.PosY"),
+		limits::kUnitRange);
+	add_range_slider(
+		keys, kKeysSize, obs_module_text("Keys.Size"),
+		limits::kKeysSizeRange);
 
 	obs_property_t *kfont = obs_properties_add_list(keys, kKeysFont, obs_module_text("Keys.Font"),
 							OBS_COMBO_TYPE_EDITABLE, OBS_COMBO_FORMAT_STRING);
@@ -955,8 +1039,12 @@ void add_monitor_section(obs_properties_t *advanced)
 	obs_properties_t *mon = obs_properties_create();
 	obs_properties_add_text(mon, "monitor_hint", obs_module_text("Monitor.Hint"), OBS_TEXT_INFO);
 	obs_properties_add_bool(mon, kMonitorManual, obs_module_text("Monitor.Manual"));
-	obs_properties_add_int(mon, kMonitorX, obs_module_text("Monitor.X"), -32768, 32767, 1);
-	obs_properties_add_int(mon, kMonitorY, obs_module_text("Monitor.Y"), -32768, 32767, 1);
+	add_range_int(
+		mon, kMonitorX, obs_module_text("Monitor.X"),
+		limits::kMonitorPositionRange);
+	add_range_int(
+		mon, kMonitorY, obs_module_text("Monitor.Y"),
+		limits::kMonitorPositionRange);
 	obs_properties_add_group(advanced, "grp_monitor", obs_module_text("Group.Monitor"), OBS_GROUP_NORMAL,
 				 mon);
 }

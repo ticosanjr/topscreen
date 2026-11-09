@@ -54,13 +54,11 @@ inline constexpr const char *kClickLeftEffect = "click_left_effect";
 inline constexpr const char *kClickLeftSize = "click_left_size";
 inline constexpr const char *kClickLeftColor = "click_left_color";
 inline constexpr const char *kClickLeftDurationMs = "click_left_duration_ms";
-inline constexpr const char *kClickLeftEasing = "click_left_easing";
 
 inline constexpr const char *kClickRightEffect = "click_right_effect";
 inline constexpr const char *kClickRightSize = "click_right_size";
 inline constexpr const char *kClickRightColor = "click_right_color";
 inline constexpr const char *kClickRightDurationMs = "click_right_duration_ms";
-inline constexpr const char *kClickRightEasing = "click_right_easing";
 
 inline constexpr const char *kClickSoundEnabled = "click_sound_enabled";
 inline constexpr const char *kClickSoundFile = "click_sound_file"; // legacy (migrates to left/right)

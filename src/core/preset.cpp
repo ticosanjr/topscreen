@@ -154,7 +154,6 @@ bool Preset::apply(Config *cfg, std::string *error) const
 	cfg->click_left.size = read_number(o, kClickLeftSize, cfg->click_left.size);
 	cfg->click_left.color = static_cast<uint32_t>(read_number(o, kClickLeftColor, cfg->click_left.color));
 	cfg->click_left.duration_ms = read_number(o, kClickLeftDurationMs, cfg->click_left.duration_ms);
-	cfg->click_left.easing = read_int(o, kClickLeftEasing, cfg->click_left.easing);
 
 	/* Right click */
 	cfg->click_right.effect = read_int(o, kClickRightEffect, cfg->click_right.effect);
@@ -162,7 +161,6 @@ bool Preset::apply(Config *cfg, std::string *error) const
 	cfg->click_right.color =
 		static_cast<uint32_t>(read_number(o, kClickRightColor, cfg->click_right.color));
 	cfg->click_right.duration_ms = read_number(o, kClickRightDurationMs, cfg->click_right.duration_ms);
-	cfg->click_right.easing = read_int(o, kClickRightEasing, cfg->click_right.easing);
 
 	/* Click sound */
 	cfg->click_sound.enabled = read_bool(o, kClickSoundEnabled, cfg->click_sound.enabled);

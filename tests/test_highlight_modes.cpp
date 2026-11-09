@@ -264,7 +264,7 @@ TEST(zoom_spot_starts_from_and_returns_to_the_current_zoom)
 {
 	ZoomModel z;
 	ZoomConfig cfg;
-	cfg.mode = static_cast<int>(ZoomMode::Manual);
+	cfg.mode = static_cast<int>(ZoomMode::Off);
 	z.configure(cfg);
 	z.reset(0.0);
 	z.set_manual(2.0);

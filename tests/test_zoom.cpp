@@ -222,3 +222,25 @@ TEST(zoom_smart_zooms_on_activity_and_returns_after_hold)
 	advance(m, t, 2.0);
 	CHECK(m.render().zoom < 1.1);
 }
+
+TEST(zoom_smart_region_focuses_the_active_area)
+{
+	ZoomModel m;
+	ZoomConfig cfg;
+	cfg.mode = static_cast<int>(ZoomMode::Smart);
+	cfg.amount = 3.0;
+	cfg.duration_ms = 100.0;
+	cfg.smart_hold_ms = 1000.0;
+	m.configure(cfg);
+	m.reset(0.0);
+	m.set_region(0.2, 0.2, 0.8, 0.8);
+	m.note_activity(0.0);
+
+	double t = 0.0;
+	advance(m, t, 0.5);
+	const ZoomRender r = m.render();
+	CHECK(r.zoom > 1.2);
+	CHECK(r.zoom < 3.0);
+	CHECK_NEAR(r.focus_x, 0.5, 0.05);
+	CHECK_NEAR(r.focus_y, 0.5, 0.05);
+}

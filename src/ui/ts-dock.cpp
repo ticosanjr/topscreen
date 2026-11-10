@@ -25,6 +25,7 @@
 #include <vector>
 
 #include "audio/ts-click-source.hpp"
+#include "webcam/ts-webcam-source.hpp"
 #include "core/keys.hpp"
 #include "core/profiles.hpp"
 #include "core/profiles_io.hpp"
@@ -108,6 +109,7 @@ public:
 		auto *stream_row = new QHBoxLayout();
 		add_audio_btn_ = new QPushButton(obs_module_text("Dock.AddClickSound"), this);
 		assign_scene_btn_ = new QPushButton(obs_module_text("Dock.AssignSceneProfile"), this);
+		add_webcam_btn_ = new QPushButton(obs_module_text("Dock.AddWebcam"), this);
 		QObject::connect(add_audio_btn_, &QPushButton::clicked, this, [this]() {
 			if (ts_click_audio_add_to_current_scene())
 				io_status_->setText(obs_module_text("Dock.ClickSoundAdded"));
@@ -126,8 +128,15 @@ public:
 			else
 				io_status_->setText(obs_module_text("Dock.SceneProfileFailed"));
 		});
+		QObject::connect(add_webcam_btn_, &QPushButton::clicked, this, [this]() {
+			if (webcam_source::add_bubble_source())
+				io_status_->setText(obs_module_text("Dock.WebcamAdded"));
+			else
+				io_status_->setText(obs_module_text("Dock.WebcamFailed"));
+		});
 		stream_row->addWidget(add_audio_btn_);
 		stream_row->addWidget(assign_scene_btn_);
+		stream_row->addWidget(add_webcam_btn_);
 		root->addLayout(stream_row);
 
 		auto *io_row = new QHBoxLayout();
@@ -282,6 +291,7 @@ private:
 		import_btn_->setEnabled(has);
 		add_audio_btn_->setEnabled(has);
 		assign_scene_btn_->setEnabled(has);
+		add_webcam_btn_->setEnabled(has);
 
 		if (!has) {
 			rebuild_presets(nullptr);
@@ -386,6 +396,7 @@ private:
 	QPushButton *import_btn_ = nullptr;
 	QPushButton *add_audio_btn_ = nullptr;
 	QPushButton *assign_scene_btn_ = nullptr;
+	QPushButton *add_webcam_btn_ = nullptr;
 	QLabel *io_status_ = nullptr;
 	QLabel *status_ = nullptr;
 	QLabel *scene_status_ = nullptr;

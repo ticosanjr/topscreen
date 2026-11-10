@@ -58,7 +58,8 @@ Status: ✅ done · 🟡 partial · ⬜ pending.
 | T3.4 | Independent right click effect | ✅ |
 | T3.5 | Click parameters (color/size/duration/curve) in the UI | ✅ |
 | T3.6 | Click sound (WAV decode + playback) | ✅ (decoded and mixed through the TopScreen Click Sound OBS source) |
-| T3.9 | Scene profiles (assign a profile to an OBS scene) | ✅ |
+| T3.9 | Scene profiles (assign/list/clear/prune) | ✅ |
+| T3.10 | Stream Deck / OBS WebSocket action guide + profile/click hotkeys | ✅ |
 | T3.7 | Presets applicable by hotkey (next/prev) | ✅ |
 | T3.8 | Hotkey fallback via OBS WebSocket | ⬜ |
 
@@ -68,7 +69,7 @@ Status: ✅ done · 🟡 partial · ⬜ pending.
 |----|--------|--------|
 | T4.1 | Spring + easings (`core/spring`, `core/easing`) | ✅ |
 | T4.5 | Smart zoom (action-driven hold/return) | ✅ |
-| T4.6 | Optional motion blur during zoom | ✅ |
+| T4.8 | Smart Zoom active-window/region focus | ✅ (Windows/X11) |
 | T4.2 | Auto-zoom by click | ✅ |
 | T4.3 | Auto-zoom following the cursor with timeout | ✅ |
 | T4.4 | Manual zoom in/out/reset by hotkey | ✅ |
@@ -86,7 +87,8 @@ Status: ✅ done · 🟡 partial · ⬜ pending.
 | T5.3 | Key capture (Windows / X11; evdev in F7) | ✅ |
 | T5.4 | Key overlay | ✅ |
 | T5.5 | Spotlight/dim following the cursor (round/square, hotkey, drop/zoom, border, halo shadow, outside blur) | ✅ |
-| T5.6 | Webcam bubble | ✅ (filter with circle/rounded mask, border and shadow) |
+| T5.6 | Webcam bubble | ✅ (filter + add-source action, mask/border/shadow) |
+| T5.8 | Device frames (browser/MacBook/iPhone) | ✅ (shader-drawn) |
 | T5.7 | Drag highlighter (box, line, zoom to selection, zoom on mouse press) | ✅ |
 
 ## F6 — Own capture source + audio

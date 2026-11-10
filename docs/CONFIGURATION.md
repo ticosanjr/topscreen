@@ -29,7 +29,7 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Horizontal screen margin (px) | `bg_padding_x` | double | 0–400 | `64` |
 | | Vertical screen margin (px) | `bg_padding_y` | double | 0–400 | `64` |
 | | Keep screen aspect ratio | `bg_keep_aspect` | bool | — | `true` |
-| | Frame style | `frame_style` | int | 0 none, 1 inner border, 2 device bezel | `0` |
+| | Frame style | `frame_style` | int | 0 none, 1 inner border, 2 device bezel, 3 browser, 4 MacBook, 5 iPhone | `0` |
 | | Frame color | `frame_color` | color | — | `0xFF000000` |
 | | Frame width (px) | `frame_width` | double | 0–40 | `2` |
 | | Screen corner radius (px) | `bg_corner_radius` | double | 0–200 | `18` |
@@ -297,6 +297,11 @@ they act on the filter selected in the dock, or the first active one):
 | `TopScreen_ToggleHighlight` | `TopScreen_ToggleHighlight — Toggle hotkey highlight (zoom)` |
 | `TopScreen_ToggleSpotlight` | `TopScreen_ToggleSpotlight — Toggle spotlight` |
 | `TopScreen_ToggleMagnifier` | `TopScreen_ToggleMagnifier — Toggle magnifier lens` |
+| `TopScreen_ProfileNext` | `TopScreen_ProfileNext — Next profile` |
+| `TopScreen_ProfilePrev` | `TopScreen_ProfilePrev — Previous profile` |
+| `TopScreen_ToggleClickSound` | `TopScreen_ToggleClickSound — Toggle click sound` |
+
+See [`STREAMDECK.md`](STREAMDECK.md) for OBS WebSocket / Stream Deck examples.
 
 ## Preset format
 

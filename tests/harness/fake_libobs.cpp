@@ -764,6 +764,19 @@ const char *obs_source_get_id(const obs_source_t *)
 	return "";
 }
 
+void obs_source_filter_add(obs_source_t *, obs_source_t *) {}
+
+bool obs_get_video_info(struct obs_video_info *)
+{
+	return false;
+}
+
+void obs_sceneitem_set_pos(obs_sceneitem_t *, const struct vec2 *) {}
+void obs_sceneitem_set_alignment(obs_sceneitem_t *, uint32_t) {}
+void obs_sceneitem_set_bounds_type(obs_sceneitem_t *, enum obs_bounds_type) {}
+void obs_sceneitem_set_bounds_alignment(obs_sceneitem_t *, uint32_t) {}
+void obs_sceneitem_set_bounds(obs_sceneitem_t *, const struct vec2 *) {}
+
 obs_source_t *obs_source_create(const char *, const char *, obs_data_t *, obs_data_t *)
 {
 	return nullptr;

@@ -35,6 +35,7 @@ void ZoomModel::reset(double now_ms)
 	focus_point_y_ = 0.5;
 	last_focus_ms_ = now_ms;
 	last_activity_ms_ = -1.0e9;
+	region_valid_ = false;
 	last_update_ms_ = now_ms;
 	velocity_ = 0.0;
 	started_ = true;
@@ -60,6 +61,29 @@ void ZoomModel::set_cursor(double x, double y, double now_ms)
 void ZoomModel::note_activity(double now_ms)
 {
 	last_activity_ms_ = now_ms;
+}
+
+bool ZoomModel::set_region(double x0, double y0, double x1, double y1)
+{
+	const double nx0 = clamp_range(std::min(x0, x1), 0.0, 1.0);
+	const double ny0 = clamp_range(std::min(y0, y1), 0.0, 1.0);
+	const double nx1 = clamp_range(std::max(x0, x1), 0.0, 1.0);
+	const double ny1 = clamp_range(std::max(y0, y1), 0.0, 1.0);
+	const bool valid = (nx1 - nx0) > 0.001 && (ny1 - ny0) > 0.001;
+	const bool changed = !region_valid_ || valid != region_valid_ ||
+			     nx0 != region_x0_ || ny0 != region_y0_ ||
+			     nx1 != region_x1_ || ny1 != region_y1_;
+	region_x0_ = nx0;
+	region_y0_ = ny0;
+	region_x1_ = nx1;
+	region_y1_ = ny1;
+	region_valid_ = valid;
+	return changed;
+}
+
+void ZoomModel::clear_region()
+{
+	region_valid_ = false;
 }
 
 void ZoomModel::spot_start_hold(double focus_x, double focus_y, double target, double in_ms,
@@ -198,10 +222,18 @@ void ZoomModel::update(double now_ms)
 	const bool smart_active =
 		smart_mode && (now_ms - last_activity_ms_) < cfg_.smart_hold_ms;
 	const bool active = auto_active || smart_active;
+	const bool region_focus = smart_active && region_valid_;
 
 	double target_zoom = manual_;
 	if (active)
 		target_zoom = manual_ * (cfg_.amount > 1.0 ? cfg_.amount : 1.0);
+	if (region_focus) {
+		const double rw = std::max(1.0e-4, region_x1_ - region_x0_);
+		const double rh = std::max(1.0e-4, region_y1_ - region_y0_);
+		const double fit = std::min(1.0 / rw, 1.0 / rh);
+		target_zoom = std::min(target_zoom, fit * 0.92);
+	}
+	target_zoom = clamp_range(target_zoom, 1.0, 8.0);
 	zoom_.set_target(target_zoom);
 
 	/*
@@ -218,10 +250,14 @@ void ZoomModel::update(double now_ms)
 		return follow + (center - follow) * camt;
 	};
 
-	const FocusLimits lx = focus_limits(focus_point_x_, target_zoom);
-	const FocusLimits ly = focus_limits(focus_point_y_, target_zoom);
-	fx_.set_target(clamp_range(focus_target(focus_point_x_), lx.lo, lx.hi));
-	fy_.set_target(clamp_range(focus_target(focus_point_y_), ly.lo, ly.hi));
+	const double focus_x = region_focus ? (region_x0_ + region_x1_) * 0.5
+					    : focus_point_x_;
+	const double focus_y = region_focus ? (region_y0_ + region_y1_) * 0.5
+					    : focus_point_y_;
+	const FocusLimits lx = focus_limits(focus_x, target_zoom);
+	const FocusLimits ly = focus_limits(focus_y, target_zoom);
+	fx_.set_target(clamp_range(focus_target(focus_x), lx.lo, lx.hi));
+	fy_.set_target(clamp_range(focus_target(focus_y), ly.lo, ly.hi));
 
 	const double prev_zoom = zoom_.value();
 	zoom_.update(dt);

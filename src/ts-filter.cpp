@@ -13,6 +13,7 @@
 #include "core/spotlight.hpp"
 #include "hotkeys/ts-hotkeys.hpp"
 #include "input/ts-input.hpp"
+#include "input/ts-active-window.hpp"
 #include "ts-monitor-origin.hpp"
 #include "render/ts-compositor.hpp"
 #include "render/ts-frame.hpp"
@@ -59,6 +60,9 @@ enum ActionBits : uint32_t {
 	A_TOGGLE_MAGNIFIER = 1u << 15,
 	A_TOGGLE_CURSOR = 1u << 16,
 	A_RESET_PROFILES = 1u << 17,
+	A_PROFILE_NEXT = 1u << 18,
+	A_PROFILE_PREV = 1u << 19,
+	A_TOGGLE_CLICK_SOUND = 1u << 20,
 };
 
 /**
@@ -87,6 +91,7 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 	core::SpotlightModel spotlight;
 	core::MagnifierModel magnifier;
 	MonitorOrigin monitor_origin_;
+	ActiveWindow active_window_;
 	FrameState frame;
 
 	uint32_t target_w = 0;
@@ -147,6 +152,7 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 	void update_input();
 	core::ContentArea update_content_area();
 	void update_pointer(const core::ContentArea &content);
+	void update_active_window();
 	void update_visual_state(const core::ContentArea &content);
 	void sync_parent_cursor(bool hide);
 	void restore_parent_cursor();
@@ -171,6 +177,9 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 	void toggle_spotlight() override { actions_.fetch_or(A_TOGGLE_SPOTLIGHT); }
 	void toggle_magnifier() override { actions_.fetch_or(A_TOGGLE_MAGNIFIER); }
 	void toggle_cursor() override { actions_.fetch_or(A_TOGGLE_CURSOR); }
+	void next_profile() override { actions_.fetch_or(A_PROFILE_NEXT); }
+	void prev_profile() override { actions_.fetch_or(A_PROFILE_PREV); }
+	void toggle_click_sound() override { actions_.fetch_or(A_TOGGLE_CLICK_SOUND); }
 	void reset_profiles() { actions_.fetch_or(A_RESET_PROFILES); }
 	FilterControl *filter_control() override { return this; }
 
@@ -553,19 +562,31 @@ void ts_filter_ctx::process_actions()
 		if (i >= 0)
 			request_preset(i);
 	}
-	if (act & A_PROFILE_SET) {
-		const int i = pending_profile_.exchange(-1);
-		if (i >= 0 && i < kProfileCount) {
-			/* Save pending edits to the profile we are leaving. */
-			flush_profile_if_dirty();
-			current_profile_ = i;
-			last_profile = i;
-			apply_profile(i);
-			reconfigure_models();
-			push_settings();
-			refresh_properties();
-			blog(LOG_INFO, "[TopScreen] profile activated: %s", core::profile_label(i));
-		}
+	int profile_target = -1;
+	if (act & A_PROFILE_SET)
+		profile_target = pending_profile_.exchange(-1);
+	else if (act & A_PROFILE_NEXT)
+		profile_target = (current_profile_ + 1) % kProfileCount;
+	else if (act & A_PROFILE_PREV)
+		profile_target = (current_profile_ + kProfileCount - 1) % kProfileCount;
+	if (profile_target >= 0 && profile_target < kProfileCount) {
+		/* Save pending edits to the profile we are leaving. */
+		flush_profile_if_dirty();
+		current_profile_ = profile_target;
+		last_profile = profile_target;
+		apply_profile(profile_target);
+		reconfigure_models();
+		push_settings();
+		refresh_properties();
+		blog(LOG_INFO, "[TopScreen] profile activated: %s",
+		     core::profile_label(profile_target));
+	}
+	if (act & A_TOGGLE_CLICK_SOUND) {
+		cfg.click_sound.enabled = !cfg.click_sound.enabled;
+		push_settings();
+		mark_profile_dirty();
+		blog(LOG_INFO, "[TopScreen] click sound: %s",
+		     cfg.click_sound.enabled ? "on" : "off");
 	}
 	if (act & A_TOGGLE_HIGHLIGHT) {
 		if (!cfg.effects_enabled || !cfg.highlight.hotkey_enabled) {
@@ -855,8 +876,39 @@ void ts_filter_ctx::update_pointer(const core::ContentArea &content)
 	}
 }
 
+void ts_filter_ctx::update_active_window()
+{
+	active_window_.poll(time_ms);
+	if (cfg.zoom.mode != static_cast<int>(core::ZoomMode::Smart)) {
+		zoom.clear_region();
+		return;
+	}
+	const ActiveWindowRect &aw = active_window_.rect();
+	if (!aw.valid || !target_w || !target_h) {
+		zoom.clear_region();
+		return;
+	}
+
+	const core::Monitor mon{monitor_origin_.x(), monitor_origin_.y(),
+				static_cast<double>(target_w),
+				static_cast<double>(target_h)};
+	const core::Vec2f a = core::screen_to_content(aw.x, aw.y, mon);
+	const core::Vec2f b = core::screen_to_content(aw.x + aw.width, aw.y + aw.height, mon);
+	const double x0 = core::clamp01(std::min(a.x, b.x));
+	const double y0 = core::clamp01(std::min(a.y, b.y));
+	const double x1 = core::clamp01(std::max(a.x, b.x));
+	const double y1 = core::clamp01(std::max(a.y, b.y));
+	if (x1 - x0 > 0.01 && y1 - y0 > 0.01) {
+		if (zoom.set_region(x0, y0, x1, y1))
+			zoom.note_activity(time_ms);
+	} else {
+		zoom.clear_region();
+	}
+}
+
 void ts_filter_ctx::update_visual_state(const core::ContentArea &content)
 {
+	update_active_window();
 	const double target_w = static_cast<double>(this->target_w);
 	const double target_h = static_cast<double>(this->target_h);
 	clicks.tick(time_ms);

@@ -206,7 +206,8 @@ TEST(integration_hotkeys_all_actions)
 			       "TopScreen_ProfileJ",	      "TopScreen_ProfileSave",
 			       "TopScreen_ToggleHighlight",
 			       "TopScreen_ToggleSpotlight", "TopScreen_ToggleMagnifier",
-			       "TopScreen_ToggleCursor"};
+			       "TopScreen_ToggleCursor",    "TopScreen_ProfileNext",
+			       "TopScreen_ProfilePrev",     "TopScreen_ToggleClickSound"};
 	for (const char *n : names)
 		REQUIRE(fakeobs::find_hotkey(n) >= 0);
 
@@ -619,7 +620,8 @@ TEST(integration_registers_all_hotkeys)
 			       "TopScreen_ProfileJ",	      "TopScreen_ProfileSave",
 			       "TopScreen_ToggleHighlight",
 			       "TopScreen_ToggleSpotlight", "TopScreen_ToggleMagnifier",
-			       "TopScreen_ToggleCursor"};
+			       "TopScreen_ToggleCursor",    "TopScreen_ProfileNext",
+			       "TopScreen_ProfilePrev",     "TopScreen_ToggleClickSound"};
 	const int expected = static_cast<int>(sizeof(names) / sizeof(names[0]));
 
 	/* The harness keeps earlier registrations, so measure this filter's delta. */
@@ -636,7 +638,7 @@ TEST(integration_registers_all_hotkeys)
 }
 
 /* Frontend hotkeys are process-wide: a second filter must NOT register a
- * second set of 22, and destroying one filter must keep them alive. */
+ * second set of 25, and destroying one filter must keep them alive. */
 TEST(integration_hotkeys_shared_between_filters)
 {
 	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
@@ -651,7 +653,7 @@ TEST(integration_hotkeys_shared_between_filters)
 	REQUIRE(ctx1 != nullptr);
 	REQUIRE(ctx2 != nullptr);
 
-	CHECK_EQ(fakeobs::hotkey_count() - before, 22);
+	CHECK_EQ(fakeobs::hotkey_count() - before, 25);
 	CHECK(fakeobs::hotkeys_active_from(before));
 
 	/* Destroying one filter keeps the shared hotkeys working. */
@@ -1066,6 +1068,34 @@ TEST(integration_profile_keeps_user_edit)
 	CHECK_EQ(obs_data_get_int(filter->settings, core::keys::kClickLeftColor),
 		 static_cast<long long>(0xFF112233));
 
+	destroy_filter(ctx);
+}
+
+TEST(integration_profile_next_prev_and_click_sound_hotkeys)
+{
+	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
+	obs_source_t *parent = make_parent(1920, 1080);
+	obs_source_t *filter = fakeobs::make_source(&ts_filter_source_info, parent, 0, 0);
+	void *ctx = create_filter(filter);
+	REQUIRE(ctx != nullptr);
+	FilterControl *ctrl = registry_first();
+	REQUIRE(ctrl != nullptr);
+	ctrl->select_profile(0);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+
+	fakeobs::invoke_hotkey(fakeobs::find_hotkey("TopScreen_ProfileNext"), true);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK_EQ(ctrl->current_profile(), 1);
+
+	fakeobs::invoke_hotkey(fakeobs::find_hotkey("TopScreen_ProfilePrev"), true);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK_EQ(ctrl->current_profile(), 0);
+
+	const bool before =
+		obs_data_get_bool(filter->settings, core::keys::kClickSoundEnabled);
+	fakeobs::invoke_hotkey(fakeobs::find_hotkey("TopScreen_ToggleClickSound"), true);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK_EQ(obs_data_get_bool(filter->settings, core::keys::kClickSoundEnabled), !before);
 	destroy_filter(ctx);
 }
 

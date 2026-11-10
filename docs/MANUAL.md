@@ -98,7 +98,7 @@ Places the screen "floating" over a background, with corners and shadow.
 | ↳ **Enable shadow** | Turns the shadow behind the screen on/off |
 | ↳ **Shadow opacity (0–1)** | How strong the shadow is (0 = invisible, 1 = strong) |
 | ↳ **Shadow blur (px)** | How soft and large the shadow is |
-| **Frame style** | `None`, `Inner border` or `Device bezel` around the captured screen |
+| **Frame style** | `None`, `Inner border`, `Device bezel`, `Browser window`, `MacBook` or `iPhone` around the captured screen (shader-drawn) |
 | **Frame color / width** | Color and thickness of the frame |
 | ↳ **Shadow offset X (px)** | Moves the shadow left/right |
 | ↳ **Shadow offset Y (px)** | Moves the shadow up/down (positive = down) |
@@ -181,7 +181,9 @@ Each button has its own independent effect.
 
 ### Webcam bubble
 
-Add a **Video Capture Device** source, then apply the **TopScreen Webcam
+Use **Webcam → Add webcam bubble source** in the TopScreen filter (or the dock
+button) to create a video capture source with the bubble filter already applied
+and fitted to the canvas. You can also add a **Video Capture Device** source, then apply the **TopScreen Webcam
 Bubble** filter. The filter masks the camera into a circle or rounded square
 with transparent surroundings, configurable anchor/offset, border and shadow.
 The rest of the frame is transparent, so the bubble can be placed over the
@@ -194,6 +196,7 @@ scene like any other source.
 | **Left / Right click sound** | 26 bundled sounds — real mouse recordings (tight/single/right), Retro, Optical, Muted, Soft, Hard, Tick, Bubble, Thock, plus the remaining custom pack (typewriter, stapler, old camera, etc.) |
 | **Click sound volume (0–1)** | Sound volume inside OBS |
 | **Add click sound to the current scene** | Adds the `TopScreen Click Sound` audio source, which routes clicks through the OBS mixer |
+| **Add click sound to all scenes** | Adds the audio source to every scene in the collection |
 | **Play on left / right click** | Which buttons trigger it |
 
 > Switching sounds applies immediately (no restart needed).
@@ -210,6 +213,7 @@ scene like any other source.
 | **Zoom transition time (ms)** | Animation duration |
 | **Return to normal after idle (ms)** | After stopping, returns to normal |
 | **Smart hold after action (ms)** | Smart mode stays zoomed for this long after the last click/drag/key |
+| **Active window** | On Windows/X11, Smart mode also focuses the foreground window when it changes |
 | **Motion blur while zooming** | Optional radial blur during zoom transitions |
 | **Motion blur strength (0–1)** | How strong the radial blur is |
 | **Pan intensity (0 = off)** | How much the screen "follows" the mouse |
@@ -348,11 +352,12 @@ section lists Highlighter before Keystrokes.
 
 ## 6. Hotkeys
 
-Default profile hotkeys are **Ctrl+Shift+Alt+A…J**. In **Settings → Hotkeys**, search for `TopScreen`: all 22 actions are labelled
+Default profile hotkeys are **Ctrl+Shift+Alt+A…J**. In **Settings → Hotkeys**, search for `TopScreen`: all 25 actions are labelled
 **`TopScreen_...`** (for example `TopScreen_ProfileA — Activate profile A`), so
 they are easy to spot. They are global hotkeys, so they
 act on the **target filter selected in the dock** (or the first active one
-when nothing is selected):
+when nothing is selected). See [`STREAMDECK.md`](STREAMDECK.md) for OBS
+WebSocket / Stream Deck action names:
 
 | Action | Effect |
 |------|--------|
@@ -361,7 +366,9 @@ when nothing is selected):
 | **Zoom in / Zoom out / Reset zoom** | Manual zoom |
 | **Next preset / Previous preset** | Switch preset |
 | **Activate profile A … J** | Applies the profile (all of its settings) |
+| **Next / previous profile** | Cycles the ten profiles without pressing A–J |
 | **Save to current profile** | Writes the adjustments to the active profile |
+| **Toggle click sound** | Enables/disables the click audio without opening Properties |
 | **Toggle highlight** | Independent zoom toggle: first press zooms at the cursor, second press releases/returns (enable it under Highlighter) |
 | **Toggle spotlight** | Drops/zooms the spotlight in or out at the cursor |
 

@@ -13,6 +13,7 @@
 #include "ts-registry.hpp"
 #include "ts-scene-profiles.hpp"
 #include "ts-version.hpp"
+#include "webcam/ts-webcam-source.hpp"
 #include "ts-wallpapers.hpp"
 
 #include <obs-frontend-api.h>
@@ -602,6 +603,16 @@ void add_profiles_section(obs_properties_t *props, void *data)
 	obs_properties_add_text(prof, "profile_hint", obs_module_text("Profile.Hint"), OBS_TEXT_INFO);
 	obs_properties_add_text(prof, "profile_scene_hint", obs_module_text("Profile.SceneHint"),
 				OBS_TEXT_INFO);
+	std::string scene_list;
+	for (const auto &entry : scene_profiles::list()) {
+		scene_list += entry.first;
+		scene_list += " -> ";
+		scene_list += profile_label(entry.second);
+		scene_list += '\n';
+	}
+	if (scene_list.empty())
+		scene_list = obs_module_text("Profile.SceneListNone");
+	obs_properties_add_text(prof, "profile_scene_list", scene_list.c_str(), OBS_TEXT_INFO);
 	obs_property_t *assign_scene = obs_properties_add_button2(
 		prof, "profile_assign_scene", obs_module_text("Profile.AssignSceneButton"),
 		assign_scene_profile_clicked, data);
@@ -749,6 +760,9 @@ void add_background_section(obs_properties_t *props, obs_properties_t *capture, 
 	obs_property_list_add_int(fstyle, obs_module_text("Frame.Style.None"), 0);
 	obs_property_list_add_int(fstyle, obs_module_text("Frame.Style.Inner"), 1);
 	obs_property_list_add_int(fstyle, obs_module_text("Frame.Style.Bezel"), 2);
+	obs_property_list_add_int(fstyle, obs_module_text("Frame.Style.Browser"), 3);
+	obs_property_list_add_int(fstyle, obs_module_text("Frame.Style.MacBook"), 4);
+	obs_property_list_add_int(fstyle, obs_module_text("Frame.Style.iPhone"), 5);
 	obs_property_set_modified_callback(fstyle, frame_style_changed);
 	obs_properties_add_color(frame, kFrameColor, obs_module_text("Frame.Color"));
 	add_range_slider(
@@ -1183,6 +1197,28 @@ void add_keys_section(obs_properties_t *props, obs_properties_t *overlays, obs_d
 	keys_options_changed(props, nullptr, settings);
 }
 
+bool add_webcam_source_clicked(obs_properties_t *props, obs_property_t *p, void *data)
+{
+	(void)props;
+	(void)p;
+	(void)data;
+	return webcam_source::add_bubble_source();
+}
+
+void add_webcam_section(obs_properties_t *props, obs_properties_t *overlays)
+{
+	obs_properties_t *webcam = obs_properties_create();
+	obs_properties_add_text(webcam, "webcam_main_hint", obs_module_text("Webcam.AddHint"),
+				OBS_TEXT_INFO);
+	obs_property_t *add = obs_properties_add_button2(
+		webcam, "webcam_add_source", obs_module_text("Webcam.AddButton"),
+		add_webcam_source_clicked, nullptr);
+	set_tip(add, obs_module_text("Webcam.Tip.Add"));
+	obs_properties_add_group(overlays, "grp_webcam", obs_module_text("Webcam.MainGroup"),
+				 OBS_GROUP_NORMAL, webcam);
+	(void)props;
+}
+
 void add_monitor_section(obs_properties_t *advanced)
 {
 	/* ---------------- Monitor origin ---------------- */
@@ -1212,6 +1248,7 @@ void add_tooltips(obs_properties_t *props)
 	tip("grp_bg_image", obs_module_text("Tooltip.GroupWallpaper"));
 	tip("grp_shadow", obs_module_text("Tooltip.GroupShadow"));
 	tip("grp_frame", obs_module_text("Tooltip.GroupFrame"));
+	tip("grp_webcam", obs_module_text("Tooltip.GroupWebcam"));
 	tip("grp_cursor", obs_module_text("Tooltip.GroupCursor"));
 	tip("grp_click_left", obs_module_text("Tooltip.GroupClickLeft"));
 	tip("grp_click_right", obs_module_text("Tooltip.GroupClickRight"));
@@ -1390,6 +1427,7 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 	/* Highlight is registered before keys to keep that UI order. */
 	add_highlight_section(props, overlays, settings);
 	add_keys_section(props, overlays, settings);
+	add_webcam_section(props, overlays);
 
 	add_monitor_section(advanced);
 	add_profile_backup_section(props, data);

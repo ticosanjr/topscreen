@@ -43,7 +43,7 @@ Mode: `auto` reacts on its own · `hotkey` only by hotkey · `always` always on.
 | Feature | Mode | Status | Notes |
 |---------|------|--------|-------------|
 | Automatic zoom (click/cursor) | auto | ✅ | returns to normal when idle |
-| Smart zoom | auto | ✅ | action-driven with configurable hold and return |
+| Smart zoom | auto | ✅ | action-driven with configurable hold and return; focuses the foreground window on Windows/X11 |
 | Motion blur | auto | ✅ | optional radial blur while zooming |
 | Manual zoom in/out/reset | hotkey | ✅ | |
 | Light pan following the mouse | auto | ✅ | |

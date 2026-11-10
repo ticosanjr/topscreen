@@ -145,12 +145,14 @@ if(TOPSCREEN_BUILD_PLUGIN)
         src/ts-wallpapers.cpp
         src/render/ts-compositor.cpp
         src/webcam/ts-webcam-filter.cpp
+        src/webcam/ts-webcam-source.cpp
     src/render/ts-wallpaper.cpp
         src/render/ts-text.cpp
         src/input/ts-input.cpp
         src/input/ts-monitor.cpp
         src/input/ts-input-win.cpp
         src/input/ts-input-linux.cpp
+        src/input/ts-active-window.cpp
         src/input/ts-input-none.cpp
         src/hotkeys/ts-hotkeys.cpp
         src/audio/ts-click-audio.cpp

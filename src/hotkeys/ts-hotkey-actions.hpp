@@ -36,6 +36,9 @@ enum HotkeyAction {
 	HK_ToggleSpotlight,
 	HK_ToggleMagnifier,
 	HK_ToggleCursor,
+	HK_ProfileNext,
+	HK_ProfilePrev,
+	HK_ToggleClickSound,
 	HK_Count,
 };
 
@@ -54,6 +57,9 @@ inline constexpr const char *kHotkeyNames[HK_Count] = {
 	"TopScreen_ToggleSpotlight",
 	"TopScreen_ToggleMagnifier",
 	"TopScreen_ToggleCursor",
+	"TopScreen_ProfileNext",
+	"TopScreen_ProfilePrev",
+	"TopScreen_ToggleClickSound",
 };
 
 /** Locale keys, index = HotkeyAction. */
@@ -80,6 +86,9 @@ inline constexpr const char *kHotkeyLabelKeys[HK_Count] = {
 	"Hotkey.ToggleSpotlight",
 	"Hotkey.ToggleMagnifier",
 	"Hotkey.ToggleCursor",
+	"Hotkey.ProfileNext",
+	"Hotkey.ProfilePrev",
+	"Hotkey.ToggleClickSound",
 };
 
 inline constexpr int kHotkeyCount = HK_Count;

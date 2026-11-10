@@ -56,11 +56,12 @@ covered by tests) and the **OBS layer** (thin, it only wires the core to libobs)
 | Compositor | `src/render/ts-compositor.{hpp,cpp}` | Shader effect + parameter upload |
 | Frame | `src/render/ts-frame.hpp` | Per-frame state (cursor/zoom/clicks) |
 | Input | `src/input/ts-input.*` + `ts-input-{win,linux,none}.cpp` | Cursor/button/key state (one backend per platform) |
+| Active window | `src/input/ts-active-window.*` | Foreground window rect for Smart Zoom (Windows/X11) |
 | Hotkeys | `src/hotkeys/ts-hotkeys.{hpp,cpp}` | Hotkey registration + callbacks |
 | Text | `src/render/ts-text.{hpp,cpp}` + `src/core/font_atlas.*` | Key overlay (font atlas + band) |
 | Profiles | `src/core/profiles.{hpp,cpp}` + `ts-profile-store.*` + `ts-profile-bundle.*` + `ts-scene-profiles.*` | A–J seeds, slot store, export/import bundle, scene mappings |
 | Audio | `src/audio/ts-click-sound.*` + `ts-click-audio.*` + `ts-click-source.*` | Click WAV decode, process-wide mix queue and OBS audio source |
-| Webcam | `src/webcam/ts-webcam-filter.*` + `data/effects/webcam.effect` | Independent webcam bubble filter |
+| Webcam | `src/webcam/ts-webcam-filter.*` + `ts-webcam-source.*` + `data/effects/webcam.effect` | Independent webcam bubble filter and source action |
 | UI | `src/ui/ts-dock.{hpp,cpp}` | Qt dock (optional) |
 
 ## Render pipeline

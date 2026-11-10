@@ -665,15 +665,65 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 		col = mb;
 	}
 
-	// Optional inner border / device bezel around the captured screen.
+	// Frame styles: inner border, device bezel, browser chrome, MacBook base
+	// or iPhone notch. All are drawn by the shader (no external assets).
 	if (frame_style > 0.5 && frame_width > 0.01) {
-		float inner = smoothstep(-frame_width - 1.0, -frame_width + 1.0, dc) *
+		float fw = max(frame_width, 2.0);
+		float inner = smoothstep(-fw - 1.0, -fw + 1.0, dc) *
 			      (1.0 - smoothstep(-1.0, 1.0, dc));
 		float outer = smoothstep(-1.0, 1.0, dc) *
-			      (1.0 - smoothstep(frame_width - 1.0, frame_width + 1.0, dc));
-		float f = frame_style < 1.5 ? inner : outer;
-		col.rgb = lerp(col.rgb, frame_color.rgb, f * frame_color.a);
-		col.a = max(col.a, f * frame_color.a);
+			      (1.0 - smoothstep(fw - 1.0, fw + 1.0, dc));
+
+		if (frame_style < 1.5) {
+			col.rgb = lerp(col.rgb, frame_color.rgb, inner * frame_color.a);
+			col.a = max(col.a, inner * frame_color.a);
+		} else {
+			// Every device style keeps the outer bezel.
+			col.rgb = lerp(col.rgb, frame_color.rgb, outer * frame_color.a);
+			col.a = max(col.a, outer * frame_color.a);
+
+			if (frame_style > 2.5 && frame_style < 3.5) {
+				float bar_h = max(fw * 3.0, 18.0);
+				float top = center.y - content_half.y;
+				float2 bar_center = float2(center.x, top + bar_h * 0.5);
+				float bar = 1.0 - smoothstep(-1.0, 1.0,
+					sd_round_box(px - bar_center,
+						     float2(content_half.x, bar_h * 0.5), 0.0));
+				bar *= mask;
+				col.rgb = lerp(col.rgb, frame_color.rgb, bar * frame_color.a);
+				col.a = max(col.a, bar * frame_color.a);
+
+				float r = bar_h * 0.16;
+				float2 d0 = float2(center.x - content_half.x + bar_h * 0.8,
+						   top + bar_h * 0.5);
+				float dot0 = 1.0 - smoothstep(-1.0, 1.0, len2(px - d0) - r);
+				col.rgb = lerp(col.rgb, float3(1.0, 0.35, 0.35), dot0 * bar);
+				float2 d1 = d0 + float2(bar_h * 0.55, 0.0);
+				float dot1 = 1.0 - smoothstep(-1.0, 1.0, len2(px - d1) - r);
+				col.rgb = lerp(col.rgb, float3(1.0, 0.75, 0.25), dot1 * bar);
+				float2 d2 = d1 + float2(bar_h * 0.55, 0.0);
+				float dot2 = 1.0 - smoothstep(-1.0, 1.0, len2(px - d2) - r);
+				col.rgb = lerp(col.rgb, float3(0.35, 0.85, 0.45), dot2 * bar);
+			} else if (frame_style > 3.5 && frame_style < 4.5) {
+				float2 base_center = float2(center.x,
+					center.y + content_half.y + fw * 1.2);
+				float2 base_half = float2(content_half.x + fw * 2.2, fw);
+				float base = 1.0 - smoothstep(-1.0, 1.0,
+					sd_round_box(px - base_center, base_half, fw));
+				col.rgb = lerp(col.rgb, frame_color.rgb, base * frame_color.a);
+				col.a = max(col.a, base * frame_color.a);
+			} else if (frame_style > 4.5) {
+				float2 notch_center = float2(center.x,
+					center.y - content_half.y + fw * 1.8);
+				float2 notch_half = float2(max(content_half.x * 0.25, 24.0),
+							   fw * 1.2);
+				float notch = 1.0 - smoothstep(-1.0, 1.0,
+					sd_round_box(px - notch_center, notch_half, fw));
+				notch *= mask;
+				col.rgb = lerp(col.rgb, frame_color.rgb, notch * frame_color.a);
+				col.a = max(col.a, notch * frame_color.a);
+			}
+		}
 	}
 
 	// Click and highlight overlays stay sharp above the lens and the blur.

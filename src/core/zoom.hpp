@@ -66,6 +66,10 @@ public:
 	/** Marks an action (click/drag/typing) for Smart mode. */
 	void note_activity(double now_ms);
 
+	/** Smart mode: focus/fit this source rectangle (0..1). */
+	bool set_region(double x0, double y0, double x1, double y1);
+	void clear_region();
+
 	/**
 	 * Starts a hold-to-zoom gesture at an ABSOLUTE zoom target.
 	 *
@@ -124,6 +128,11 @@ private:
 	double last_focus_ms_ = 0.0;
 	double last_activity_ms_ = -1.0e9;
 	double velocity_ = 0.0;
+	bool region_valid_ = false;
+	double region_x0_ = 0.0;
+	double region_y0_ = 0.0;
+	double region_x1_ = 1.0;
+	double region_y1_ = 1.0;
 	double last_update_ms_ = 0.0;
 	bool started_ = false;
 };

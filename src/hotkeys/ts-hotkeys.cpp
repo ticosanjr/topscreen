@@ -1,6 +1,8 @@
 #include "ts-hotkeys.hpp"
 
+#include "core/profiles.hpp"
 #include "ts-registry.hpp"
+#include "ts-scene-profiles.hpp"
 
 #include <obs-frontend-api.h>
 
@@ -233,6 +235,21 @@ void frontend_profile_event(enum obs_frontend_event event, void *data)
 	if (event == OBS_FRONTEND_EVENT_PROFILE_CHANGED) {
 		Hotkeys::reload_saved_bindings();
 		blog(LOG_INFO, "[TopScreen] OBS profile changed: hotkey bindings reloaded");
+	} else if (event == OBS_FRONTEND_EVENT_SCENE_CHANGED) {
+		obs_source_t *scene = obs_frontend_get_current_scene();
+		if (!scene)
+			return;
+		const char *name = obs_source_get_name(scene);
+		const int profile = name ? scene_profiles::get(name) : -1;
+		if (profile >= 0) {
+			for (const auto &entry : registry_list()) {
+				if (entry.control)
+					entry.control->select_profile(profile);
+			}
+			blog(LOG_INFO, "[TopScreen] scene profile: %s -> %s", name,
+			     core::profile_label(profile));
+		}
+		obs_source_release(scene);
 	}
 }
 } // namespace

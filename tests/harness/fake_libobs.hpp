@@ -67,6 +67,9 @@ struct obs_source {
 
 namespace fakeobs {
 
+/** Name returned by obs_frontend_get_current_scene(). */
+void set_current_scene_name(const std::string &name);
+
 /** Sets the data directory resolved by obs_module_file(). */
 void set_data_dir(const std::string &dir);
 

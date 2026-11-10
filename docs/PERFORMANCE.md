@@ -39,19 +39,17 @@ counter first and only allocates/copies the target snapshot when a filter is
 added or removed. The selector is still rebuilt when needed, but the idle path
 does not allocate a vector of strings on every tick.
 
-## Click audio (Linux)
+## Click audio
 
-The old path spawned a new `paplay`/`pw-play`/`aplay` process for every click.
-When `paplay` is available, TopScreen now keeps one raw PCM stream open and
-writes the click samples to it. The one-shot spawn remains only as a fallback.
-Windows continues to use the asynchronous `PlaySoundW` path.
+Clicks are decoded once into a shared WAV buffer and queued on a process-wide
+mix bus. The `TopScreen Click Sound` OBS audio source drains the queue at the
+OBS sample rate and outputs float PCM through the normal mixer. No external
+player process is spawned and no system-audio capture is required.
 
 ## Cursor follow modes
 
-`Exact` resets the cursor position; `Glide A→B` runs one cubic interpolation per frame.
-`GlideSampled` updates the destination at a configurable interval (default
-90 ms) and `GlideAB` uses one eased segment per accepted target. Both reuse the
-same cursor state and add no GPU work.
+`Exact` resets the cursor position; `Glide A→B` runs one cubic interpolation per
+frame. Both reuse the same cursor state and add no GPU work.
 
 ## Water ripple and magnifier
 

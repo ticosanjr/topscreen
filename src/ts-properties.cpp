@@ -1,5 +1,6 @@
 #include "ts-properties.hpp"
 
+#include "audio/ts-click-source.hpp"
 #include "core/config_limits.hpp"
 #include "core/easing.hpp"
 #include "core/cursor_catalog.hpp"
@@ -9,8 +10,12 @@
 #include "core/types.hpp"
 #include "hotkeys/ts-hotkeys.hpp"
 #include "ts-profiles-ui.hpp"
+#include "ts-registry.hpp"
+#include "ts-scene-profiles.hpp"
 #include "ts-version.hpp"
 #include "ts-wallpapers.hpp"
+
+#include <obs-frontend-api.h>
 
 #include <cstring>
 #include <string>
@@ -480,6 +485,14 @@ bool click_sound_side_changed(obs_properties_t *props, obs_property_t *p, obs_da
 	return click_sound_changed(props, nullptr, settings);
 }
 
+bool add_click_audio_clicked(obs_properties_t *props, obs_property_t *p, void *data)
+{
+	(void)props;
+	(void)p;
+	(void)data;
+	return ts_click_audio_add_to_current_scene();
+}
+
 bool zoom_mode_changed(obs_properties_t *props, obs_property_t *p, obs_data_t *settings)
 {
 	(void)p;
@@ -496,7 +509,38 @@ bool zoom_mode_changed(obs_properties_t *props, obs_property_t *p, obs_data_t *s
 
 namespace {
 
-void add_profiles_section(obs_properties_t *props)
+bool assign_scene_profile_clicked(obs_properties_t *props, obs_property_t *p, void *data)
+{
+	(void)props;
+	(void)p;
+	auto *control = static_cast<FilterControl *>(data);
+	obs_source_t *scene = obs_frontend_get_current_scene();
+	if (!control || !scene) {
+		if (scene)
+			obs_source_release(scene);
+		return false;
+	}
+	const char *name = obs_source_get_name(scene);
+	const bool ok = name && scene_profiles::assign(name, control->current_profile());
+	obs_source_release(scene);
+	return ok;
+}
+
+bool clear_scene_profile_clicked(obs_properties_t *props, obs_property_t *p, void *data)
+{
+	(void)props;
+	(void)p;
+	(void)data;
+	obs_source_t *scene = obs_frontend_get_current_scene();
+	if (!scene)
+		return false;
+	const char *name = obs_source_get_name(scene);
+	const bool ok = name && scene_profiles::clear(name);
+	obs_source_release(scene);
+	return ok;
+}
+
+void add_profiles_section(obs_properties_t *props, void *data)
 {
 	/* ---------------- Profiles (at the top) ---------------- */
 	obs_properties_t *prof = obs_properties_create();
@@ -507,6 +551,16 @@ void add_profiles_section(obs_properties_t *props)
 	for (int i = 0; i < kProfileCount; ++i)
 		obs_property_list_add_int(plist, profile_label(i), i);
 	obs_properties_add_text(prof, "profile_hint", obs_module_text("Profile.Hint"), OBS_TEXT_INFO);
+	obs_properties_add_text(prof, "profile_scene_hint", obs_module_text("Profile.SceneHint"),
+				OBS_TEXT_INFO);
+	obs_property_t *assign_scene = obs_properties_add_button2(
+		prof, "profile_assign_scene", obs_module_text("Profile.AssignSceneButton"),
+		assign_scene_profile_clicked, data);
+	set_tip(assign_scene, obs_module_text("Tooltip.ProfileAssignScene"));
+	obs_property_t *clear_scene = obs_properties_add_button2(
+		prof, "profile_clear_scene", obs_module_text("Profile.ClearSceneButton"),
+		clear_scene_profile_clicked, data);
+	set_tip(clear_scene, obs_module_text("Tooltip.ProfileClearScene"));
 
 	obs_properties_add_group(props, "grp_profiles", obs_module_text("Group.Profiles"), OBS_GROUP_NORMAL, prof);
 }
@@ -761,6 +815,10 @@ void add_click_sound_section(obs_properties_t *props, obs_properties_t *pointer,
 	add_range_slider(
 		snd, kClickSoundVolume, obs_module_text("ClickSound.Volume"),
 		limits::kUnitRange);
+	obs_property_t *add_audio = obs_properties_add_button2(
+		snd, "click_sound_add_btn", obs_module_text("ClickSound.AddAudioButton"),
+		add_click_audio_clicked, nullptr);
+	set_tip(add_audio, obs_module_text("Tooltip.ClickSoundAddAudio"));
 	obs_properties_add_group(pointer, "grp_sound", obs_module_text("Group.ClickSound"), OBS_GROUP_NORMAL, snd);
 	click_sound_changed(props, nullptr, settings);
 }
@@ -1208,7 +1266,7 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 	const std::string version_line = std::string("TopScreen ") + kVersion;
 	obs_properties_add_text(props, "topscreen_version", version_line.c_str(), OBS_TEXT_INFO);
 
-	add_profiles_section(props);
+	add_profiles_section(props, data);
 	obs_properties_add_bool(props, kEffectsEnabled, obs_module_text("Enabled"));
 
 	obs_properties_t *capture = obs_properties_create();

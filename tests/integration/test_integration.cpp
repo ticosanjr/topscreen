@@ -1,6 +1,7 @@
 #include "harness/fake_libobs.hpp"
 #include "test_framework.hpp"
 
+#include <obs-frontend-api.h>
 #include <obs-module.h>
 
 #include <chrono>
@@ -24,6 +25,7 @@
 #include "core/profiles.hpp"
 #include "core/types.hpp"
 #include "ts-filter.hpp"
+#include "ts-scene-profiles.hpp"
 #include "ts-properties.hpp"
 #include "ts-profiles-ui.hpp"
 #include "render/ts-wallpaper.hpp"
@@ -1064,6 +1066,33 @@ TEST(integration_profile_keeps_user_edit)
 	CHECK_EQ(obs_data_get_int(filter->settings, core::keys::kClickLeftColor),
 		 static_cast<long long>(0xFF112233));
 
+	destroy_filter(ctx);
+}
+
+TEST(integration_scene_profiles_switch_on_scene_change)
+{
+	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
+	scene_profiles::clear("Scene A");
+
+	fakeobs::set_current_scene_name("Scene A");
+	obs_source_t *parent = make_parent(1920, 1080);
+	obs_source_t *filter = fakeobs::make_source(&ts_filter_source_info, parent, 0, 0);
+	void *ctx = create_filter(filter);
+	REQUIRE(ctx != nullptr);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+
+	FilterControl *ctrl = registry_first();
+	REQUIRE(ctrl != nullptr);
+	CHECK(scene_profiles::assign("Scene A", 4));
+	CHECK_EQ(scene_profiles::get("Scene A"), 4);
+
+	fakeobs::fire_frontend_event(OBS_FRONTEND_EVENT_SCENE_CHANGED);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK_EQ(ctrl->current_profile(), 4);
+
+	scene_profiles::clear("Scene A");
+	CHECK_EQ(scene_profiles::get("Scene A"), -1);
+	fakeobs::set_current_scene_name("Scene");
 	destroy_filter(ctx);
 }
 

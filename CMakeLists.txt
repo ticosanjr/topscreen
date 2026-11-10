@@ -137,6 +137,7 @@ if(TOPSCREEN_BUILD_PLUGIN)
         src/ts-parent-cursor.cpp
         src/ts-profile-bundle.cpp
         src/ts-profile-store.cpp
+        src/ts-scene-profiles.cpp
         src/ts-properties.cpp
         src/ts-presets.cpp
         src/ts-registry.cpp
@@ -150,7 +151,9 @@ if(TOPSCREEN_BUILD_PLUGIN)
         src/input/ts-input-linux.cpp
         src/input/ts-input-none.cpp
         src/hotkeys/ts-hotkeys.cpp
+        src/audio/ts-click-audio.cpp
         src/audio/ts-click-sound.cpp
+        src/audio/ts-click-source.cpp
         ${TOPSCREEN_CORE_SOURCES}
     )
 

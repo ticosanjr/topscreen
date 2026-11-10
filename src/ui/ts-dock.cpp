@@ -24,10 +24,12 @@
 #include <string>
 #include <vector>
 
+#include "audio/ts-click-source.hpp"
 #include "core/keys.hpp"
 #include "core/profiles.hpp"
 #include "core/profiles_io.hpp"
 #include "ts-registry.hpp"
+#include "ts-scene-profiles.hpp"
 #include "ts-version.hpp"
 
 namespace topscreen {
@@ -102,6 +104,31 @@ public:
 				c->save_profile();
 		});
 		root->addWidget(saveProfile);
+
+		auto *stream_row = new QHBoxLayout();
+		add_audio_btn_ = new QPushButton(obs_module_text("Dock.AddClickSound"), this);
+		assign_scene_btn_ = new QPushButton(obs_module_text("Dock.AssignSceneProfile"), this);
+		QObject::connect(add_audio_btn_, &QPushButton::clicked, this, [this]() {
+			if (ts_click_audio_add_to_current_scene())
+				io_status_->setText(obs_module_text("Dock.ClickSoundAdded"));
+			else
+				io_status_->setText(obs_module_text("Dock.ClickSoundFailed"));
+		});
+		QObject::connect(assign_scene_btn_, &QPushButton::clicked, this, [this]() {
+			FilterControl *c = registry_first();
+			obs_source_t *scene = obs_frontend_get_current_scene();
+			const char *name = scene ? obs_source_get_name(scene) : nullptr;
+			const bool ok = c && name && scene_profiles::assign(name, c->current_profile());
+			if (scene)
+				obs_source_release(scene);
+			if (ok)
+				io_status_->setText(obs_module_text("Dock.SceneProfileAssigned"));
+			else
+				io_status_->setText(obs_module_text("Dock.SceneProfileFailed"));
+		});
+		stream_row->addWidget(add_audio_btn_);
+		stream_row->addWidget(assign_scene_btn_);
+		root->addLayout(stream_row);
 
 		auto *io_row = new QHBoxLayout();
 		export_btn_ = new QPushButton(obs_module_text("Dock.ExportProfiles"), this);
@@ -249,6 +276,8 @@ private:
 		profile_->setEnabled(has);
 		export_btn_->setEnabled(has);
 		import_btn_->setEnabled(has);
+		add_audio_btn_->setEnabled(has);
+		assign_scene_btn_->setEnabled(has);
 
 		if (!has) {
 			rebuild_presets(nullptr);
@@ -334,6 +363,8 @@ private:
 	QComboBox *profile_ = nullptr;
 	QPushButton *export_btn_ = nullptr;
 	QPushButton *import_btn_ = nullptr;
+	QPushButton *add_audio_btn_ = nullptr;
+	QPushButton *assign_scene_btn_ = nullptr;
 	QLabel *io_status_ = nullptr;
 	QLabel *status_ = nullptr;
 	QTimer *timer_ = nullptr;

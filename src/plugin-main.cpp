@@ -1,5 +1,6 @@
 #include <obs-module.h>
 
+#include "audio/ts-click-source.hpp"
 #include "ts-filter.hpp"
 
 #ifdef TOPSCREEN_HAVE_QT
@@ -17,6 +18,7 @@ MODULE_EXPORT const char *obs_module_description(void)
 bool obs_module_load(void)
 {
 	obs_register_source(&ts_filter_source_info);
+	obs_register_source(&topscreen::ts_click_audio_source_info);
 
 #ifdef TOPSCREEN_HAVE_QT
 	topscreen::ts_dock_register();

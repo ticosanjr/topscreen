@@ -3,9 +3,11 @@
 
 #include <obs-module.h>
 
+#include <cmath>
 #include <string>
 #include <utility>
 
+#include "audio/ts-click-audio.hpp"
 #include "audio/ts-click-sound.hpp"
 #include "core/keys.hpp"
 #include "core/types.hpp"
@@ -637,7 +639,19 @@ TEST(clicksound_fails_gracefully)
 	CHECK(snd.load("sounds/click-bubble.wav", "sounds/click-mouse-right.wav"));
 	CHECK(snd.loaded_path(false).find("click-bubble.wav") != std::string::npos);
 	CHECK(snd.loaded_path(true).find("click-mouse-right.wav") != std::string::npos);
-	/* Does not actually play in the test (avoids fork/exec in the suite). */
+
+	/* The click is queued for the OBS audio source and mixes into a buffer. */
+	auto &bus = ClickAudioBus::instance();
+	bus.request_clear();
+	snd.play(false, 1.0);
+	float left[512] = {};
+	float right[512] = {};
+	bus.mix(left, right, 512, 48000);
+	double energy = 0.0;
+	for (int i = 0; i < 512; ++i)
+		energy += std::abs(left[i]) + std::abs(right[i]);
+	CHECK(energy > 0.0);
+
 	snd.release();
 	CHECK(!snd.loaded());
 }

@@ -24,7 +24,7 @@ Each phase delivers something usable and has a verifiable acceptance criterion.
 | F0 | yes | — | yes |
 | F1 | yes | yes (core) | yes |
 | F2 | yes | yes (core) | yes |
-| F3 | yes (sound via system audio) | yes (core) | yes |
+| F3 | yes (sound via the TopScreen Click Sound OBS source) | yes (core) | yes |
 | F4 | yes | yes (core) | yes |
 
 ## Cross-cutting goals

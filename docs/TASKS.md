@@ -57,7 +57,8 @@ Status: ✅ done · 🟡 partial · ⬜ pending.
 | T3.3 | Left click effect (ripple/orb/ring/force) | ✅ |
 | T3.4 | Independent right click effect | ✅ |
 | T3.5 | Click parameters (color/size/duration/curve) in the UI | ✅ |
-| T3.6 | Click sound (WAV decode + playback) | ✅ (decode + playback via system audio; OBS channel in T6.5) |
+| T3.6 | Click sound (WAV decode + playback) | ✅ (decoded and mixed through the TopScreen Click Sound OBS source) |
+| T3.9 | Scene profiles (assign a profile to an OBS scene) | ✅ |
 | T3.7 | Presets applicable by hotkey (next/prev) | ✅ |
 | T3.8 | Hotkey fallback via OBS WebSocket | ⬜ |
 
@@ -94,7 +95,7 @@ Status: ✅ done · 🟡 partial · ⬜ pending.
 | T6.2 | Linux capture (PipeWire + XShm) | ⬜ |
 | T6.3 | Input source `obs_source_info` | ⬜ |
 | T6.4 | Screen selection in the UI | ⬜ |
-| T6.5 | Own audio output (click sound on the channel) | ⬜ |
+| T6.5 | Own audio output (click sound on the channel) | ✅ (dedicated OBS audio source) |
 
 ## F7 — Wayland parity + polish
 

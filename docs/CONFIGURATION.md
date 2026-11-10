@@ -64,7 +64,7 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Left click sound | `click_sound_file_left` | string | bundled `sounds/*.wav`; `""` = Mute | `sounds/click-soft.wav` |
 | | Right click sound | `click_sound_file_right` | string | bundled `sounds/*.wav`; `""` = Mute | `sounds/click-mouse-right.wav` |
 | | Legacy single file | `click_sound_file` | string | migrates to both sides | — |
-| | Click sound volume (0–1) | `click_sound_volume` | double | 0–1 (honored by paplay) | `0.6` |
+| | Click sound volume (0–1) | `click_sound_volume` | double | 0–1 | `0.6` |
 | | Play on left click (legacy) | `click_sound_left` | bool | derived from the left file; Mute is an empty path | `true` |
 | | Play on right click (legacy) | `click_sound_right` | bool | derived from the right file; Mute is an empty path | `true` |
 | Spotlight | Enable spotlight | `spotlight_enabled` | bool | — | `false` |
@@ -189,6 +189,21 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 > profiles are loaded. Non-finite values (NaN/infinity) fall back to the
 > built-in default and out-of-range values are clamped to the ranges above, so a
 > hand-edited file cannot produce degenerate uniforms or animation state.
+
+### Scene profiles
+
+The **Profiles → Assign current profile to this scene** button stores the active
+TopScreen profile for the current OBS scene. The mapping lives in the OBS
+profile config (`[TopScreen.Scenes]`), not in the source settings; changing
+scenes applies the mapped profile automatically. **Clear this scene's profile**
+removes one assignment.
+
+### Click sound audio source
+
+Click sounds are mixed into OBS through the `TopScreen Click Sound` audio
+source. Add it once with **Click sound → Add click sound to the current scene**
+(or from **Sources → +**). The source outputs silence when idle, so it can stay
+in the scene; its level follows **Click sound volume**.
 
 ### Profiles backup
 

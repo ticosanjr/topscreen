@@ -31,7 +31,7 @@ Add a **Display Capture** and the **TopScreen FX** filter. Then:
 | 4 | Cursor size/rotation | changes with the sliders |
 | 5 | Left click | ripple/orb effect at the click point |
 | 6 | Right click | effect distinct from the left |
-| 7 | Click sound | sound on click (if a player is available) |
+| 7 | Click sound | sound on click through the `TopScreen Click Sound` OBS source; **Add click sound to the current scene** creates the source |
 | 8 | Automatic zoom | on click, zooms and returns after stopping |
 | 9 | Manual zoom (hotkeys) | in/out/reset work |
 | 11 | Key overlay | keys appear at the bottom and disappear after the TTL |
@@ -40,6 +40,7 @@ Add a **Display Capture** and the **TopScreen FX** filter. Then:
 | 13 | Highlighter | dragging with the left button marks the region; `TopScreen_ToggleHighlight` zooms at the cursor on the first press and returns on the second; manual zoom/drag cancels the hotkey toggle |
 | 14 | Presets (hotkey) | next/previous switch the look |
 | 15 | Profiles | switching A–J also reloads the click sounds (test A vs. D with different WAVs) |
+| 15b | Scene profiles | assign profile B to a scene, switch scenes, and check that B is applied |
 | 16 | Profile import | an older/partial `.json` imports with defaults instead of failing |
 | 17 | Effects off / cursor off / filter removed | the capture's native cursor comes back; with two TopScreen filters on the same capture it only returns after the last one releases it |
 | 18 | Dock | reflects the state and shows the input tier |

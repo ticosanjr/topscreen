@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
+#include <chrono>
 #include <memory>
 #include <unordered_map>
 
@@ -19,6 +20,7 @@
 namespace {
 
 std::string g_data_dir;
+std::string g_current_scene_name = "Scene";
 const obs_source_info *g_registered = nullptr;
 std::vector<obs_source_t *> g_sources;
 std::unordered_map<void *, obs_source_t *> g_filter_ctx;
@@ -91,6 +93,11 @@ void cleanup()
 void set_data_dir(const std::string &dir)
 {
 	g_data_dir = dir;
+}
+
+void set_current_scene_name(const std::string &name)
+{
+	g_current_scene_name = name;
 }
 
 obs_source_t *make_source(const obs_source_info *info, obs_source_t *parent, uint32_t w, uint32_t h)
@@ -709,6 +716,59 @@ bool obs_data_save_json_pretty_safe(obs_data_t *data, const char *file, const ch
 }
 
 // ---- obs_source ----
+uint64_t os_gettime_ns(void)
+{
+	return static_cast<uint64_t>(
+		std::chrono::duration_cast<std::chrono::nanoseconds>(
+			std::chrono::steady_clock::now().time_since_epoch())
+			.count());
+}
+
+obs_source_t *obs_frontend_get_current_scene(void)
+{
+	static obs_source_t scene;
+	scene.name = g_current_scene_name;
+	return &scene;
+}
+
+obs_scene_t *obs_scene_from_source(const obs_source_t *)
+{
+	return nullptr;
+}
+
+obs_sceneitem_t *obs_scene_find_source(obs_scene_t *, const char *)
+{
+	return nullptr;
+}
+
+obs_sceneitem_t *obs_scene_add(obs_scene_t *, obs_source_t *)
+{
+	return nullptr;
+}
+
+void obs_scene_enum_items(obs_scene_t *, bool (*)(obs_scene_t *, obs_sceneitem_t *, void *), void *)
+{
+}
+
+obs_source_t *obs_sceneitem_get_source(const obs_sceneitem_t *)
+{
+	return nullptr;
+}
+
+const char *obs_source_get_id(const obs_source_t *)
+{
+	return "";
+}
+
+obs_source_t *obs_source_create(const char *, const char *, obs_data_t *, obs_data_t *)
+{
+	return nullptr;
+}
+
+void obs_source_release(obs_source_t *) {}
+
+void obs_source_set_audio_mixers(obs_source_t *, uint32_t) {}
+
 obs_data_t *obs_source_get_settings(const obs_source_t *source)
 {
 	if (!source)
@@ -922,6 +982,27 @@ void config_set_string(config_t *, const char *section, const char *name, const 
 {
 	if (section && name)
 		g_profile_config[std::string(section) + "/" + name] = value ? value : "";
+}
+
+int64_t config_get_int(config_t *, const char *section, const char *name)
+{
+	const char *value = config_get_string(nullptr, section, name);
+	if (!value || !*value)
+		return 0;
+	return std::strtoll(value, nullptr, 10);
+}
+
+void config_set_int(config_t *, const char *section, const char *name, int64_t value)
+{
+	const std::string text = std::to_string(value);
+	config_set_string(nullptr, section, name, text.c_str());
+}
+
+bool config_remove_value(config_t *, const char *section, const char *name)
+{
+	if (!section || !name)
+		return false;
+	return g_profile_config.erase(std::string(section) + "/" + name) > 0;
 }
 
 int config_save_safe(config_t *, const char *, const char *)

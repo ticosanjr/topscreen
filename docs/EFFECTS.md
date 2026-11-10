@@ -24,7 +24,7 @@ Mode: `auto` reacts on its own · `hotkey` only by hotkey · `always` always on.
 |---------|------|--------|-------------|
 | Left button effect | auto | ✅ | ripple / orb / ring / force / glow / echo / flare / quiet circle / water ripple + color/size/duration/curve |
 | Right button effect | auto | ✅ | independent of the left |
-| Click sound | auto | ✅ | 26 bundled sounds, one per button, through the system audio |
+| Click sound | auto | ✅ | 26 bundled sounds, one per button, through the `TopScreen Click Sound` OBS audio source |
 
 ## Framing
 

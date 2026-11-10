@@ -182,13 +182,15 @@ Each button has its own independent effect.
 |-------|-----------|
 | **Enable click sound** | Plays a short click |
 | **Left / Right click sound** | 26 bundled sounds — real mouse recordings (tight/single/right), Retro, Optical, Muted, Soft, Hard, Tick, Bubble, Thock, plus the remaining custom pack (typewriter, stapler, old camera, etc.) |
-| **Click sound volume (0–1)** | Sound volume (applied on paplay; other system players play as-is) |
+| **Click sound volume (0–1)** | Sound volume inside OBS |
+| **Add click sound to the current scene** | Adds the `TopScreen Click Sound` audio source, which routes clicks through the OBS mixer |
 | **Play on left / right click** | Which buttons trigger it |
 
 > Switching sounds applies immediately (no restart needed).
 
-> The sound plays through the **system audio** (it enters OBS through your Desktop
-> Audio capture). It does not yet come out through the source's own audio channel.
+> The sound is mixed by the **TopScreen Click Sound** OBS audio source, so it
+> follows the OBS mixer, monitoring and stream audio. Add the source once with
+> the button above; it stays silent when no click is playing.
 
 ### Zoom
 | Option | What it does |
@@ -385,6 +387,10 @@ nothing is selected).
   the profile on every frame; switching profiles/saving/exporting flushes it.
 - The selected profile is re-applied **when OBS opens**, so the look comes back the same.
 - Hotkeys: **Activate profile A … J** and **Save to current profile**.
+- **Scene profiles:** assign the current profile to the current OBS scene in
+  **Profiles → Assign current profile to this scene** (or **Assign profile to scene**
+  in the dock). Changing scenes then applies that profile automatically;
+  **Clear this scene's profile** removes it.
 - Default profile hotkeys are **Ctrl+Shift+Alt+A** through **Ctrl+Shift+Alt+J**.
   Saved bindings win; defaults are applied only when no saved binding exists.
   Bindings reload when the OBS profile changes. The Properties backup section
@@ -604,7 +610,6 @@ No, the default installer uses the per-user plugins folder.
 ## 14. Current limitations
 
 - **Webcam bubble** and **zoom into a region** have not been implemented yet.
-- The **click sound** uses the system audio (not the source's audio channel).
 - **Global hotkeys on Wayland** depend on the compositor (portal not implemented yet).
 - The **own capture source** (choosing the screen inside TopScreen) is
   planned; today you use OBS's Display Capture.

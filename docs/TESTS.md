@@ -101,8 +101,8 @@ That is where all the math and the state logic live — what actually must be ri
 ## Current numbers
 
 ```
-242 tests | 8577 checks | 0 failures   (core)
-58 tests | 784 checks   | 0 failures   (integration with fake libobs, LeakSanitizer clean)
+242 tests | 8697 checks | 0 failures   (core)
+60 tests | 798 checks   | 0 failures   (integration with fake libobs, LeakSanitizer clean)
 ```
 
 ## What the integration layer covers
@@ -113,9 +113,10 @@ fake libobs:
 
 | File | Coverage |
 |------|----------|
-| `test_integration.cpp` | filter lifecycle (create/tick/render/destroy), preset apply, background toggle, all 21 hotkeys, native-cursor shutdown/restore on the parent (including effects/cursor-off and shared refcount), profiles (save/switch/seeds/list/auto-save/restart/export-import round-trip, **click-sound reload on switch**, **partial import fills missing fields/slots**), **independent hotkey highlight toggle (manual zoom/drag ownership)**, **spotlight hotkey**, **magnifier hotkey + Spotlight/Magnifier exclusion**, **Properties refresh after profile/preset changes**, **dock target selection (hotkeys follow it)** and **debounced auto-save with flush** |
+| `test_integration.cpp` | filter lifecycle (create/tick/render/destroy), preset apply, background toggle, all 21 hotkeys, native-cursor shutdown/restore on the parent (including effects/cursor-off and shared refcount), profiles (save/switch/seeds/list/auto-save/restart/export-import round-trip, **click-sound reload on switch**, **partial import fills missing fields/slots**), **independent hotkey highlight toggle (manual zoom/drag ownership)**, **spotlight hotkey**, **magnifier hotkey + Spotlight/Magnifier exclusion**, **Properties refresh after profile/preset changes**, **dock target selection (hotkeys follow it)**, **debounced auto-save with flush**, and **scene → profile assignment applied on scene change** |
 | `test_integration.cpp` hotkeys | `integration_registers_all_hotkeys` covers every hotkey id/name/callback; `integration_hotkeys_shared_between_filters` proves one process-wide set shared across filters; `integration_registry_target_selection` proves selection routing/fallback |
 | `test_uniforms.cpp` | every uniform declared by `topscreen.effect` is uploaded on a plain frame (D3D11 aborts the draw otherwise) |
+| `test_click_audio.cpp` | click WAV is decoded, queued and mixed by the `topscreen_click_audio` source; silence when idle, PCM when a click is queued |
 | `test_text_render.cpp` | key-overlay text batches all glyphs + shadow quads into one vertex buffer (**1 draw total**, cache hit without rebuild) and falls back to per-glyph sprites if vertex-buffer creation fails |
 | `test_settings.cpp` | defaults match `Config`, legacy source falls back, store/load roundtrip, partial-slot fallback, background type migration/visibility, migrations, properties tree/zoom-group visibility with the hotkey, **dependent-control visibility callbacks** (cursor idle, spotlight corner, keystroke band), input without a backend, click sound error handling |
 
@@ -129,7 +130,7 @@ These items depend on a running `libobs`/GPU/OS and do not run here:
 | `obs_source_info` integration | needs a running OBS | `obs --verbose` and check the TopScreen log |
 | Input backends | need real WinAPI/X11 | test cursor/clicks in OBS |
 | Qt dock | **compiles** (stub/real Qt), but the runtime needs OBS | open the dock in OBS |
-| Click sound | plays via system audio (the OBS channel comes in F6) | test click with sound in OBS |
+| Click sound | mixes through the TopScreen Click Sound OBS source | test click with sound in OBS |
 
 > The plugin's **compilation** against the OBS headers is checked (layer 2);
 > what is missing is the **execution** inside OBS.

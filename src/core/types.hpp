@@ -28,6 +28,7 @@ enum class BgMode : int {
 	Wallpaper = 2,
 	LocalImage = 3,
 	Transparent = 4,
+	BlurredScreen = 5,
 
 	/* Legacy aliases: old configs/presets used 1=V vertical, 2=diagonal and
 	 * 3=image. They are migrated to the new types on load. */
@@ -169,6 +170,7 @@ enum class ZoomMode : int {
 	Off = 0,
 	Auto = 1,
 	/* Retired value 2 (Manual) is migrated to Off by sanitize_config(). */
+	Smart = 3, // action-driven zoom (click/drag/typing) with hold/return
 };
 
 } // namespace topscreen::core

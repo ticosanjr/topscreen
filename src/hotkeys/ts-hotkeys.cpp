@@ -250,6 +250,19 @@ void frontend_profile_event(enum obs_frontend_event event, void *data)
 			     core::profile_label(profile));
 		}
 		obs_source_release(scene);
+	} else if (event == OBS_FRONTEND_EVENT_SCENE_LIST_CHANGED ||
+		   event == OBS_FRONTEND_EVENT_SCENE_COLLECTION_CHANGED) {
+		obs_frontend_source_list scenes = {};
+		obs_frontend_get_scenes(&scenes);
+		std::vector<std::string> names;
+		names.reserve(scenes.sources.num);
+		for (size_t i = 0; i < scenes.sources.num; ++i) {
+			const char *name = obs_source_get_name(scenes.sources.array[i]);
+			if (name)
+				names.emplace_back(name);
+		}
+		obs_frontend_source_list_free(&scenes);
+		scene_profiles::prune(names);
 	}
 }
 } // namespace

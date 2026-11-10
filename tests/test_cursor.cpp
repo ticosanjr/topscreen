@@ -225,3 +225,25 @@ TEST(cursor_link_name_classifier)
 	CHECK(!cursor_name_is_link("arrow"));
 	CHECK(!cursor_name_is_link(""));
 }
+
+TEST(cursor_smooth_mode_follows_without_jumping)
+{
+	CursorModel m;
+	CursorConfig cfg;
+	cfg.follow_mode = static_cast<int>(CursorFollowMode::Smooth);
+	cfg.smooth_ms = 50.0;
+	m.configure(cfg);
+	m.reset(0.0, 0.0, 0.0);
+	m.set_target(1.0, 1.0, 0.0);
+
+	double t = 0.0;
+	advance(m, t, 0.1);
+	const CursorRender early = m.render();
+	CHECK(early.x > 0.0);
+	CHECK(early.x < 1.0);
+
+	advance(m, t, 1.0);
+	const CursorRender settled = m.render();
+	CHECK(settled.x > 0.999);
+	CHECK(settled.y > 0.999);
+}

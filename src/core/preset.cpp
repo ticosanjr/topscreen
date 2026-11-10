@@ -96,7 +96,7 @@ bool Preset::apply(Config *cfg, std::string *error) const
 			cfg->bg.gradient_angle =
 				bg_gradient_angle_from_legacy(legacy, cfg->bg.gradient_angle);
 	}
-	if (cfg->bg.mode < 0 || cfg->bg.mode > static_cast<int>(BgMode::Transparent))
+	if (cfg->bg.mode < 0 || cfg->bg.mode > static_cast<int>(BgMode::BlurredScreen))
 		cfg->bg.mode = static_cast<int>(BgMode::Gradient);
 	cfg->bg.color_a = static_cast<uint32_t>(read_number(o, kBgColorA, cfg->bg.color_a));
 	cfg->bg.color_b = static_cast<uint32_t>(read_number(o, kBgColorB, cfg->bg.color_b));
@@ -125,6 +125,9 @@ bool Preset::apply(Config *cfg, std::string *error) const
 	cfg->bg.shadow_offset_x = read_number(o, kBgShadowOffsetX, cfg->bg.shadow_offset_x);
 	cfg->bg.shadow_offset = read_number(o, kBgShadowOffset, cfg->bg.shadow_offset);
 	cfg->bg.keep_aspect = read_bool(o, kBgKeepAspect, cfg->bg.keep_aspect);
+	cfg->bg.frame_style = read_int(o, kFrameStyle, cfg->bg.frame_style);
+	cfg->bg.frame_color = static_cast<uint32_t>(read_number(o, kFrameColor, cfg->bg.frame_color));
+	cfg->bg.frame_width = read_number(o, kFrameWidth, cfg->bg.frame_width);
 
 	/* Cursor */
 	cfg->cursor.enabled = read_bool(o, kCursorEnabled, cfg->cursor.enabled);
@@ -138,6 +141,7 @@ bool Preset::apply(Config *cfg, std::string *error) const
 	cfg->cursor.shadow = read_bool(o, kCursorShadow, cfg->cursor.shadow);
 	cfg->cursor.follow_mode = read_int(o, kCursorFollowMode, cfg->cursor.follow_mode);
 	cfg->cursor.glide_ms = read_number(o, kCursorGlideMs, cfg->cursor.glide_ms);
+	cfg->cursor.smooth_ms = read_number(o, kCursorSmoothMs, cfg->cursor.smooth_ms);
 	cfg->cursor.hide_idle = read_bool(o, kCursorHideIdle, cfg->cursor.hide_idle);
 	cfg->cursor.idle_delay_ms = read_number(o, kCursorIdleDelayMs, cfg->cursor.idle_delay_ms);
 
@@ -146,6 +150,9 @@ bool Preset::apply(Config *cfg, std::string *error) const
 	cfg->zoom.amount = read_number(o, kZoomAmount, cfg->zoom.amount);
 	cfg->zoom.duration_ms = read_number(o, kZoomDurationMs, cfg->zoom.duration_ms);
 	cfg->zoom.idle_timeout_ms = read_number(o, kZoomIdleTimeoutMs, cfg->zoom.idle_timeout_ms);
+	cfg->zoom.smart_hold_ms = read_number(o, kZoomSmartHoldMs, cfg->zoom.smart_hold_ms);
+	cfg->zoom.motion_blur = read_bool(o, kZoomMotionBlur, cfg->zoom.motion_blur);
+	cfg->zoom.motion_blur_amount = read_number(o, kZoomMotionBlurAmount, cfg->zoom.motion_blur_amount);
 	cfg->zoom.pan_amount = read_number(o, kZoomPanAmount, cfg->zoom.pan_amount);
 	cfg->zoom.center_amount = read_number(o, kZoomCenterAmount, cfg->zoom.center_amount);
 

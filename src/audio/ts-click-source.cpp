@@ -109,17 +109,12 @@ struct obs_source_info ts_click_audio_source_info = {
 	.audio_render = click_audio_render,
 };
 
-bool ts_click_audio_add_to_current_scene()
-{
-	obs_source_t *scene_source = obs_frontend_get_current_scene();
-	if (!scene_source)
-		return false;
+namespace {
 
-	obs_scene_t *scene = obs_scene_from_source(scene_source);
-	if (!scene) {
-		obs_source_release(scene_source);
+bool add_to_scene(obs_scene_t *scene)
+{
+	if (!scene)
 		return false;
-	}
 
 	struct FindState {
 		const char *id = nullptr;
@@ -139,25 +134,53 @@ bool ts_click_audio_add_to_current_scene()
 			return true;
 		},
 		&find);
-	if (find.found) {
-		obs_source_release(scene_source);
+	if (find.found)
 		return true;
-	}
 
 	obs_source_t *source = obs_source_create(kSourceId, kSourceName, nullptr, nullptr);
-	bool ok = false;
-	if (source) {
-		obs_source_set_audio_mixers(source, kDefaultMixers);
-		ok = obs_scene_add(scene, source) != nullptr;
-		obs_source_release(source);
+	if (!source)
+		return false;
+	obs_source_set_audio_mixers(source, kDefaultMixers);
+	const bool added = obs_scene_add(scene, source) != nullptr;
+	obs_source_release(source);
+	return added;
+}
+
+} // namespace
+
+bool ts_click_audio_add_to_current_scene()
+{
+	obs_source_t *scene_source = obs_frontend_get_current_scene();
+	if (!scene_source)
+		return false;
+
+	obs_scene_t *scene = obs_scene_from_source(scene_source);
+	if (!scene) {
+		obs_source_release(scene_source);
+		return false;
 	}
 
+	const bool ok = add_to_scene(scene);
 	obs_source_release(scene_source);
 	if (ok)
 		blog(LOG_INFO, "[TopScreen] click sound source added to the current scene");
 	else
 		blog(LOG_WARNING, "[TopScreen] could not add the click sound source");
 	return ok;
+}
+
+bool ts_click_audio_add_to_all_scenes()
+{
+	obs_frontend_source_list scenes = {};
+	obs_frontend_get_scenes(&scenes);
+	int added = 0;
+	for (size_t i = 0; i < scenes.sources.num; ++i) {
+		if (add_to_scene(obs_scene_from_source(scenes.sources.array[i])))
+			++added;
+	}
+	obs_frontend_source_list_free(&scenes);
+	blog(LOG_INFO, "[TopScreen] click sound source present in %d scene(s)", added);
+	return added > 0;
 }
 
 } // namespace topscreen

@@ -108,7 +108,7 @@ TEST(integration_filter_lifecycle)
 
 	FilterControl *ctrl = registry_first();
 	REQUIRE(ctrl != nullptr);
-	CHECK_EQ(ctrl->preset_count(), 3);
+	CHECK_EQ(ctrl->preset_count(), 4);
 
 	/* Render sets the target dimensions and, if the effect loaded, disables
 	 * the parent's native cursor (T2.1). */
@@ -1094,6 +1094,23 @@ TEST(integration_scene_profiles_switch_on_scene_change)
 	CHECK_EQ(scene_profiles::get("Scene A"), -1);
 	fakeobs::set_current_scene_name("Scene");
 	destroy_filter(ctx);
+}
+
+TEST(scene_profiles_map_list_prune_and_clear_all)
+{
+	scene_profiles::clear_all();
+	CHECK(scene_profiles::assign("Scene A", 1));
+	CHECK(scene_profiles::assign("Scene B", 2));
+	CHECK_EQ(scene_profiles::get("Scene A"), 1);
+	CHECK_EQ(scene_profiles::get("Scene B"), 2);
+	CHECK_EQ(static_cast<int>(scene_profiles::list().size()), 2);
+
+	scene_profiles::prune({"Scene B"});
+	CHECK_EQ(scene_profiles::get("Scene A"), -1);
+	CHECK_EQ(scene_profiles::get("Scene B"), 2);
+
+	CHECK(scene_profiles::clear_all());
+	CHECK(scene_profiles::list().empty());
 }
 
 TEST(integration_chosen_profile_survives_restart)

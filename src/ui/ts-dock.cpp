@@ -150,6 +150,10 @@ public:
 		status_ = new QLabel(this);
 		root->addWidget(status_);
 
+		scene_status_ = new QLabel(this);
+		scene_status_->setWordWrap(true);
+		root->addWidget(scene_status_);
+
 		auto *refresh = new QPushButton(obs_module_text("Dock.Refresh"), this);
 		QObject::connect(refresh, &QPushButton::clicked, this, [this]() { refresh_ui(); });
 		root->addWidget(refresh);
@@ -340,6 +344,23 @@ private:
 			}
 		}
 
+		{
+			obs_source_t *scene = obs_frontend_get_current_scene();
+			const char *raw_name = scene ? obs_source_get_name(scene) : nullptr;
+			const std::string scene_name = raw_name ? raw_name : "";
+			const int profile = scene_name.empty() ? -1 : scene_profiles::get(scene_name);
+			if (scene)
+				obs_source_release(scene);
+			if (!has || scene_name.empty())
+				scene_status_->clear();
+			else if (profile >= 0)
+				scene_status_->setText(
+					QString(obs_module_text("Dock.SceneProfile")) + ": " +
+					QString::fromUtf8(core::profile_label(profile)));
+			else
+				scene_status_->setText(obs_module_text("Dock.NoSceneProfile"));
+		}
+
 		if (has) {
 			const int tier = c->input_tier();
 			const char *tier_text = obs_module_text("Tier.None");
@@ -367,6 +388,7 @@ private:
 	QPushButton *assign_scene_btn_ = nullptr;
 	QLabel *io_status_ = nullptr;
 	QLabel *status_ = nullptr;
+	QLabel *scene_status_ = nullptr;
 	QTimer *timer_ = nullptr;
 	std::vector<FilterEntry> targets_;
 	std::uint64_t targets_revision_ = 0;

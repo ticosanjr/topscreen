@@ -30,6 +30,9 @@ inline constexpr const char *kBgShadowBlur = "bg_shadow_blur";
 inline constexpr const char *kBgShadowOffsetX = "bg_shadow_offset_x";
 inline constexpr const char *kBgShadowOffset = "bg_shadow_offset";
 inline constexpr const char *kBgKeepAspect = "bg_keep_aspect";
+inline constexpr const char *kFrameStyle = "frame_style";
+inline constexpr const char *kFrameColor = "frame_color";
+inline constexpr const char *kFrameWidth = "frame_width";
 
 inline constexpr const char *kCursorEnabled = "cursor_enabled";
 inline constexpr const char *kCursorStyle = "cursor_style";
@@ -40,6 +43,7 @@ inline constexpr const char *kCursorRotationOffset = "cursor_rotation_offset_deg
 inline constexpr const char *kCursorShadow = "cursor_shadow";
 inline constexpr const char *kCursorFollowMode = "cursor_follow_mode";
 inline constexpr const char *kCursorGlideMs = "cursor_glide_ms";
+inline constexpr const char *kCursorSmoothMs = "cursor_smooth_ms";
 inline constexpr const char *kCursorHideIdle = "cursor_hide_idle";
 inline constexpr const char *kCursorIdleDelayMs = "cursor_idle_delay_ms";
 
@@ -47,6 +51,9 @@ inline constexpr const char *kZoomMode = "zoom_mode";
 inline constexpr const char *kZoomAmount = "zoom_amount";
 inline constexpr const char *kZoomDurationMs = "zoom_duration_ms";
 inline constexpr const char *kZoomIdleTimeoutMs = "zoom_idle_timeout_ms";
+inline constexpr const char *kZoomSmartHoldMs = "zoom_smart_hold_ms";
+inline constexpr const char *kZoomMotionBlur = "zoom_motion_blur";
+inline constexpr const char *kZoomMotionBlurAmount = "zoom_motion_blur_amount";
 inline constexpr const char *kZoomPanAmount = "zoom_pan_amount";
 inline constexpr const char *kZoomCenterAmount = "zoom_center_amount";
 
@@ -152,5 +159,23 @@ inline constexpr const char *kProfileSlots[kProfileCount] = {
 	"profile_slot_0", "profile_slot_1", "profile_slot_2", "profile_slot_3", "profile_slot_4",
 	"profile_slot_5", "profile_slot_6", "profile_slot_7", "profile_slot_8", "profile_slot_9",
 };
+
+/* Webcam bubble filter. */
+inline constexpr const char *kWebcamShape = "webcam_shape";
+inline constexpr const char *kWebcamSize = "webcam_size";
+inline constexpr const char *kWebcamAnchor = "webcam_anchor";
+inline constexpr const char *kWebcamOffsetX = "webcam_offset_x";
+inline constexpr const char *kWebcamOffsetY = "webcam_offset_y";
+inline constexpr const char *kWebcamCorner = "webcam_corner_ratio";
+inline constexpr const char *kWebcamMirror = "webcam_mirror";
+inline constexpr const char *kWebcamBorderEnabled = "webcam_border_enabled";
+inline constexpr const char *kWebcamBorderColor = "webcam_border_color";
+inline constexpr const char *kWebcamBorderWidth = "webcam_border_width";
+inline constexpr const char *kWebcamShadowEnabled = "webcam_shadow_enabled";
+inline constexpr const char *kWebcamShadowColor = "webcam_shadow_color";
+inline constexpr const char *kWebcamShadowAlpha = "webcam_shadow_alpha";
+inline constexpr const char *kWebcamShadowBlur = "webcam_shadow_blur";
+inline constexpr const char *kWebcamShadowOffsetX = "webcam_shadow_offset_x";
+inline constexpr const char *kWebcamShadowOffsetY = "webcam_shadow_offset_y";
 
 } // namespace topscreen::core::keys

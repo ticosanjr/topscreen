@@ -12,6 +12,7 @@ const char *const kPresetFiles[] = {
 	"presets/demo.json",
 	"presets/tutorial.json",
 	"presets/presentation.json",
+	"presets/glass.json",
 };
 
 bool read_module_file(const char *name, std::string *out)

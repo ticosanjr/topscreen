@@ -82,14 +82,14 @@ Places the screen "floating" over a background, with corners and shadow.
 | Option | What it does |
 |-------|-----------|
 | **Enable background** | Turns on the background + corners + spacing |
-| **Background type** | **Solid color**, **Two-color gradient** or **Wallpaper** |
+| **Background type** | **Solid color**, **Two-color gradient**, **Wallpaper**, **Local image**, **Transparent** or **Blurred screen** |
 | **Color 1 (solid / gradient start)** | Background color for solid, or the first gradient color |
 | **Color 2 (gradient end)** | Second gradient color (gradient only) |
 | **Gradient angle (degrees)** | Direction of the two-color gradient (0–360°) |
 | **Gradient meeting point X/Y** | Moves the point where the two colors meet (0 = left/top, 1 = right/bottom) |
 | **Wallpaper preset** | One of the **18 images** that ship with the plugin. Choosing one applies the Wallpaper background type |
 | **Local image file** | Choose a file from your PC (jpg/png/bmp/tga/gif/webp) in the **Local image** background type |
-| **Wallpaper blur radius (px)** | How far the background image spreads (0 = sharp) |
+| **Wallpaper blur radius (px)** | How far the wallpaper/blurred-screen background spreads (0 = sharp) |
 | **Wallpaper diffusion** | **Soft** is the only style. The wallpaper is prefiltered once when the image or blur settings change, then sampled once per pixel |
 | **Horizontal / vertical screen margin (px)** | Margin between the screen and the edge (separate X and Y) |
 | **Keep screen aspect ratio** | Avoids stretching the screen: it is scaled down proportionally (leave it on) |
@@ -98,6 +98,8 @@ Places the screen "floating" over a background, with corners and shadow.
 | ↳ **Enable shadow** | Turns the shadow behind the screen on/off |
 | ↳ **Shadow opacity (0–1)** | How strong the shadow is (0 = invisible, 1 = strong) |
 | ↳ **Shadow blur (px)** | How soft and large the shadow is |
+| **Frame style** | `None`, `Inner border` or `Device bezel` around the captured screen |
+| **Frame color / width** | Color and thickness of the frame |
 | ↳ **Shadow offset X (px)** | Moves the shadow left/right |
 | ↳ **Shadow offset Y (px)** | Moves the shadow up/down (positive = down) |
 
@@ -113,7 +115,7 @@ Places the screen "floating" over a background, with corners and shadow.
 | **Cursor style** | Primary cursor: one of the 79 cursors (see below) |
 | **Secondary cursor (links)** | Cursor used while the native pointer is over a link; "Same as primary" disables the swap |
 | **Change cursor over links** | Automatic on **Windows and X11**. Wayland has no portable link-cursor signal, so the primary stays active |
-| **Cursor movement** | **Exact** or **Glide (A to B)** |
+| **Cursor movement** | **Exact**, **Glide (A to B)** or **Smooth (continuous)** |
 | **Cursor size (1 = default)** | Cursor scale (1.0 = default) |
 | **Rotation offset (degrees)** | Extra rotation added to the style baseline: 0° for Bibata–Dot, 30° for Custom images |
 | **Glide duration** | A→B duration |
@@ -177,6 +179,14 @@ Each button has its own independent effect.
 | **Click effect** | Ripple, Orb, Ring, Force, Glow, Echo (double ring), Flare (spark), **Quiet circle**, **Water ripple** (colored ring with distortion) or **Water ripple (clear)** (distortion only, no color) |
 | **Effect size / color / duration / animation curve** | Appearance and timing of the effect |
 
+### Webcam bubble
+
+Add a **Video Capture Device** source, then apply the **TopScreen Webcam
+Bubble** filter. The filter masks the camera into a circle or rounded square
+with transparent surroundings, configurable anchor/offset, border and shadow.
+The rest of the frame is transparent, so the bubble can be placed over the
+scene like any other source.
+
 ### Click sound
 | Option | What it does |
 |-------|-----------|
@@ -195,10 +205,13 @@ Each button has its own independent effect.
 ### Zoom
 | Option | What it does |
 |-------|-----------|
-| **Zoom mode** | `Off` or `Automatic` (follows clicks/cursor); manual zoom stays available through the hotkeys |
+| **Zoom mode** | `Off`, `Automatic` (follows clicks/cursor) or `Smart` (action-driven with hold); manual zoom stays available through the hotkeys |
 | **Zoom intensity (1 = no zoom)** | How much it magnifies (1.0 = no zoom) |
 | **Zoom transition time (ms)** | Animation duration |
 | **Return to normal after idle (ms)** | After stopping, returns to normal |
+| **Smart hold after action (ms)** | Smart mode stays zoomed for this long after the last click/drag/key |
+| **Motion blur while zooming** | Optional radial blur during zoom transitions |
+| **Motion blur strength (0–1)** | How strong the radial blur is |
 | **Pan intensity (0 = off)** | How much the screen "follows" the mouse |
 | **Centering (0 = follows mouse, 1 = centered)** | 0 = follows the mouse; 1 = keeps the mouse in the **center** (the view **anticipates** the edges — the corner appears before you get to it) |
 
@@ -366,6 +379,7 @@ Ready presets (files in `data/presets/`):
 | **Demo** | Gradient, highlighted cursor, automatic zoom |
 | **Tutorial** | Solid background, click sound, soft cursor |
 | **Presentation** | Dark background, no zoom, no sound |
+| **Glass** | Blurred-screen background, device bezel, smooth cursor, smart zoom and soft motion blur |
 
 Switch with the *Next/Previous preset* hotkey (or via the dock). To create your
 own, copy a file and adjust it — the format is in [`CONFIGURATION.md`](CONFIGURATION.md).

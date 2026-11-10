@@ -2,6 +2,7 @@
 
 #include "audio/ts-click-source.hpp"
 #include "ts-filter.hpp"
+#include "webcam/ts-webcam-filter.hpp"
 
 #ifdef TOPSCREEN_HAVE_QT
 #include "ui/ts-dock.hpp"
@@ -18,6 +19,7 @@ MODULE_EXPORT const char *obs_module_description(void)
 bool obs_module_load(void)
 {
 	obs_register_source(&ts_filter_source_info);
+	obs_register_source(&topscreen::ts_webcam_filter_source_info);
 	obs_register_source(&topscreen::ts_click_audio_source_info);
 
 #ifdef TOPSCREEN_HAVE_QT

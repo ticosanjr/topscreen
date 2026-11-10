@@ -25,14 +25,21 @@ void CursorModel::configure(const CursorConfig &cfg)
 {
 	const int previous_mode = cfg_.follow_mode;
 	cfg_ = cfg;
-	cfg_.follow_mode = cfg_.follow_mode == static_cast<int>(CursorFollowMode::Exact)
-				   ? static_cast<int>(CursorFollowMode::Exact)
-				   : static_cast<int>(CursorFollowMode::GlideAB);
+	switch (cfg_.follow_mode) {
+	case static_cast<int>(CursorFollowMode::Exact):
+	case static_cast<int>(CursorFollowMode::GlideAB):
+	case static_cast<int>(CursorFollowMode::Smooth):
+		break;
+	default:
+		cfg_.follow_mode = static_cast<int>(CursorFollowMode::GlideAB);
+		break;
+	}
 	if (cfg_.follow_mode != previous_mode) {
 		glide_active_ = false;
 		target_dirty_ = true;
 	}
 	cfg_.glide_ms = glide_duration(cfg_.glide_ms);
+	cfg_.smooth_ms = cfg_.smooth_ms >= 1.0 ? cfg_.smooth_ms : 1.0;
 	resolved_style_ = cursor_style_resolve(cfg_.style);
 	resolved_link_style_ =
 		cfg_.secondary_style >= 0 ? cursor_style_resolve(cfg_.secondary_style) : -1;
@@ -128,15 +135,22 @@ void CursorModel::update(double now_ms)
 	if (!started_)
 		return;
 
+	const double dt = std::max(0.0, (now_ms - last_update_ms_) / 1000.0);
 	last_update_ms_ = now_ms;
 
 	if (cfg_.follow_mode == static_cast<int>(CursorFollowMode::Exact)) {
 		x_ = target_x_;
 		y_ = target_y_;
 		glide_active_ = false;
+	} else if (cfg_.follow_mode == static_cast<int>(CursorFollowMode::Smooth)) {
+		const double tau = std::max(0.001, cfg_.smooth_ms / 1000.0);
+		const double alpha = dt > 0.0 ? 1.0 - std::exp(-dt / tau) : 0.0;
+		x_ += (target_x_ - x_) * alpha;
+		y_ += (target_y_ - y_) * alpha;
+		glide_active_ = false;
 	} else {
-		/* Only Glide A→B remains; legacy Spring/Sampled values were mapped
-		 * to this mode by config sanitization. */
+		/* Glide A→B; legacy Spring/Sampled values were mapped to this mode
+		 * by config sanitization. */
 		if (!glide_active_ && target_dirty_) {
 			start_glide(now_ms);
 			target_dirty_ = false;

@@ -31,15 +31,18 @@ inline constexpr Range kBgPaddingRange{0.0, 400.0, 1.0};
 inline constexpr Range kCornerRadiusRange{0.0, 200.0, 1.0};
 inline constexpr Range kShadowBlurRange{0.0, 200.0, 1.0};
 inline constexpr Range kShadowOffsetRange{-100.0, 100.0, 1.0};
+inline constexpr Range kFrameWidthRange{0.0, 40.0, 0.5};
 
 inline constexpr Range kCursorSizeRange{0.5, 4.0, 0.05};
 inline constexpr Range kCursorRotationRange{-180.0, 180.0, 1.0};
 inline constexpr Range kCursorGlideRange{50.0, 1200.0, 10.0};
 inline constexpr Range kCursorIdleDelayRange{0.0, 5000.0, 50.0};
+inline constexpr Range kCursorSmoothRange{16.0, 300.0, 1.0};
 
 inline constexpr Range kZoomAmountRange{1.0, 4.0, 0.05};
 inline constexpr Range kZoomDurationRange{100.0, 2000.0, 10.0};
 inline constexpr Range kZoomIdleTimeoutRange{200.0, 10000.0, 50.0};
+inline constexpr Range kZoomSmartHoldRange{0.0, 5000.0, 50.0};
 
 inline constexpr Range kClickSizeRange{0.1, 4.0, 0.05};
 inline constexpr Range kClickDurationRange{100.0, 2000.0, 10.0};
@@ -60,5 +63,14 @@ inline constexpr Range kHighlightZoomInRange{50.0, 2000.0, 10.0};
 inline constexpr Range kHighlightZoomOutRange{100.0, 8000.0, 50.0};
 
 inline constexpr IntRange kMonitorPositionRange{-32768, 32767, 1};
+
+/* Webcam bubble filter. */
+inline constexpr Range kWebcamSizeRange{0.10, 1.0, 0.01};
+inline constexpr Range kWebcamCornerRange{0.0, 0.5, 0.01};
+inline constexpr Range kWebcamOffsetRange{-1000.0, 1000.0, 1.0};
+inline constexpr Range kWebcamBorderWidthRange{0.0, 20.0, 0.5};
+inline constexpr Range kWebcamShadowBlurRange{0.0, 80.0, 1.0};
+inline constexpr Range kWebcamShadowOffsetRange{-200.0, 200.0, 1.0};
+
 
 } // namespace topscreen::core::limits

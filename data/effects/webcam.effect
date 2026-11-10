@@ -1,0 +1,112 @@
+// TopScreen webcam bubble filter.
+//
+// Masks the parent video source (a webcam) into a circle or rounded square,
+// with an optional border and soft shadow. The rest of the frame is
+// transparent, so the source can be placed over the scene.
+
+uniform float4x4 ViewProj;
+uniform texture2d image;
+
+uniform float2 target_size;
+uniform float2 bubble_center; // px
+uniform float2 bubble_half;   // px
+uniform float  corner_radius; // px
+uniform float  shape;         // 0 circle, 1 rounded square
+uniform float  mirror;        // 1 = mirror horizontally
+
+uniform float  border_enabled;
+uniform float4 border_color;
+uniform float  border_width; // px
+
+uniform float  shadow_enabled;
+uniform float4 shadow_color;
+uniform float  shadow_alpha;
+uniform float  shadow_blur; // px
+uniform float2 shadow_offset;
+
+sampler_state def_sampler {
+	Filter   = Linear;
+	AddressU = Clamp;
+	AddressV = Clamp;
+};
+
+struct VertInOut {
+	float4 pos : POSITION;
+	float2 uv  : TEXCOORD0;
+};
+
+VertInOut VSDefault(VertInOut vert_in)
+{
+	VertInOut vert_out;
+	vert_out.pos = mul(float4(vert_in.pos.xyz, 1.0), ViewProj);
+	vert_out.uv  = vert_in.uv;
+	return vert_out;
+}
+
+float len2(float2 v)
+{
+	return sqrt(dot(v, v));
+}
+
+float sd_round_box(float2 p, float2 half_extents, float radius)
+{
+	float2 q = abs(p) - half_extents + radius;
+	return min(max(q.x, q.y), 0.0) + len2(max(q, 0.0)) - radius;
+}
+
+float sd_shape(float2 p, float2 half_extents, float radius)
+{
+	if (shape > 0.5)
+		return sd_round_box(p, half_extents, radius);
+	return len2(p) - half_extents.x;
+}
+
+float4 PSWebcam(VertInOut vert_in) : TARGET
+{
+	float2 px = vert_in.uv * target_size;
+	float sd = sd_shape(px - bubble_center, bubble_half, corner_radius);
+
+	float4 col = float4(0.0, 0.0, 0.0, 0.0);
+	float blur = max(shadow_blur, 0.5);
+	if (shadow_enabled > 0.5 && shadow_alpha > 0.001) {
+		float2 sp = px - (bubble_center + shadow_offset);
+		float shd = sd_shape(sp, bubble_half, corner_radius);
+		float s = 1.0 - smoothstep(-blur, blur, shd);
+		col = float4(shadow_color.rgb, shadow_color.a * shadow_alpha * s);
+	}
+
+	float mask = 1.0 - smoothstep(-1.0, 1.0, sd);
+	if (mask > 0.001) {
+		float2 diameter = max(bubble_half * 2.0, float2(1.0, 1.0));
+		float2 src = saturate((px - (bubble_center - bubble_half)) / diameter);
+
+		/* Cover: keep the webcam aspect and crop the overflow. */
+		float image_aspect = target_size.x / max(target_size.y, 1.0);
+		float bubble_aspect = bubble_half.x / max(bubble_half.y, 1.0);
+		if (image_aspect > bubble_aspect)
+			src.x = 0.5 + (src.x - 0.5) * bubble_aspect / image_aspect;
+		else
+			src.y = 0.5 + (src.y - 0.5) * image_aspect / bubble_aspect;
+		if (mirror > 0.5)
+			src.x = 1.0 - src.x;
+
+		float4 webcam = image.Sample(def_sampler, src);
+		col = lerp(col, float4(webcam.rgb, 1.0), mask);
+	}
+
+	if (border_enabled > 0.5 && border_width > 0.01) {
+		float ring = 1.0 - smoothstep(-1.0, 1.0, abs(sd) - border_width * 0.5);
+		col.rgb = lerp(col.rgb, border_color.rgb, ring * border_color.a);
+		col.a = max(col.a, ring * border_color.a);
+	}
+	return col;
+}
+
+technique Draw
+{
+	pass
+	{
+		vertex_shader = VSDefault(vert_in);
+		pixel_shader  = PSWebcam(vert_in);
+	}
+}

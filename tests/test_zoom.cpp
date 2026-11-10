@@ -202,3 +202,23 @@ TEST(zoom_pan_does_not_decay_over_time)
 	CHECK_NEAR(fx1, fx2, 1e-6);
 	CHECK(fx2 > 0.6);
 }
+
+TEST(zoom_smart_zooms_on_activity_and_returns_after_hold)
+{
+	ZoomModel m;
+	ZoomConfig cfg;
+	cfg.mode = static_cast<int>(ZoomMode::Smart);
+	cfg.amount = 2.0;
+	cfg.duration_ms = 100.0;
+	cfg.smart_hold_ms = 300.0;
+	m.configure(cfg);
+	m.reset(0.0);
+	m.note_activity(0.0);
+
+	double t = 0.0;
+	advance(m, t, 0.2);
+	CHECK(m.render().zoom > 1.4);
+
+	advance(m, t, 2.0);
+	CHECK(m.render().zoom < 1.1);
+}

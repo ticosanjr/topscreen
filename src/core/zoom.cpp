@@ -34,7 +34,9 @@ void ZoomModel::reset(double now_ms)
 	focus_point_x_ = 0.5;
 	focus_point_y_ = 0.5;
 	last_focus_ms_ = now_ms;
+	last_activity_ms_ = -1.0e9;
 	last_update_ms_ = now_ms;
+	velocity_ = 0.0;
 	started_ = true;
 }
 
@@ -53,6 +55,11 @@ void ZoomModel::focus_on(double x, double y, double now_ms)
 void ZoomModel::set_cursor(double x, double y, double now_ms)
 {
 	focus_on(x, y, now_ms);
+}
+
+void ZoomModel::note_activity(double now_ms)
+{
+	last_activity_ms_ = now_ms;
 }
 
 void ZoomModel::spot_start_hold(double focus_x, double focus_y, double target, double in_ms,
@@ -185,7 +192,12 @@ void ZoomModel::update(double now_ms)
 		dt = 0.0;
 
 	const bool auto_mode = cfg_.mode == static_cast<int>(ZoomMode::Auto);
-	const bool active = auto_mode && (now_ms - last_focus_ms_) < cfg_.idle_timeout_ms;
+	const bool smart_mode = cfg_.mode == static_cast<int>(ZoomMode::Smart);
+	const bool auto_active =
+		auto_mode && (now_ms - last_focus_ms_) < cfg_.idle_timeout_ms;
+	const bool smart_active =
+		smart_mode && (now_ms - last_activity_ms_) < cfg_.smart_hold_ms;
+	const bool active = auto_active || smart_active;
 
 	double target_zoom = manual_;
 	if (active)
@@ -211,7 +223,9 @@ void ZoomModel::update(double now_ms)
 	fx_.set_target(clamp_range(focus_target(focus_point_x_), lx.lo, lx.hi));
 	fy_.set_target(clamp_range(focus_target(focus_point_y_), ly.lo, ly.hi));
 
+	const double prev_zoom = zoom_.value();
 	zoom_.update(dt);
+	velocity_ = dt > 1.0e-9 ? (zoom_.value() - prev_zoom) / dt : 0.0;
 	fx_.update(dt);
 	fy_.update(dt);
 }
@@ -240,6 +254,7 @@ ZoomRender ZoomModel::render() const
 		out.zoom = 1.0;
 	out.focus_x = clamp_focus(fx_.value(), out.zoom);
 	out.focus_y = clamp_focus(fy_.value(), out.zoom);
+	out.velocity = velocity_;
 	return out;
 }
 

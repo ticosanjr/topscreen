@@ -16,7 +16,7 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 |------------|------------|-------|------|-------|--------|
 | — | Effects enabled | `effects_enabled` | bool | — | `true` |
 | Background | Enable background | `bg_enabled` | bool | — | `true` |
-| | Background type | `bg_type` | int | 0 solid · 1 gradient · 2 wallpaper · 3 local image · 4 transparent | `1` |
+| | Background type | `bg_type` | int | 0 solid · 1 gradient · 2 wallpaper · 3 local image · 4 transparent · 5 blurred screen | `1` |
 | | Legacy style (migrated) | `bg_mode` | int | old 0 solid · 1/2 gradient · 3 wallpaper | — |
 | | Color 1 (solid / gradient start) | `bg_color_a` | color | — | `0xFF20242E` |
 | | Color 2 (gradient end) | `bg_color_b` | color | gradient only | `0xFF3A2E5C` |
@@ -29,6 +29,9 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Horizontal screen margin (px) | `bg_padding_x` | double | 0–400 | `64` |
 | | Vertical screen margin (px) | `bg_padding_y` | double | 0–400 | `64` |
 | | Keep screen aspect ratio | `bg_keep_aspect` | bool | — | `true` |
+| | Frame style | `frame_style` | int | 0 none, 1 inner border, 2 device bezel | `0` |
+| | Frame color | `frame_color` | color | — | `0xFF000000` |
+| | Frame width (px) | `frame_width` | double | 0–40 | `2` |
 | | Screen corner radius (px) | `bg_corner_radius` | double | 0–200 | `18` |
 | | Window shadow | `bg_shadow` | bool | — | `true` |
 | | Shadow opacity (0–1) | `bg_shadow_alpha` | double | 0–1 | `0.35` |
@@ -44,12 +47,16 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Idle delay before hiding (ms) | `cursor_idle_delay_ms` | double | 0–5000 | `1200` |
 | | Secondary cursor (links) | `cursor_secondary_style` | int | -1 = same as primary; otherwise a cursor style ID | `-1` |
 | | Change cursor over links | `cursor_link_detection` | bool | Windows/X11 only | `true` |
-| | Cursor movement | `cursor_follow_mode` | int | 0 exact · 3 glide A→B (legacy 1/2 map to 3) | `0` |
+| | Cursor movement | `cursor_follow_mode` | int | 0 exact · 3 glide A→B · 4 smooth (legacy 1/2 map to 3) | `0` |
 | | Glide duration (ms) | `cursor_glide_ms` | double | 50–1200 | `180` |
-| Zoom | Zoom mode | `zoom_mode` | int | 0 off · 1 auto; manual zoom is always available through the hotkeys | `1` |
+| | Smooth time (ms) | `cursor_smooth_ms` | double | 16–300 | `90` |
+| Zoom | Zoom mode | `zoom_mode` | int | 0 off · 1 auto · 3 smart (manual zoom is always available through the hotkeys) | `1` |
 | | Zoom intensity (1 = no zoom) | `zoom_amount` | double | 1–4 | `1.6` |
 | | Zoom transition time (ms) | `zoom_duration_ms` | double | 100–2000 | `450` |
 | | Return to normal after idle (ms) | `zoom_idle_timeout_ms` | double | 200–10000 | `1500` |
+| | Smart hold after action (ms) | `zoom_smart_hold_ms` | double | 0–5000 | `1200` |
+| | Motion blur while zooming | `zoom_motion_blur` | bool | — | `false` |
+| | Motion blur strength | `zoom_motion_blur_amount` | double | 0–1 | `0.35` |
 | | Pan intensity (0 = off) | `zoom_pan_amount` | double | 0–1 | `1.0` |
 | | Centering (0 = follows mouse, 1 = centered) | `zoom_center_amount` | double | 0–1 | `1.0` |
 | Left click | Click effect | `click_left_effect` | int | 0 ripple, 1 orb, 2 ring, 3 force, 4 glow, 5 echo, 6 flare, 7 quiet circle, 8 water ripple, 9 clear water ripple | `0` |
@@ -190,6 +197,32 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 > built-in default and out-of-range values are clamped to the ranges above, so a
 > hand-edited file cannot produce degenerate uniforms or animation state.
 
+
+### Webcam bubble filter
+
+The `TopScreen Webcam Bubble` filter has its own settings (not part of the
+TopScreen Config). Apply it to a webcam source; the outside of the mask is
+transparent.
+
+| Key | Type | Range/default |
+|-----|------|---------------|
+| `webcam_shape` | int | 0 circle, 1 rounded square · default `1` |
+| `webcam_size` | double | 0.10–1.0 (fraction of the shorter side) · default `0.28` |
+| `webcam_anchor` | int | 0 top-left … 8 bottom-right · default `8` |
+| `webcam_offset_x` | double | −1000…1000 px · default `0` |
+| `webcam_offset_y` | double | −1000…1000 px · default `0` |
+| `webcam_corner_ratio` | double | 0–0.5 (fraction of the diameter) · default `0.35` |
+| `webcam_mirror` | bool | default `true` |
+| `webcam_border_enabled` | bool | default `true` |
+| `webcam_border_color` | color | default `0xFFFFFFFF` |
+| `webcam_border_width` | double | 0–20 px · default `3` |
+| `webcam_shadow_enabled` | bool | default `true` |
+| `webcam_shadow_color` | color | default `0xFF000000` |
+| `webcam_shadow_alpha` | double | 0–1 · default `0.45` |
+| `webcam_shadow_blur` | double | 0–80 px · default `24` |
+| `webcam_shadow_offset_x` | double | −200…200 px · default `0` |
+| `webcam_shadow_offset_y` | double | −200…200 px · default `8` |
+
 ### Scene profiles
 
 The **Profiles → Assign current profile to this scene** button stores the active
@@ -213,7 +246,7 @@ in the scene; its level follows **Click sound volume**.
 {
   "topscreen_profiles": 1,
   "plugin": "TopScreen",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "current": 0,
   "profile_slot_0": { "effects_enabled": true },
   "profile_slot_1": { "effects_enabled": true },

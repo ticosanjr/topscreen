@@ -14,7 +14,7 @@ Mode: `auto` reacts on its own · `hotkey` only by hotkey · `always` always on.
 | **79 cursor styles** | auto | ✅ | 29 built-ins + 50 custom PNG styles grouped under `Custom`; see [`CURSORS.md`](CURSORS.md) |
 | Size | auto | ✅ | 0.5–4× |
 | Shadow | auto | ✅ | |
-| Motion smoothing | auto | ✅ | exact or A→B glide |
+| Motion smoothing | auto | ✅ | exact, A→B glide or continuous smooth |
 | Secondary cursor over links | auto | ✅ | Windows/X11; primary/secondary style pair |
 | Hide when idle | auto | ✅ | with delay |
 
@@ -30,19 +30,21 @@ Mode: `auto` reacts on its own · `hotkey` only by hotkey · `always` always on.
 
 | Feature | Mode | Status | Notes |
 |---------|------|--------|-------------|
-| Background | always | ✅ | solid color or two-color gradient with adjustable meeting point/angle |
+| Background | always | ✅ | solid color, two-color gradient or blurred screen |
 | Wallpaper background | always | ✅ | 18 built-in wallpapers, an image from your PC, or **Transparent** (show the scene below) |
 | Text overlay | auto | ✅ | one draw for text + shadow/outline via vertex colors |
 | Rounded corners | always | ✅ | |
 | Spacing (padding X and Y) | always | ✅ | separate axes |
 | Window shadow | always | ✅ | opacity, blur and offset |
-| Inset / inner border | off | ⬜ | |
+| Inner border / device bezel | always | ✅ | configurable color and width |
 
 ## Zoom / Pan
 
 | Feature | Mode | Status | Notes |
 |---------|------|--------|-------------|
 | Automatic zoom (click/cursor) | auto | ✅ | returns to normal when idle |
+| Smart zoom | auto | ✅ | action-driven with configurable hold and return |
+| Motion blur | auto | ✅ | optional radial blur while zooming |
 | Manual zoom in/out/reset | hotkey | ✅ | |
 | Light pan following the mouse | auto | ✅ | |
 | Zoom into a selected region | hotkey | ⬜ | |
@@ -68,7 +70,7 @@ Mode: `auto` reacts on its own · `hotkey` only by hotkey · `always` always on.
 
 | Feature | Mode | Status | Notes |
 |---------|------|--------|-------------|
-| Webcam bubble | always | ⬜ | requires its own source (F6) |
+| Webcam bubble | always | ✅ | separate filter: circle/rounded mask, border and shadow |
 | Countdown / hotkey HUD | hotkey | ⬜ | |
 
 ## Out of scope (post-production)

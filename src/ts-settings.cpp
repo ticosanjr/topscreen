@@ -31,6 +31,9 @@ namespace topscreen {
 	X(DOUBLE, kBgShadowOffsetX, bg.shadow_offset_x) \
 	X(DOUBLE, kBgShadowOffset, bg.shadow_offset) \
 	X(BOOL, kBgKeepAspect, bg.keep_aspect) \
+	X(INT, kFrameStyle, bg.frame_style) \
+	X(COLOR, kFrameColor, bg.frame_color) \
+	X(DOUBLE, kFrameWidth, bg.frame_width) \
 	X(BOOL, kCursorEnabled, cursor.enabled) \
 	X(INT, kCursorStyle, cursor.style) \
 	X(INT, kCursorSecondaryStyle, cursor.secondary_style) \
@@ -40,12 +43,16 @@ namespace topscreen {
 	X(BOOL, kCursorShadow, cursor.shadow) \
 	X(INT, kCursorFollowMode, cursor.follow_mode) \
 	X(DOUBLE, kCursorGlideMs, cursor.glide_ms) \
+	X(DOUBLE, kCursorSmoothMs, cursor.smooth_ms) \
 	X(BOOL, kCursorHideIdle, cursor.hide_idle) \
 	X(DOUBLE, kCursorIdleDelayMs, cursor.idle_delay_ms) \
 	X(INT, kZoomMode, zoom.mode) \
 	X(DOUBLE, kZoomAmount, zoom.amount) \
 	X(DOUBLE, kZoomDurationMs, zoom.duration_ms) \
 	X(DOUBLE, kZoomIdleTimeoutMs, zoom.idle_timeout_ms) \
+	X(DOUBLE, kZoomSmartHoldMs, zoom.smart_hold_ms) \
+	X(BOOL, kZoomMotionBlur, zoom.motion_blur) \
+	X(DOUBLE, kZoomMotionBlurAmount, zoom.motion_blur_amount) \
 	X(DOUBLE, kZoomPanAmount, zoom.pan_amount) \
 	X(DOUBLE, kZoomCenterAmount, zoom.center_amount) \
 	X(INT, kClickLeftEffect, click_left.effect) \

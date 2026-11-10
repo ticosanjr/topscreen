@@ -743,6 +743,8 @@ void ts_filter_ctx::update_input()
 	for (int i = 0; i < input.state().key_count; ++i)
 		keys.press(input.state().key_labels[i], input.state().key_modifier[i],
 				time_ms, input.state().key_modifiers[i]);
+	if (input.state().key_count > 0)
+		zoom.note_activity(time_ms);
 }
 
 core::ContentArea ts_filter_ctx::update_content_area()
@@ -785,6 +787,8 @@ void ts_filter_ctx::update_pointer(const core::ContentArea &content)
 	const double target_h = static_cast<double>(this->target_h);
 	if (input.available() && target_w > 0 && target_h > 0) {
 		const InputState &st = input.state();
+		if (st.left || st.left_pressed || st.right_pressed)
+			zoom.note_activity(time_ms);
 		const core::Monitor mon{monitor_origin_.x(), monitor_origin_.y(),
 					static_cast<double>(target_w),
 					static_cast<double>(target_h)};

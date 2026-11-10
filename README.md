@@ -36,10 +36,10 @@ presets, click sound, key overlay and dock.
 |------|--------|--------|
 | F0 | Plugin skeleton + passthrough filter | ✅ |
 | F1 | Background, corners, padding, shadow, presets + dock | ✅ |
-| F2 | Cursor styles, size, rotation offset, exact/glide and idle hide | ✅ |
+| F2 | Cursor styles, size, rotation offset, exact/glide/smooth and idle hide | ✅ |
 | F3 | L/R clicks + sound + hotkeys + presets | ✅ |
 | F4 | Auto + manual Zoom/Pan (hotkeys), full-scene zoom | ✅ |
-| F5 | Key overlay + spotlight + magnifier + highlighter | 🟡 (webcam ⬜) |
+| F5 | Key overlay + spotlight + magnifier + highlighter + webcam bubble | ✅ |
 | F6 | Own capture source + own audio | ⬜ |
 | F7 | Wayland parity (portal + evdev) + CI | 🟡 (evdev ✅; portal ⬜) |
 

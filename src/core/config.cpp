@@ -59,7 +59,7 @@ void sanitize_config(Config *cfg)
 
 	/* Background */
 	cfg->bg.mode = bounded_int(cfg->bg.mode, static_cast<int>(BgMode::Solid),
-				   static_cast<int>(BgMode::Transparent));
+				   static_cast<int>(BgMode::BlurredScreen));
 	cfg->bg.gradient_angle = wrapped_angle(cfg->bg.gradient_angle, def.bg.gradient_angle);
 	cfg->bg.gradient_center_x =
 		bounded(cfg->bg.gradient_center_x, limits::kUnitRange, def.bg.gradient_center_x);
@@ -83,16 +83,20 @@ void sanitize_config(Config *cfg)
 		cfg->cursor.secondary_style = -1;
 	else if (cfg->cursor.secondary_style >= 0)
 		cfg->cursor.secondary_style = cursor_style_resolve(cfg->cursor.secondary_style);
-	cfg->cursor.follow_mode = bounded_int(cfg->cursor.follow_mode,
-					      static_cast<int>(CursorFollowMode::Exact),
-					      static_cast<int>(CursorFollowMode::GlideAB));
-	/* Spring and sampled glide were removed; every non-Exact mode is A→B. */
-	if (cfg->cursor.follow_mode != static_cast<int>(CursorFollowMode::Exact))
+	/* Spring and sampled glide were removed; legacy values 1/2 map to A→B.
+	 * Exact and Smooth keep their own mode; invalid values map to A→B. */
+	if (cfg->cursor.follow_mode < static_cast<int>(CursorFollowMode::Exact) ||
+	    cfg->cursor.follow_mode > static_cast<int>(CursorFollowMode::Smooth))
+		cfg->cursor.follow_mode = static_cast<int>(CursorFollowMode::GlideAB);
+	else if (cfg->cursor.follow_mode != static_cast<int>(CursorFollowMode::Exact) &&
+		 cfg->cursor.follow_mode != static_cast<int>(CursorFollowMode::Smooth))
 		cfg->cursor.follow_mode = static_cast<int>(CursorFollowMode::GlideAB);
 	cfg->cursor.size = bounded(cfg->cursor.size, limits::kCursorSizeRange, def.cursor.size);
 	cfg->cursor.rotation_offset_deg =
 		bounded(cfg->cursor.rotation_offset_deg, limits::kCursorRotationRange, 0.0);
 	cfg->cursor.glide_ms = bounded(cfg->cursor.glide_ms, limits::kCursorGlideRange, def.cursor.glide_ms);
+	cfg->cursor.smooth_ms = bounded(cfg->cursor.smooth_ms, limits::kCursorSmoothRange,
+					 def.cursor.smooth_ms);
 	cfg->cursor.idle_delay_ms =
 		bounded(cfg->cursor.idle_delay_ms, limits::kCursorIdleDelayRange, def.cursor.idle_delay_ms);
 
@@ -102,11 +106,15 @@ void sanitize_config(Config *cfg)
 	if (cfg->zoom.mode == 2)
 		cfg->zoom.mode = static_cast<int>(ZoomMode::Off);
 	cfg->zoom.mode = bounded_int(cfg->zoom.mode, static_cast<int>(ZoomMode::Off),
-				     static_cast<int>(ZoomMode::Auto));
+				     static_cast<int>(ZoomMode::Smart));
 	cfg->zoom.amount = bounded(cfg->zoom.amount, limits::kZoomAmountRange, def.zoom.amount);
 	cfg->zoom.duration_ms = bounded(cfg->zoom.duration_ms, limits::kZoomDurationRange, def.zoom.duration_ms);
 	cfg->zoom.idle_timeout_ms =
 		bounded(cfg->zoom.idle_timeout_ms, limits::kZoomIdleTimeoutRange, def.zoom.idle_timeout_ms);
+	cfg->zoom.smart_hold_ms = bounded(cfg->zoom.smart_hold_ms, limits::kZoomSmartHoldRange,
+					   def.zoom.smart_hold_ms);
+	cfg->zoom.motion_blur_amount = bounded(cfg->zoom.motion_blur_amount, limits::kUnitRange,
+					       def.zoom.motion_blur_amount);
 	cfg->zoom.pan_amount = bounded(cfg->zoom.pan_amount, limits::kUnitRange, def.zoom.pan_amount);
 	cfg->zoom.center_amount = bounded(cfg->zoom.center_amount, limits::kUnitRange, def.zoom.center_amount);
 

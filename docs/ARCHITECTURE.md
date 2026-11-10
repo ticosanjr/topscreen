@@ -60,6 +60,7 @@ covered by tests) and the **OBS layer** (thin, it only wires the core to libobs)
 | Text | `src/render/ts-text.{hpp,cpp}` + `src/core/font_atlas.*` | Key overlay (font atlas + band) |
 | Profiles | `src/core/profiles.{hpp,cpp}` + `ts-profile-store.*` + `ts-profile-bundle.*` + `ts-scene-profiles.*` | A–J seeds, slot store, export/import bundle, scene mappings |
 | Audio | `src/audio/ts-click-sound.*` + `ts-click-audio.*` + `ts-click-source.*` | Click WAV decode, process-wide mix queue and OBS audio source |
+| Webcam | `src/webcam/ts-webcam-filter.*` + `data/effects/webcam.effect` | Independent webcam bubble filter |
 | UI | `src/ui/ts-dock.{hpp,cpp}` | Qt dock (optional) |
 
 ## Render pipeline

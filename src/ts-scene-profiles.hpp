@@ -1,6 +1,8 @@
 #pragma once
 
 #include <string>
+#include <utility>
+#include <vector>
 
 namespace topscreen::scene_profiles {
 
@@ -15,5 +17,14 @@ bool assign(const std::string &scene, int profile);
 
 /** Removes the assignment for one scene. */
 bool clear(const std::string &scene);
+
+/** All scene -> profile assignments, sorted by scene name. */
+std::vector<std::pair<std::string, int>> list();
+
+/** Removes every scene assignment. */
+bool clear_all();
+
+/** Drops assignments whose scene no longer exists in the collection. */
+void prune(const std::vector<std::string> &scene_names);
 
 } // namespace topscreen::scene_profiles

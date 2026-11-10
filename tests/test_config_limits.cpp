@@ -30,13 +30,16 @@ TEST(config_limits_are_sane)
 	check_range(limits::kCornerRadiusRange);
 	check_range(limits::kShadowBlurRange);
 	check_range(limits::kShadowOffsetRange);
+	check_range(limits::kFrameWidthRange);
 	check_range(limits::kCursorSizeRange);
 	check_range(limits::kCursorRotationRange);
 	check_range(limits::kCursorGlideRange);
 	check_range(limits::kCursorIdleDelayRange);
+	check_range(limits::kCursorSmoothRange);
 	check_range(limits::kZoomAmountRange);
 	check_range(limits::kZoomDurationRange);
 	check_range(limits::kZoomIdleTimeoutRange);
+	check_range(limits::kZoomSmartHoldRange);
 	check_range(limits::kClickSizeRange);
 	check_range(limits::kClickDurationRange);
 	check_range(limits::kRadiusRange);
@@ -78,15 +81,18 @@ TEST(config_defaults_are_inside_the_shared_ranges)
 	CHECK_DEFAULT(kShadowBlurRange, bg.shadow_blur);
 	CHECK_DEFAULT(kShadowOffsetRange, bg.shadow_offset_x);
 	CHECK_DEFAULT(kShadowOffsetRange, bg.shadow_offset);
+	CHECK_DEFAULT(kFrameWidthRange, bg.frame_width);
 
 	CHECK_DEFAULT(kCursorSizeRange, cursor.size);
 	CHECK_DEFAULT(kCursorRotationRange, cursor.rotation_offset_deg);
 	CHECK_DEFAULT(kCursorGlideRange, cursor.glide_ms);
 	CHECK_DEFAULT(kCursorIdleDelayRange, cursor.idle_delay_ms);
+	CHECK_DEFAULT(kCursorSmoothRange, cursor.smooth_ms);
 
 	CHECK_DEFAULT(kZoomAmountRange, zoom.amount);
 	CHECK_DEFAULT(kZoomDurationRange, zoom.duration_ms);
 	CHECK_DEFAULT(kZoomIdleTimeoutRange, zoom.idle_timeout_ms);
+	CHECK_DEFAULT(kZoomSmartHoldRange, zoom.smart_hold_ms);
 	CHECK_DEFAULT(kUnitRange, zoom.pan_amount);
 	CHECK_DEFAULT(kUnitRange, zoom.center_amount);
 

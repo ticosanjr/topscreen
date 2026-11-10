@@ -66,6 +66,7 @@ private:
 	gs_eparam_t *p_pad_ = nullptr;
 	gs_eparam_t *p_radius_ = nullptr;
 	gs_eparam_t *p_zoom_ = nullptr;
+	gs_eparam_t *p_motion_blur_ = nullptr;
 	gs_eparam_t *p_focus_ = nullptr;
 	gs_eparam_t *p_bg_a_ = nullptr;
 	gs_eparam_t *p_bg_b_ = nullptr;
@@ -77,6 +78,10 @@ private:
 	gs_eparam_t *p_bg_tex_aspect_ = nullptr;
 	gs_eparam_t *p_bg_transparent_ = nullptr;
 	gs_eparam_t *p_bg_keep_aspect_ = nullptr;
+	gs_eparam_t *p_bg_blur_ = nullptr;
+	gs_eparam_t *p_frame_style_ = nullptr;
+	gs_eparam_t *p_frame_color_ = nullptr;
+	gs_eparam_t *p_frame_width_ = nullptr;
 	gs_eparam_t *p_shadow_alpha_ = nullptr;
 	gs_eparam_t *p_shadow_blur_ = nullptr;
 	gs_eparam_t *p_shadow_offset_ = nullptr;

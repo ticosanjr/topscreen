@@ -9,11 +9,11 @@ GitHub Release attachments are the canonical downloadable copies.
 
 | Version | Linux | Windows | Highlights |
 |---------|-------|---------|------------|
+| **1.2.4** | [`topscreen-1.2.4-linux.tar.gz`](https://github.com/ticosanjr/topscreen/releases/download/v1.2.4/topscreen-1.2.4-linux.tar.gz) | [`topscreen-1.2.4-windows.zip`](https://github.com/ticosanjr/topscreen/releases/download/v1.2.4/topscreen-1.2.4-windows.zip) \* | **Live polish:** smart zoom, smooth cursor, optional motion blur, blurred-screen/bezel backgrounds, webcam bubble filter, click audio source in the OBS mixer, scene-profile actions/list/prune and a new Glass preset |
 | **1.2.3** | [`topscreen-1.2.3-linux.tar.gz`](https://github.com/ticosanjr/topscreen/releases/download/v1.2.3/topscreen-1.2.3-linux.tar.gz) | [`topscreen-1.2.3-windows.zip`](https://github.com/ticosanjr/topscreen/releases/download/v1.2.3/topscreen-1.2.3-windows.zip) \* | **Brazilian Portuguese + release quality:** `pt-BR` UI, CI builds OBS 30.0.2/31.1.1 and publishes the Windows package with the Qt dock, `verify-release.sh` checks CI artifacts, parent-cursor and monitor-origin modules extracted from the filter, config-limit invariants tested |
 | **1.2.2** | [`topscreen-1.2.2-linux.tar.gz`](https://github.com/ticosanjr/topscreen/releases/download/v1.2.2/topscreen-1.2.2-linux.tar.gz) | [`topscreen-1.2.2-windows.zip`](https://github.com/ticosanjr/topscreen/releases/download/v1.2.2/topscreen-1.2.2-windows.zip) \* | **Cleanup + shared limits:** properties split per section, profile export/import module, input backends split per platform, integration tests run with LeakSanitizer, shared UI/sanitize ranges, retired click-easing and manual zoom-mode config removed |
-| **1.2.1** | [`topscreen-1.2.1-linux.tar.gz`](https://github.com/ticosanjr/topscreen/releases/download/v1.2.1/topscreen-1.2.1-linux.tar.gz) | [`topscreen-1.2.1-windows.zip`](https://github.com/ticosanjr/topscreen/releases/download/v1.2.1/topscreen-1.2.1-windows.zip) \* | **Hotkey persistence + cleanup:** saved profile bindings are restored and reloaded when the OBS profile changes; restore-defaults now persists; dead motion-blur/cursor/spotlight/magnifier legacy paths removed; table-driven settings and hotkey dispatch; profile slot store; wallpaper/cursor hot-path caches |
 
-> \* **Windows packages 0.2.18–1.2.3** are built by the `Release` workflow and include the Qt dock.
+> \* **Windows packages 0.2.18–1.2.4** are built by the `Release` workflow and include the Qt dock.
 > Local fallback cross-builds (if used) do not include it. They are the full filter (Properties, hotkeys,
 > presets, profiles, multi-screen fix). The Linux package includes the dock.
 

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 
-project(TopScreen VERSION 1.2.3 LANGUAGES C CXX)
+project(TopScreen VERSION 1.2.4 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -23,6 +23,7 @@ option(ENABLE_FRONTEND_API    "Use obs-frontend-api for dock" ON)
 # ---------------------------------------------------------------------------
 set(TOPSCREEN_CORE_SOURCES
     src/core/config.cpp
+    src/core/webcam.cpp
     src/core/easing.cpp
     src/core/spring.cpp
     src/core/geometry.cpp
@@ -143,6 +144,7 @@ if(TOPSCREEN_BUILD_PLUGIN)
         src/ts-registry.cpp
         src/ts-wallpapers.cpp
         src/render/ts-compositor.cpp
+        src/webcam/ts-webcam-filter.cpp
     src/render/ts-wallpaper.cpp
         src/render/ts-text.cpp
         src/input/ts-input.cpp

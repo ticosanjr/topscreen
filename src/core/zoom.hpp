@@ -10,14 +10,20 @@ struct ZoomConfig {
 	double amount = 1.6;         // target zoom in auto mode
 	double duration_ms = 450.0;  // animation speed
 	double idle_timeout_ms = 1500.0; // no focus -> returns to normal
+	double smart_hold_ms = 1200.0;   // Smart: stay zoomed after the last action
 	double pan_amount = 1.0;     // how much the focus "follows" the cursor (0..1)
 	double center_amount = 1.0;  // how much the cursor stays at the CENTER (0..1)
+	bool motion_blur = false;    // optional radial blur while zooming
+	double motion_blur_amount = 0.35;
 };
 
 struct ZoomRender {
 	double zoom = 1.0;
 	double focus_x = 0.5;
 	double focus_y = 0.5;
+	/* Absolute zoom change per second; the compositor turns it into a
+	 * short-lived radial motion blur. */
+	double velocity = 0.0;
 };
 
 /**
@@ -57,6 +63,8 @@ public:
 
 	/** Focus following the cursor. */
 	void set_cursor(double x, double y, double now_ms);
+	/** Marks an action (click/drag/typing) for Smart mode. */
+	void note_activity(double now_ms);
 
 	/**
 	 * Starts a hold-to-zoom gesture at an ABSOLUTE zoom target.
@@ -114,6 +122,8 @@ private:
 	double focus_point_x_ = 0.5; // last (source) point focused
 	double focus_point_y_ = 0.5;
 	double last_focus_ms_ = 0.0;
+	double last_activity_ms_ = -1.0e9;
+	double velocity_ = 0.0;
 	double last_update_ms_ = 0.0;
 	bool started_ = false;
 };

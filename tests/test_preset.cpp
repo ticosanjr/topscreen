@@ -105,7 +105,7 @@ TEST(preset_legacy_background_modes_are_migrated)
 
 TEST(preset_real_files_use_modern_background_key)
 {
-	const char *names[] = {"demo.json", "tutorial.json", "presentation.json"};
+	const char *names[] = {"demo.json", "tutorial.json", "presentation.json", "glass.json"};
 	for (const char *n : names) {
 		const std::string path = std::string(TOPSCREEN_TEST_DATA_DIR) + "/presets/" + n;
 		bool ok = false;
@@ -163,7 +163,7 @@ TEST(preset_legacy_click_sound_file_applies_to_both_sides)
 
 TEST(preset_real_files_parse)
 {
-	const char *names[] = {"demo.json", "tutorial.json", "presentation.json"};
+	const char *names[] = {"demo.json", "tutorial.json", "presentation.json", "glass.json"};
 	for (const char *n : names) {
 		const std::string path = std::string(TOPSCREEN_TEST_DATA_DIR) + "/presets/" + n;
 		bool ok = false;

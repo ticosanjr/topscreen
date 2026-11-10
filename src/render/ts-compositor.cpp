@@ -169,6 +169,7 @@ void Compositor::cache_params()
 	p_pad_ = P("content_pad");
 	p_radius_ = P("corner_radius");
 	p_zoom_ = P("zoom");
+	p_motion_blur_ = P("motion_blur");
 	p_focus_ = P("zoom_focus");
 	p_bg_a_ = P("bg_a");
 	p_bg_b_ = P("bg_b");
@@ -180,6 +181,10 @@ void Compositor::cache_params()
 	p_bg_tex_aspect_ = P("bg_tex_aspect");
 	p_bg_transparent_ = P("bg_transparent");
 	p_bg_keep_aspect_ = P("bg_keep_aspect");
+	p_bg_blur_ = P("bg_blur");
+	p_frame_style_ = P("frame_style");
+	p_frame_color_ = P("frame_color");
+	p_frame_width_ = P("frame_width");
 	p_shadow_alpha_ = P("shadow_alpha");
 	p_shadow_blur_ = P("shadow_blur");
 	p_shadow_offset_ = P("shadow_offset");
@@ -274,6 +279,7 @@ bool Compositor::validate_params() const
 		"content_pad",
 		"corner_radius",
 		"zoom",
+		"motion_blur",
 		"zoom_focus",
 		"bg_a",
 		"bg_b",
@@ -285,6 +291,10 @@ bool Compositor::validate_params() const
 		"bg_transparent",
 		"bg_tex_aspect",
 		"bg_keep_aspect",
+		"bg_blur",
+		"frame_style",
+		"frame_color",
+		"frame_width",
 		"shadow_alpha",
 		"shadow_blur",
 		"shadow_offset",
@@ -453,6 +463,10 @@ void Compositor::upload_background(const core::Config &cfg, uint32_t w, uint32_t
 	}
 	set_v2(p_bg_gradient_dir_, gradient_dir_x_, gradient_dir_y_);
 	set_f(p_bg_keep_aspect_, cfg.bg.keep_aspect ? 1.0f : 0.0f);
+	set_f(p_bg_blur_, static_cast<float>(cfg.bg.image_blur));
+	set_f(p_frame_style_, bg ? static_cast<float>(cfg.bg.frame_style) : 0.0f);
+	set_c(p_frame_color_, cfg.bg.frame_color);
+	set_f(p_frame_width_, static_cast<float>(cfg.bg.frame_width));
 	set_c(p_bg_a_, cfg.bg.color_a);
 	set_c(p_bg_b_, cfg.bg.color_b);
 
@@ -499,6 +513,13 @@ void Compositor::upload_cursor(const core::Config &cfg, const FrameState &st, bo
 	if (zoom < 1.0f)
 		zoom = 1.0f;
 	set_f(p_zoom_, zoom);
+	float motion_blur = 0.0f;
+	if (active && cfg.zoom.motion_blur) {
+		motion_blur = static_cast<float>(
+			std::clamp(std::abs(st.zoom.velocity) * 0.18 * cfg.zoom.motion_blur_amount,
+				   0.0, 0.6));
+	}
+	set_f(p_motion_blur_, motion_blur);
 	set_v2(p_focus_, static_cast<float>(st.zoom.focus_x), static_cast<float>(st.zoom.focus_y));
 
 	/* Cursor. The offset is applied on the CPU so clicks, zoom, spotlight and

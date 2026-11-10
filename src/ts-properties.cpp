@@ -112,13 +112,14 @@ bool background_type_changed(obs_properties_t *props, obs_property_t *p, obs_dat
 	int type = settings ? static_cast<int>(obs_data_get_int(settings, kBgType))
 			    : static_cast<int>(BgMode::Gradient);
 	if (type < static_cast<int>(BgMode::Solid) ||
-	    type > static_cast<int>(BgMode::Transparent))
+	    type > static_cast<int>(BgMode::BlurredScreen))
 		type = static_cast<int>(BgMode::Gradient);
 
 	const bool solid = type == static_cast<int>(BgMode::Solid);
 	const bool gradient = type == static_cast<int>(BgMode::Gradient);
 	const bool wallpaper = type == static_cast<int>(BgMode::Wallpaper);
 	const bool local = type == static_cast<int>(BgMode::LocalImage);
+	const bool blurred = type == static_cast<int>(BgMode::BlurredScreen);
 	const bool image = wallpaper || local;
 
 	auto show = [&](const char *key, bool visible) {
@@ -130,12 +131,24 @@ bool background_type_changed(obs_properties_t *props, obs_property_t *p, obs_dat
 	show(kBgGradientAngle, gradient);
 	show(kBgGradientCenterX, gradient);
 	show(kBgGradientCenterY, gradient);
-	show("grp_bg_image", image);
+	show("grp_bg_image", image || blurred);
 	show(kBgImage, wallpaper);
 	show(kBgImageFile, local);
-	show(kBgImageBlur, image);
+	show(kBgImageBlur, image || blurred);
 	/* Padding, corner and the window shadow still shape the transparent
 	 * "floating screen", so they stay available for every background type. */
+	return true;
+}
+
+bool frame_style_changed(obs_properties_t *props, obs_property_t *p, obs_data_t *settings)
+{
+	(void)p;
+	const bool on = settings &&
+			obs_data_get_int(settings, kFrameStyle) != 0;
+	for (const char *key : {kFrameColor, kFrameWidth}) {
+		if (obs_property_t *v = obs_properties_get(props, key))
+			obs_property_set_visible(v, on);
+	}
 	return true;
 }
 
@@ -147,7 +160,7 @@ bool background_enabled_changed(obs_properties_t *props, obs_property_t *p, obs_
 	for (const char *key : {kBgType, kBgColorA, kBgColorB, kBgGradientAngle,
 			       kBgGradientCenterX, kBgGradientCenterY, "grp_bg_image",
 			       kBgPaddingX, kBgPaddingY, kBgKeepAspect, kBgCornerRadius,
-			       "grp_shadow"}) {
+			       "grp_shadow", "grp_frame"}) {
 		if (obs_property_t *v = obs_properties_get(props, key))
 			obs_property_set_visible(v, on);
 	}
@@ -179,7 +192,8 @@ bool cursor_options_changed(obs_properties_t *props, obs_property_t *p, obs_data
 	const long long mode =
 		setting_int(settings, kCursorFollowMode,
 			    static_cast<long long>(CursorFollowMode::Exact));
-	const bool glide = mode != static_cast<long long>(CursorFollowMode::Exact);
+	const bool glide = mode == static_cast<long long>(CursorFollowMode::GlideAB);
+	const bool smooth = mode == static_cast<long long>(CursorFollowMode::Smooth);
 	if (!on) {
 		for (const char *key : {kCursorStyle, kCursorSecondaryStyle,
 				       kCursorLinkDetection, kCursorSize,
@@ -209,6 +223,8 @@ bool cursor_options_changed(obs_properties_t *props, obs_property_t *p, obs_data
 		obs_property_set_visible(v, true);
 	if (obs_property_t *v = obs_properties_get(props, kCursorGlideMs))
 		obs_property_set_visible(v, glide);
+	if (obs_property_t *v = obs_properties_get(props, kCursorSmoothMs))
+		obs_property_set_visible(v, smooth);
 	if (obs_property_t *v = obs_properties_get(props, kCursorIdleDelayMs))
 		obs_property_set_visible(v, hide);
 	return true;
@@ -493,17 +509,42 @@ bool add_click_audio_clicked(obs_properties_t *props, obs_property_t *p, void *d
 	return ts_click_audio_add_to_current_scene();
 }
 
+bool add_click_audio_all_clicked(obs_properties_t *props, obs_property_t *p, void *data)
+{
+	(void)props;
+	(void)p;
+	(void)data;
+	return ts_click_audio_add_to_all_scenes();
+}
+
+bool zoom_motion_blur_changed(obs_properties_t *props, obs_property_t *p,
+			      obs_data_t *settings)
+{
+	(void)p;
+	const bool on = settings && obs_data_get_bool(settings, kZoomMotionBlur);
+	if (obs_property_t *v = obs_properties_get(props, kZoomMotionBlurAmount))
+		obs_property_set_visible(v, on);
+	return true;
+}
+
 bool zoom_mode_changed(obs_properties_t *props, obs_property_t *p, obs_data_t *settings)
 {
 	(void)p;
-	const bool auto_mode = settings &&
-			       obs_data_get_int(settings, kZoomMode) ==
-				       static_cast<long long>(ZoomMode::Auto);
-	for (const char *key : {kZoomAmount, kZoomDurationMs, kZoomIdleTimeoutMs,
-			       kZoomPanAmount, kZoomCenterAmount}) {
+	const long long mode = settings ? obs_data_get_int(settings, kZoomMode)
+					: static_cast<long long>(ZoomMode::Auto);
+	const bool auto_mode = mode == static_cast<long long>(ZoomMode::Auto);
+	const bool smart = mode == static_cast<long long>(ZoomMode::Smart);
+	const bool active = auto_mode || smart;
+	for (const char *key : {kZoomAmount, kZoomDurationMs, kZoomPanAmount,
+			       kZoomCenterAmount}) {
 		if (obs_property_t *v = obs_properties_get(props, key))
-			obs_property_set_visible(v, auto_mode);
+			obs_property_set_visible(v, active);
 	}
+	if (obs_property_t *v = obs_properties_get(props, kZoomIdleTimeoutMs))
+		obs_property_set_visible(v, auto_mode);
+	if (obs_property_t *v = obs_properties_get(props, kZoomSmartHoldMs))
+		obs_property_set_visible(v, smart);
+	zoom_motion_blur_changed(props, nullptr, settings);
 	return true;
 }
 
@@ -540,6 +581,14 @@ bool clear_scene_profile_clicked(obs_properties_t *props, obs_property_t *p, voi
 	return ok;
 }
 
+bool clear_all_scene_profiles_clicked(obs_properties_t *props, obs_property_t *p, void *data)
+{
+	(void)props;
+	(void)p;
+	(void)data;
+	return scene_profiles::clear_all();
+}
+
 void add_profiles_section(obs_properties_t *props, void *data)
 {
 	/* ---------------- Profiles (at the top) ---------------- */
@@ -561,6 +610,10 @@ void add_profiles_section(obs_properties_t *props, void *data)
 		prof, "profile_clear_scene", obs_module_text("Profile.ClearSceneButton"),
 		clear_scene_profile_clicked, data);
 	set_tip(clear_scene, obs_module_text("Tooltip.ProfileClearScene"));
+	obs_property_t *clear_all_scenes = obs_properties_add_button2(
+		prof, "profile_clear_all_scenes", obs_module_text("Profile.ClearAllScenesButton"),
+		clear_all_scene_profiles_clicked, data);
+	set_tip(clear_all_scenes, obs_module_text("Tooltip.ProfileClearAllScenes"));
 
 	obs_properties_add_group(props, "grp_profiles", obs_module_text("Group.Profiles"), OBS_GROUP_NORMAL, prof);
 }
@@ -616,6 +669,8 @@ void add_background_section(obs_properties_t *props, obs_properties_t *capture, 
 				  static_cast<int>(BgMode::LocalImage));
 	obs_property_list_add_int(mode, obs_module_text("Background.Type.Transparent"),
 				  static_cast<int>(BgMode::Transparent));
+	obs_property_list_add_int(mode, obs_module_text("Background.Type.BlurredScreen"),
+				  static_cast<int>(BgMode::BlurredScreen));
 	obs_property_set_modified_callback(mode, background_type_changed);
 
 	obs_properties_add_color(bg, kBgColorA, obs_module_text("Background.ColorA"));
@@ -686,6 +741,22 @@ void add_background_section(obs_properties_t *props, obs_properties_t *capture, 
 		sh, kBgShadowOffset, obs_module_text("Shadow.Offset"),
 		limits::kShadowOffsetRange);
 	obs_properties_add_group(bg, "grp_shadow", obs_module_text("Group.Shadow"), OBS_GROUP_NORMAL, sh);
+
+	obs_properties_t *frame = obs_properties_create();
+	obs_property_t *fstyle = obs_properties_add_list(
+		frame, kFrameStyle, obs_module_text("Frame.Style"), OBS_COMBO_TYPE_LIST,
+		OBS_COMBO_FORMAT_INT);
+	obs_property_list_add_int(fstyle, obs_module_text("Frame.Style.None"), 0);
+	obs_property_list_add_int(fstyle, obs_module_text("Frame.Style.Inner"), 1);
+	obs_property_list_add_int(fstyle, obs_module_text("Frame.Style.Bezel"), 2);
+	obs_property_set_modified_callback(fstyle, frame_style_changed);
+	obs_properties_add_color(frame, kFrameColor, obs_module_text("Frame.Color"));
+	add_range_slider(
+		frame, kFrameWidth, obs_module_text("Frame.Width"),
+		limits::kFrameWidthRange);
+	obs_properties_add_group(bg, "grp_frame", obs_module_text("Group.Frame"), OBS_GROUP_NORMAL, frame);
+	frame_style_changed(props, nullptr, settings);
+
 	obs_properties_add_group(capture, "grp_bg", obs_module_text("Group.Background"), OBS_GROUP_NORMAL, bg);
 	background_enabled_changed(props, nullptr, settings);
 	background_shadow_changed(props, nullptr, settings);
@@ -699,6 +770,7 @@ void add_zoom_section(obs_properties_t *props, obs_properties_t *capture, obs_da
 							OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
 	obs_property_list_add_int(zmode, obs_module_text("Zoom.Mode.Off"), static_cast<int>(ZoomMode::Off));
 	obs_property_list_add_int(zmode, obs_module_text("Zoom.Mode.Auto"), static_cast<int>(ZoomMode::Auto));
+	obs_property_list_add_int(zmode, obs_module_text("Zoom.Mode.Smart"), static_cast<int>(ZoomMode::Smart));
 	obs_property_set_modified_callback(zmode, zoom_mode_changed);
 
 	add_range_slider(
@@ -718,6 +790,16 @@ void add_zoom_section(obs_properties_t *props, obs_properties_t *capture, obs_da
 		zoom, kZoomCenterAmount, obs_module_text("Zoom.CenterAmount"),
 		limits::kUnitRange);
 	set_tip(center, obs_module_text("Tooltip.ZoomCentering"));
+	add_range_slider(
+		zoom, kZoomSmartHoldMs, obs_module_text("Zoom.SmartHoldMs"),
+		limits::kZoomSmartHoldRange);
+	obs_property_t *mblur = obs_properties_add_bool(
+		zoom, kZoomMotionBlur, obs_module_text("Zoom.MotionBlur"));
+	set_tip(mblur, obs_module_text("Tooltip.ZoomMotionBlur"));
+	obs_property_set_modified_callback(mblur, zoom_motion_blur_changed);
+	add_range_slider(
+		zoom, kZoomMotionBlurAmount, obs_module_text("Zoom.MotionBlurAmount"),
+		limits::kUnitRange);
 	obs_properties_add_group(capture, "grp_zoom", obs_module_text("Group.Zoom"), OBS_GROUP_NORMAL, zoom);
 	zoom_mode_changed(props, nullptr, settings);
 }
@@ -762,10 +844,16 @@ void add_cursor_section(obs_properties_t *props, obs_properties_t *pointer, obs_
 				  static_cast<int>(CursorFollowMode::Exact));
 	obs_property_list_add_int(follow, obs_module_text("Cursor.Follow.GlideAB"),
 				  static_cast<int>(CursorFollowMode::GlideAB));
+	obs_property_list_add_int(follow, obs_module_text("Cursor.Follow.Smooth"),
+				  static_cast<int>(CursorFollowMode::Smooth));
 	obs_property_set_modified_callback(follow, cursor_options_changed);
 	add_range_slider(
 		cur, kCursorGlideMs, obs_module_text("Cursor.GlideMs"),
 		limits::kCursorGlideRange);
+	obs_property_t *smooth_ms = add_range_slider(
+		cur, kCursorSmoothMs, obs_module_text("Cursor.SmoothMs"),
+		limits::kCursorSmoothRange);
+	set_tip(smooth_ms, obs_module_text("Tooltip.CursorSmoothMs"));
 	obs_properties_add_bool(cur, kCursorShadow, obs_module_text("Cursor.Shadow"));
 	obs_property_t *hide_idle =
 		obs_properties_add_bool(cur, kCursorHideIdle, obs_module_text("Cursor.HideIdle"));
@@ -819,6 +907,10 @@ void add_click_sound_section(obs_properties_t *props, obs_properties_t *pointer,
 		snd, "click_sound_add_btn", obs_module_text("ClickSound.AddAudioButton"),
 		add_click_audio_clicked, nullptr);
 	set_tip(add_audio, obs_module_text("Tooltip.ClickSoundAddAudio"));
+	obs_property_t *add_audio_all = obs_properties_add_button2(
+		snd, "click_sound_add_all_btn", obs_module_text("ClickSound.AddAudioAllButton"),
+		add_click_audio_all_clicked, nullptr);
+	set_tip(add_audio_all, obs_module_text("Tooltip.ClickSoundAddAudioAll"));
 	obs_properties_add_group(pointer, "grp_sound", obs_module_text("Group.ClickSound"), OBS_GROUP_NORMAL, snd);
 	click_sound_changed(props, nullptr, settings);
 }
@@ -1119,6 +1211,7 @@ void add_tooltips(obs_properties_t *props)
 	tip("grp_bg", obs_module_text("Tooltip.GroupBackground"));
 	tip("grp_bg_image", obs_module_text("Tooltip.GroupWallpaper"));
 	tip("grp_shadow", obs_module_text("Tooltip.GroupShadow"));
+	tip("grp_frame", obs_module_text("Tooltip.GroupFrame"));
 	tip("grp_cursor", obs_module_text("Tooltip.GroupCursor"));
 	tip("grp_click_left", obs_module_text("Tooltip.GroupClickLeft"));
 	tip("grp_click_right", obs_module_text("Tooltip.GroupClickRight"));

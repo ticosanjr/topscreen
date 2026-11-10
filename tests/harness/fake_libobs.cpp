@@ -731,6 +731,10 @@ obs_source_t *obs_frontend_get_current_scene(void)
 	return &scene;
 }
 
+void obs_frontend_get_scenes(struct obs_frontend_source_list *)
+{
+}
+
 obs_scene_t *obs_scene_from_source(const obs_source_t *)
 {
 	return nullptr;

@@ -10,6 +10,7 @@ namespace topscreen::core {
 enum class CursorFollowMode : int {
 	Exact = 0,   // follows the pointer immediately
 	GlideAB = 3, // eases from the current point to the next accepted point
+	Smooth = 4,  // continuous low-latency smoothing
 };
 
 /** X11 cursor names that mean "link/hand" (Windows uses IDC_HAND instead). */
@@ -41,6 +42,7 @@ struct CursorConfig {
 	bool shadow = true;
 	int follow_mode = static_cast<int>(CursorFollowMode::Exact);
 	double glide_ms = 180.0; // Glide: A->B easing duration
+	double smooth_ms = 90.0; // Smooth: low-pass time constant
 	bool hide_idle = true; // hides when idle
 	double idle_delay_ms = 1200.0;
 };

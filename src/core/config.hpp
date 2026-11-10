@@ -32,6 +32,9 @@ struct BackgroundConfig {
 	double shadow_offset_x = 0.0; // horizontal offset (px)
 	double shadow_offset = 12.0;  // vertical offset (px)
 	bool keep_aspect = true;      // keeps the screen aspect ratio (without distortion)
+	int frame_style = 0;          // 0 none, 1 inner border, 2 device bezel
+	uint32_t frame_color = 0xFF000000u;
+	double frame_width = 2.0;      // px
 };
 
 struct ClickSoundConfig {
@@ -141,7 +144,8 @@ inline int legacy_bg_mode_value(int mode)
 {
 	return (mode == static_cast<int>(BgMode::Wallpaper) ||
 		mode == static_cast<int>(BgMode::LocalImage) ||
-		mode == static_cast<int>(BgMode::Transparent))
+		mode == static_cast<int>(BgMode::Transparent) ||
+		mode == static_cast<int>(BgMode::BlurredScreen))
 		       ? 3
 		       : mode;
 }

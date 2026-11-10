@@ -67,6 +67,8 @@ Status: ✅ done · 🟡 partial · ⬜ pending.
 | ID | Task | Status |
 |----|--------|--------|
 | T4.1 | Spring + easings (`core/spring`, `core/easing`) | ✅ |
+| T4.5 | Smart zoom (action-driven hold/return) | ✅ |
+| T4.6 | Optional motion blur during zoom | ✅ |
 | T4.2 | Auto-zoom by click | ✅ |
 | T4.3 | Auto-zoom following the cursor with timeout | ✅ |
 | T4.4 | Manual zoom in/out/reset by hotkey | ✅ |
@@ -84,7 +86,7 @@ Status: ✅ done · 🟡 partial · ⬜ pending.
 | T5.3 | Key capture (Windows / X11; evdev in F7) | ✅ |
 | T5.4 | Key overlay | ✅ |
 | T5.5 | Spotlight/dim following the cursor (round/square, hotkey, drop/zoom, border, halo shadow, outside blur) | ✅ |
-| T5.6 | Webcam bubble | ⬜ (needs its own source - F6) |
+| T5.6 | Webcam bubble | ✅ (filter with circle/rounded mask, border and shadow) |
 | T5.7 | Drag highlighter (box, line, zoom to selection, zoom on mouse press) | ✅ |
 
 ## F6 — Own capture source + audio
@@ -106,7 +108,7 @@ Status: ✅ done · 🟡 partial · ⬜ pending.
 | T7.3 | `uaccess` udev rule + detection in the dock | ✅ (rule ready + log warning) |
 | T7.4 | Graceful degradation + tier report | ✅ (readable tier in the dock + log warnings) |
 | T7.5 | CI: Win + Linux build against OBS | ✅ (release workflow builds both; header check covers OBS 30.0.2 and 31.1.1) |
-| T7.6 | Portable packaging + release | ✅ (packages in `releases/`, published as GitHub Release `v1.2.3`; Windows package includes the Qt dock) |
+| T7.6 | Portable packaging + release | ✅ (packages in `releases/`, published as GitHub Release `v1.2.4`; Windows package includes the Qt dock) |
 | T7.7 | Final i18n + icon + screenshots | 🟡 (en-US + pt-BR ✅; icon/screenshots ⬜) |
 | T7.8 | Automated release archive verification (`scripts/verify-release.sh`) | ✅ |
 

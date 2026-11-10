@@ -101,8 +101,8 @@ That is where all the math and the state logic live — what actually must be ri
 ## Current numbers
 
 ```
-242 tests | 8697 checks | 0 failures   (core)
-60 tests | 798 checks   | 0 failures   (integration with fake libobs, LeakSanitizer clean)
+246 tests | 9233 checks | 0 failures   (core)
+62 tests | 828 checks   | 0 failures   (integration with fake libobs, LeakSanitizer clean)
 ```
 
 ## What the integration layer covers
@@ -117,6 +117,7 @@ fake libobs:
 | `test_integration.cpp` hotkeys | `integration_registers_all_hotkeys` covers every hotkey id/name/callback; `integration_hotkeys_shared_between_filters` proves one process-wide set shared across filters; `integration_registry_target_selection` proves selection routing/fallback |
 | `test_uniforms.cpp` | every uniform declared by `topscreen.effect` is uploaded on a plain frame (D3D11 aborts the draw otherwise) |
 | `test_click_audio.cpp` | click WAV is decoded, queued and mixed by the `topscreen_click_audio` source; silence when idle, PCM when a click is queued |
+| `test_webcam_filter.cpp` | webcam bubble filter uploads its mask/border/shadow uniforms and exposes the mask properties |
 | `test_text_render.cpp` | key-overlay text batches all glyphs + shadow quads into one vertex buffer (**1 draw total**, cache hit without rebuild) and falls back to per-glyph sprites if vertex-buffer creation fails |
 | `test_settings.cpp` | defaults match `Config`, legacy source falls back, store/load roundtrip, partial-slot fallback, background type migration/visibility, migrations, properties tree/zoom-group visibility with the hotkey, **dependent-control visibility callbacks** (cursor idle, spotlight corner, keystroke band), input without a backend, click sound error handling |
 

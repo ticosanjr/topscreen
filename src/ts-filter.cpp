@@ -135,6 +135,7 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 	std::mutex profile_io_mutex_;
 	std::string profile_io_path_;
 	std::string profile_io_text_;
+	std::string profile_io_scenes_;
 	std::atomic<int> profile_io_result_{0};
 
 	void push_settings();
@@ -146,7 +147,7 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 	void mark_profile_dirty();
 	void flush_profile_if_dirty();
 	void do_save_profile();
-	void do_export_profiles(const std::string &path);
+	void do_export_profiles(const std::string &path, const std::string &scenes);
 	void do_import_profiles(const std::string &json_text);
 	void process_actions();
 	void reload_from_settings();
@@ -215,11 +216,13 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 	{
 		return click_sound.loaded_path(right);
 	}
-	void export_profiles(const std::string &path) override
+	void export_profiles(const std::string &path,
+			     const std::string &scene_profiles_json) override
 	{
 		{
 			std::lock_guard<std::mutex> lock(profile_io_mutex_);
 			profile_io_path_ = path;
+			profile_io_scenes_ = scene_profiles_json;
 		}
 		profile_io_result_.store(0);
 		actions_.fetch_or(A_EXPORT_PROFILES);
@@ -324,7 +327,7 @@ void ts_filter_ctx::do_save_profile()
 	blog(LOG_INFO, "[TopScreen] profile saved: %s", core::profile_label(current_profile_));
 }
 
-void ts_filter_ctx::do_export_profiles(const std::string &path)
+void ts_filter_ctx::do_export_profiles(const std::string &path, const std::string &scenes)
 {
 	/* Make sure the active profile carries the edits that are on screen. */
 	store_profile_slot(current_profile_);
@@ -332,7 +335,6 @@ void ts_filter_ctx::do_export_profiles(const std::string &path)
 
 	obs_data_t *s = obs_source_get_settings(source);
 	std::string error;
-	const std::string scenes = scene_profiles::export_json();
 	const bool ok =
 		profile_bundle::export_to_file(s, current_profile_, path, scenes, &error);
 	obs_data_release(s);
@@ -349,9 +351,9 @@ void ts_filter_ctx::do_import_profiles(const std::string &json_text)
 	obs_data_t *s = obs_source_get_settings(source);
 	core::ProfileBundleInfo info;
 	std::string error;
-	std::string scenes;
-	const bool ok =
-		profile_bundle::import_from_text(json_text, s, &info, &scenes, &error);
+	/* The scene map is restored by the UI thread before queuing the import;
+	 * this thread only touches the filter's own obs_data slots. */
+	const bool ok = profile_bundle::import_from_text(json_text, s, &info, nullptr, &error);
 	obs_data_release(s);
 
 	if (!ok) {
@@ -359,10 +361,6 @@ void ts_filter_ctx::do_import_profiles(const std::string &json_text)
 		blog(LOG_WARNING, "[TopScreen] profiles import rejected: %s", error.c_str());
 		return;
 	}
-
-	/* Old backups have no scene map, so leave the current assignments alone. */
-	if (!scenes.empty() && !scene_profiles::import_json(scenes))
-		blog(LOG_WARNING, "[TopScreen] profiles import: invalid scene profile map");
 
 	/* The imported slots replace everything; a pending debounce write must
 	 * not overwrite the freshly imported active profile. */
@@ -657,13 +655,15 @@ void ts_filter_ctx::process_actions()
 	if (act & (A_EXPORT_PROFILES | A_IMPORT_PROFILES)) {
 		std::string path;
 		std::string text;
+		std::string scenes;
 		{
 			std::lock_guard<std::mutex> lock(profile_io_mutex_);
 			path.swap(profile_io_path_);
 			text.swap(profile_io_text_);
+			scenes.swap(profile_io_scenes_);
 		}
 		if (act & A_EXPORT_PROFILES)
-			do_export_profiles(path);
+			do_export_profiles(path, scenes);
 		if (act & A_IMPORT_PROFILES)
 			do_import_profiles(text);
 	}
@@ -1044,7 +1044,7 @@ bool profiles_export_from_properties(void *filter)
 		blog(LOG_WARNING, "[TopScreen] profiles export: choose a file first");
 		return false;
 	}
-	ctx->export_profiles(path);
+	ctx->export_profiles(path, scene_profiles::export_json());
 	return true;
 }
 
@@ -1085,6 +1085,10 @@ bool profiles_import_from_properties(void *filter)
 		return false;
 	}
 
+	/* The scene map is config/UI state, so restore it on this thread instead of
+	 * touching the OBS profile config from the video thread. */
+	if (!scene_profiles::import_from_bundle(text))
+		blog(LOG_WARNING, "[TopScreen] profiles import: invalid scene profile map");
 	ctx->import_profiles(text);
 	return true;
 }

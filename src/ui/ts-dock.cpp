@@ -194,7 +194,7 @@ private:
 		if (!path.endsWith(QStringLiteral(".json"), Qt::CaseInsensitive))
 			path += QStringLiteral(".json");
 
-		c->export_profiles(path.toStdString());
+		c->export_profiles(path.toStdString(), scene_profiles::export_json());
 		io_status_->setText(obs_module_text("Dock.ExportStarted"));
 	}
 
@@ -239,6 +239,8 @@ private:
 		if (answer != QMessageBox::Yes)
 			return;
 
+		if (!scene_profiles::import_from_bundle(text))
+			blog(LOG_WARNING, "[TopScreen] profiles import: invalid scene profile map");
 		c->import_profiles(text);
 		io_status_->setText(obs_module_text("Dock.ImportStarted"));
 	}

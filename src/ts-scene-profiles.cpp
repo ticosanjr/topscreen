@@ -356,6 +356,17 @@ bool import_json(const std::string &json_text)
 	return true;
 }
 
+bool import_from_bundle(const std::string &bundle_json)
+{
+	obs_data_t *bundle = obs_data_create_from_json(bundle_json.c_str());
+	if (!bundle)
+		return false;
+	const char *scenes = obs_data_get_string(bundle, "scene_profiles");
+	const bool ok = !scenes || !*scenes || import_json(scenes);
+	obs_data_release(bundle);
+	return ok;
+}
+
 void prune_uuids(const std::vector<std::string> &scene_uuids)
 {
 	/* OBS versions that do not expose scene UUIDs would otherwise erase every

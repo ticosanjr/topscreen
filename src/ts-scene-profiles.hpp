@@ -47,4 +47,7 @@ std::string export_json();
 /** Replaces the scene -> profile map from a backup. Invalid input is ignored. */
 bool import_json(const std::string &json_text);
 
+/** Restores the optional scene map from a profiles bundle (UI thread). */
+bool import_from_bundle(const std::string &bundle_json);
+
 } // namespace topscreen::scene_profiles

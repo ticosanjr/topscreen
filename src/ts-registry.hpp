@@ -47,7 +47,9 @@ struct FilterControl {
 	/* Profiles backup: the filter does the file I/O on the video thread and
 	 * publishes the last result (0 = none, 1 = export ok, 2 = export failed,
 	 * 3 = import ok, 4 = import failed). */
-	virtual void export_profiles(const std::string &path) = 0;
+	/** `scene_profiles_json` is computed on the UI thread and only written. */
+	virtual void export_profiles(const std::string &path,
+				     const std::string &scene_profiles_json) = 0;
 	virtual void import_profiles(const std::string &json_text) = 0;
 	virtual int profile_io_result() const = 0;
 };

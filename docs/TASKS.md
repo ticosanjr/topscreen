@@ -96,9 +96,9 @@ Status: ✅ done · 🟡 partial · ⬜ pending.
 | ID | Task | Status |
 |----|--------|--------|
 | T6.1 | Windows capture (DXGI Desktop Duplication) | ⬜ |
-| T6.2 | Linux capture (PipeWire + XShm) | ⬜ |
-| T6.3 | Input source `obs_source_info` | ⬜ |
-| T6.4 | Screen selection in the UI | ⬜ |
+| T6.2 | Linux capture (PipeWire + XShm) | 🟡 (X11/XShm source; PipeWire ⬜) |
+| T6.3 | Input source `obs_source_info` | ✅ (Linux/X11 `topscreen_capture`) |
+| T6.4 | Screen selection in the UI | ✅ (source monitor list) |
 | T6.5 | Own audio output (click sound on the channel) | ✅ (dedicated OBS audio source) |
 
 ## F7 — Wayland parity + polish
@@ -121,7 +121,7 @@ Status: ✅ done · 🟡 partial · ⬜ pending.
 | TD.1 | Full GPL-2.0 license text (`COPYING`) | ✅ |
 | TD.2 | `CONTRIBUTING.md` and PR template | ✅ |
 | TD.3 | Adjust `buildspec.json`/presets for the official CI | ⬜ |
-| TD.4 | Core sanity tests | ✅ (249 core + 66 integration + 55 OBS header files + ASan/UBSan) |
+| TD.4 | Core sanity tests | ✅ (249 core + 67 integration + 57 OBS header files + ASan/UBSan) |
 
 ---
 

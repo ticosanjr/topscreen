@@ -76,6 +76,11 @@ else
     echo "X11 missing: X11 backend will NOT be checked."
 fi
 
+if [ -f /usr/include/X11/extensions/XShm.h ]; then
+    DEF+=(-DTOPSCREEN_HAVE_XSHM)
+    echo "XShm detected: native capture backend included in the check."
+fi
+
 if [ -f /usr/include/linux/input.h ]; then
     DEF+=(-DTOPSCREEN_HAVE_EVDEV)
     echo "linux/input.h detected: evdev backend included in the check."

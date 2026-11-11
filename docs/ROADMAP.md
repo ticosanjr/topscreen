@@ -14,7 +14,7 @@ Each phase delivers something usable and has a verifiable acceptance criterion.
 | **F3** | L/R clicks (effects + color/size/duration/curve), sound, hotkeys, presets | Hotkeys in the OBS tab; L and R distinct; presets by hotkey | ✅ |
 | **F4** | Zoom/Pan: spring, auto-zoom (click/cursor), manual zoom, light pan | Adjustable curve/duration/speed/idle; no "jump" | ✅ |
 | **F5** | Key overlay, spotlight, drag highlighter, webcam bubble | Sharp text at any scale; clean masked camera bubble | ✅ |
-| **F6** | Own capture source + own audio | Choose the screen in the TopScreen UI; audio through the source channel | ⬜ |
+| **F6** | Own capture source + own audio | Choose the screen in the TopScreen UI; audio through the source channel | 🟡 (Linux/X11 source; Windows DXGI + Wayland PipeWire pending) |
 | **F7** | Wayland parity: `GlobalShortcuts` portal + evdev, CI 2 OBS versions, polish | Input matrix green on X11 and Wayland | ⬜ |
 
 ### Detail of what is implemented vs verified

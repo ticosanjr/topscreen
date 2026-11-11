@@ -102,8 +102,8 @@ That is where all the math and the state logic live — what actually must be ri
 ## Current numbers
 
 ```
-249 tests | 9399 checks | 0 failures   (core)
-66 tests | 855 checks   | 0 failures   (integration with fake libobs, LeakSanitizer clean)
+249 tests | 9447 checks | 0 failures   (core)
+67 tests | 861 checks   | 0 failures   (integration with fake libobs, LeakSanitizer clean)
 ```
 
 ## What the integration layer covers
@@ -119,6 +119,7 @@ fake libobs:
 | `test_uniforms.cpp` | every uniform declared by `topscreen.effect` is uploaded on a plain frame (D3D11 aborts the draw otherwise) |
 | `test_click_audio.cpp` | click WAV is decoded, queued and mixed by the `topscreen_click_audio` source; silence when idle, PCM when a click is queued |
 | `test_webcam_filter.cpp` | webcam bubble filter uploads its mask/border/shadow uniforms and exposes the mask properties |
+| `test_capture_source.cpp` | `topscreen_capture` source lifecycle, defaults and monitor properties (the real X11 frame pull is verified in OBS) |
 | `test_text_render.cpp` | key-overlay text batches all glyphs + shadow quads into one vertex buffer (**1 draw total**, cache hit without rebuild) and falls back to per-glyph sprites if vertex-buffer creation fails |
 | `test_settings.cpp` | defaults match `Config`, legacy source falls back, store/load roundtrip, partial-slot fallback, background type migration/visibility, migrations, properties tree/zoom-group visibility with the hotkey, **dependent-control visibility callbacks** (cursor idle, spotlight corner, keystroke band), input without a backend, click sound error handling |
 
@@ -129,6 +130,7 @@ These items depend on a running `libobs`/GPU/OS and do not run here:
 | Item | Why not tested here | How to verify |
 |------|--------------------------|----------------|
 | Shader `topscreen.effect` | needs an OpenGL/D3D context from OBS | load the filter in OBS and check visually |
+| `topscreen_capture` (X11) | needs a real X server and OBS graphics context | add the source in OBS and check the monitor is captured; see `VERIFICATION.md` |
 | `obs_source_info` integration | needs a running OBS | `obs --verbose` and check the TopScreen log |
 | Input backends | need real WinAPI/X11 | test cursor/clicks in OBS |
 | Qt dock | **compiles** (stub/real Qt), but the runtime needs OBS | open the dock in OBS |

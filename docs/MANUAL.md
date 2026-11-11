@@ -49,6 +49,20 @@ to proceed. Details in [`BUILD.md`](BUILD.md).
 > **Tip:** open the **TopScreen** dock (menu **View → Docks → TopScreen**) to
 > see the state and switch presets quickly.
 
+### TopScreen Capture (Linux X11, experimental)
+
+Instead of Display Capture + filter, you can add **Sources → + → TopScreen
+Capture** on Linux/X11. The source captures the selected monitor natively
+(X11/XShm) and already carries a **TopScreen FX** filter, so the scene has a
+single source. Choose the monitor in the source properties and adjust the
+effects in **Filters → TopScreen FX**.
+
+- Windows and Wayland still use **Display Capture + TopScreen FX**.
+- Do not apply a second TopScreen FX filter on top of this source.
+- If you remove the effects filter, the source properties offer
+  **Add TopScreen effects** to put it back.
+- Profiles, hotkeys and the dock target the **filter**, exactly as before.
+
 ---
 
 ## 4. Concepts

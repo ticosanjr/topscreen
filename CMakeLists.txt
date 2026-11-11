@@ -143,6 +143,8 @@ if(TOPSCREEN_BUILD_PLUGIN)
         src/ts-presets.cpp
         src/ts-registry.cpp
         src/ts-wallpapers.cpp
+        src/capture/ts-capture-x11.cpp
+        src/capture/ts-capture-source.cpp
         src/render/ts-compositor.cpp
         src/webcam/ts-webcam-filter.cpp
         src/webcam/ts-webcam-source.cpp
@@ -201,6 +203,14 @@ if(TOPSCREEN_BUILD_PLUGIN)
                 message(STATUS "TopScreen: XFixes link-cursor detection enabled")
             else()
                 message(STATUS "TopScreen: XFixes not found, link-cursor detection disabled")
+            endif()
+
+            if(X11_XShm_FOUND AND X11_Xext_FOUND)
+                target_compile_definitions(topscreen PRIVATE TOPSCREEN_HAVE_XSHM)
+                target_link_libraries(topscreen PRIVATE ${X11_Xext_LIB})
+                message(STATUS "TopScreen: X11 shared-memory capture enabled")
+            else()
+                message(STATUS "TopScreen: XShm not found, native X11 capture disabled")
             endif()
         endif()
         include(CheckIncludeFile)

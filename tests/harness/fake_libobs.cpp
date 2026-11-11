@@ -784,6 +784,11 @@ obs_source_t *obs_source_get_filter_by_name(obs_source_t *, const char *)
 	return nullptr;
 }
 
+size_t obs_source_filter_count(const obs_source_t *)
+{
+	return 0;
+}
+
 bool obs_get_video_info(struct obs_video_info *)
 {
 	return false;
@@ -1262,6 +1267,11 @@ void gs_matrix_push(void) {}
 void gs_matrix_pop(void) {}
 void gs_matrix_translate3f(float, float, float) {}
 void gs_matrix_scale3f(float, float, float) {}
+
+void gs_draw_sprite(gs_texture_t *, uint32_t, uint32_t, uint32_t)
+{
+	++g_sprite_draw_calls;
+}
 
 void gs_draw_sprite_subregion(gs_texture_t *, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t)
 {

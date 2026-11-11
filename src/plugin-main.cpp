@@ -1,6 +1,7 @@
 #include <obs-module.h>
 
 #include "audio/ts-click-source.hpp"
+#include "capture/ts-capture-source.hpp"
 #include "ts-filter.hpp"
 #include "webcam/ts-webcam-filter.hpp"
 
@@ -21,6 +22,11 @@ bool obs_module_load(void)
 	obs_register_source(&ts_filter_source_info);
 	obs_register_source(&topscreen::ts_webcam_filter_source_info);
 	obs_register_source(&topscreen::ts_click_audio_source_info);
+	/* Native capture is currently X11/XShm. Windows and Wayland keep using
+	 * Display Capture + the filter until their backends land. */
+#if defined(TOPSCREEN_HAVE_XSHM)
+	obs_register_source(&topscreen::ts_capture_source_info);
+#endif
 
 #ifdef TOPSCREEN_HAVE_QT
 	topscreen::ts_dock_register();

@@ -265,6 +265,18 @@ remain readable. The file contains settings only; custom images and sounds are
 referenced by path and are not embedded. Scene → profile assignments live in the
 OBS profile config and are **not** part of this backup.
 
+## Capture source settings (Linux/X11)
+
+These belong to the `topscreen_capture` source, not to the filter:
+
+| Option | Key | Type | Notes |
+|--------|-----|------|-------|
+| Captured monitor | `capture_monitor` | int | Index in the X11 monitor list |
+| Effects filter attached | `capture_effects_filter` | bool | Internal: prevents a duplicate TopScreen FX filter on reload |
+
+The effects themselves use the normal filter keys above. Windows and Wayland do
+not expose this source yet; use Display Capture + the filter there.
+
 ## Hotkeys
 
 Registered IDs (global frontend hotkeys, shown in **Settings → Hotkeys**;

@@ -52,6 +52,7 @@ inline constexpr const char *kZoomAmount = "zoom_amount";
 inline constexpr const char *kZoomDurationMs = "zoom_duration_ms";
 inline constexpr const char *kZoomIdleTimeoutMs = "zoom_idle_timeout_ms";
 inline constexpr const char *kZoomSmartHoldMs = "zoom_smart_hold_ms";
+inline constexpr const char *kZoomActiveWindow = "zoom_active_window";
 inline constexpr const char *kZoomMotionBlur = "zoom_motion_blur";
 inline constexpr const char *kZoomMotionBlurAmount = "zoom_motion_blur_amount";
 inline constexpr const char *kZoomPanAmount = "zoom_pan_amount";

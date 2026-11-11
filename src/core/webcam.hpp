@@ -51,6 +51,17 @@ Vec2f webcam_bubble_center(const WebcamConfig &cfg, double width, double height)
 /** Bubble diameter in target pixels. */
 double webcam_bubble_diameter(const WebcamConfig &cfg, double width, double height);
 
+/** Default scene-item layout for the "add webcam bubble" action. */
+struct WebcamBubbleLayout {
+	double diameter = 0.0;
+	double margin = 0.0;
+	Vec2f center;
+};
+
+/** Bottom-right bubble layout used when the action creates a camera source. */
+WebcamBubbleLayout webcam_bubble_item_layout(const WebcamConfig &cfg, double width,
+					     double height);
+
 void sanitize_webcam_config(WebcamConfig *cfg);
 
 } // namespace topscreen::core

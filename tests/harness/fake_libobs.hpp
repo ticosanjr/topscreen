@@ -61,6 +61,7 @@ struct obs_source {
 	obs_data_t *settings = nullptr;
 	obs_source_t *parent = nullptr;
 	std::string name;
+	std::string uuid;
 	uint32_t base_w = 0;
 	uint32_t base_h = 0;
 };
@@ -69,6 +70,9 @@ namespace fakeobs {
 
 /** Name returned by obs_frontend_get_current_scene(). */
 void set_current_scene_name(const std::string &name);
+
+/** UUID returned by obs_source_get_uuid() for the current scene. */
+void set_current_scene_uuid(const std::string &uuid);
 
 /** Sets the data directory resolved by obs_module_file(). */
 void set_data_dir(const std::string &dir);
@@ -88,6 +92,9 @@ void cleanup();
 
 /** Sets the name returned by obs_source_get_name() (default: "fake-parent"). */
 void set_source_name(obs_source_t *source, const std::string &name);
+
+/** Sets the UUID returned by obs_source_get_uuid() (default: empty). */
+void set_source_uuid(obs_source_t *source, const std::string &uuid);
 
 /** Last source registered by obs_register_source(). */
 const obs_source_info *registered_source();

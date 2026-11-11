@@ -51,6 +51,7 @@ namespace topscreen {
 	X(DOUBLE, kZoomDurationMs, zoom.duration_ms) \
 	X(DOUBLE, kZoomIdleTimeoutMs, zoom.idle_timeout_ms) \
 	X(DOUBLE, kZoomSmartHoldMs, zoom.smart_hold_ms) \
+	X(BOOL, kZoomActiveWindow, zoom.active_window) \
 	X(BOOL, kZoomMotionBlur, zoom.motion_blur) \
 	X(DOUBLE, kZoomMotionBlurAmount, zoom.motion_blur_amount) \
 	X(DOUBLE, kZoomPanAmount, zoom.pan_amount) \

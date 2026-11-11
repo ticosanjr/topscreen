@@ -1126,6 +1126,50 @@ TEST(integration_scene_profiles_switch_on_scene_change)
 	destroy_filter(ctx);
 }
 
+TEST(integration_scene_profile_applies_when_filter_is_created)
+{
+	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
+	scene_profiles::clear_all();
+	fakeobs::set_current_scene_name("Startup Scene");
+	fakeobs::set_current_scene_uuid("");
+	CHECK(scene_profiles::assign("Startup Scene", 6));
+
+	obs_source_t *parent = make_parent(1920, 1080);
+	obs_source_t *filter = fakeobs::make_source(&ts_filter_source_info, parent, 0, 0);
+	void *ctx = create_filter(filter);
+	REQUIRE(ctx != nullptr);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+
+	FilterControl *ctrl = registry_first();
+	REQUIRE(ctrl != nullptr);
+	CHECK_EQ(ctrl->current_profile(), 6);
+
+	destroy_filter(ctx);
+	scene_profiles::clear_all();
+	fakeobs::set_current_scene_name("Scene");
+}
+
+TEST(scene_profiles_use_scene_uuid_and_keep_legacy_names_readable)
+{
+	scene_profiles::clear_all();
+	fakeobs::set_current_scene_name("Scene U");
+	fakeobs::set_current_scene_uuid("11111111-1111-1111-1111-111111111111");
+
+	obs_source_t *scene = obs_frontend_get_current_scene();
+	REQUIRE(scene != nullptr);
+	CHECK(scene_profiles::assign(scene, 7));
+	CHECK_EQ(scene_profiles::get(scene), 7);
+	/* The UUID-based entry is not silently duplicated under the scene name. */
+	CHECK_EQ(scene_profiles::get("Scene U"), -1);
+	CHECK(scene_profiles::clear(scene));
+	CHECK_EQ(scene_profiles::get(scene), -1);
+	obs_source_release(scene);
+
+	fakeobs::set_current_scene_uuid("");
+	fakeobs::set_current_scene_name("Scene");
+	scene_profiles::clear_all();
+}
+
 TEST(scene_profiles_map_list_prune_and_clear_all)
 {
 	scene_profiles::clear_all();
@@ -1134,6 +1178,11 @@ TEST(scene_profiles_map_list_prune_and_clear_all)
 	CHECK_EQ(scene_profiles::get("Scene A"), 1);
 	CHECK_EQ(scene_profiles::get("Scene B"), 2);
 	CHECK_EQ(static_cast<int>(scene_profiles::list().size()), 2);
+
+	/* A transient empty scene list must not be treated as "all deleted". */
+	scene_profiles::prune({});
+	scene_profiles::prune_uuids({});
+	CHECK_EQ(scene_profiles::get("Scene B"), 2);
 
 	scene_profiles::prune({"Scene B"});
 	CHECK_EQ(scene_profiles::get("Scene A"), -1);

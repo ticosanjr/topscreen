@@ -183,8 +183,10 @@ Each button has its own independent effect.
 
 Use **Webcam → Add webcam bubble source** in the TopScreen filter (or the dock
 button) to create a video capture source with the bubble filter already applied
-and fitted to the canvas. You can also add a **Video Capture Device** source, then apply the **TopScreen Webcam
-Bubble** filter. The filter masks the camera into a circle or rounded square
+and sized as a draggable bubble in the bottom-right corner. Clicking again
+reuses the existing source instead of creating duplicates. You can also add a
+**Video Capture Device** source, then apply the **TopScreen Webcam Bubble**
+filter. The filter masks the camera into a circle or rounded square
 with transparent surroundings, configurable anchor/offset, border and shadow.
 The rest of the frame is transparent, so the bubble can be placed over the
 scene like any other source.
@@ -213,7 +215,7 @@ scene like any other source.
 | **Zoom transition time (ms)** | Animation duration |
 | **Return to normal after idle (ms)** | After stopping, returns to normal |
 | **Smart hold after action (ms)** | Smart mode stays zoomed for this long after the last click/drag/key |
-| **Active window** | On Windows/X11, Smart mode also focuses the foreground window when it changes |
+| **Focus the foreground window** | On Windows/X11, Smart mode also focuses the window in the foreground when it changes; turn it off to zoom only around actions and the cursor |
 | **Motion blur while zooming** | Optional radial blur during zoom transitions |
 | **Motion blur strength (0–1)** | How strong the radial blur is |
 | **Pan intensity (0 = off)** | How much the screen "follows" the mouse |
@@ -410,8 +412,10 @@ nothing is selected).
 - Hotkeys: **Activate profile A … J** and **Save to current profile**.
 - **Scene profiles:** assign the current profile to the current OBS scene in
   **Profiles → Assign current profile to this scene** (or **Assign profile to scene**
-  in the dock). Changing scenes then applies that profile automatically;
-  **Clear this scene's profile** removes it.
+  in the dock). The assignment is stored by the scene UUID, so renaming a scene
+  keeps it; changing scenes then applies that profile automatically, including
+  the scene that is open when OBS starts. **Clear this scene's profile** removes
+  it. Scene assignments are not included in the profiles backup file.
 - Default profile hotkeys are **Ctrl+Shift+Alt+A** through **Ctrl+Shift+Alt+J**.
   Saved bindings win; defaults are applied only when no saved binding exists.
   Bindings reload when the OBS profile changes. The Properties backup section

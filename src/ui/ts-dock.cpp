@@ -119,8 +119,7 @@ public:
 		QObject::connect(assign_scene_btn_, &QPushButton::clicked, this, [this]() {
 			FilterControl *c = registry_first();
 			obs_source_t *scene = obs_frontend_get_current_scene();
-			const char *name = scene ? obs_source_get_name(scene) : nullptr;
-			const bool ok = c && name && scene_profiles::assign(name, c->current_profile());
+			const bool ok = c && scene && scene_profiles::assign(scene, c->current_profile());
 			if (scene)
 				obs_source_release(scene);
 			if (ok)
@@ -358,7 +357,7 @@ private:
 			obs_source_t *scene = obs_frontend_get_current_scene();
 			const char *raw_name = scene ? obs_source_get_name(scene) : nullptr;
 			const std::string scene_name = raw_name ? raw_name : "";
-			const int profile = scene_name.empty() ? -1 : scene_profiles::get(scene_name);
+			const int profile = scene ? scene_profiles::get(scene) : -1;
 			if (scene)
 				obs_source_release(scene);
 			if (!has || scene_name.empty())

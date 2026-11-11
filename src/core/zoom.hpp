@@ -11,6 +11,7 @@ struct ZoomConfig {
 	double duration_ms = 450.0;  // animation speed
 	double idle_timeout_ms = 1500.0; // no focus -> returns to normal
 	double smart_hold_ms = 1200.0;   // Smart: stay zoomed after the last action
+	bool active_window = true;   // Smart: also focus the foreground window
 	double pan_amount = 1.0;     // how much the focus "follows" the cursor (0..1)
 	double center_amount = 1.0;  // how much the cursor stays at the CENTER (0..1)
 	bool motion_blur = false;    // optional radial blur while zooming

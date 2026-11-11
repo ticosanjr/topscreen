@@ -85,6 +85,22 @@ const HotkeyInvoke kHotkeyInvoke[HK_Count] = {
 
 namespace {
 void frontend_profile_event(enum obs_frontend_event event, void *data);
+
+void apply_scene_profile(obs_source_t *scene)
+{
+	if (!scene)
+		return;
+	const int profile = scene_profiles::get(scene);
+	if (profile < 0)
+		return;
+	for (const auto &entry : registry_list()) {
+		if (entry.control)
+			entry.control->select_profile(profile);
+	}
+	blog(LOG_INFO, "[TopScreen] scene profile: %s -> %s",
+	     obs_source_get_name(scene) ? obs_source_get_name(scene) : "?",
+	     core::profile_label(profile));
+}
 }
 
 std::atomic<int> Hotkeys::refs_{0};
@@ -245,33 +261,42 @@ void frontend_profile_event(enum obs_frontend_event event, void *data)
 		obs_source_t *scene = obs_frontend_get_current_scene();
 		if (!scene)
 			return;
-		const char *name = obs_source_get_name(scene);
-		const int profile = name ? scene_profiles::get(name) : -1;
-		if (profile >= 0) {
-			for (const auto &entry : registry_list()) {
-				if (entry.control)
-					entry.control->select_profile(profile);
-			}
-			blog(LOG_INFO, "[TopScreen] scene profile: %s -> %s", name,
-			     core::profile_label(profile));
-		}
+		apply_scene_profile(scene);
 		obs_source_release(scene);
+	} else if (event == OBS_FRONTEND_EVENT_FINISHED_LOADING) {
+		Hotkeys::apply_scene_profile_to_current();
 	} else if (event == OBS_FRONTEND_EVENT_SCENE_LIST_CHANGED ||
 		   event == OBS_FRONTEND_EVENT_SCENE_COLLECTION_CHANGED) {
 		obs_frontend_source_list scenes = {};
 		obs_frontend_get_scenes(&scenes);
 		std::vector<std::string> names;
+		std::vector<std::string> uuids;
 		names.reserve(scenes.sources.num);
+		uuids.reserve(scenes.sources.num);
 		for (size_t i = 0; i < scenes.sources.num; ++i) {
-			const char *name = obs_source_get_name(scenes.sources.array[i]);
+			obs_source_t *scene = scenes.sources.array[i];
+			const char *name = obs_source_get_name(scene);
 			if (name)
 				names.emplace_back(name);
+			const char *uuid = obs_source_get_uuid(scene);
+			if (uuid && *uuid)
+				uuids.emplace_back(uuid);
 		}
 		obs_frontend_source_list_free(&scenes);
 		scene_profiles::prune(names);
+		scene_profiles::prune_uuids(uuids);
 	}
 }
 } // namespace
+
+void Hotkeys::apply_scene_profile_to_current()
+{
+	obs_source_t *scene = obs_frontend_get_current_scene();
+	if (!scene)
+		return;
+	apply_scene_profile(scene);
+	obs_source_release(scene);
+}
 
 void Hotkeys::unregister_all(HotkeyContext *ctx)
 {

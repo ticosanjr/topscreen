@@ -21,6 +21,7 @@ namespace {
 
 std::string g_data_dir;
 std::string g_current_scene_name = "Scene";
+std::string g_current_scene_uuid;
 const obs_source_info *g_registered = nullptr;
 std::vector<obs_source_t *> g_sources;
 std::unordered_map<void *, obs_source_t *> g_filter_ctx;
@@ -95,6 +96,11 @@ void set_data_dir(const std::string &dir)
 	g_data_dir = dir;
 }
 
+void set_current_scene_uuid(const std::string &uuid)
+{
+	g_current_scene_uuid = uuid;
+}
+
 void set_current_scene_name(const std::string &name)
 {
 	g_current_scene_name = name;
@@ -136,6 +142,12 @@ void set_source_name(obs_source_t *source, const std::string &name)
 {
 	if (source)
 		source->name = name;
+}
+
+void set_source_uuid(obs_source_t *source, const std::string &uuid)
+{
+	if (source)
+		source->uuid = uuid;
 }
 
 const obs_source_info *registered_source()
@@ -728,6 +740,7 @@ obs_source_t *obs_frontend_get_current_scene(void)
 {
 	static obs_source_t scene;
 	scene.name = g_current_scene_name;
+	scene.uuid = g_current_scene_uuid;
 	return &scene;
 }
 
@@ -765,6 +778,11 @@ const char *obs_source_get_id(const obs_source_t *)
 }
 
 void obs_source_filter_add(obs_source_t *, obs_source_t *) {}
+
+obs_source_t *obs_source_get_filter_by_name(obs_source_t *, const char *)
+{
+	return nullptr;
+}
 
 bool obs_get_video_info(struct obs_video_info *)
 {
@@ -812,6 +830,11 @@ const char *obs_source_get_name(const obs_source_t *source)
 	if (source && !source->name.empty())
 		return source->name.c_str();
 	return "fake-parent";
+}
+
+const char *obs_source_get_uuid(const obs_source_t *source)
+{
+	return source ? source->uuid.c_str() : "";
 }
 
 uint32_t obs_source_get_base_width(obs_source_t *source)

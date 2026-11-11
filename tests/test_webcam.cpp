@@ -32,6 +32,26 @@ TEST(webcam_bubble_geometry_anchors_and_offsets)
 	CHECK_NEAR(mc.y, 250.0, 1e-9);
 }
 
+TEST(webcam_bubble_item_layout_sits_in_the_bottom_right_corner)
+{
+	WebcamConfig cfg;
+	cfg.size = 0.28;
+	const WebcamBubbleLayout layout = webcam_bubble_item_layout(cfg, 1920.0, 1080.0);
+	CHECK_NEAR(layout.diameter, 302.4, 1e-6);
+	CHECK_NEAR(layout.margin, 24.192, 1e-6);
+	CHECK_NEAR(layout.center.x, 1920.0 - layout.margin - layout.diameter * 0.5, 1e-6);
+	CHECK_NEAR(layout.center.y, 1080.0 - layout.margin - layout.diameter * 0.5, 1e-6);
+}
+
+TEST(webcam_bubble_item_layout_keeps_a_minimum_on_tiny_frames)
+{
+	WebcamConfig cfg;
+	const WebcamBubbleLayout layout = webcam_bubble_item_layout(cfg, 40.0, 30.0);
+	CHECK_NEAR(layout.diameter, 32.0, 1e-6);
+	CHECK(layout.center.x >= layout.diameter * 0.5);
+	CHECK(layout.center.y >= layout.diameter * 0.5);
+}
+
 TEST(webcam_bubble_sanitizes_mask_settings)
 {
 	WebcamConfig cfg;

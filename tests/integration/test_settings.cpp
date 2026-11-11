@@ -93,6 +93,7 @@ TEST(settings_store_load_roundtrip)
 	a.spotlight.blur_amount = 21.0;
 	a.spotlight.zoom_amount = 1.7;
 	a.spotlight.in_ms = 120.0;
+	a.zoom.active_window = false;
 	a.magnifier.radius = 0.33;
 	a.magnifier.zoom_amount = 2.2;
 	a.magnifier.follow_cursor = false;
@@ -109,6 +110,7 @@ TEST(settings_store_load_roundtrip)
 	CHECK(b.effects_enabled == false);
 	CHECK_EQ(b.zoom.mode, a.zoom.mode);
 	CHECK_NEAR(b.zoom.amount, 2.5, 1e-9);
+	CHECK(!b.zoom.active_window);
 	CHECK_EQ(b.click_left.color, a.click_left.color);
 	CHECK_EQ(b.click_right.color, a.click_right.color);
 	CHECK_EQ(b.bg.mode, a.bg.mode);

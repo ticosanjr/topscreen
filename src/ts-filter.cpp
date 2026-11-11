@@ -724,6 +724,10 @@ void *ts_filter_create(obs_data_t *settings, obs_source_t *source)
 	ctx->input.start(source);
 
 	registry_add(ctx);
+	/* A filter created while OBS is already on a mapped scene must start with
+	 * that profile; waiting for the next SCENE_CHANGED would miss the scene
+	 * that is active at startup. Queued and applied on the next tick. */
+	Hotkeys::apply_scene_profile_to_current();
 
 	blog(LOG_INFO, "[TopScreen] filter created (presets=%d)", ctx->presets.count());
 
@@ -878,11 +882,12 @@ void ts_filter_ctx::update_pointer(const core::ContentArea &content)
 
 void ts_filter_ctx::update_active_window()
 {
-	active_window_.poll(time_ms);
-	if (cfg.zoom.mode != static_cast<int>(core::ZoomMode::Smart)) {
+	if (!cfg.effects_enabled || !cfg.zoom.active_window ||
+	    cfg.zoom.mode != static_cast<int>(core::ZoomMode::Smart)) {
 		zoom.clear_region();
 		return;
 	}
+	active_window_.poll(time_ms);
 	const ActiveWindowRect &aw = active_window_.rect();
 	if (!aw.valid || !target_w || !target_h) {
 		zoom.clear_region();

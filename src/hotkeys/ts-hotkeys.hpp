@@ -48,7 +48,7 @@ void ts_hotkey_callback(void *data, obs_hotkey_id id, obs_hotkey_t *key, bool pr
  * Process-wide hotkeys.
  *
  * OBS marks every filter source as private, so obs_hotkey_register_source()
- * always fails for filters (OBS_INVALID_HOTKEY_ID on every platform). The 21
+ * always fails for filters (OBS_INVALID_HOTKEY_ID on every platform). The 25
  * actions are therefore registered ONCE as frontend hotkeys and dispatched to
  * the filter selected in the dock (or the first active one). Refcounted across
  * filter instances so creating/destroying filters never leaks or duplicates entries.
@@ -63,6 +63,9 @@ public:
 
 	/** Reloads bindings from the active OBS profile (profile switch). */
 	static void reload_saved_bindings();
+
+	/** Applies the current scene's profile to every registered filter. */
+	static void apply_scene_profile_to_current();
 
 private:
 	static void load_saved_or_defaults();

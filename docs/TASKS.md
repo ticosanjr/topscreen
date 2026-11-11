@@ -58,24 +58,24 @@ Status: ✅ done · 🟡 partial · ⬜ pending.
 | T3.4 | Independent right click effect | ✅ |
 | T3.5 | Click parameters (color/size/duration/curve) in the UI | ✅ |
 | T3.6 | Click sound (WAV decode + playback) | ✅ (decoded and mixed through the TopScreen Click Sound OBS source) |
-| T3.9 | Scene profiles (assign/list/clear/prune) | ✅ |
-| T3.10 | Stream Deck / OBS WebSocket action guide + profile/click hotkeys | ✅ |
 | T3.7 | Presets applicable by hotkey (next/prev) | ✅ |
-| T3.8 | Hotkey fallback via OBS WebSocket | ⬜ |
+| T3.8 | Hotkey fallback via OBS WebSocket | ✅ (documented `TriggerHotkeyByName` path in `STREAMDECK.md`) |
+| T3.9 | Scene profiles (assign/list/clear/prune, UUID + startup apply) | ✅ |
+| T3.10 | Stream Deck / OBS WebSocket action guide + profile/click hotkeys | ✅ |
 
 ## F4 — Zoom / Pan
 
 | ID | Task | Status |
 |----|--------|--------|
 | T4.1 | Spring + easings (`core/spring`, `core/easing`) | ✅ |
-| T4.5 | Smart zoom (action-driven hold/return) | ✅ |
-| T4.8 | Smart Zoom active-window/region focus | ✅ (Windows/X11) |
 | T4.2 | Auto-zoom by click | ✅ |
 | T4.3 | Auto-zoom following the cursor with timeout | ✅ |
 | T4.4 | Manual zoom in/out/reset by hotkey | ✅ |
-| T4.5 | Light pan following the mouse | ✅ |
-| T4.6 | Zoom parameters in the UI | ✅ |
-| T4.7 | Motion blur (cursor and zoom) | ✅ (radial blur from zoom) |
+| T4.5 | Smart zoom (action-driven hold/return) | ✅ |
+| T4.6 | Light pan following the mouse | ✅ |
+| T4.7 | Zoom parameters in the UI | ✅ |
+| T4.8 | Motion blur (cursor and zoom) | ✅ (radial blur from zoom) |
+| T4.9 | Smart Zoom active-window/region focus with opt-out | ✅ (Windows/X11) |
 
 ## F5 — Text, spotlight, webcam
 
@@ -87,9 +87,9 @@ Status: ✅ done · 🟡 partial · ⬜ pending.
 | T5.3 | Key capture (Windows / X11; evdev in F7) | ✅ |
 | T5.4 | Key overlay | ✅ |
 | T5.5 | Spotlight/dim following the cursor (round/square, hotkey, drop/zoom, border, halo shadow, outside blur) | ✅ |
-| T5.6 | Webcam bubble | ✅ (filter + add-source action, mask/border/shadow) |
-| T5.8 | Device frames (browser/MacBook/iPhone) | ✅ (shader-drawn) |
+| T5.6 | Webcam bubble | ✅ (filter + add-source action, mask/border/shadow, draggable item) |
 | T5.7 | Drag highlighter (box, line, zoom to selection, zoom on mouse press) | ✅ |
+| T5.8 | Device frames (browser/MacBook/iPhone) | ✅ (shader-drawn) |
 
 ## F6 — Own capture source + audio
 
@@ -121,12 +121,12 @@ Status: ✅ done · 🟡 partial · ⬜ pending.
 | TD.1 | Full GPL-2.0 license text (`COPYING`) | ✅ |
 | TD.2 | `CONTRIBUTING.md` and PR template | ✅ |
 | TD.3 | Adjust `buildspec.json`/presets for the official CI | ⬜ |
-| TD.4 | Core sanity tests | ✅ (238 core + 58 integration + 42 OBS header files + ASan/UBSan) |
+| TD.4 | Core sanity tests | ✅ (249 core + 65 integration + 55 OBS header files + ASan/UBSan) |
 
 ---
 
 ## Next steps (suggested order)
 
-1. **F6** own capture source + audio through the source channel (includes webcam bubble).
+1. **F6** own capture source + audio through the source channel.
 2. **F7** `GlobalShortcuts` portal (Wayland) + tier polish.
 3. Runtime coverage of the Qt dock (today only via a real OBS).

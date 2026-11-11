@@ -49,6 +49,19 @@ double webcam_bubble_diameter(const WebcamConfig &cfg, double width, double heig
 	return std::clamp(cfg.size, 0.1, 1.0) * shorter;
 }
 
+WebcamBubbleLayout webcam_bubble_item_layout(const WebcamConfig &cfg, double width,
+					     double height)
+{
+	WebcamBubbleLayout out;
+	out.diameter = std::max(32.0, webcam_bubble_diameter(cfg, width, height));
+	out.margin = std::max(8.0, out.diameter * 0.08);
+	out.center.x = std::max(out.margin + out.diameter * 0.5,
+				width - out.margin - out.diameter * 0.5);
+	out.center.y = std::max(out.margin + out.diameter * 0.5,
+				height - out.margin - out.diameter * 0.5);
+	return out;
+}
+
 Vec2f webcam_bubble_center(const WebcamConfig &cfg, double width, double height)
 {
 	const double diameter = webcam_bubble_diameter(cfg, width, height);

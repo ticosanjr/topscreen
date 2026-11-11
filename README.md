@@ -123,6 +123,7 @@ Full index: [`docs/README.md`](docs/README.md).
 | [`docs/CONFIGURATION.md`](docs/CONFIGURATION.md) | Reference for every option, preset and hotkey |
 | [`docs/EFFECTS.md`](docs/EFFECTS.md) | Effect catalog (with status) |
 | [`docs/INPUT-AND-PLATFORMS.md`](docs/INPUT-AND-PLATFORMS.md) | Input per OS and X11/Wayland parity |
+| [`docs/STREAMDECK.md`](docs/STREAMDECK.md) | Stream Deck / OBS WebSocket action names |
 | [`docs/BUILD.md`](docs/BUILD.md) | Build and install (Windows/Linux) |
 | [`docs/VERIFICATION.md`](docs/VERIFICATION.md) | Validation script on a real OBS |
 | [`docs/TESTS.md`](docs/TESTS.md) | Automated tests: how to run and what they cover |

@@ -545,6 +545,8 @@ bool zoom_mode_changed(obs_properties_t *props, obs_property_t *p, obs_data_t *s
 		obs_property_set_visible(v, auto_mode);
 	if (obs_property_t *v = obs_properties_get(props, kZoomSmartHoldMs))
 		obs_property_set_visible(v, smart);
+	if (obs_property_t *v = obs_properties_get(props, kZoomActiveWindow))
+		obs_property_set_visible(v, smart);
 	zoom_motion_blur_changed(props, nullptr, settings);
 	return true;
 }
@@ -562,8 +564,7 @@ bool assign_scene_profile_clicked(obs_properties_t *props, obs_property_t *p, vo
 			obs_source_release(scene);
 		return false;
 	}
-	const char *name = obs_source_get_name(scene);
-	const bool ok = name && scene_profiles::assign(name, control->current_profile());
+	const bool ok = scene_profiles::assign(scene, control->current_profile());
 	obs_source_release(scene);
 	return ok;
 }
@@ -576,8 +577,7 @@ bool clear_scene_profile_clicked(obs_properties_t *props, obs_property_t *p, voi
 	obs_source_t *scene = obs_frontend_get_current_scene();
 	if (!scene)
 		return false;
-	const char *name = obs_source_get_name(scene);
-	const bool ok = name && scene_profiles::clear(name);
+	const bool ok = scene_profiles::clear(scene);
 	obs_source_release(scene);
 	return ok;
 }
@@ -807,6 +807,9 @@ void add_zoom_section(obs_properties_t *props, obs_properties_t *capture, obs_da
 	add_range_slider(
 		zoom, kZoomSmartHoldMs, obs_module_text("Zoom.SmartHoldMs"),
 		limits::kZoomSmartHoldRange);
+	obs_property_t *active_window = obs_properties_add_bool(
+		zoom, kZoomActiveWindow, obs_module_text("Zoom.ActiveWindow"));
+	set_tip(active_window, obs_module_text("Tooltip.ZoomActiveWindow"));
 	obs_property_t *mblur = obs_properties_add_bool(
 		zoom, kZoomMotionBlur, obs_module_text("Zoom.MotionBlur"));
 	set_tip(mblur, obs_module_text("Tooltip.ZoomMotionBlur"));

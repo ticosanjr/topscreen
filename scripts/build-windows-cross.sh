@@ -138,7 +138,7 @@ cd "$ROOT" # sources are relative to the repository
 	-I "$WORK/obs-src/obs-studio-$OBS_VERSION/frontend/api" \
 	$SRCS "$WORK/libobs.a" "$WORK/libobs-frontend-api.a" "$WORK/topscreen.def" \
 	-Wl,-Bstatic -lunwind -Wl,-Bdynamic \
-	-lwinmm -luser32 \
+	-lwinmm -luser32 -ldwmapi \
 	-o "$ROOT/build/topscreen.dll"
 
 echo "OK: $ROOT/build/topscreen.dll"

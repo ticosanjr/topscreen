@@ -26,6 +26,7 @@ Each phase delivers something usable and has a verifiable acceptance criterion.
 | F2 | yes | yes (core) | yes |
 | F3 | yes (sound via the TopScreen Click Sound OBS source) | yes (core) | yes |
 | F4 | yes | yes (core) | yes |
+| F5 | yes (text, spotlight, highlighter, webcam source/filter, device frames) | yes (core + integration) | yes (smoke) |
 
 ## Cross-cutting goals
 

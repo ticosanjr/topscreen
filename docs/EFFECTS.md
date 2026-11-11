@@ -47,7 +47,7 @@ Mode: `auto` reacts on its own · `hotkey` only by hotkey · `always` always on.
 | Motion blur | auto | ✅ | optional radial blur while zooming |
 | Manual zoom in/out/reset | hotkey | ✅ | |
 | Light pan following the mouse | auto | ✅ | |
-| Zoom into a selected region | hotkey | ⬜ | |
+| Zoom into a selected region | hotkey | ✅ | the drag highlighter already zooms into a drawn selection; a dedicated one-shot hotkey remains open |
 
 ## Movement and attention
 
@@ -70,7 +70,8 @@ Mode: `auto` reacts on its own · `hotkey` only by hotkey · `always` always on.
 
 | Feature | Mode | Status | Notes |
 |---------|------|--------|-------------|
-| Webcam bubble | always | ✅ | separate filter: circle/rounded mask, border and shadow |
+| Webcam bubble | always | ✅ | separate filter plus add-source action: circle/rounded mask, border and shadow, draggable bubble |
+| Device frames | always | ✅ | shader-drawn browser, MacBook and iPhone bezels |
 | Countdown / hotkey HUD | hotkey | ⬜ | |
 
 ## Out of scope (post-production)

@@ -55,6 +55,7 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Zoom transition time (ms) | `zoom_duration_ms` | double | 100–2000 | `450` |
 | | Return to normal after idle (ms) | `zoom_idle_timeout_ms` | double | 200–10000 | `1500` |
 | | Smart hold after action (ms) | `zoom_smart_hold_ms` | double | 0–5000 | `1200` |
+| | Smart: focus the foreground window | `zoom_active_window` | bool | — | `true` (Windows/X11) |
 | | Motion blur while zooming | `zoom_motion_blur` | bool | — | `false` |
 | | Motion blur strength | `zoom_motion_blur_amount` | double | 0–1 | `0.35` |
 | | Pan intensity (0 = off) | `zoom_pan_amount` | double | 0–1 | `1.0` |
@@ -261,7 +262,8 @@ profile's default seed; missing fields keep that seed's defaults. Import
 replaces profiles A–J and activates the stored profile. Unknown keys are
 ignored, so newer/older backups and fields added or removed between versions
 remain readable. The file contains settings only; custom images and sounds are
-referenced by path and are not embedded.
+referenced by path and are not embedded. Scene → profile assignments live in the
+OBS profile config and are **not** part of this backup.
 
 ## Hotkeys
 

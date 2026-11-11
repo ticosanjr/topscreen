@@ -789,6 +789,10 @@ size_t obs_source_filter_count(const obs_source_t *)
 	return 0;
 }
 
+void obs_source_enum_filters(obs_source_t *, obs_source_enum_proc_t, void *)
+{
+}
+
 bool obs_get_video_info(struct obs_video_info *)
 {
 	return false;

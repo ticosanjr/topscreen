@@ -7,6 +7,7 @@
 #include <graphics/graphics.h>
 
 #include <atomic>
+#include <cstring>
 #include <memory>
 #include <string>
 
@@ -22,6 +23,8 @@ struct CaptureSource {
 	obs_source_t *source = nullptr;
 	std::unique_ptr<capture::Backend> backend;
 	std::atomic<int> pending_monitor{-1};
+	std::atomic<int> capture_failures{0};
+	std::atomic<bool> restart_requested{false};
 	int monitor = 0;
 	bool started = false;
 	bool logged_creation = false;
@@ -47,6 +50,7 @@ void start_backend(CaptureSource *ctx)
 	config.monitor = ctx->monitor;
 	ctx->started = ctx->backend->start(config);
 	if (ctx->started) {
+		ctx->capture_failures.store(0);
 		ctx->backend->size(&ctx->width, &ctx->height);
 		ctx->display_width.store(ctx->width);
 		ctx->display_height.store(ctx->height);
@@ -79,6 +83,7 @@ void render_frame(CaptureSource *ctx, gs_effect_t *effect)
 	const bool fresh = ctx->backend->capture(&frame) && frame.data && frame.width &&
 			   frame.height;
 	if (fresh) {
+		ctx->capture_failures.store(0);
 		const gs_color_format color_format =
 			frame.format == capture::PixelFormat::Rgba ? GS_RGBA : GS_BGRA;
 
@@ -102,6 +107,10 @@ void render_frame(CaptureSource *ctx, gs_effect_t *effect)
 		} else {
 			gs_texture_set_image(ctx->texture, frame.data, frame.stride, false);
 		}
+	} else if (ctx->capture_failures.fetch_add(1) >= 10) {
+		/* A monitor unplug or a server reset can make XShmGetImage fail
+		 * forever. Ask the video thread to reopen the backend. */
+		ctx->restart_requested.store(true);
 	}
 
 	if (!ctx->texture || !effect)
@@ -135,8 +144,8 @@ void *capture_create(obs_data_t *settings, obs_source_t *source)
 	 * filter on the next load; the filter itself is saved with the source. */
 	const bool has_effects = obs_data_get_bool(settings, kFilterFlag);
 	if (!has_effects) {
-		obs_source_t *filter =
-			obs_source_create(kFilterId, "TopScreen FX", nullptr, nullptr);
+		obs_source_t *filter = obs_source_create(
+			kFilterId, obs_module_text("FilterName"), nullptr, nullptr);
 		if (filter) {
 			obs_source_filter_add(source, filter);
 			obs_source_release(filter);
@@ -188,6 +197,11 @@ void capture_tick(void *data, float seconds)
 			ctx->backend->stop();
 		start_backend(ctx);
 	}
+	if (ctx->restart_requested.exchange(false)) {
+		if (ctx->backend)
+			ctx->backend->stop();
+		start_backend(ctx);
+	}
 	if (!ctx->started && ctx->elapsed_ms >= ctx->retry_at_ms) {
 		ctx->retry_at_ms = ctx->elapsed_ms + 2000.0;
 		start_backend(ctx);
@@ -216,15 +230,22 @@ void capture_defaults(obs_data_t *settings)
 	obs_data_set_default_int(settings, kMonitorKey, 0);
 }
 
+void find_effects_filter(obs_source_t *, obs_source_t *filter, void *param)
+{
+	if (!filter || !param)
+		return;
+	const char *id = obs_source_get_id(filter);
+	if (id && std::strcmp(id, kFilterId) == 0)
+		*static_cast<bool *>(param) = true;
+}
+
 bool has_effects_filter(obs_source_t *source)
 {
 	if (!source)
 		return false;
-	obs_source_t *filter = obs_source_get_filter_by_name(source, "TopScreen FX");
-	if (!filter)
-		return false;
-	obs_source_release(filter);
-	return true;
+	bool found = false;
+	obs_source_enum_filters(source, find_effects_filter, &found);
+	return found;
 }
 
 bool add_effects_clicked(obs_properties_t *props, obs_property_t *property, void *data)
@@ -235,7 +256,8 @@ bool add_effects_clicked(obs_properties_t *props, obs_property_t *property, void
 	if (!ctx || !ctx->source || has_effects_filter(ctx->source))
 		return false;
 
-	obs_source_t *filter = obs_source_create(kFilterId, "TopScreen FX", nullptr, nullptr);
+	obs_source_t *filter = obs_source_create(kFilterId, obs_module_text("FilterName"),
+						 nullptr, nullptr);
 	if (!filter)
 		return false;
 	obs_source_filter_add(ctx->source, filter);

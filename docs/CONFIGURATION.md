@@ -247,7 +247,7 @@ in the scene; its level follows **Click sound volume**.
 {
   "topscreen_profiles": 1,
   "plugin": "TopScreen",
-  "version": "1.2.4",
+  "version": "1.2.5",
   "current": 0,
   "profile_slot_0": { "effects_enabled": true },
   "profile_slot_1": { "effects_enabled": true },

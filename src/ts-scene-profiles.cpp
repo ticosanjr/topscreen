@@ -310,9 +310,19 @@ std::string export_json()
 	for (const auto &entry : read_map(cfg, kMapKey))
 		merged[entry.first] = entry.second;
 
+	/* A backup must survive a different machine/scene collection: write scene
+	 * names instead of local UUIDs whenever the scene is in this collection. */
+	const auto names = current_scene_names();
 	obs_data_t *data = obs_data_create();
-	for (const auto &entry : merged)
-		obs_data_set_int(data, entry.first.c_str(), entry.second);
+	for (const auto &entry : merged) {
+		std::string key = entry.first;
+		if (looks_like_uuid(key)) {
+			const auto it = names.find(key);
+			if (it != names.end() && !it->second.empty())
+				key = it->second;
+		}
+		obs_data_set_int(data, key.c_str(), entry.second);
+	}
 	const char *json = obs_data_get_json(data);
 	std::string out = json ? json : "{}";
 	obs_data_release(data);

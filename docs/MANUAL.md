@@ -429,7 +429,7 @@ nothing is selected).
   in the dock). The assignment is stored by the scene UUID, so renaming a scene
   keeps it; changing scenes then applies that profile automatically, including
   the scene that is open when OBS starts. **Clear this scene's profile** removes
-  it. Scene assignments are not included in the profiles backup file.
+  it. Scene assignments are included in the profiles backup file.
 - Default profile hotkeys are **Ctrl+Shift+Alt+A** through **Ctrl+Shift+Alt+J**.
   Saved bindings win; defaults are applied only when no saved binding exists.
   Bindings reload when the OBS profile changes. The Properties backup section

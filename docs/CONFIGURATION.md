@@ -261,9 +261,11 @@ anything. Missing `current` defaults to 0; missing or empty slots use that
 profile's default seed; missing fields keep that seed's defaults. Import
 replaces profiles A–J and activates the stored profile. Unknown keys are
 ignored, so newer/older backups and fields added or removed between versions
-remain readable. The file contains settings only; custom images and sounds are
-referenced by path and are not embedded. Scene → profile assignments live in the
-OBS profile config and are **not** part of this backup.
+remain readable. The file also carries the scene → profile map under
+`scene_profiles` (as a JSON string); older builds ignore it. Custom images and
+sounds are referenced by path and are not embedded. Scene assignments are
+replaced only when the imported file contains that field, so old backups do not
+erase the current mappings.
 
 ## Capture source settings (Linux/X11)
 

@@ -303,6 +303,49 @@ void prune(const std::vector<std::string> &scene_names)
 	}
 }
 
+std::string export_json()
+{
+	config_t *cfg = obs_frontend_get_profile_config();
+	std::map<std::string, int> merged = read_map(cfg, kLegacyMapKey);
+	for (const auto &entry : read_map(cfg, kMapKey))
+		merged[entry.first] = entry.second;
+
+	obs_data_t *data = obs_data_create();
+	for (const auto &entry : merged)
+		obs_data_set_int(data, entry.first.c_str(), entry.second);
+	const char *json = obs_data_get_json(data);
+	std::string out = json ? json : "{}";
+	obs_data_release(data);
+	return out;
+}
+
+bool import_json(const std::string &json_text)
+{
+	core::json::Value root;
+	std::string error;
+	if (!core::json::parse(json_text, &root, &error) || !root.is_object())
+		return false;
+
+	std::map<std::string, int> map;
+	for (const auto &entry : *root.object) {
+		if (!entry.second.is_number())
+			continue;
+		const long long profile = static_cast<long long>(entry.second.as_number());
+		if (profile >= 0 && profile < core::keys::kProfileCount)
+			map[entry.first] = static_cast<int>(profile);
+	}
+
+	config_t *cfg = obs_frontend_get_profile_config();
+	if (!cfg)
+		return false;
+	write_map(cfg, kMapKey, map);
+	config_remove_value(cfg, kSection, kLegacyMapKey);
+	config_save_safe(cfg, "tmp", nullptr);
+	blog(LOG_INFO, "[TopScreen] scene profile assignments imported (%zu)",
+	     map.size());
+	return true;
+}
+
 void prune_uuids(const std::vector<std::string> &scene_uuids)
 {
 	/* OBS versions that do not expose scene UUIDs would otherwise erase every

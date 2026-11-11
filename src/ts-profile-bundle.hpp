@@ -19,7 +19,7 @@ namespace topscreen::profile_bundle {
  * written.
  */
 bool export_to_file(obs_data_t *source_settings, int current, const std::string &path,
-		    std::string *error);
+		    const std::string &scene_profiles_json, std::string *error);
 
 /**
  * Validates `json_text` and copies its slots into `target_settings`.
@@ -32,6 +32,7 @@ bool export_to_file(obs_data_t *source_settings, int current, const std::string 
  * Returns false and fills `error` when the text is not a valid bundle.
  */
 bool import_from_text(const std::string &json_text, obs_data_t *target_settings,
-		      core::ProfileBundleInfo *info, std::string *error);
+		      core::ProfileBundleInfo *info, std::string *scene_profiles_json,
+		      std::string *error);
 
 } // namespace topscreen::profile_bundle

@@ -24,6 +24,7 @@
 #include "ts-profiles-ui.hpp"
 #include "ts-properties.hpp"
 #include "ts-registry.hpp"
+#include "ts-scene-profiles.hpp"
 #include "ts-settings.hpp"
 #include "ts-version.hpp"
 
@@ -331,7 +332,9 @@ void ts_filter_ctx::do_export_profiles(const std::string &path)
 
 	obs_data_t *s = obs_source_get_settings(source);
 	std::string error;
-	const bool ok = profile_bundle::export_to_file(s, current_profile_, path, &error);
+	const std::string scenes = scene_profiles::export_json();
+	const bool ok =
+		profile_bundle::export_to_file(s, current_profile_, path, scenes, &error);
 	obs_data_release(s);
 
 	profile_io_result_.store(ok ? 1 : 2);
@@ -346,7 +349,9 @@ void ts_filter_ctx::do_import_profiles(const std::string &json_text)
 	obs_data_t *s = obs_source_get_settings(source);
 	core::ProfileBundleInfo info;
 	std::string error;
-	const bool ok = profile_bundle::import_from_text(json_text, s, &info, &error);
+	std::string scenes;
+	const bool ok =
+		profile_bundle::import_from_text(json_text, s, &info, &scenes, &error);
 	obs_data_release(s);
 
 	if (!ok) {
@@ -354,6 +359,10 @@ void ts_filter_ctx::do_import_profiles(const std::string &json_text)
 		blog(LOG_WARNING, "[TopScreen] profiles import rejected: %s", error.c_str());
 		return;
 	}
+
+	/* Old backups have no scene map, so leave the current assignments alone. */
+	if (!scenes.empty() && !scene_profiles::import_json(scenes))
+		blog(LOG_WARNING, "[TopScreen] profiles import: invalid scene profile map");
 
 	/* The imported slots replace everything; a pending debounce write must
 	 * not overwrite the freshly imported active profile. */

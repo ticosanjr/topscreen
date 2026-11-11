@@ -1,6 +1,8 @@
 #include "harness/fake_libobs.hpp"
 #include "test_framework.hpp"
 
+#include "ts-profile-bundle.hpp"
+
 #include <obs-frontend-api.h>
 #include <obs-module.h>
 
@@ -1211,6 +1213,38 @@ TEST(scene_profiles_map_list_prune_and_clear_all)
 
 	CHECK(scene_profiles::clear_all());
 	CHECK(scene_profiles::list().empty());
+}
+
+TEST(scene_profiles_export_import_roundtrip)
+{
+	scene_profiles::clear_all();
+	CHECK(scene_profiles::assign("Scene X", 3));
+	const std::string json = scene_profiles::export_json();
+	CHECK(!json.empty());
+
+	scene_profiles::clear_all();
+	CHECK_EQ(scene_profiles::get("Scene X"), -1);
+	CHECK(scene_profiles::import_json(json));
+	CHECK_EQ(scene_profiles::get("Scene X"), 3);
+
+	CHECK(!scene_profiles::import_json("not json"));
+	scene_profiles::clear_all();
+}
+
+TEST(profile_bundle_carries_the_scene_map)
+{
+	const std::string text =
+		R"({"topscreen_profiles":1,"plugin":"TopScreen","version":"test","current":0,)"
+		R"("profile_slot_0":{},"scene_profiles":"{\"Scene X\":3}"})";
+	obs_data_t *target = obs_data_create();
+	REQUIRE(target != nullptr);
+
+	core::ProfileBundleInfo info;
+	std::string scenes;
+	std::string error;
+	CHECK(profile_bundle::import_from_text(text, target, &info, &scenes, &error));
+	CHECK_EQ(scenes, std::string("{\"Scene X\":3}"));
+	obs_data_release(target);
 }
 
 TEST(integration_chosen_profile_survives_restart)

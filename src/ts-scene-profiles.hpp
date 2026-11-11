@@ -41,4 +41,10 @@ void prune(const std::vector<std::string> &scene_names);
 /** Drops UUID-keyed assignments whose scene no longer exists. */
 void prune_uuids(const std::vector<std::string> &scene_uuids);
 
+/** Serializes the raw scene -> profile map (used by the profiles backup). */
+std::string export_json();
+
+/** Replaces the scene -> profile map from a backup. Invalid input is ignored. */
+bool import_json(const std::string &json_text);
+
 } // namespace topscreen::scene_profiles

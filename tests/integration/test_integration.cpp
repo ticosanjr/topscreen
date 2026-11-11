@@ -1170,6 +1170,27 @@ TEST(scene_profiles_use_scene_uuid_and_keep_legacy_names_readable)
 	scene_profiles::clear_all();
 }
 
+TEST(scene_profiles_migrate_legacy_name_entries_to_uuid)
+{
+	scene_profiles::clear_all();
+	fakeobs::set_current_scene_name("Legacy Scene");
+	fakeobs::set_current_scene_uuid("22222222-2222-2222-2222-222222222222");
+	fakeobs::set_profile_config_string(scene_profiles::kSection, "map",
+					   "{\"Legacy Scene\": 5}");
+
+	obs_source_t *scene = obs_frontend_get_current_scene();
+	REQUIRE(scene != nullptr);
+	CHECK_EQ(scene_profiles::get(scene), 5);
+	/* After the lazy migration the old name key is gone and the UUID wins. */
+	CHECK_EQ(scene_profiles::get("Legacy Scene"), -1);
+	CHECK_EQ(scene_profiles::get(scene), 5);
+	obs_source_release(scene);
+
+	fakeobs::set_current_scene_uuid("");
+	fakeobs::set_current_scene_name("Scene");
+	scene_profiles::clear_all();
+}
+
 TEST(scene_profiles_map_list_prune_and_clear_all)
 {
 	scene_profiles::clear_all();

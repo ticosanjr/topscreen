@@ -124,14 +124,29 @@ int get(const struct obs_source *scene)
 	if (!scene)
 		return -1;
 	const std::string uuid = source_uuid(scene);
+	const std::string name = source_name(scene);
 	if (!uuid.empty()) {
 		config_t *cfg = obs_frontend_get_profile_config();
-		const auto map = read_map(cfg, kMapKey);
+		auto map = read_map(cfg, kMapKey);
 		const auto it = map.find(uuid);
 		if (it != map.end())
 			return it->second;
+
+		/* Lazy migration: an assignment created before UUID storage still
+		 * lives under the scene name. Move it to the stable UUID now, so a
+		 * later scene rename no longer loses the mapping. */
+		auto legacy = read_map(cfg, kLegacyMapKey);
+		const auto old = legacy.find(name);
+		if (old != legacy.end()) {
+			const int profile = old->second;
+			map[uuid] = profile;
+			write_map(cfg, kMapKey, map);
+			legacy.erase(old);
+			write_map(cfg, kLegacyMapKey, legacy);
+			return profile;
+		}
 	}
-	return get(source_name(scene));
+	return get(name);
 }
 
 bool assign(const std::string &scene, int profile)

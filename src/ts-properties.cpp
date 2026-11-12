@@ -463,19 +463,26 @@ bool highlight_mode_changed(obs_properties_t *props, obs_property_t *property, o
 	const bool hotkey_zoom = settings
 					 ? obs_data_get_bool(settings, kHighlightHotkeyEnabled)
 					 : true;
-	/* The pure zoom mode draws no mark at all, so its look/timing controls do
-	 * not apply. Every zoom mode (zoom, box+zoom, line+zoom) needs the zoom
-	 * group; the independent hotkey also uses it in any drag mode. */
+	const bool lock = settings ? obs_data_get_bool(settings, kHighlightLockUntilClick)
+				   : false;
+	const bool reading = mode_reads(static_cast<int>(mode));
+	/* The pure zoom and Reading modes draw no mark at all, so look/timing do
+	 * not apply. A pinned mark also ignores hold/fade: it stays until the next
+	 * click. Every zoom mode and Reading need the zoom group; the independent
+	 * hotkey also uses it in any drag mode. */
 	const bool draws_mark = enabled && mode_draws_mark(static_cast<int>(mode));
 	highlight_group_visible(props, "grp_hl_look", draws_mark);
-	highlight_group_visible(props, "grp_hl_timing", draws_mark);
-	const bool wants_zoom = enabled &&
-				(mode_wants_zoom(static_cast<int>(mode)) || hotkey_zoom);
+	highlight_group_visible(props, "grp_hl_timing", draws_mark && !lock);
+	highlight_group_visible(props, "grp_hl_reading", enabled && reading);
+	const bool wants_zoom = enabled && (mode_wants_zoom(static_cast<int>(mode)) ||
+					    hotkey_zoom || reading);
 	highlight_group_visible(props, "grp_hl_zoom", wants_zoom);
 	if (obs_property_t *p = obs_properties_get(props, kHighlightMode))
 		obs_property_set_visible(p, enabled);
 	if (obs_property_t *p = obs_properties_get(props, kHighlightHotkeyEnabled))
 		obs_property_set_visible(p, enabled);
+	if (obs_property_t *p = obs_properties_get(props, kHighlightLockUntilClick))
+		obs_property_set_visible(p, enabled && !reading);
 	return true;
 }
 
@@ -1104,8 +1111,15 @@ void add_highlight_section(obs_properties_t *props, obs_properties_t *overlays, 
 				  static_cast<int>(HighlightMode::BoxZoom));
 	obs_property_list_add_int(hmode, obs_module_text("Highlight.Mode.LineZoom"),
 				  static_cast<int>(HighlightMode::LineZoom));
+	obs_property_list_add_int(hmode, obs_module_text("Highlight.Mode.Reading"),
+				  static_cast<int>(HighlightMode::Reading));
 	obs_property_set_modified_callback(hmode, highlight_mode_changed);
 	obs_property_set_modified_callback(hkh, highlight_mode_changed);
+
+	obs_property_t *lock = obs_properties_add_bool(
+		hl, kHighlightLockUntilClick, obs_module_text("Highlight.LockUntilClick"));
+	set_tip(lock, obs_module_text("Tooltip.HighlightLockUntilClick"));
+	obs_property_set_modified_callback(lock, highlight_mode_changed);
 
 	/* Look (box + line). */
 	obs_properties_t *hl_look = obs_properties_create();
@@ -1129,6 +1143,15 @@ void add_highlight_section(obs_properties_t *props, obs_properties_t *overlays, 
 		limits::kHighlightFadeRange);
 	obs_properties_add_group(hl, "grp_hl_timing", obs_module_text("Highlight.Timing"), OBS_GROUP_NORMAL,
 				 hl_timing);
+
+	/* Reading: dim the area outside the selected rectangle. */
+	obs_properties_t *hl_reading = obs_properties_create();
+	obs_property_t *reading_dim = add_range_slider(
+		hl_reading, kHighlightReadingDim, obs_module_text("Highlight.ReadingDim"),
+		limits::kUnitRange);
+	set_tip(reading_dim, obs_module_text("Tooltip.HighlightReadingDim"));
+	obs_properties_add_group(hl, "grp_hl_reading", obs_module_text("Highlight.ReadingGroup"),
+				 OBS_GROUP_NORMAL, hl_reading);
 
 	/* Zoom gesture: one fixed IN sequence with ease-in-out cubic. */
 	obs_properties_t *hl_zoom = obs_properties_create();

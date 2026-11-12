@@ -68,8 +68,10 @@ That is where all the math and the state logic live — what actually must be ri
 | `test_coord.cpp` | `core/coord.*` | screen↔content mapping, monitor bounds, invalid cases |
 | `test_cursor.cpp` | `core/cursor.*` | initial position, target pursuit, idle/fade, disabled, exact/A→B glide, rotation offset, primary→secondary link style |
 | `test_click_fx.cpp` | `core/click_fx.*` | spawn, progress, expiry, distinct L/R, slot recycling, saturation |
-| `test_zoom.cpp` | `core/zoom.*` | manual step and limits, auto with recent focus, return on idle, off mode, focus clamp, **Smart region fit/focus** |
+| `test_zoom.cpp` | `core/zoom.*` | manual step and limits, auto with recent focus, return on idle, off mode, focus clamp, **Smart region fit/focus**, **locked spot and freeze** |
 | `test_webcam.cpp` | `core/webcam.*` | mask/geometry anchors and offsets, sanitizing, **default source item layout** |
+| `test_highlighter.cpp` | `core/highlighter.*` | drag box/line, hold/fade, opacity, **Reading lock**, **keep-until-click for marks and zoom** |
+| `test_mapping.cpp` | `core/mapping.*` | padding/keep-aspect, cursor content output, **display ↔ source zoom inverse** |
 | `test_json.cpp` | `core/json.*` | object/array/nested, numbers, escapes (`\uXXXX`), errors, **depth and size limits** (user-provided profile files) |
 | `test_file.cpp` | `core/file.hpp` | reading a file with a **UTF-8 name** (accents) through the native path helper and enforcing a caller-provided size cap |
 | `test_preset.cpp` | `core/preset.*` | parse + apply, missing fields kept, errors, **legacy `bg_mode` 1/2/3 migration** and `bg_type` precedence, **real files** `data/presets/*.json` use the modern background key |
@@ -102,8 +104,8 @@ That is where all the math and the state logic live — what actually must be ri
 ## Current numbers
 
 ```
-249 tests | 9447 checks | 0 failures   (core)
-69 tests | 870 checks   | 0 failures   (integration with fake libobs, LeakSanitizer clean)
+257 tests | 9570 checks | 0 failures   (core)
+70 tests | 896 checks   | 0 failures   (integration with fake libobs, LeakSanitizer clean)
 ```
 
 ## What the integration layer covers

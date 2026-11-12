@@ -90,6 +90,7 @@ Status: ✅ done · 🟡 partial · ⬜ pending.
 | T5.6 | Webcam bubble | ✅ (filter + add-source action, mask/border/shadow, draggable item) |
 | T5.7 | Drag highlighter (box, line, zoom to selection, zoom on mouse press) | ✅ |
 | T5.8 | Device frames (browser/MacBook/iPhone) | ✅ (shader-drawn) |
+| T5.9 | Reading highlight (dim outside + locked zoom) and keep-until-click for other marks | ✅ |
 
 ## F6 — Own capture source + audio
 
@@ -121,7 +122,7 @@ Status: ✅ done · 🟡 partial · ⬜ pending.
 | TD.1 | Full GPL-2.0 license text (`COPYING`) | ✅ |
 | TD.2 | `CONTRIBUTING.md` and PR template | ✅ |
 | TD.3 | Adjust `buildspec.json`/presets for the official CI | ⬜ |
-| TD.4 | Core sanity tests | ✅ (249 core + 69 integration + 57 OBS header files + ASan/UBSan) |
+| TD.4 | Core sanity tests | ✅ (257 core + 70 integration + 57 OBS header files + ASan/UBSan) |
 
 ---
 

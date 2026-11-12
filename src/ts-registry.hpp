@@ -39,6 +39,8 @@ struct FilterControl {
 	virtual void select_profile(int index) = 0;
 	virtual void save_profile() = 0;
 	virtual void toggle_highlight() = 0;
+	/** Ends a pinned highlight/zoom on scene changes/build exit. */
+	virtual void cancel_highlight() = 0;
 	/** Test/diagnostic: the independent hotkey highlight is currently active. */
 	virtual bool hotkey_highlight_active() const = 0;
 	/** Test/diagnostic: resolved module path of the loaded click sound. */

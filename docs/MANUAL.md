@@ -308,7 +308,9 @@ section lists Highlighter before Keystrokes.
 |-------|--------|--------------|
 | — | **Enable drag actions** | Master switch for what a left-drag does |
 | — | **Enable hotkey highlight** | Independent extra: assign `TopScreen_ToggleHighlight`. First press zooms at the current cursor; second press releases/returns. It works with drag actions on or off, and the Zoom group stays visible so those values can be tuned in any drag mode. |
-| — | **Drag action** | **Filled box** (classic mark) · **Line** (draw freehand, fades out) · **Zoom to the selection** (no drawing) · **Zoom on mouse press** (hold the button, no drag) · **Box + zoom** (marks *and* zooms) · **Line + zoom** (draws freehand *and* zooms) |
+| — | **Drag action** | **Filled box** (classic mark) · **Line** (draw freehand, fades out) · **Zoom to the selection** (no drawing) · **Zoom on mouse press** (hold the button, no drag) · **Box + zoom** (marks *and* zooms) · **Line + zoom** (draws freehand *and* zooms) · **Reading** (dims outside, stays until the next click) |
+| — | **Keep until the next click** | Keeps the mark/zoom pinned after you release, until the next click or an exit event (scene/profile change or effects off) |
+| Reading | **Darken outside** | How dark the area outside the reading selection becomes |
 | Mark appearance | **Mark color** | Highlight color (use alpha < 255 for translucent) |
 | Mark appearance | **Mark opacity (0 = invisible, 1 = solid)** | Strength ceiling; keeps content readable |
 | Mark appearance | **Line thickness (fraction of the screen)** | Stroke width as a fraction of the screen height |
@@ -347,6 +349,12 @@ section lists Highlighter before Keystrokes.
 - **Zoom on mouse press**: pure press-and-hold. No area selection: the zoom is
   centered on the point where you pressed, ignores any drag, and starts after
   the configured short delay. A quick click stays a click.
+- **Reading**: drag over the text/area to read. Releasing keeps the selection,
+  darkens everything outside it and fits the zoom to it. Moving the mouse does
+  **not** move the scene; the next left click exits and is consumed (no ripple
+  or click sound). Changing scene/profile/preset or disabling effects also
+  exits. The **Keep until the next click** switch gives the same pinned
+  behaviour to the other marks and to the pure zoom modes.
 - **Box + zoom**: draws the box *and* zooms, for when you want to mark the area
   you are inspecting.
 - **Line + zoom**: same gesture as *Box + zoom*, but the mark is the freehand

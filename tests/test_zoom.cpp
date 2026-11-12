@@ -244,3 +244,52 @@ TEST(zoom_smart_region_focuses_the_active_area)
 	CHECK_NEAR(r.focus_x, 0.5, 0.05);
 	CHECK_NEAR(r.focus_y, 0.5, 0.05);
 }
+
+TEST(zoom_locked_spot_stays_until_release)
+{
+	ZoomModel m;
+	ZoomConfig cfg;
+	cfg.mode = static_cast<int>(ZoomMode::Off);
+	cfg.duration_ms = 50.0;
+	m.configure(cfg);
+	m.reset(0.0);
+
+	m.spot_start_locked(0.7, 0.3, 2.0, 50.0, 1200.0, 0.0);
+	m.update(1000.0);
+	const ZoomRender held = m.render();
+	CHECK_NEAR(held.zoom, 2.0, 1e-6);
+	CHECK_NEAR(held.focus_x, 0.7, 1e-6);
+	CHECK_NEAR(held.focus_y, 0.3, 1e-6);
+
+	/* Still locked after a long time. */
+	m.update(100000.0);
+	CHECK_NEAR(m.render().zoom, 2.0, 1e-6);
+	CHECK_NEAR(m.render().focus_x, 0.7, 1e-6);
+
+	m.spot_release(100001.0);
+	m.update(100002.0);
+	CHECK(m.spot_active());
+	m.update(200000.0);
+	CHECK(!m.spot_active());
+	CHECK_NEAR(m.render().zoom, 1.0, 1e-6);
+}
+
+TEST(zoom_freeze_holds_the_current_view)
+{
+	ZoomModel m;
+	ZoomConfig cfg;
+	cfg.mode = static_cast<int>(ZoomMode::Auto);
+	cfg.amount = 2.0;
+	cfg.duration_ms = 50.0;
+	m.configure(cfg);
+	m.reset(0.0);
+	m.set_cursor(0.2, 0.3, 0.0);
+	m.update(200.0);
+	const double z = m.render().zoom;
+
+	m.freeze();
+	m.set_cursor(0.9, 0.9, 300.0);
+	m.update(400.0);
+	CHECK_NEAR(m.render().zoom, z, 1e-6);
+	m.unfreeze();
+}

@@ -61,7 +61,7 @@ Mode: `auto` reacts on its own · `hotkey` only by hotkey · `always` always on.
 | Feature | Mode | Status | Notes |
 |---------|------|--------|-------------|
 | Key overlay | auto/hotkey | ✅ | TTF atlas (font/color/size/shadow) + X/Y position + background band |
-| Drag highlighter | auto | ✅ | filled box, freehand **line**, **zoom to the selection** or **zoom on mouse press** (quick in, slow out); dragged region with hold/fade |
+| Drag highlighter | auto | ✅ | filled box, freehand **line**, **zoom to the selection**, **zoom on mouse press**, **Reading** (dim outside + fitted zoom pinned until the next click); optional **keep until click** for the other modes |
 
 > Highlighting the **text that is actually selected** (via accessibility) remains
 > out of scope — the substitute is the **drag highlighter**.

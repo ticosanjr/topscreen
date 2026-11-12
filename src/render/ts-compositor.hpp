@@ -112,6 +112,7 @@ private:
 	gs_eparam_t *p_spotlight_blur_ = nullptr;
 	gs_eparam_t *p_spotlight_zoom_ = nullptr;
 	gs_eparam_t *p_spotlight_focus_ = nullptr;
+	gs_eparam_t *p_spotlight_zoom_focus_ = nullptr;
 
 	gs_eparam_t *p_magnifier_enabled_ = nullptr;
 	gs_eparam_t *p_magnifier_amount_ = nullptr;
@@ -134,6 +135,9 @@ private:
 	gs_eparam_t *p_highlight_rect_ = nullptr;
 	gs_eparam_t *p_highlight_color_ = nullptr;
 	gs_eparam_t *p_highlight_alpha_ = nullptr;
+	gs_eparam_t *p_reading_active_ = nullptr;
+	gs_eparam_t *p_reading_rect_ = nullptr;
+	gs_eparam_t *p_reading_dim_ = nullptr;
 
 	/* Explicit click slots (the shader does not use uniform arrays). */
 	struct ClickParams {

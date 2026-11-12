@@ -258,6 +258,10 @@ void frontend_profile_event(enum obs_frontend_event event, void *data)
 		Hotkeys::reload_saved_bindings();
 		blog(LOG_INFO, "[TopScreen] OBS profile changed: hotkey bindings reloaded");
 	} else if (event == OBS_FRONTEND_EVENT_SCENE_CHANGED) {
+		for (const auto &entry : registry_list()) {
+			if (entry.control)
+				entry.control->cancel_highlight();
+		}
 		obs_source_t *scene = obs_frontend_get_current_scene();
 		if (!scene)
 			return;

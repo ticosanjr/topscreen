@@ -64,6 +64,7 @@ enum ActionBits : uint32_t {
 	A_PROFILE_NEXT = 1u << 18,
 	A_PROFILE_PREV = 1u << 19,
 	A_TOGGLE_CLICK_SOUND = 1u << 20,
+	A_CANCEL_HIGHLIGHT = 1u << 21,
 };
 
 /**
@@ -104,6 +105,16 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 	bool cursor_hiding_ = false;
 	bool prev_left = false;
 	bool cursor_hotkey_visible_ = true;
+	/* Pointer in the two coordinate spaces (see update_pointer). */
+	double pointer_display_x_ = 0.5;
+	double pointer_display_y_ = 0.5;
+	double pointer_source_x_ = 0.5;
+	double pointer_source_y_ = 0.5;
+	/* Spotlight zoom focus is frozen while a Reading selection is dragged or
+	 * pinned, so moving the mouse cannot move the scene through it. */
+	bool reading_dragging_ = false;
+	double reading_spot_x_ = 0.5;
+	double reading_spot_y_ = 0.5;
 	std::atomic<bool> hotkey_highlight_active_{false};
 
 	int current_profile_ = 0;
@@ -154,12 +165,16 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 	void update_input();
 	core::ContentArea update_content_area();
 	void update_pointer(const core::ContentArea &content);
+	/** Combined normal + spotlight scene transform (source space). */
+	void scene_view(double *zoom, double *focus_x, double *focus_y) const;
 	void update_active_window();
 	void update_visual_state(const core::ContentArea &content);
 	void sync_parent_cursor(bool hide);
 	void restore_parent_cursor();
 	void start_zoom_spot(double zx0, double zy0, double zx1, double zy1, bool immediate_out,
 			     double hold_override_ms = -1.0);
+	void start_locked_highlight_zoom(double dx0, double dy0, double dx1, double dy1);
+	void exit_locked_highlight(bool animate);
 
 	/* ---- HotkeyContext (hotkey thread: only queues) ---- */
 	void toggle_effects() override { actions_.fetch_or(A_TOGGLE_EFFECTS); }
@@ -183,6 +198,7 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 	void prev_profile() override { actions_.fetch_or(A_PROFILE_PREV); }
 	void toggle_click_sound() override { actions_.fetch_or(A_TOGGLE_CLICK_SOUND); }
 	void reset_profiles() { actions_.fetch_or(A_RESET_PROFILES); }
+	void cancel_highlight() override { actions_.fetch_or(A_CANCEL_HIGHLIGHT); }
 	FilterControl *filter_control() override { return this; }
 
 	/* ---- FilterControl (UI thread: only queues / reads atomic) ---- */
@@ -267,6 +283,7 @@ void ts_filter_ctx::apply_profile(int index)
 {
 	if (index < 0 || index >= kProfileCount)
 		return;
+	exit_locked_highlight(false);
 
 	/* Monitor origin is machine-specific, not a look preset: switching
 	 * profiles must never move the pointer mapping to another monitor. */
@@ -445,6 +462,60 @@ void ts_filter_ctx::start_zoom_spot(double zx0, double zy0, double zx1, double z
 		zoom.spot_release(time_ms);
 }
 
+void ts_filter_ctx::start_locked_highlight_zoom(double dx0, double dy0, double dx1,
+						double dy1)
+{
+	double scene_zoom = 1.0;
+	double scene_focus_x = 0.5;
+	double scene_focus_y = 0.5;
+	scene_view(&scene_zoom, &scene_focus_x, &scene_focus_y);
+	double sx0 = 0.0, sy0 = 0.0, sx1 = 0.0, sy1 = 0.0;
+	core::display_rect_to_source(dx0, dy0, dx1, dy1, scene_focus_x, scene_focus_y,
+				     scene_zoom, &sx0, &sy0, &sx1, &sy1);
+	sx0 = core::clamp01(sx0);
+	sy0 = core::clamp01(sy0);
+	sx1 = core::clamp01(sx1);
+	sy1 = core::clamp01(sy1);
+
+	const double rw = std::max(1e-3, sx1 - sx0);
+	const double rh = std::max(1e-3, sy1 - sy0);
+	const double fit = std::min(1.0 / rw, 1.0 / rh);
+	const double target = std::max(1.0, std::min(fit, cfg.highlight.zoom_max));
+	const double cx = (sx0 + sx1) * 0.5;
+	const double cy = (sy0 + sy1) * 0.5;
+	const double focus_x = core::center_focus_for(cx, std::max(target, 1.0001));
+	const double focus_y = core::center_focus_for(cy, std::max(target, 1.0001));
+
+	zoom.unfreeze();
+	zoom.spot_start_locked(focus_x, focus_y, target, cfg.highlight.zoom_in_ms,
+			       cfg.highlight.zoom_out_ms, time_ms);
+	reading_dragging_ = false;
+	reading_spot_x_ = focus_x;
+	reading_spot_y_ = focus_y;
+	hotkey_highlight_active_.store(false);
+	blog(LOG_INFO, "[TopScreen] highlight locked: %.2fx rect=%.3f,%.3f..%.3f,%.3f", target,
+	     sx0, sy0, sx1, sy1);
+}
+
+void ts_filter_ctx::exit_locked_highlight(bool animate)
+{
+	const bool had_lock = highlight.locked();
+	if (had_lock) {
+		if (animate)
+			zoom.spot_release(time_ms);
+		else
+			zoom.spot_stop();
+	}
+	/* Also cancel an in-progress Reading drag (which freezes the view). */
+	highlight.clear_lock();
+	reading_dragging_ = false;
+	zoom.unfreeze();
+	if (had_lock) {
+		hotkey_highlight_active_.store(false);
+		blog(LOG_INFO, "[TopScreen] highlight unlocked");
+	}
+}
+
 void ts_filter_ctx::reconfigure_models()
 {
 	cursor.configure(cfg.cursor);
@@ -468,6 +539,7 @@ void ts_filter_ctx::request_preset(int index)
 {
 	if (index < 0)
 		return;
+	exit_locked_highlight(false);
 
 	std::string err;
 	if (!presets.apply(index, &cfg)) {
@@ -485,10 +557,18 @@ void ts_filter_ctx::request_preset(int index)
 
 void ts_filter_ctx::reload_from_settings()
 {
+	const int old_highlight_mode = cfg.highlight.mode;
 	obs_data_t *s = obs_source_get_settings(source);
 	config_load(s, &cfg);
 	const long long pc = obs_data_get_int(s, kProfileCurrent);
 	obs_data_release(s);
+
+	/* A setting edit can change/disable the active drag mode. A pinned
+	 * highlight must not survive that; ordinary edits (e.g. click sound) do. */
+	if (highlight.locked() &&
+	    (cfg.highlight.mode != old_highlight_mode || !cfg.highlight.enabled ||
+	     !cfg.effects_enabled))
+		exit_locked_highlight(false);
 
 	const int want = std::max(0, std::min(kProfileCount - 1, static_cast<int>(pc)));
 
@@ -531,8 +611,13 @@ void ts_filter_ctx::process_actions()
 	if (act == 0)
 		return;
 
+	if (act & A_CANCEL_HIGHLIGHT)
+		exit_locked_highlight(false);
+
 	if (act & A_TOGGLE_EFFECTS) {
 		cfg.effects_enabled = !cfg.effects_enabled;
+		if (!cfg.effects_enabled)
+			exit_locked_highlight(false);
 		push_settings();
 		mark_profile_dirty();
 	}
@@ -540,6 +625,8 @@ void ts_filter_ctx::process_actions()
 		const int v = pending_effects_.exchange(-1);
 		if (v >= 0) {
 			cfg.effects_enabled = (v != 0);
+			if (!cfg.effects_enabled)
+				exit_locked_highlight(false);
 			push_settings();
 			mark_profile_dirty();
 		}
@@ -607,9 +694,9 @@ void ts_filter_ctx::process_actions()
 			hotkey_highlight_active_.store(false);
 			blog(LOG_INFO, "[TopScreen] hotkey highlight: release");
 		} else {
-			/* First press: zoom into the current cursor position. */
-			const double cx = frame.cursor.x;
-			const double cy = frame.cursor.y;
+			/* First press: zoom into the source point under the pointer. */
+			const double cx = pointer_source_x_;
+			const double cy = pointer_source_y_;
 			start_zoom_spot(cx, cy, cx, cy, false, 0.0);
 			hotkey_highlight_active_.store(zoom.spot_active());
 			blog(LOG_INFO, "[TopScreen] hotkey highlight: %s",
@@ -815,77 +902,131 @@ core::ContentArea ts_filter_ctx::update_content_area()
 	return content;
 }
 
+void ts_filter_ctx::scene_view(double *out_zoom, double *focus_x, double *focus_y) const
+{
+	const core::ZoomRender z = zoom.render();
+	const core::SpotlightRender s = spotlight.render();
+	const double amount = core::clamp01(s.amount);
+	if (out_zoom)
+		*out_zoom = z.zoom * std::max(1.0, s.zoom);
+	if (focus_x)
+		*focus_x = z.focus_x + (s.zoom_focus_x - z.focus_x) * amount;
+	if (focus_y)
+		*focus_y = z.focus_y + (s.zoom_focus_y - z.focus_y) * amount;
+}
+
 void ts_filter_ctx::update_pointer(const core::ContentArea &content)
 {
 	const double target_w = static_cast<double>(this->target_w);
 	const double target_h = static_cast<double>(this->target_h);
-	if (input.available() && target_w > 0 && target_h > 0) {
-		const InputState &st = input.state();
-		if (st.left || st.left_pressed || st.right_pressed)
-			zoom.note_activity(time_ms);
-		const core::Monitor mon{monitor_origin_.x(), monitor_origin_.y(),
-					static_cast<double>(target_w),
-					static_cast<double>(target_h)};
-		/* Source/content pointer (0..1): clicks, zoom and the highlighter use
-		 * this coordinate system. */
-		const core::Vec2f n = core::screen_to_content(st.x, st.y, mon);
-		const double cx = core::clamp01(n.x);
-		const double cy = core::clamp01(n.y);
+	if (!input.available() || target_w <= 0.0 || target_h <= 0.0)
+		return;
 
-		/* Cursor overlay in OUTPUT coordinates: the tip follows the same
-		 * captured pixel as the physical pointer (content area), while the
-		 * icon body is allowed to overhang into the wallpaper padding. */
-		const core::Vec2f cursor_pos =
-			core::pointer_to_content_output(cx, cy, content, target_w, target_h);
+	const InputState &st = input.state();
+	const core::Monitor mon{monitor_origin_.x(), monitor_origin_.y(),
+				monitor_origin_.width(), monitor_origin_.height()};
+	/* DISPLAY space: the physical pointer over the composed content. */
+	const core::Vec2f display = core::screen_to_content(st.x, st.y, mon);
+	const double dx = core::clamp01(display.x);
+	const double dy = core::clamp01(display.y);
 
-		cursor.set_target(cursor_pos.x, cursor_pos.y, time_ms);
-		zoom.set_cursor(cx, cy, time_ms);
+	/* SOURCE space: the captured pixel under the pointer after the current
+	 * zoom/pan (normal zoom + spotlight zoom). Clicks/highlights stay in
+	 * display space; zoom focus and selection targets use source space. */
+	double scene_zoom = 1.0;
+	double scene_focus_x = 0.5;
+	double scene_focus_y = 0.5;
+	scene_view(&scene_zoom, &scene_focus_x, &scene_focus_y);
+	const core::Vec2f source =
+		core::display_to_source(dx, dy, scene_focus_x, scene_focus_y, scene_zoom);
+	const double sx = core::clamp01(source.x);
+	const double sy = core::clamp01(source.y);
+	pointer_display_x_ = dx;
+	pointer_display_y_ = dy;
+	pointer_source_x_ = sx;
+	pointer_source_y_ = sy;
 
-		/* Drag highlighter (left button). A drag owns the zoom spot now, so a
-		 * hotkey toggle must not leave a stale "active" state behind. */
-		if (st.left_pressed) {
+	if (!highlight.locked() && (st.left || st.left_pressed || st.right_pressed))
+		zoom.note_activity(time_ms);
+
+	const core::Vec2f cursor_pos =
+		core::pointer_to_content_output(dx, dy, content, target_w, target_h);
+	cursor.set_target(cursor_pos.x, cursor_pos.y, time_ms);
+	if (!highlight.locked())
+		zoom.set_cursor(sx, sy, time_ms);
+
+	bool swallow_click = false;
+	if (st.left_pressed) {
+		if (highlight.locked()) {
+			/* The click that dismisses a pinned highlight is consumed. */
+			exit_locked_highlight(true);
+			swallow_click = true;
+		} else {
 			if (hotkey_highlight_active_.exchange(false))
 				zoom.spot_release(time_ms);
-			highlight.begin(cx, cy, time_ms);
-		} else if (st.left)
-			highlight.move(cx, cy, time_ms);
-		if (!st.left && prev_left) {
-			highlight.end(time_ms);
-
-			/* Released before the trigger (or QuickZoom-style tap-drag):
-			 * if the model still holds a request, run the in/out cycle now. */
-			double zx0 = 0.0, zy0 = 0.0, zx1 = 0.0, zy1 = 0.0;
-			if (highlight.take_zoom_request(&zx0, &zy0, &zx1, &zy1)) {
-				hotkey_highlight_active_.store(false);
-				start_zoom_spot(zx0, zy0, zx1, zy1, true);
-			}
-		} else if (st.left) {
-			/* While held: fire the zoom as soon as the model asks for it. */
-			double zx0 = 0.0, zy0 = 0.0, zx1 = 0.0, zy1 = 0.0;
-			if (highlight.take_zoom_request(&zx0, &zy0, &zx1, &zy1)) {
-				hotkey_highlight_active_.store(false);
-				start_zoom_spot(zx0, zy0, zx1, zy1, false);
+			highlight.begin(dx, dy, time_ms);
+			if (core::mode_reads(cfg.highlight.mode)) {
+				const core::SpotlightRender s = spotlight.render();
+				reading_spot_x_ = s.zoom_focus_x;
+				reading_spot_y_ = s.zoom_focus_y;
+				reading_dragging_ = true;
+				zoom.freeze();
 			}
 		}
+	}
+	if (st.left && !highlight.locked() && !swallow_click)
+		highlight.move(dx, dy, time_ms);
 
-		/* Let go: glide back with the configured out animation. */
-		if (!st.left && prev_left) {
+	if (!st.left && prev_left && !swallow_click) {
+		highlight.end(time_ms);
+
+		double zx0 = 0.0, zy0 = 0.0, zx1 = 0.0, zy1 = 0.0;
+		if (highlight.take_zoom_request(&zx0, &zy0, &zx1, &zy1)) {
+			hotkey_highlight_active_.store(false);
+			if (core::mode_reads(cfg.highlight.mode) ||
+			    (cfg.highlight.lock_until_click &&
+			     core::mode_wants_zoom(cfg.highlight.mode))) {
+				start_locked_highlight_zoom(zx0, zy0, zx1, zy1);
+			} else {
+				double sx0 = 0.0, sy0 = 0.0, sx1 = 0.0, sy1 = 0.0;
+				double z = 1.0, fx = 0.5, fy = 0.5;
+				scene_view(&z, &fx, &fy);
+				core::display_rect_to_source(zx0, zy0, zx1, zy1, fx, fy, z,
+							     &sx0, &sy0, &sx1, &sy1);
+				start_zoom_spot(sx0, sy0, sx1, sy1, true);
+			}
+		}
+		reading_dragging_ = false;
+		zoom.unfreeze();
+		/* A pinned spot stays until the next click/exit. */
+		if (!highlight.locked()) {
 			hotkey_highlight_active_.store(false);
 			zoom.spot_release(time_ms);
 		}
-
-		prev_left = st.left;
-
-		if (st.left_pressed) {
-			clicks.spawn(cx, cy, time_ms, false);
-			if (cfg.click_sound.enabled)
-				click_sound.play(false, cfg.click_sound.volume);
+	} else if (st.left) {
+		double zx0 = 0.0, zy0 = 0.0, zx1 = 0.0, zy1 = 0.0;
+		if (highlight.take_zoom_request(&zx0, &zy0, &zx1, &zy1)) {
+			hotkey_highlight_active_.store(false);
+			double sx0 = 0.0, sy0 = 0.0, sx1 = 0.0, sy1 = 0.0;
+			double z = 1.0, fx = 0.5, fy = 0.5;
+			scene_view(&z, &fx, &fy);
+			core::display_rect_to_source(zx0, zy0, zx1, zy1, fx, fy, z, &sx0,
+						     &sy0, &sx1, &sy1);
+			start_zoom_spot(sx0, sy0, sx1, sy1, false);
 		}
-		if (st.right_pressed) {
-			clicks.spawn(cx, cy, time_ms, true);
-			if (cfg.click_sound.enabled)
-				click_sound.play(true, cfg.click_sound.volume);
-		}
+	}
+
+	prev_left = st.left;
+
+	if (st.left_pressed && !swallow_click) {
+		clicks.spawn(dx, dy, time_ms, false);
+		if (cfg.click_sound.enabled)
+			click_sound.play(false, cfg.click_sound.volume);
+	}
+	if (st.right_pressed) {
+		clicks.spawn(dx, dy, time_ms, true);
+		if (cfg.click_sound.enabled)
+			click_sound.play(true, cfg.click_sound.volume);
 	}
 }
 
@@ -904,8 +1045,7 @@ void ts_filter_ctx::update_active_window()
 	}
 
 	const core::Monitor mon{monitor_origin_.x(), monitor_origin_.y(),
-				static_cast<double>(target_w),
-				static_cast<double>(target_h)};
+				monitor_origin_.width(), monitor_origin_.height()};
 	const core::Vec2f a = core::screen_to_content(aw.x, aw.y, mon);
 	const core::Vec2f b = core::screen_to_content(aw.x + aw.width, aw.y + aw.height, mon);
 	const double x0 = core::clamp01(std::min(a.x, b.x));
@@ -922,6 +1062,7 @@ void ts_filter_ctx::update_active_window()
 
 void ts_filter_ctx::update_visual_state(const core::ContentArea &content)
 {
+	UNUSED_PARAMETER(content);
 	update_active_window();
 	const double target_w = static_cast<double>(this->target_w);
 	const double target_h = static_cast<double>(this->target_h);
@@ -935,19 +1076,14 @@ void ts_filter_ctx::update_visual_state(const core::ContentArea &content)
 	if (!cursor_hotkey_visible_)
 		frame.cursor.visible = false;
 
-	/* The spotlight center is drawn from the cursor overlay (output coords),
-	 * but its ZOOM focus is a source/content coordinate. Invert the content
-	 * mapping from the drawn cursor so the zoom follows the smoothed cursor
-	 * (Exact or Glide) instead of jumping to the raw pointer. */
-	double spot_x = 0.5;
-	double spot_y = 0.5;
-	if (content.size.x > 0.0 && content.size.y > 0.0) {
-		spot_x = core::clamp01((frame.cursor.x * target_w - content.origin.x) /
-				       content.size.x);
-		spot_y = core::clamp01((frame.cursor.y * target_h - content.origin.y) /
-				       content.size.y);
-	}
-	spotlight.update(time_ms, spot_x, spot_y);
+	/* The spotlight mask is drawn in OUTPUT coordinates (the smoothed cursor
+	 * overlay); its ZOOM focus is the SOURCE point under the physical pointer.
+	 * A pinned highlight owns the zoom focus: moving the mouse must not move
+	 * the scene through an active spotlight. */
+	const bool freeze_spot = reading_dragging_ || highlight.locked();
+	const double spot_zoom_x = freeze_spot ? reading_spot_x_ : pointer_source_x_;
+	const double spot_zoom_y = freeze_spot ? reading_spot_y_ : pointer_source_y_;
+	spotlight.update(time_ms, frame.cursor.x, frame.cursor.y, spot_zoom_x, spot_zoom_y);
 	frame.spotlight = spotlight.render();
 	magnifier.update(time_ms, frame.cursor.x, frame.cursor.y,
 			      target_w > 0.0 && target_h > 0.0 ? target_w / target_h : 1.0);

@@ -82,9 +82,17 @@ public:
 	 */
 	void spot_start_hold(double focus_x, double focus_y, double target, double in_ms,
 			     double hold_ms, double out_ms, double now_ms);
+	/** Like spot_start_hold, but keeps the target until spot_release(). */
+	void spot_start_locked(double focus_x, double focus_y, double target, double in_ms,
+			       double out_ms, double now_ms);
 	/** Releases a held spot: the configured hold runs, then it eases back. */
 	void spot_release(double now_ms);
 	void spot_stop();
+
+	/** Keeps the current zoom/focus in place while a selection is dragged. */
+	void freeze() { frozen_ = true; }
+	void unfreeze() { frozen_ = false; }
+	bool frozen() const { return frozen_; }
 	bool spot_active() const { return spot_active_; }
 	bool spot_held() const { return spot_held_; }
 	double spot_target() const { return spot_target_; }
@@ -104,6 +112,8 @@ private:
 	ZoomConfig cfg_;
 	bool spot_active_ = false;
 	bool spot_held_ = false;
+	bool spot_locked_ = false;
+	bool frozen_ = false;
 	double spot_cx_ = 0.5;
 	double spot_cy_ = 0.5;
 	double spot_target_ = 1.0;

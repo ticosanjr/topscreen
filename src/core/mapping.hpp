@@ -31,6 +31,19 @@ Vec2f source_to_pixel(double s_x, double s_y, double focus_x, double focus_y, do
 		      const ContentArea &area);
 
 /**
+ * Inverse of source_to_display: a point on the displayed (zoomed) content back
+ * to the source coordinate under it.
+ *
+ *     source = focus + (display - focus) / zoom
+ */
+Vec2f display_to_source(double d_x, double d_y, double focus_x, double focus_y, double zoom);
+
+/** Inverse-zoom mapping for a rectangle (corners may be given in any order). */
+void display_rect_to_source(double dx0, double dy0, double dx1, double dy1, double focus_x,
+			    double focus_y, double zoom, double *sx0, double *sy0,
+			    double *sx1, double *sy1);
+
+/**
  * Cursor position in OUTPUT coordinates (0..1) for a pointer normalized to the
  * captured monitor (0..1).
  *

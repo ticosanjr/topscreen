@@ -228,15 +228,20 @@ bool ts_monitor_origin_override(double *origin_x, double *origin_y)
 	return true;
 }
 
-bool ts_resolve_monitor_origin(const char *device_id, int hint, bool trust_hint, uint32_t capture_w,
-			       uint32_t capture_h, double *origin_x, double *origin_y)
+bool ts_resolve_monitor(const char *device_id, int hint, bool trust_hint, uint32_t capture_w,
+			uint32_t capture_h, core::Monitor *out)
 {
-	if (!origin_x || !origin_y)
+	if (!out)
 		return false;
 
-	if (ts_monitor_origin_override(origin_x, origin_y)) {
+	double ox = 0.0, oy = 0.0;
+	if (ts_monitor_origin_override(&ox, &oy)) {
+		out->x = ox;
+		out->y = oy;
+		out->width = static_cast<double>(capture_w);
+		out->height = static_cast<double>(capture_h);
 		blog(LOG_INFO, "[TopScreen] monitor origin: (%.0f,%.0f) [TOPSCREEN_MONITOR_ORIGIN]",
-		     *origin_x, *origin_y);
+		     ox, oy);
 		return true;
 	}
 
@@ -263,8 +268,7 @@ bool ts_resolve_monitor_origin(const char *device_id, int hint, bool trust_hint,
 
 	core::Monitor picked;
 	if (core::pick_monitor(monitors, count, hint, trust_hint, capture_w, capture_h, &picked)) {
-		*origin_x = picked.x;
-		*origin_y = picked.y;
+		*out = picked;
 		blog(LOG_INFO, "[TopScreen] monitor origin: (%.0f,%.0f) of %.0fx%.0f [%d monitor(s)]",
 		     picked.x, picked.y, picked.width, picked.height, count);
 		return true;
@@ -274,7 +278,24 @@ bool ts_resolve_monitor_origin(const char *device_id, int hint, bool trust_hint,
 		blog(LOG_INFO, "[TopScreen] monitor origin unknown (%d monitor(s), capture %ux%u): "
 			       "assuming (0,0); set TOPSCREEN_MONITOR_ORIGIN=x,y to override",
 		     count, capture_w, capture_h);
+	out->x = 0.0;
+	out->y = 0.0;
+	out->width = static_cast<double>(capture_w);
+	out->height = static_cast<double>(capture_h);
 	return false;
+}
+
+bool ts_resolve_monitor_origin(const char *device_id, int hint, bool trust_hint, uint32_t capture_w,
+			       uint32_t capture_h, double *origin_x, double *origin_y)
+{
+	if (!origin_x || !origin_y)
+		return false;
+	core::Monitor monitor;
+	const bool known = ts_resolve_monitor(device_id, hint, trust_hint, capture_w, capture_h,
+					      &monitor);
+	*origin_x = monitor.x;
+	*origin_y = monitor.y;
+	return known;
 }
 
 } // namespace topscreen

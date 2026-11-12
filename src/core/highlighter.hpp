@@ -13,6 +13,9 @@ enum class HighlightMode : int {
 	Zoom = 2, // no drawing: hold to zoom, release to glide back
 	BoxZoom = 3, // draws the box AND zooms while held
 	LineZoom = 4, // draws the freehand line AND zooms while held
+	/* 5 is retired (old PressZoom). Reading dims everything outside the
+	 * selection and keeps the fitted zoom until the next click. */
+	Reading = 6,
 };
 
 struct HighlighterConfig {
@@ -22,8 +25,12 @@ struct HighlighterConfig {
 	int mode = static_cast<int>(HighlightMode::Box);
 	double hold_ms = 900.0; // time visible after releasing
 	double fade_ms = 300.0; // fade duration
+	/* Keep the mark/zoom visible until the next click (or an exit event). */
+	bool lock_until_click = false;
 	uint32_t color = 0x6600E0FF; // 0xAABBGGRR (translucent yellow)
 	double opacity = 0.35; // ceiling for the highlight alpha (0..1)
+	/* Reading: how much the area outside the selection is darkened. */
+	double reading_dim = 0.55;
 	double thickness = 0.004; // line mode: stroke width (content units 0..1)
 	double min_span = 0.02;      // minimum drag (avoids marking clicks)
 
@@ -55,7 +62,14 @@ inline bool mode_wants_zoom(int mode)
 {
 	return mode == static_cast<int>(HighlightMode::Zoom) ||
 	       mode == static_cast<int>(HighlightMode::BoxZoom) ||
-	       mode == static_cast<int>(HighlightMode::LineZoom);
+	       mode == static_cast<int>(HighlightMode::LineZoom) ||
+	       mode == static_cast<int>(HighlightMode::Reading);
+}
+
+/** Reading dims the area outside the selection instead of painting it. */
+inline bool mode_reads(int mode)
+{
+	return mode == static_cast<int>(HighlightMode::Reading);
 }
 
 /** Modes that leave a visible mark (a box or a line). The pure zoom mode
@@ -74,6 +88,7 @@ struct HighlightRender {
 	double x0 = 0.0, y0 = 0.0, x1 = 0.0, y1 = 0.0; // normalized (x0<x1, y0<y1)
 	double alpha = 0.0;
 	uint32_t color = 0;
+	double reading_dim = 0.0; // only used by Reading
 	double thickness = 0.0;
 	/* Line modes: freehand points (content 0..1), valid until the next call. */
 	const struct Vec2f *points = nullptr;
@@ -117,6 +132,11 @@ public:
 	void move(double x, double y, double now);
 	void end(double now);
 
+	/** True while the selection/zoom is pinned until the next click. */
+	bool locked() const { return locked_; }
+	/** Clears a pinned selection (next click or an exit event). */
+	void clear_lock();
+
 	/** Zoom mode: consumes the pending "zoom into this rect" request. */
 	bool take_zoom_request(double *x0, double *y0, double *x1, double *y1);
 	void update(double now);
@@ -130,6 +150,7 @@ private:
 
 	HighlighterConfig cfg_;
 	bool dragging_ = false;
+	bool locked_ = false;
 	bool has_ = false;
 	double sx_ = 0.0, sy_ = 0.0;
 	double ex_ = 0.0, ey_ = 0.0;

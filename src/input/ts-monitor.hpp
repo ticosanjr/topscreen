@@ -30,6 +30,10 @@ int ts_query_monitors(core::Monitor *out, int max);
 bool ts_resolve_monitor_origin(const char *device_id, int hint, bool trust_hint, uint32_t capture_w,
 			       uint32_t capture_h, double *origin_x, double *origin_y);
 
+/** Full rectangle of the monitor a capture belongs to (same detection rules). */
+bool ts_resolve_monitor(const char *device_id, int hint, bool trust_hint, uint32_t capture_w,
+			uint32_t capture_h, core::Monitor *out);
+
 /**
  * Manual override from the environment: TOPSCREEN_MONITOR_ORIGIN="x,y".
  * Useful for exotic layouts and for tests.

@@ -38,6 +38,8 @@ void ZoomModel::reset(double now_ms)
 	region_valid_ = false;
 	last_update_ms_ = now_ms;
 	velocity_ = 0.0;
+	spot_locked_ = false;
+	frozen_ = false;
 	started_ = true;
 }
 
@@ -91,6 +93,7 @@ void ZoomModel::spot_start_hold(double focus_x, double focus_y, double target, d
 {
 	spot_active_ = true;
 	spot_held_ = true;
+	spot_locked_ = false;
 	spot_cx_ = clamp_range(focus_x, 0.0, 1.0);
 	spot_cy_ = clamp_range(focus_y, 0.0, 1.0);
 
@@ -109,6 +112,13 @@ void ZoomModel::spot_start_hold(double focus_x, double focus_y, double target, d
 	spot_release_ms_ = now_ms;
 }
 
+void ZoomModel::spot_start_locked(double focus_x, double focus_y, double target, double in_ms,
+				  double out_ms, double now_ms)
+{
+	spot_start_hold(focus_x, focus_y, target, in_ms, 0.0, out_ms, now_ms);
+	spot_locked_ = true;
+}
+
 void ZoomModel::spot_release(double now_ms)
 {
 	if (!spot_active_ || !spot_held_)
@@ -123,6 +133,7 @@ void ZoomModel::spot_stop()
 {
 	spot_active_ = false;
 	spot_held_ = false;
+	spot_locked_ = false;
 }
 
 SpotAim spot_aim_for_hold(bool has_rect, double rx0, double ry0, double rx1, double ry1,
@@ -207,8 +218,19 @@ void ZoomModel::update(double now_ms)
 		reset(now_ms);
 
 	if (spot_active_ && !spot_held_ &&
-	    now_ms - spot_release_ms_ > spot_hold_ms_ + spot_out_ms_)
+	    now_ms - spot_release_ms_ > spot_hold_ms_ + spot_out_ms_) {
 		spot_active_ = false;
+		spot_locked_ = false;
+	}
+
+	if (frozen_ && !spot_active_) {
+		/* A selection is being dragged: hold the exact view under it. */
+		zoom_.set_target(zoom_.value());
+		fx_.set_target(fx_.value());
+		fy_.set_target(fy_.value());
+		last_update_ms_ = now_ms;
+		return;
+	}
 
 	double dt = (now_ms - last_update_ms_) / 1000.0;
 	last_update_ms_ = now_ms;
@@ -274,14 +296,22 @@ ZoomRender ZoomModel::render() const
 		out.zoom = spot_zoom_at(last_update_ms_);
 		if (out.zoom < 1.0)
 			out.zoom = 1.0;
-		/* Focus moves from where it was to the selection and back. */
-		const double e = spot_target_ > spot_base_
-					 ? (out.zoom - spot_base_) / std::max(1e-6, spot_target_ - spot_base_)
-					 : 0.0;
-		const double fx = spot_base_fx_ + (clamp_range(spot_cx_, 0.0, 1.0) - spot_base_fx_) * e;
-		const double fy = spot_base_fy_ + (clamp_range(spot_cy_, 0.0, 1.0) - spot_base_fy_) * e;
-		out.focus_x = clamp_focus(clamp_range(fx, 0.0, 1.0), out.zoom);
-		out.focus_y = clamp_focus(clamp_range(fy, 0.0, 1.0), out.zoom);
+		/* Focus moves from where it was to the selection and back. A locked
+		 * spot keeps the selection focus even when the target zoom does not
+		 * change (e.g. the selection already fits the current view). */
+		double fx = clamp_range(spot_cx_, 0.0, 1.0);
+		double fy = clamp_range(spot_cy_, 0.0, 1.0);
+		if (!spot_locked_) {
+			const double e =
+				spot_target_ > spot_base_
+					? (out.zoom - spot_base_) /
+						  std::max(1e-6, spot_target_ - spot_base_)
+					: 0.0;
+			fx = spot_base_fx_ + (fx - spot_base_fx_) * e;
+			fy = spot_base_fy_ + (fy - spot_base_fy_) * e;
+		}
+		out.focus_x = clamp_focus(fx, out.zoom);
+		out.focus_y = clamp_focus(fy, out.zoom);
 		return out;
 	}
 

@@ -215,6 +215,7 @@ void Compositor::cache_params()
 	p_spotlight_blur_ = P("spotlight_blur");
 	p_spotlight_zoom_ = P("spotlight_zoom");
 	p_spotlight_focus_ = P("spotlight_focus");
+	p_spotlight_zoom_focus_ = P("spotlight_zoom_focus");
 
 	p_magnifier_enabled_ = P("magnifier_enabled");
 	p_magnifier_amount_ = P("magnifier_amount");
@@ -237,6 +238,9 @@ void Compositor::cache_params()
 	p_highlight_rect_ = P("highlight_rect");
 	p_highlight_color_ = P("highlight_color");
 	p_highlight_alpha_ = P("highlight_alpha");
+	p_reading_active_ = P("reading_active");
+	p_reading_rect_ = P("reading_rect");
+	p_reading_dim_ = P("reading_dim");
 
 	p_click_count_ = P("click_count");
 
@@ -322,6 +326,7 @@ bool Compositor::validate_params() const
 		"spotlight_blur",
 		"spotlight_zoom",
 		"spotlight_focus",
+		"spotlight_zoom_focus",
 		"magnifier_enabled",
 		"magnifier_amount",
 		"magnifier_shape",
@@ -342,6 +347,9 @@ bool Compositor::validate_params() const
 		"highlight_rect",
 		"highlight_color",
 		"highlight_alpha",
+		"reading_active",
+		"reading_rect",
+		"reading_dim",
 		"click_count",
 		"line_count",
 		"line_width",
@@ -436,6 +444,7 @@ void Compositor::release()
 	p_magnifier_shadow_alpha_ = p_magnifier_shadow_blur_ = nullptr;
 	p_magnifier_shadow_offset_ = nullptr;
 	p_highlight_active_ = p_highlight_rect_ = p_highlight_color_ = p_highlight_alpha_ = nullptr;
+	p_reading_active_ = p_reading_rect_ = p_reading_dim_ = nullptr;
 	p_click_count_ = nullptr;
 	for (auto &c : click_)
 		c = ClickParams{};
@@ -588,6 +597,8 @@ void Compositor::upload_focus(const core::Config &cfg, const FrameState &st, boo
 	set_f(p_spotlight_zoom_, static_cast<float>(st.spotlight.zoom));
 	set_v2(p_spotlight_focus_, static_cast<float>(st.spotlight.focus_x),
 	       static_cast<float>(st.spotlight.focus_y));
+	set_v2(p_spotlight_zoom_focus_, static_cast<float>(st.spotlight.zoom_focus_x),
+	       static_cast<float>(st.spotlight.zoom_focus_y));
 
 	/* Magnifier. Same all-uniforms-every-frame rule as Spotlight. */
 	const bool mag = active && st.magnifier.amount > 0.001;
@@ -627,6 +638,16 @@ void Compositor::upload_highlight(const FrameState &st, bool active)
 	}
 	set_c(p_highlight_color_, st.highlight.color);
 	set_f(p_highlight_alpha_, static_cast<float>(st.highlight.alpha));
+
+	const bool reading = active && st.highlight.active &&
+			     core::mode_reads(st.highlight.mode);
+	set_f(p_reading_active_, reading ? 1.0f : 0.0f);
+	struct vec4 rect;
+	vec4_set(&rect, static_cast<float>(st.highlight.x0), static_cast<float>(st.highlight.y0),
+		 static_cast<float>(st.highlight.x1), static_cast<float>(st.highlight.y1));
+	if (p_reading_rect_)
+		gs_effect_set_vec4(p_reading_rect_, &rect);
+	set_f(p_reading_dim_, static_cast<float>(st.highlight.reading_dim));
 }
 
 void Compositor::upload_clicks(const FrameState &st)

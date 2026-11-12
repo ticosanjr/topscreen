@@ -37,7 +37,9 @@ Add a **Display Capture** and the **TopScreen FX** filter. Then:
 | 11 | Key overlay | keys appear at the bottom and disappear after the TTL |
 | 12 | Spotlight | `TopScreen_ToggleSpotlight` fades/zooms in/out at the cursor; circle/square; border, Dim/Blur outside; follows the mouse |
 | 12b | Magnifier | `TopScreen_ToggleMagnifier` zooms only inside the lens; circle/square; border/shadow; follows cursor or fixed center; Spotlight and Magnifier are mutually exclusive |
-| 13 | Highlighter | dragging with the left button marks the region; `TopScreen_ToggleHighlight` zooms at the cursor on the first press and returns on the second; manual zoom/drag cancels the hotkey toggle |
+| 13 | Highlighter | dragging with the left button marks the region; `TopScreen_ToggleHighlight` zooms at the cursor on the first press and returns on the second; manual zoom/drag cancels the hotkey toggle; **Keep until the next click** pins marks/zoom |
+| 13b | Reading | drag a rectangle, release and check the outside dims + selection is fitted/zoomed; moving the mouse does not move the scene; the next left click exits without ripple/sound; scene/profile/effects-off also exit |
+| 13c | Mouse alignment | with zoom, spotlight and padding active, the cursor overlay, click and highlight must stay under the physical pointer; repeat on a second monitor, identical monitors and a scaled capture |
 | 14 | Presets (hotkey) | next/previous switch the look |
 | 15 | Profiles | switching A–J also reloads the click sounds (test A vs. D with different WAVs) |
 | 15b | Scene profiles | assign profile B to a scene, switch scenes, and check that B is applied; restart OBS on that scene and check it applies on startup; rename the scene and check the assignment survives |

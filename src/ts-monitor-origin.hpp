@@ -27,6 +27,9 @@ public:
 	bool known() const { return known_.load(); }
 	double x() const { return known_.load() ? x_.load() : 0.0; }
 	double y() const { return known_.load() ? y_.load() : 0.0; }
+	/** Real monitor size, used to normalize the global pointer. */
+	double width() const { return width_.load() > 0.0 ? width_.load() : 1920.0; }
+	double height() const { return height_.load() > 0.0 ? height_.load() : 1080.0; }
 
 private:
 	void refresh(obs_source_t *filter, const core::Config &cfg, uint32_t target_w,
@@ -34,10 +37,14 @@ private:
 
 	std::atomic<double> x_{0.0};
 	std::atomic<double> y_{0.0};
+	std::atomic<double> width_{1920.0};
+	std::atomic<double> height_{1080.0};
 	std::atomic<bool> known_{false};
 	uint32_t target_w_ = 0;
 	uint32_t target_h_ = 0;
 	int age_ticks_ = 0;
+	int check_ticks_ = 0;
+	int last_capture_monitor_ = -1;
 };
 
 } // namespace topscreen

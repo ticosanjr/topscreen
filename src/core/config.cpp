@@ -192,10 +192,12 @@ void sanitize_config(Config *cfg)
 		cfg->highlight.mode = static_cast<int>(HighlightMode::Zoom);
 	cfg->highlight.mode = bounded_int(cfg->highlight.mode,
 					  static_cast<int>(HighlightMode::Box),
-					  static_cast<int>(HighlightMode::LineZoom));
+					  static_cast<int>(HighlightMode::Reading));
 	cfg->highlight.hold_ms = bounded(cfg->highlight.hold_ms, limits::kHighlightHoldRange, def.highlight.hold_ms);
 	cfg->highlight.fade_ms = bounded(cfg->highlight.fade_ms, limits::kHighlightFadeRange, def.highlight.fade_ms);
 	cfg->highlight.opacity = bounded(cfg->highlight.opacity, limits::kUnitRange, def.highlight.opacity);
+	cfg->highlight.reading_dim =
+		bounded(cfg->highlight.reading_dim, limits::kUnitRange, def.highlight.reading_dim);
 	cfg->highlight.thickness = bounded(cfg->highlight.thickness, limits::kHighlightThicknessRange,
 					   def.highlight.thickness);
 	cfg->highlight.zoom_delay_ms =

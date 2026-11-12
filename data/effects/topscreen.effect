@@ -61,7 +61,8 @@ uniform float  spotlight_border_width; // px
 uniform float  spotlight_outside_mode; // 0 dim, 1 blur
 uniform float  spotlight_blur;   // px
 uniform float  spotlight_zoom;   // multiplicative scene zoom
-uniform float2 spotlight_focus;  // source uv under the cursor
+uniform float2 spotlight_focus;  // displayed mask center (output uv)
+uniform float2 spotlight_zoom_focus; // source uv under the cursor (zoom focus)
 
 uniform float  magnifier_enabled;
 uniform float  magnifier_amount;
@@ -84,6 +85,9 @@ uniform float  highlight_active;
 uniform float4 highlight_rect;   // x0,y0,x1,y1 (content 0..1)
 uniform float4 highlight_color;  // rgba
 uniform float  highlight_alpha;
+uniform float  reading_active;
+uniform float4 reading_rect;   // x0,y0,x1,y1 (content 0..1)
+uniform float  reading_dim;    // 0..1 darkening outside the selection
 
 /* Freehand line: up to 16 polyline points (content 0..1), unrolled on
  * purpose like the click slots (no arrays, no dynamic loops). */
@@ -254,7 +258,7 @@ float scene_zoom_value()
 // screen move together.
 float2 scene_focus_target()
 {
-	return lerp(zoom_focus, spotlight_focus, saturate(spotlight_amount));
+	return lerp(zoom_focus, spotlight_zoom_focus, saturate(spotlight_amount));
 }
 
 // Map a displayed target UV back to the unzoomed scene. The same transform is
@@ -972,6 +976,20 @@ float4 PSCompose(VertInOut vert_in) : TARGET
 				col.rgb = lerp(col.rgb, spotlight_border_color.rgb, saturate(border));
 			}
 		}
+	}
+
+	// Reading: darken everything outside the selected rectangle. Applied after
+	// the scene/spotlight/frame and before the cursor, so the pointer and the
+	// key overlay stay readable.
+	if (reading_active > 0.5) {
+		float2 rp0 = content_to_pixel(reading_rect.xy);
+		float2 rp1 = content_to_pixel(reading_rect.zw);
+		float2 rc = (rp0 + rp1) * 0.5;
+		float2 rh = abs(rp1 - rp0) * 0.5;
+		float rr = min(rh.x, rh.y) * 0.06;
+		float rd = sd_round_box(px - rc, rh, rr);
+		float outside = smoothstep(-1.0, 1.0, rd);
+		col.rgb *= 1.0 - clamp(reading_dim, 0.0, 1.0) * outside;
 	}
 
 	// Cursor: target coordinates, on top of the whole composition. It can

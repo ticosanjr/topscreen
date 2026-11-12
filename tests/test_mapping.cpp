@@ -204,3 +204,27 @@ TEST(mapping_pointer_uses_real_content_area)
 	CHECK(out.x > 0.0 && out.x < 1.0);
 	CHECK(out.y > 0.0 && out.y < 1.0);
 }
+
+TEST(mapping_display_to_source_is_the_inverse_of_zoom)
+{
+	for (double z : {1.0, 1.6, 2.5}) {
+		for (double d : {0.0, 0.2, 0.5, 0.8, 1.0}) {
+			const Vec2f s = display_to_source(d, d, 0.35, 0.6, z);
+			const Vec2f back = source_to_display(s.x, s.y, 0.35, 0.6, z);
+			CHECK_NEAR(back.x, d, 1e-9);
+			CHECK_NEAR(back.y, d, 1e-9);
+		}
+	}
+}
+
+TEST(mapping_display_rect_to_source_normalizes_corners)
+{
+	double x0 = 0.0, y0 = 0.0, x1 = 0.0, y1 = 0.0;
+	display_rect_to_source(0.8, 0.9, 0.2, 0.3, 0.5, 0.5, 2.0, &x0, &y0, &x1, &y1);
+	CHECK(x0 < x1);
+	CHECK(y0 < y1);
+	CHECK_NEAR(x0, 0.5 + (0.2 - 0.5) / 2.0, 1e-9);
+	CHECK_NEAR(y0, 0.5 + (0.3 - 0.5) / 2.0, 1e-9);
+	CHECK_NEAR(x1, 0.5 + (0.8 - 0.5) / 2.0, 1e-9);
+	CHECK_NEAR(y1, 0.5 + (0.9 - 0.5) / 2.0, 1e-9);
+}

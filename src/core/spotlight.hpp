@@ -8,8 +8,10 @@ namespace topscreen::core {
 struct SpotlightRender {
 	double amount = 0.0; // 0..1 animated activation
 	double zoom = 1.0;   // multiplicative zoom factor
-	double focus_x = 0.5;
+	double focus_x = 0.5; // displayed mask center
 	double focus_y = 0.5;
+	double zoom_focus_x = 0.5; // source point under the cursor
+	double zoom_focus_y = 0.5;
 };
 
 /**
@@ -21,7 +23,13 @@ class SpotlightModel {
 public:
 	void configure(const SpotlightConfig &cfg);
 	void set_active(bool active, double now_ms);
-	void update(double now_ms, double cursor_x, double cursor_y);
+	void update(double now_ms, double cursor_x, double cursor_y, double zoom_focus_x,
+		    double zoom_focus_y);
+	/** Test/legacy convenience: zoom focus equals the displayed cursor. */
+	void update(double now_ms, double cursor_x, double cursor_y)
+	{
+		update(now_ms, cursor_x, cursor_y, cursor_x, cursor_y);
+	}
 	SpotlightRender render() const;
 
 	bool active() const { return target_; }
@@ -41,6 +49,8 @@ private:
 	double last_ms_ = 0.0;
 	double cursor_x_ = 0.5;
 	double cursor_y_ = 0.5;
+	double zoom_focus_x_ = 0.5;
+	double zoom_focus_y_ = 0.5;
 };
 
 } // namespace topscreen::core

@@ -126,6 +126,8 @@ namespace topscreen {
 	X(COLOR, kHighlightColor, highlight.color) \
 	X(DOUBLE, kHighlightOpacity, highlight.opacity) \
 	X(INT, kHighlightMode, highlight.mode) \
+	X(BOOL, kHighlightLockUntilClick, highlight.lock_until_click) \
+	X(DOUBLE, kHighlightReadingDim, highlight.reading_dim) \
 	X(DOUBLE, kHighlightThickness, highlight.thickness) \
 	X(DOUBLE, kHighlightZoomDelayMs, highlight.zoom_delay_ms) \
 	X(DOUBLE, kHighlightZoomMax, highlight.zoom_max) \

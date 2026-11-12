@@ -49,11 +49,14 @@ void SpotlightModel::begin_transition(bool active, double now_ms)
 		amount_ = to_;
 }
 
-void SpotlightModel::update(double now_ms, double cursor_x, double cursor_y)
+void SpotlightModel::update(double now_ms, double cursor_x, double cursor_y,
+			    double zoom_focus_x, double zoom_focus_y)
 {
 	last_ms_ = now_ms;
 	cursor_x_ = std::clamp(cursor_x, 0.0, 1.0);
 	cursor_y_ = std::clamp(cursor_y, 0.0, 1.0);
+	zoom_focus_x_ = std::clamp(zoom_focus_x, 0.0, 1.0);
+	zoom_focus_y_ = std::clamp(zoom_focus_y, 0.0, 1.0);
 
 	if (duration_ms_ <= 0.0)
 		return;
@@ -73,6 +76,8 @@ SpotlightRender SpotlightModel::render() const
 	out.zoom = 1.0 + (zoom - 1.0) * out.amount;
 	out.focus_x = cursor_x_;
 	out.focus_y = cursor_y_;
+	out.zoom_focus_x = zoom_focus_x_;
+	out.zoom_focus_y = zoom_focus_y_;
 	return out;
 }
 

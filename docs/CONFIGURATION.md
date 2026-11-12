@@ -126,7 +126,9 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Band color | `keys_band_color` | color | — | `0x99000000` |
 | Highlighter | Enable drag actions | `highlight_enabled` | bool | — | `true` |
 | | Enable hotkey highlight (toggle zoom) | `highlight_hotkey_enabled` | bool | — | `true` |
-| — | Drag action: box / line / zoom / press-zoom / box+zoom / line+zoom | `highlight_mode` | int | 0 box, 1 line, 2 zoom, 3 box+zoom, 4 line+zoom, 5 zoom on mouse press | `0` |
+| — | Drag action: box / line / zoom / box+zoom / line+zoom / reading | `highlight_mode` | int | 0 box, 1 line, 2 zoom, 3 box+zoom, 4 line+zoom, 6 reading (5 is retired and migrates to 2) | `0` |
+| — | Keep the mark/zoom until the next click | `highlight_lock_until_click` | bool | — | `false` |
+| Reading | Darken outside (0 = off, 1 = black) | `highlight_reading_dim` | double | 0–1 | `0.55` |
 | Mark appearance | Mark color | `highlight_color` | color | — | `0x6600E0FF` |
 | Mark appearance | Mark opacity (0 = invisible, 1 = solid) | `highlight_opacity` | double | 0–1 | `0.35` |
 | Mark appearance | Line thickness (fraction of the screen) | `highlight_thickness` | double | 0.001–0.05 | `0.004` |

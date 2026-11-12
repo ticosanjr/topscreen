@@ -14,6 +14,8 @@ void HighlighterModel::configure(const HighlighterConfig &cfg)
 
 void HighlighterModel::begin(double x, double y, double now)
 {
+	if (locked_)
+		return;
 	(void)now;
 	sx_ = ex_ = x;
 	sy_ = ey_ = y;
@@ -62,14 +64,43 @@ void HighlighterModel::end(double now)
 	dragging_ = false;
 	ended_ms_ = now;
 
+	double rx0 = 0.0, ry0 = 0.0, rx1 = 0.0, ry1 = 0.0;
+	selection_rect(&rx0, &ry0, &rx1, &ry1);
+	const bool valid = (rx1 - rx0 >= cfg_.min_span) &&
+			   (ry1 - ry0 >= cfg_.min_span);
+	const bool reading = mode_reads(cfg_.mode);
+	const bool zoom_mode = mode_wants_zoom(cfg_.mode) && !reading;
+
+	if (reading && !valid) {
+		has_ = false;
+		alpha_ = 0.0;
+		return;
+	}
+
+	/* Reading always pins its selection; other modes can opt into the same
+	 * "stay until the next click" behaviour. A quick click never locks. */
+	if (cfg_.enabled && valid && (reading || cfg_.lock_until_click)) {
+		locked_ = true;
+		has_ = !reading && mode_draws_mark(cfg_.mode);
+		alpha_ = 1.0;
+		if (reading || zoom_mode) {
+			zx0_ = rx0;
+			zy0_ = ry0;
+			zx1_ = rx1;
+			zy1_ = ry1;
+			zoom_request_ = true;
+		}
+		if (reading && cfg_.mode == static_cast<int>(HighlightMode::Reading))
+			has_ = true;
+		return;
+	}
+
 	/* Zoom gesture: remember the selection so the filter can zoom into it.
 	 * The hold path (update) fires while the button is still down; this path
 	 * only handles a release that happened before the trigger, with a real
 	 * drag behind it; a quick click must do nothing. */
-	if (!zoom_fired_ && mode_wants_zoom(cfg_.mode) && cfg_.enabled) {
-		double rx0 = 0.0, ry0 = 0.0, rx1 = 0.0, ry1 = 0.0;
-		selection_rect(&rx0, &ry0, &rx1, &ry1);
-		if (rx1 - rx0 >= cfg_.min_span && ry1 - ry0 >= cfg_.min_span) {
+	if (!zoom_fired_ && zoom_mode && cfg_.enabled) {
+		if (valid) {
 			zx0_ = rx0;
 			zy0_ = ry0;
 			zx1_ = rx1;
@@ -81,6 +112,17 @@ void HighlighterModel::end(double now)
 				has_ = false;
 		}
 	}
+}
+
+void HighlighterModel::clear_lock()
+{
+	locked_ = false;
+	dragging_ = false;
+	has_ = false;
+	alpha_ = 0.0;
+	zoom_request_ = false;
+	zoom_fired_ = false;
+	trail_count_ = 0;
 }
 
 /* Selection the zoom gesture works on. For the line modes it is the bounding
@@ -131,8 +173,14 @@ bool HighlighterModel::take_zoom_request(double *x0, double *y0, double *x1, dou
 
 void HighlighterModel::update(double now)
 {
-	if (mode_wants_zoom(cfg_.mode) && cfg_.enabled && dragging_ && !zoom_fired_ &&
-	    now - press_ms_ >= cfg_.zoom_delay_ms) {
+	/* A pinned mark keeps its strength until clear_lock(); no fade. */
+	if (locked_ && cfg_.enabled) {
+		alpha_ = 1.0;
+		return;
+	}
+
+	if (mode_wants_zoom(cfg_.mode) && !mode_reads(cfg_.mode) && cfg_.enabled &&
+	    dragging_ && !zoom_fired_ && now - press_ms_ >= cfg_.zoom_delay_ms) {
 		/* The drawn area always wins over the "just held" point; for the
 		 * line modes that area is the stroke's bounding box. */
 		double rx0 = 0.0, ry0 = 0.0, rx1 = 0.0, ry1 = 0.0;
@@ -177,6 +225,28 @@ void HighlighterModel::update(double now)
 HighlightRender HighlighterModel::render() const
 {
 	HighlightRender out;
+	const bool reading = mode_reads(cfg_.mode);
+
+	/* Reading previews the dim while dragging and keeps it after release. */
+	if (reading) {
+		const double dx = std::fabs(ex_ - sx_);
+		const double dy = std::fabs(ey_ - sy_);
+		if (!cfg_.enabled || !has_ || alpha_ <= 0.01 || dx < cfg_.min_span ||
+		    dy < cfg_.min_span) {
+			out.active = false;
+			return out;
+		}
+		out.active = true;
+		out.mode = cfg_.mode;
+		out.x0 = sx_ < ex_ ? sx_ : ex_;
+		out.y0 = sy_ < ey_ ? sy_ : ey_;
+		out.x1 = sx_ < ex_ ? ex_ : sx_;
+		out.y1 = sy_ < ey_ ? ey_ : sy_;
+		out.alpha = alpha_;
+		out.color = cfg_.color;
+		out.reading_dim = clamp01(cfg_.reading_dim);
+		return out;
+	}
 
 	/* The line is a freehand stroke: it only needs a trail (two points or
 	 * more). The filled box still needs a real drag, so plain clicks never

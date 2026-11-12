@@ -13,6 +13,30 @@ void MonitorOrigin::tick(obs_source_t *filter, const core::Config &cfg, uint32_t
 {
 	if (target_w == 0 || target_h == 0)
 		return;
+
+	/* TopScreen Capture exposes the selected monitor as a setting. Watch it at
+	 * ~0.5 s so switching between identical monitors refreshes immediately
+	 * instead of waiting for the 10 s layout poll. */
+	if (++check_ticks_ >= 30) {
+		check_ticks_ = 0;
+		int hint = -1;
+		if (obs_source_t *parent = obs_filter_get_parent(filter)) {
+			const char *id = obs_source_get_id(parent);
+			if (id && std::strcmp(id, "topscreen_capture") == 0) {
+				obs_data_t *s = obs_source_get_settings(parent);
+				if (s) {
+					hint = static_cast<int>(
+						obs_data_get_int(s, "capture_monitor"));
+					obs_data_release(s);
+				}
+			}
+		}
+		if (hint != last_capture_monitor_) {
+			last_capture_monitor_ = hint;
+			age_ticks_ = 600; // force a refresh on this tick
+		}
+	}
+
 	++age_ticks_;
 	refresh(filter, cfg, target_w, target_h);
 }
@@ -28,9 +52,12 @@ void MonitorOrigin::refresh(obs_source_t *filter, const core::Config &cfg,
 	if (cfg.monitor_manual) {
 		const double nx = static_cast<double>(cfg.monitor_x);
 		const double ny = static_cast<double>(cfg.monitor_y);
-		if (!known_.load() || nx != x_.load() || ny != y_.load()) {
+		if (!known_.load() || nx != x_.load() || ny != y_.load() ||
+		    width_.load() != static_cast<double>(target_w)) {
 			x_.store(nx);
 			y_.store(ny);
+			width_.store(static_cast<double>(target_w));
+			height_.store(static_cast<double>(target_h));
 			known_.store(true);
 			blog(LOG_INFO, "[TopScreen] monitor origin: (%.0f,%.0f) [manual]", nx, ny);
 		}
@@ -70,16 +97,24 @@ void MonitorOrigin::refresh(obs_source_t *filter, const core::Config &cfg,
 				hint = static_cast<int>(obs_data_get_int(s, "monitor"));
 				trust_hint = true;
 			}
+			/* Our own source knows the exact monitor index even when two
+			 * monitors have the same resolution. */
+			const char *id = obs_source_get_id(parent);
+			if (id && std::strcmp(id, "topscreen_capture") == 0) {
+				hint = static_cast<int>(obs_data_get_int(s, "capture_monitor"));
+				trust_hint = true;
+			}
 			obs_data_release(s);
 		}
 	}
 
-	double ox = 0.0;
-	double oy = 0.0;
-	const bool known = ts_resolve_monitor_origin(device.c_str(), hint, trust_hint, target_w,
-						     target_h, &ox, &oy);
-	x_.store(known ? ox : 0.0);
-	y_.store(known ? oy : 0.0);
+	core::Monitor monitor;
+	const bool known = ts_resolve_monitor(device.c_str(), hint, trust_hint, target_w,
+					      target_h, &monitor);
+	x_.store(monitor.x);
+	y_.store(monitor.y);
+	width_.store(monitor.width > 0.0 ? monitor.width : static_cast<double>(target_w));
+	height_.store(monitor.height > 0.0 ? monitor.height : static_cast<double>(target_h));
 	known_.store(known);
 }
 

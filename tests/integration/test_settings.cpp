@@ -93,6 +93,8 @@ TEST(settings_store_load_roundtrip)
 	a.spotlight.blur_amount = 21.0;
 	a.spotlight.zoom_amount = 1.7;
 	a.spotlight.in_ms = 120.0;
+	a.highlight.lock_until_click = true;
+	a.highlight.reading_dim = 0.7;
 	a.zoom.active_window = false;
 	a.magnifier.radius = 0.33;
 	a.magnifier.zoom_amount = 2.2;
@@ -121,6 +123,8 @@ TEST(settings_store_load_roundtrip)
 	CHECK_NEAR(b.bg.shadow_offset_x, -17.0, 1e-9);
 	CHECK_NEAR(b.keys.pos_x, 0.25, 1e-9);
 	CHECK_EQ(b.highlight.color, a.highlight.color);
+	CHECK(b.highlight.lock_until_click);
+	CHECK_NEAR(b.highlight.reading_dim, 0.7, 1e-9);
 	CHECK_NEAR(b.cursor.size, 1.5, 1e-9);
 	CHECK_NEAR(b.cursor.rotation_offset_deg, -12.0, 1e-9);
 	CHECK_EQ(b.cursor.secondary_style, a.cursor.secondary_style);
@@ -693,4 +697,57 @@ TEST(properties_version_and_profile_backup_are_present)
 	CHECK(obs_properties_get(p, "profile_export_btn") != nullptr);
 	CHECK(obs_properties_get(p, "profile_import_btn") != nullptr);
 	obs_properties_destroy(p);
+}
+
+/* Reading has its own dim control; the generic mark look/timing and the
+ * "keep until click" switch (always on for Reading) do not apply. */
+TEST(properties_reading_and_lock_visibility)
+{
+	auto make_props = [](int mode, bool lock) {
+		obs_data_t *s = obs_data_create();
+		config_defaults(s);
+		obs_data_set_int(s, core::keys::kHighlightMode, static_cast<long long>(mode));
+		obs_data_set_bool(s, core::keys::kHighlightLockUntilClick, lock);
+		return std::make_pair(s, properties_create(nullptr, s));
+	};
+
+	{
+		auto [s, p] = make_props(static_cast<int>(core::HighlightMode::Reading), false);
+		CHECK(p != nullptr);
+		CHECK(!fakeobs::property_visible(obs_properties_get(p, "grp_hl_look")));
+		CHECK(!fakeobs::property_visible(obs_properties_get(p, "grp_hl_timing")));
+		CHECK(fakeobs::property_visible(obs_properties_get(p, "grp_hl_zoom")));
+		CHECK(fakeobs::property_visible(obs_properties_get(p, "grp_hl_reading")));
+		CHECK(!fakeobs::property_visible(
+			obs_properties_get(p, core::keys::kHighlightLockUntilClick)));
+		CHECK(fakeobs::property_visible(
+			obs_properties_get(p, core::keys::kHighlightReadingDim)));
+		obs_properties_destroy(p);
+		obs_data_release(s);
+	}
+
+	/* A pinned box hides hold/fade because it stays until the next click. */
+	{
+		auto [s, p] = make_props(static_cast<int>(core::HighlightMode::Box), true);
+		CHECK(p != nullptr);
+		CHECK(fakeobs::property_visible(obs_properties_get(p, "grp_hl_look")));
+		CHECK(!fakeobs::property_visible(obs_properties_get(p, "grp_hl_timing")));
+		CHECK(fakeobs::property_visible(
+			obs_properties_get(p, core::keys::kHighlightLockUntilClick)));
+		obs_properties_destroy(p);
+		obs_data_release(s);
+	}
+
+	/* Pure zoom can also be pinned; it has no mark controls. */
+	{
+		auto [s, p] = make_props(static_cast<int>(core::HighlightMode::Zoom), true);
+		CHECK(p != nullptr);
+		CHECK(!fakeobs::property_visible(obs_properties_get(p, "grp_hl_look")));
+		CHECK(!fakeobs::property_visible(obs_properties_get(p, "grp_hl_timing")));
+		CHECK(fakeobs::property_visible(obs_properties_get(p, "grp_hl_zoom")));
+		CHECK(fakeobs::property_visible(
+			obs_properties_get(p, core::keys::kHighlightLockUntilClick)));
+		obs_properties_destroy(p);
+		obs_data_release(s);
+	}
 }

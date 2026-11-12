@@ -368,6 +368,7 @@ TEST(highlight_mode_predicates_are_pinned)
 		{HighlightMode::Zoom, false, false, true},
 		{HighlightMode::BoxZoom, true, false, true},
 		{HighlightMode::LineZoom, false, true, true},
+		{HighlightMode::Reading, false, false, true},
 	};
 
 	for (const Row &row : rows) {
@@ -392,7 +393,7 @@ TEST(highlight_mode_predicates_are_pinned)
 		CHECK_EQ(mode_wants_zoom(mode), row.zoom);
 		CHECK_EQ(mode_draws_line(mode), row.line);
 		CHECK_EQ(mode_draws_mark(mode), row.box || row.line);
-		if (row.box) {
+		if (row.box || row.mode == HighlightMode::Reading) {
 			CHECK(r.active);
 		} else if (row.line) {
 			/* The line mark is live and carries its trail. */

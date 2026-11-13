@@ -36,6 +36,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Verify tag matches the project version
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          version=$(sed -n 's/^project(TopScreen VERSION \([0-9.]*\).*/\1/p' CMakeLists.txt)
+          tag="${GITHUB_REF_NAME#v}"
+          if [ "$version" != "$tag" ]; then
+            echo "tag v$tag does not match CMakeLists.txt version $version" >&2
+            exit 1
+          fi
+          echo "release tag v$tag matches the project version"
+
       - name: Install dependencies (OBS dev from the distro)
         run: |
           sudo apt-get update

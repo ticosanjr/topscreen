@@ -130,6 +130,7 @@ Full index: [`docs/README.md`](docs/README.md).
 | [`docs/BUILD.md`](docs/BUILD.md) | Build and install (Windows/Linux) |
 | [`docs/VERIFICATION.md`](docs/VERIFICATION.md) | Validation script on a real OBS |
 | [`docs/TESTS.md`](docs/TESTS.md) | Automated tests: how to run and what they cover |
+| [`CHANGELOG.md`](CHANGELOG.md) | User-visible changes per release |
 | [`docs/PLAN.md`](docs/PLAN.md) · [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) · [`docs/ROADMAP.md`](docs/ROADMAP.md) · [`docs/TASKS.md`](docs/TASKS.md) | Plan, architecture, roadmap and tasks |
 
 ---

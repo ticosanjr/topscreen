@@ -141,6 +141,11 @@ if(TOPSCREEN_BUILD_PLUGIN)
         src/ts-profile-store.cpp
         src/ts-scene-profiles.cpp
         src/ts-properties.cpp
+        src/properties/ts-properties-common.cpp
+        src/properties/ts-properties-capture.cpp
+        src/properties/ts-properties-pointer.cpp
+        src/properties/ts-properties-focus.cpp
+        src/properties/ts-properties-overlays.cpp
         src/ts-presets.cpp
         src/ts-registry.cpp
         src/ts-wallpapers.cpp

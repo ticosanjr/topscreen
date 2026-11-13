@@ -122,7 +122,7 @@ Status: ✅ done · 🟡 partial · ⬜ pending.
 | TD.1 | Full GPL-2.0 license text (`COPYING`) | ✅ |
 | TD.2 | `CONTRIBUTING.md` and PR template | ✅ |
 | TD.3 | Adjust `buildspec.json`/presets for the official CI | ⬜ |
-| TD.4 | Core sanity tests | ✅ (257 core + 70 integration + 57 OBS header files + ASan/UBSan) |
+| TD.4 | Core sanity tests | ✅ (257 core + 71 integration + 57 OBS header files + ASan/UBSan) |
 
 ---
 

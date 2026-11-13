@@ -81,6 +81,16 @@ if [ -f /usr/include/X11/extensions/XShm.h ]; then
     echo "XShm detected: native capture backend included in the check."
 fi
 
+if [ -f /usr/include/X11/extensions/Xrandr.h ]; then
+    DEF+=(-DTOPSCREEN_HAVE_XRANDR)
+    echo "XRandR detected: monitor fallback included in the check."
+fi
+
+if [ -f /usr/include/X11/extensions/Xfixes.h ]; then
+    DEF+=(-DTOPSCREEN_HAVE_XFIXES)
+    echo "XFixes detected: native cursor compositing included in the check."
+fi
+
 if [ -f /usr/include/linux/input.h ]; then
     DEF+=(-DTOPSCREEN_HAVE_EVDEV)
     echo "linux/input.h detected: evdev backend included in the check."

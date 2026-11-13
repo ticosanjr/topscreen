@@ -205,6 +205,12 @@ if(TOPSCREEN_BUILD_PLUGIN)
                 message(STATUS "TopScreen: XFixes not found, link-cursor detection disabled")
             endif()
 
+            if(X11_Xrandr_FOUND)
+                target_compile_definitions(topscreen PRIVATE TOPSCREEN_HAVE_XRANDR)
+                target_link_libraries(topscreen PRIVATE ${X11_Xrandr_LIB})
+                message(STATUS "TopScreen: XRandR monitor fallback enabled")
+            endif()
+
             if(X11_XShm_FOUND AND X11_Xext_FOUND)
                 target_compile_definitions(topscreen PRIVATE TOPSCREEN_HAVE_XSHM)
                 target_link_libraries(topscreen PRIVATE ${X11_Xext_LIB})

@@ -276,6 +276,7 @@ These belong to the `topscreen_capture` source, not to the filter:
 | Option | Key | Type | Notes |
 |--------|-----|------|-------|
 | Captured monitor | `capture_monitor` | int | Index in the X11 monitor list |
+| Include native cursor | `capture_cursor` | bool | Composites the X11 cursor into the capture; the filter turns it off while its own cursor is active |
 | Effects filter attached | `capture_effects_filter` | bool | Internal: prevents a duplicate TopScreen FX filter on reload |
 
 The effects themselves use the normal filter keys above. Windows and Wayland do

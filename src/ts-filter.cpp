@@ -636,6 +636,8 @@ void ts_filter_ctx::process_actions()
 		push_settings();
 		mark_profile_dirty();
 	}
+	if (act & (A_ZOOM_IN | A_ZOOM_OUT | A_RESET_ZOOM))
+		exit_locked_highlight(false);
 	if (act & A_ZOOM_IN)
 		zoom.manual_step(1.25);
 	if (act & A_ZOOM_OUT)
@@ -683,7 +685,10 @@ void ts_filter_ctx::process_actions()
 		     cfg.click_sound.enabled ? "on" : "off");
 	}
 	if (act & A_TOGGLE_HIGHLIGHT) {
-		if (!cfg.effects_enabled || !cfg.highlight.hotkey_enabled) {
+		if (highlight.locked()) {
+			/* Do not let the hotkey replace a pinned Reading/locked spot. */
+			exit_locked_highlight(true);
+		} else if (!cfg.effects_enabled || !cfg.highlight.hotkey_enabled) {
 			if (hotkey_highlight_active_.load()) {
 				zoom.spot_release(time_ms);
 				hotkey_highlight_active_.store(false);
@@ -704,6 +709,7 @@ void ts_filter_ctx::process_actions()
 		}
 	}
 	if (act & A_TOGGLE_SPOTLIGHT) {
+		exit_locked_highlight(false);
 		cfg.spotlight.enabled = !cfg.spotlight.enabled;
 		if (cfg.spotlight.enabled) {
 			cfg.magnifier.enabled = false;
@@ -715,6 +721,7 @@ void ts_filter_ctx::process_actions()
 		blog(LOG_INFO, "[TopScreen] spotlight: %s", cfg.spotlight.enabled ? "on" : "off");
 	}
 	if (act & A_TOGGLE_MAGNIFIER) {
+		exit_locked_highlight(false);
 		cfg.magnifier.enabled = !cfg.magnifier.enabled;
 		if (cfg.magnifier.enabled) {
 			cfg.spotlight.enabled = false;
@@ -981,7 +988,9 @@ void ts_filter_ctx::update_pointer(const core::ContentArea &content)
 		highlight.end(time_ms);
 
 		double zx0 = 0.0, zy0 = 0.0, zx1 = 0.0, zy1 = 0.0;
-		if (highlight.take_zoom_request(&zx0, &zy0, &zx1, &zy1)) {
+		const bool had_request =
+			highlight.take_zoom_request(&zx0, &zy0, &zx1, &zy1);
+		if (had_request) {
 			hotkey_highlight_active_.store(false);
 			if (core::mode_reads(cfg.highlight.mode) ||
 			    (cfg.highlight.lock_until_click &&
@@ -997,9 +1006,13 @@ void ts_filter_ctx::update_pointer(const core::ContentArea &content)
 			}
 		}
 		reading_dragging_ = false;
-		zoom.unfreeze();
-		/* A pinned spot stays until the next click/exit. */
-		if (!highlight.locked()) {
+		if (highlight.locked()) {
+			/* A pinned mark without a spot also freezes the view. */
+			if (!had_request)
+				zoom.freeze();
+		} else {
+			zoom.unfreeze();
+			/* A pinned spot stays until the next click/exit. */
 			hotkey_highlight_active_.store(false);
 			zoom.spot_release(time_ms);
 		}

@@ -772,9 +772,9 @@ obs_source_t *obs_sceneitem_get_source(const obs_sceneitem_t *)
 	return nullptr;
 }
 
-const char *obs_source_get_id(const obs_source_t *)
+const char *obs_source_get_id(const obs_source_t *source)
 {
-	return "";
+	return source && source->info && source->info->id ? source->info->id : "";
 }
 
 void obs_source_filter_add(obs_source_t *, obs_source_t *) {}

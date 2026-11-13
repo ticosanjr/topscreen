@@ -7,6 +7,9 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/extensions/XShm.h>
+#if defined(TOPSCREEN_HAVE_XFIXES)
+#include <X11/extensions/Xfixes.h>
+#endif
 
 #include <sys/ipc.h>
 #include <sys/shm.h>
@@ -27,6 +30,7 @@ public:
 	const char *id() const override { return "none"; }
 	bool start(const Config &) override { return false; }
 	void stop() override {}
+	void set_capture_cursor(bool) override {}
 	void size(uint32_t *width, uint32_t *height) const override
 	{
 		if (width)
@@ -56,6 +60,7 @@ public:
 
 		screen_ = DefaultScreen(dpy_);
 		root_ = RootWindow(dpy_, screen_);
+		capture_cursor_ = config.capture_cursor;
 
 		core::Monitor monitors[16] = {};
 		const int count = ts_query_monitors(monitors, 16);
@@ -114,6 +119,8 @@ public:
 		use_shm_ = false;
 	}
 
+	void set_capture_cursor(bool enabled) override { capture_cursor_ = enabled; }
+
 	void size(uint32_t *width, uint32_t *height) const override
 	{
 		if (width)
@@ -135,6 +142,8 @@ public:
 				       AllPlanes, ZPixmap, image_, 0, 0) != nullptr;
 		if (!ok)
 			return false;
+		if (capture_cursor_)
+			composite_cursor();
 
 		frame->data = reinterpret_cast<const uint8_t *>(image_->data);
 		frame->width = static_cast<uint32_t>(image_->width);
@@ -145,6 +154,63 @@ public:
 	}
 
 private:
+	void composite_cursor()
+	{
+#if defined(TOPSCREEN_HAVE_XFIXES)
+		if (!dpy_ || !image_ || !image_->data || image_->bits_per_pixel != 32)
+			return;
+		XFixesCursorImage *cursor = XFixesGetCursorImage(dpy_);
+		if (!cursor)
+			return;
+
+		const int left = static_cast<int>(monitor_.x);
+		const int top = static_cast<int>(monitor_.y);
+		const int rx = static_cast<int>(cursor->x) - static_cast<int>(cursor->xhot);
+		const int ry = static_cast<int>(cursor->y) - static_cast<int>(cursor->yhot);
+		const int cw = static_cast<int>(cursor->width);
+		const int ch = static_cast<int>(cursor->height);
+		const PixelFormat format = pixel_format(*image_);
+
+		for (int cy = 0; cy < ch; ++cy) {
+			const int dy = ry + cy - top;
+			if (dy < 0 || dy >= image_->height)
+				continue;
+			auto *row = reinterpret_cast<uint8_t *>(
+				image_->data + static_cast<size_t>(dy) * image_->bytes_per_line);
+			for (int cx = 0; cx < cw; ++cx) {
+				const int dx = rx + cx - left;
+				if (dx < 0 || dx >= image_->width)
+					continue;
+				const unsigned long p = cursor->pixels[cy * cw + cx];
+				const unsigned int a = (p >> 24) & 0xffu;
+				if (!a)
+					continue;
+				const unsigned int sr = (p >> 16) & 0xffu;
+				const unsigned int sg = (p >> 8) & 0xffu;
+				const unsigned int sb = p & 0xffu;
+				uint8_t *dst = row + static_cast<size_t>(dx) * 4;
+				auto blend = [a](uint8_t d, unsigned int s) {
+					return static_cast<uint8_t>(
+						(s * a + d * (255u - a) + 127u) / 255u);
+				};
+				if (format == PixelFormat::Bgra) {
+					dst[0] = blend(dst[0], sb);
+					dst[1] = blend(dst[1], sg);
+					dst[2] = blend(dst[2], sr);
+				} else {
+					dst[0] = blend(dst[0], sr);
+					dst[1] = blend(dst[1], sg);
+					dst[2] = blend(dst[2], sb);
+				}
+				dst[3] = 0xff;
+			}
+		}
+		XFree(cursor);
+#else
+		/* XFixes is optional at build time. */
+#endif
+	}
+
 	static PixelFormat pixel_format(const XImage &image)
 	{
 		/* TrueColor masks tell us whether the first byte is B or R. Most
@@ -224,6 +290,7 @@ private:
 	XShmSegmentInfo shm_ = {};
 	bool shm_attached_ = false;
 	bool use_shm_ = false;
+	bool capture_cursor_ = false;
 };
 
 #endif

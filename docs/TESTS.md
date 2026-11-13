@@ -104,8 +104,8 @@ That is where all the math and the state logic live — what actually must be ri
 ## Current numbers
 
 ```
-257 tests | 9570 checks | 0 failures   (core)
-70 tests | 896 checks   | 0 failures   (integration with fake libobs, LeakSanitizer clean)
+257 tests | 9578 checks | 0 failures   (core)
+71 tests | 903 checks   | 0 failures   (integration with fake libobs, LeakSanitizer clean)
 ```
 
 ## What the integration layer covers
@@ -121,7 +121,7 @@ fake libobs:
 | `test_uniforms.cpp` | every uniform declared by `topscreen.effect` is uploaded on a plain frame (D3D11 aborts the draw otherwise) |
 | `test_click_audio.cpp` | click WAV is decoded, queued and mixed by the `topscreen_click_audio` source; silence when idle, PCM when a click is queued |
 | `test_webcam_filter.cpp` | webcam bubble filter uploads its mask/border/shadow uniforms and exposes the mask properties |
-| `test_capture_source.cpp` | `topscreen_capture` source lifecycle, defaults and monitor properties (the real X11 frame pull is verified in OBS) |
+| `test_capture_source.cpp` | `topscreen_capture` source lifecycle, defaults, monitor properties and **native-cursor lease with the filter** (the real X11 frame pull/cursor compositing is verified in OBS) |
 | `test_text_render.cpp` | key-overlay text batches all glyphs + shadow quads into one vertex buffer (**1 draw total**, cache hit without rebuild) and falls back to per-glyph sprites if vertex-buffer creation fails |
 | `test_settings.cpp` | defaults match `Config`, legacy source falls back, store/load roundtrip, partial-slot fallback, background type migration/visibility, migrations, properties tree/zoom-group visibility with the hotkey, **dependent-control visibility callbacks** (cursor idle, spotlight corner, keystroke band), input without a backend, click sound error handling |
 

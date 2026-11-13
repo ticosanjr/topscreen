@@ -61,6 +61,9 @@ effects in **Filters → TopScreen FX**.
 - Do not apply a second TopScreen FX filter on top of this source.
 - If you remove the effects filter, the source properties offer
   **Add TopScreen effects** to put it back.
+- **Include native cursor** keeps the X11 pointer visible when the filter is
+  removed or the effects are off. While the TopScreen custom cursor is active,
+  the filter disables it automatically to avoid a double cursor.
 - Profiles, hotkeys and the dock target the **filter**, exactly as before.
 
 ---

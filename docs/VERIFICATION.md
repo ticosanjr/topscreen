@@ -46,7 +46,7 @@ Add a **Display Capture** and the **TopScreen FX** filter. Then:
 | 15c | Smart Zoom active window | in Smart mode, focus another window and check the zoom follows it; turn **Focus the foreground window** off and check the zoom only reacts to actions/cursor |
 | 15d | Webcam bubble | **Add webcam bubble source** creates a draggable bottom-right bubble; a second click reuses it; configure the camera in the source properties |
 | 15e | Device frames | select Browser/MacBook/iPhone and check the frame is drawn around the captured screen (add padding if the base/notch is clipped) |
-| 15f | TopScreen Capture (Linux X11) | add **TopScreen Capture**, pick the monitor, confirm the scene shows the screen with effects through the attached **TopScreen FX** filter; reload OBS and confirm there is only one filter |
+| 15f | TopScreen Capture (Linux X11) | add **TopScreen Capture**, pick the monitor, confirm the scene shows the screen with effects through the attached **TopScreen FX** filter; reload OBS and confirm there is only one filter; turn effects off and confirm the native cursor returns (**Include native cursor**) |
 | 16 | Profile import | an older/partial `.json` imports with defaults instead of failing |
 | 17 | Effects off / cursor off / filter removed | the capture's native cursor comes back; with two TopScreen filters on the same capture it only returns after the last one releases it |
 | 18 | Dock | reflects the state and shows the input tier |

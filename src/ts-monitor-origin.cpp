@@ -52,14 +52,28 @@ void MonitorOrigin::refresh(obs_source_t *filter, const core::Config &cfg,
 	if (cfg.monitor_manual) {
 		const double nx = static_cast<double>(cfg.monitor_x);
 		const double ny = static_cast<double>(cfg.monitor_y);
-		if (!known_.load() || nx != x_.load() || ny != y_.load() ||
-		    width_.load() != static_cast<double>(target_w)) {
+		if (!known_.load() || nx != x_.load() || ny != y_.load()) {
+			/* The manual escape hatch only carries the origin. Find the real
+			 * monitor at that origin so a scaled capture still normalizes by
+			 * the monitor resolution, not by the capture resolution. */
+			double mw = static_cast<double>(target_w);
+			double mh = static_cast<double>(target_h);
+			core::Monitor monitors[16] = {};
+			const int count = ts_query_monitors(monitors, 16);
+			for (int i = 0; i < count; ++i) {
+				if (monitors[i].x == nx && monitors[i].y == ny) {
+					mw = monitors[i].width;
+					mh = monitors[i].height;
+					break;
+				}
+			}
 			x_.store(nx);
 			y_.store(ny);
-			width_.store(static_cast<double>(target_w));
-			height_.store(static_cast<double>(target_h));
+			width_.store(mw);
+			height_.store(mh);
 			known_.store(true);
-			blog(LOG_INFO, "[TopScreen] monitor origin: (%.0f,%.0f) [manual]", nx, ny);
+			blog(LOG_INFO, "[TopScreen] monitor origin: (%.0f,%.0f) %.0fx%.0f [manual]",
+			     nx, ny, mw, mh);
 		}
 		age_ticks_ = 0;
 		return;

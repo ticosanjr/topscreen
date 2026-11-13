@@ -12,6 +12,9 @@
 #include <dlfcn.h>
 #if defined(TOPSCREEN_HAVE_X11)
 #include <X11/Xlib.h>
+#if defined(TOPSCREEN_HAVE_XRANDR)
+#include <X11/extensions/Xrandr.h>
+#endif
 #endif
 #endif
 
@@ -186,6 +189,29 @@ int ts_query_monitors(core::Monitor *out, int max)
 		}
 	}
 
+#if defined(TOPSCREEN_HAVE_XRANDR)
+	/* Xinerama still reports one combined screen on some fractional-scaling
+	 * setups. XRandR's monitor list is the modern per-monitor truth. */
+	if (written <= 1) {
+		int n = 0;
+		XRRMonitorInfo *monitors =
+			XRRGetMonitors(cache.dpy, DefaultRootWindow(cache.dpy), True, &n);
+		if (monitors) {
+			if (n > written) {
+				written = 0;
+				for (int i = 0; i < n && written < max; ++i) {
+					core::Monitor &m = out[written++];
+					m.x = monitors[i].x;
+					m.y = monitors[i].y;
+					m.width = monitors[i].width;
+					m.height = monitors[i].height;
+				}
+			}
+			XRRFreeMonitors(monitors);
+		}
+	}
+#endif
+
 	return written;
 
 #else
@@ -240,8 +266,18 @@ bool ts_resolve_monitor(const char *device_id, int hint, bool trust_hint, uint32
 		out->y = oy;
 		out->width = static_cast<double>(capture_w);
 		out->height = static_cast<double>(capture_h);
-		blog(LOG_INFO, "[TopScreen] monitor origin: (%.0f,%.0f) [TOPSCREEN_MONITOR_ORIGIN]",
-		     ox, oy);
+		core::Monitor monitors[kMaxMonitors] = {};
+		const int count = ts_query_monitors(monitors, kMaxMonitors);
+		for (int i = 0; i < count; ++i) {
+			if (monitors[i].x == ox && monitors[i].y == oy) {
+				out->width = monitors[i].width;
+				out->height = monitors[i].height;
+				break;
+			}
+		}
+		blog(LOG_INFO, "[TopScreen] monitor origin: (%.0f,%.0f) %.0fx%.0f "
+			       "[TOPSCREEN_MONITOR_ORIGIN]",
+		     ox, oy, out->width, out->height);
 		return true;
 	}
 

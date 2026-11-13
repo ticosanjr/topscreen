@@ -9,13 +9,16 @@
 #include <atomic>
 #include <cstring>
 #include <memory>
+#include <mutex>
 #include <string>
+#include <unordered_map>
 
 namespace topscreen {
 
 namespace {
 
 constexpr const char *kMonitorKey = "capture_monitor";
+constexpr const char *kCursorKey = "capture_cursor";
 constexpr const char *kFilterFlag = "capture_effects_filter";
 constexpr const char *kFilterId = "topscreen_filter";
 
@@ -39,7 +42,28 @@ struct CaptureSource {
 	 * updates the texture. */
 	std::atomic<uint32_t> display_width{0};
 	std::atomic<uint32_t> display_height{0};
+	std::atomic<bool> capture_cursor{true};
+	std::atomic<bool> runtime_cursor_hidden{false};
+	uint64_t tick_serial = 0;
+	uint64_t captured_serial = 0;
 };
+
+std::mutex &source_mutex()
+{
+	static std::mutex m;
+	return m;
+}
+
+std::unordered_map<obs_source_t *, CaptureSource *> &source_map()
+{
+	static std::unordered_map<obs_source_t *, CaptureSource *> map;
+	return map;
+}
+
+bool effective_cursor(const CaptureSource *ctx)
+{
+	return ctx && ctx->capture_cursor.load() && !ctx->runtime_cursor_hidden.load();
+}
 
 void start_backend(CaptureSource *ctx)
 {
@@ -48,6 +72,8 @@ void start_backend(CaptureSource *ctx)
 
 	capture::Config config;
 	config.monitor = ctx->monitor;
+	config.capture_cursor = effective_cursor(ctx);
+	ctx->captured_serial = 0;
 	ctx->started = ctx->backend->start(config);
 	if (ctx->started) {
 		ctx->capture_failures.store(0);
@@ -80,8 +106,14 @@ void render_frame(CaptureSource *ctx, gs_effect_t *effect)
 		return;
 
 	capture::Frame frame;
-	const bool fresh = ctx->backend->capture(&frame) && frame.data && frame.width &&
-			   frame.height;
+	bool fresh = false;
+	/* OBS can render the same source more than once per tick (preview and
+	 * program). Capture at most once per tick and reuse the texture. */
+	if (ctx->captured_serial != ctx->tick_serial) {
+		fresh = ctx->backend->capture(&frame) && frame.data && frame.width &&
+			frame.height;
+		ctx->captured_serial = ctx->tick_serial;
+	}
 	if (fresh) {
 		ctx->capture_failures.store(0);
 		const gs_color_format color_format =
@@ -130,10 +162,15 @@ void *capture_create(obs_data_t *settings, obs_source_t *source)
 {
 	auto *ctx = new CaptureSource();
 	ctx->source = source;
+	{
+		std::lock_guard<std::mutex> lock(source_mutex());
+		source_map()[source] = ctx;
+	}
 	ctx->backend = capture::create_backend();
 	ctx->monitor = static_cast<int>(obs_data_get_int(settings, kMonitorKey));
 	if (ctx->monitor < 0)
 		ctx->monitor = 0;
+	ctx->capture_cursor.store(obs_data_get_bool(settings, kCursorKey));
 	start_backend(ctx);
 
 	/* A single source that already carries the effects. The user can still
@@ -163,6 +200,10 @@ void capture_destroy(void *data)
 	auto *ctx = static_cast<CaptureSource *>(data);
 	if (!ctx)
 		return;
+	{
+		std::lock_guard<std::mutex> lock(source_mutex());
+		source_map().erase(ctx->source);
+	}
 	if (ctx->texture) {
 		obs_enter_graphics();
 		release_texture(ctx);
@@ -181,6 +222,10 @@ void capture_update(void *data, obs_data_t *settings)
 	const int monitor = static_cast<int>(obs_data_get_int(settings, kMonitorKey));
 	if (monitor >= 0 && monitor != ctx->monitor)
 		ctx->pending_monitor.store(monitor);
+	const bool cursor = obs_data_get_bool(settings, kCursorKey);
+	ctx->capture_cursor.store(cursor);
+	if (ctx->backend)
+		ctx->backend->set_capture_cursor(effective_cursor(ctx));
 }
 
 void capture_tick(void *data, float seconds)
@@ -190,6 +235,9 @@ void capture_tick(void *data, float seconds)
 		return;
 
 	ctx->elapsed_ms += static_cast<double>(seconds) * 1000.0;
+	++ctx->tick_serial;
+	if (ctx->backend)
+		ctx->backend->set_capture_cursor(effective_cursor(ctx));
 	const int pending = ctx->pending_monitor.exchange(-1);
 	if (pending >= 0 && pending != ctx->monitor) {
 		ctx->monitor = pending;
@@ -228,6 +276,7 @@ uint32_t capture_height(void *data)
 void capture_defaults(obs_data_t *settings)
 {
 	obs_data_set_default_int(settings, kMonitorKey, 0);
+	obs_data_set_default_bool(settings, kCursorKey, true);
 }
 
 void find_effects_filter(obs_source_t *, obs_source_t *filter, void *param)
@@ -295,6 +344,8 @@ obs_properties_t *capture_properties(void *data)
 	}
 	(void)current;
 
+	obs_properties_add_bool(props, kCursorKey, obs_module_text("Capture.Cursor"));
+
 	if (ctx && ctx->source) {
 		obs_properties_add_text(props, "capture_effects_hint",
 					obs_module_text("Capture.EffectsHint"), OBS_TEXT_INFO);
@@ -318,6 +369,27 @@ obs_properties_t *capture_properties(void *data)
 }
 
 } // namespace
+
+void set_native_cursor(obs_source_t *source, bool enabled)
+{
+	std::lock_guard<std::mutex> lock(source_mutex());
+	const auto it = source_map().find(source);
+	if (it == source_map().end())
+		return;
+	const bool was_hidden = it->second->runtime_cursor_hidden.exchange(!enabled);
+	if (was_hidden != !enabled)
+		blog(LOG_INFO, "[TopScreen] capture native cursor %s (runtime)",
+		     enabled ? "enabled" : "disabled");
+	if (it->second->backend)
+		it->second->backend->set_capture_cursor(effective_cursor(it->second));
+}
+
+bool native_cursor_enabled(obs_source_t *source)
+{
+	std::lock_guard<std::mutex> lock(source_mutex());
+	const auto it = source_map().find(source);
+	return it != source_map().end() && effective_cursor(it->second);
+}
 
 struct obs_source_info ts_capture_source_info = {
 	.id = "topscreen_capture",

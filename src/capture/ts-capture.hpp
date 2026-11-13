@@ -57,6 +57,8 @@ public:
 	virtual const char *id() const = 0;
 	virtual bool start(const Config &config) = 0;
 	virtual void stop() = 0;
+	/** Toggle native-cursor compositing without restarting the backend. */
+	virtual void set_capture_cursor(bool enabled) = 0;
 	/** Output size of the selected monitor (0 when not started). */
 	virtual void size(uint32_t *width, uint32_t *height) const = 0;
 	/** Non-blocking: returns false when no new frame is available. */

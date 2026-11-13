@@ -2,11 +2,12 @@
 
 **Live screen-capture effects for OBS Studio.**
 
-TopScreen is an OBS *filter plugin* that applies live effects over any screen
-capture — a styled cursor, click effects, automatic zoom/pan, a background with
-rounded corners, a key overlay, spotlight and highlighter — **without recording
-anything and without post-editing**. Everything is automatic or triggered by
-hotkeys, and the result is consumed directly by OBS.
+TopScreen is an OBS plugin that applies live effects over a screen capture — a
+styled cursor, click effects, automatic zoom/pan, a background with rounded
+corners, a key overlay, spotlight, magnifier and highlights — **without
+recording anything and without post-editing**. It works as the **TopScreen FX
+filter** on any capture, or with the experimental **TopScreen Capture** source
+on Linux/X11. Everything is automatic or triggered by hotkeys.
 
 > It is not a recorder. It produces no file. It has no timeline. It exists to be
 > used **together with OBS**, as a filter on an OBS source itself.
@@ -20,8 +21,10 @@ hotkeys, and the result is consumed directly by OBS.
 3. Adjust it in the filter's **Properties** and/or the **TopScreen dock**.
 4. Profile hotkeys **Ctrl+Shift+Alt+A…J** are applied by default; customize them in **Settings → Hotkeys → TopScreen**.
 
-The filter runs entirely on the GPU, inside the OBS process — no IPC, no encode,
-no frame copy.
+On Linux/X11 you can instead add **Sources → TopScreen Capture**, which picks a
+monitor and attaches the effects filter automatically. The effects pipeline runs
+on the GPU inside OBS; the filter does not copy frames, while the experimental
+capture source pulls pixels through XShm.
 
 📖 **Full user manual: [`docs/MANUAL.md`](docs/MANUAL.md).**
 
@@ -39,8 +42,8 @@ presets, click sound, key overlay and dock.
 | F2 | Cursor styles, size, rotation offset, exact/glide/smooth and idle hide | ✅ |
 | F3 | L/R clicks + sound + hotkeys + presets | ✅ |
 | F4 | Auto + manual Zoom/Pan (hotkeys), full-scene zoom | ✅ |
-| F5 | Key overlay + spotlight + magnifier + highlighter + webcam bubble | ✅ |
-| F6 | Own capture source + own audio | ⬜ |
+| F5 | Key overlay + spotlight + magnifier + highlighter + webcam bubble + Reading | ✅ |
+| F6 | Own capture source + own audio | 🟡 (Linux/X11 source; Windows/Wayland pending) |
 | F7 | Wayland parity (portal + evdev) + CI | 🟡 (evdev ✅; portal ⬜) |
 
 The core has **automated tests** and the OBS layer is checked against the real
@@ -50,8 +53,8 @@ ready-to-use looks (A–D everyday, E–I aggressive, J passthrough). The UI is 
 ### Quick tests
 
 ```bash
-./tests/run.sh            # Linux: 242 core tests
-./tests/run-all.sh        # core + OBS headers + 58 integration tests
+./tests/run.sh            # Linux: 257 core tests
+./tests/run-all.sh        # core + OBS headers + 71 integration tests
 pwsh -File tests\run.ps1  # Windows (or PowerShell on any OS)
 ```
 

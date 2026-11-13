@@ -1,5 +1,8 @@
 #include "ts-parent-cursor.hpp"
 
+#include "capture/ts-capture-source.hpp"
+
+#include <cstring>
 #include <map>
 #include <mutex>
 
@@ -52,11 +55,19 @@ void capture_cursor_state(obs_source_t *parent, CursorEntry *entry)
 
 void apply_cursor_state(obs_source_t *parent, CursorEntry *entry)
 {
+	const bool hide = entry->hidden_wants > 0;
+
+	/* TopScreen Capture keeps the override in memory: changing its persisted
+	 * obs_data would save "cursor off" into the scene while the filter lives. */
+	const char *id = obs_source_get_id(parent);
+	if (id && std::strcmp(id, "topscreen_capture") == 0) {
+		set_native_cursor(parent, !hide);
+		return;
+	}
+
 	obs_data_t *s = obs_source_get_settings(parent);
 	if (!s)
 		return;
-
-	const bool hide = entry->hidden_wants > 0;
 	bool changed = false;
 	for (int i = 0; i < 2; ++i) {
 		if (!entry->has[i])

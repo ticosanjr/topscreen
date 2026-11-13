@@ -13,6 +13,7 @@ TEST(integration_capture_source_lifecycle_and_properties)
 	REQUIRE(settings != nullptr);
 	topscreen::ts_capture_source_info.get_defaults(settings);
 	CHECK(obs_data_get_bool(settings, "capture_cursor"));
+	CHECK(!obs_data_get_bool(settings, "capture_click_audio"));
 
 	void *ctx = topscreen::ts_capture_source_info.create(settings, source);
 	REQUIRE(ctx != nullptr);
@@ -23,6 +24,7 @@ TEST(integration_capture_source_lifecycle_and_properties)
 	REQUIRE(props != nullptr);
 	CHECK(obs_properties_get(props, "capture_monitor") != nullptr);
 	CHECK(obs_properties_get(props, "capture_cursor") != nullptr);
+	CHECK(obs_properties_get(props, "capture_click_audio") != nullptr);
 	obs_properties_destroy(props);
 
 	/* The filter's parent-cursor lease toggles this property at runtime. */

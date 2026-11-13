@@ -46,7 +46,26 @@ bool click_audio_render(void *data, uint64_t *ts_out, struct obs_source_audio_mi
 			uint32_t mixers, size_t channels, size_t sample_rate)
 {
 	auto *state = static_cast<ClickAudioSource *>(data);
-	if (!state || !ts_out || !audio || sample_rate == 0)
+	if (!state)
+		return false;
+	return ts_click_audio_mix(&state->next_ts, ts_out, audio, mixers, channels,
+				  sample_rate);
+}
+
+obs_properties_t *click_audio_properties(void *)
+{
+	obs_properties_t *props = obs_properties_create();
+	obs_properties_add_text(props, "click_audio_hint", obs_module_text("ClickAudio.Hint"),
+				OBS_TEXT_INFO);
+	return props;
+}
+
+} // namespace
+
+bool ts_click_audio_mix(uint64_t *next_ts, uint64_t *ts_out, struct obs_source_audio_mix *audio,
+			uint32_t mixers, size_t channels, size_t sample_rate)
+{
+	if (!next_ts || !ts_out || !audio || sample_rate == 0)
 		return false;
 
 	float left[AUDIO_OUTPUT_FRAMES] = {};
@@ -79,23 +98,13 @@ bool click_audio_render(void *data, uint64_t *ts_out, struct obs_source_audio_mi
 		}
 	}
 
-	if (state->next_ts == 0)
-		state->next_ts = os_gettime_ns();
-	*ts_out = state->next_ts;
-	state->next_ts += static_cast<uint64_t>(AUDIO_OUTPUT_FRAMES) * 1000000000ULL /
-			  static_cast<uint64_t>(sample_rate);
+	if (*next_ts == 0)
+		*next_ts = os_gettime_ns();
+	*ts_out = *next_ts;
+	*next_ts += static_cast<uint64_t>(AUDIO_OUTPUT_FRAMES) * 1000000000ULL /
+		    static_cast<uint64_t>(sample_rate);
 	return true;
 }
-
-obs_properties_t *click_audio_properties(void *)
-{
-	obs_properties_t *props = obs_properties_create();
-	obs_properties_add_text(props, "click_audio_hint", obs_module_text("ClickAudio.Hint"),
-				OBS_TEXT_INFO);
-	return props;
-}
-
-} // namespace
 
 struct obs_source_info ts_click_audio_source_info = {
 	.id = kSourceId,

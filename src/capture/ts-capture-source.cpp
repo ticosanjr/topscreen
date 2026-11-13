@@ -1,6 +1,7 @@
 #include "ts-capture-source.hpp"
 
 #include "capture/ts-capture.hpp"
+#include "audio/ts-click-source.hpp"
 
 #include <obs-module.h>
 
@@ -19,7 +20,9 @@ namespace {
 
 constexpr const char *kMonitorKey = "capture_monitor";
 constexpr const char *kCursorKey = "capture_cursor";
+constexpr const char *kClickAudioKey = "capture_click_audio";
 constexpr const char *kFilterFlag = "capture_effects_filter";
+constexpr uint32_t kDefaultMixers = 0x3F;
 constexpr const char *kFilterId = "topscreen_filter";
 
 struct CaptureSource {
@@ -44,6 +47,8 @@ struct CaptureSource {
 	std::atomic<uint32_t> display_height{0};
 	std::atomic<bool> capture_cursor{true};
 	std::atomic<bool> runtime_cursor_hidden{false};
+	std::atomic<bool> click_audio{false};
+	uint64_t audio_next_ts = 0;
 	uint64_t tick_serial = 0;
 	uint64_t captured_serial = 0;
 };
@@ -171,6 +176,8 @@ void *capture_create(obs_data_t *settings, obs_source_t *source)
 	if (ctx->monitor < 0)
 		ctx->monitor = 0;
 	ctx->capture_cursor.store(obs_data_get_bool(settings, kCursorKey));
+	ctx->click_audio.store(obs_data_get_bool(settings, kClickAudioKey));
+	obs_source_set_audio_mixers(source, kDefaultMixers);
 	start_backend(ctx);
 
 	/* A single source that already carries the effects. The user can still
@@ -224,8 +231,26 @@ void capture_update(void *data, obs_data_t *settings)
 		ctx->pending_monitor.store(monitor);
 	const bool cursor = obs_data_get_bool(settings, kCursorKey);
 	ctx->capture_cursor.store(cursor);
+	ctx->click_audio.store(obs_data_get_bool(settings, kClickAudioKey));
 	if (ctx->backend)
 		ctx->backend->set_capture_cursor(effective_cursor(ctx));
+}
+
+bool capture_audio_render(void *data, uint64_t *ts_out, struct obs_source_audio_mix *audio,
+			  uint32_t mixers, size_t channels, size_t sample_rate)
+{
+	auto *ctx = static_cast<CaptureSource *>(data);
+	if (!ctx || !ctx->click_audio.load())
+		return false;
+	return ts_click_audio_mix(&ctx->audio_next_ts, ts_out, audio, mixers, channels,
+				  sample_rate);
+}
+
+void capture_activate(void *data)
+{
+	auto *ctx = static_cast<CaptureSource *>(data);
+	if (ctx)
+		ctx->audio_next_ts = 0;
 }
 
 void capture_tick(void *data, float seconds)
@@ -277,6 +302,7 @@ void capture_defaults(obs_data_t *settings)
 {
 	obs_data_set_default_int(settings, kMonitorKey, 0);
 	obs_data_set_default_bool(settings, kCursorKey, true);
+	obs_data_set_default_bool(settings, kClickAudioKey, false);
 }
 
 void find_effects_filter(obs_source_t *, obs_source_t *filter, void *param)
@@ -345,6 +371,7 @@ obs_properties_t *capture_properties(void *data)
 	(void)current;
 
 	obs_properties_add_bool(props, kCursorKey, obs_module_text("Capture.Cursor"));
+	obs_properties_add_bool(props, kClickAudioKey, obs_module_text("Capture.ClickAudio"));
 
 	if (ctx && ctx->source) {
 		obs_properties_add_text(props, "capture_effects_hint",
@@ -394,7 +421,7 @@ bool native_cursor_enabled(obs_source_t *source)
 struct obs_source_info ts_capture_source_info = {
 	.id = "topscreen_capture",
 	.type = OBS_SOURCE_TYPE_INPUT,
-	.output_flags = OBS_SOURCE_VIDEO,
+	.output_flags = OBS_SOURCE_VIDEO | OBS_SOURCE_AUDIO,
 	.get_name = capture_name,
 	.create = capture_create,
 	.destroy = capture_destroy,
@@ -403,8 +430,10 @@ struct obs_source_info ts_capture_source_info = {
 	.get_defaults = capture_defaults,
 	.get_properties = capture_properties,
 	.update = capture_update,
+	.activate = capture_activate,
 	.video_tick = capture_tick,
 	.video_render = capture_render,
+	.audio_render = capture_audio_render,
 };
 
 } // namespace topscreen

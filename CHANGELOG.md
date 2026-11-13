@@ -16,6 +16,8 @@ User-visible changes. Dates are in ISO form. The released packages are listed in
 - Hotkey highlight, manual zoom and spotlight/magnifier exit a pinned Reading.
 - Pointer mapping centralized in `core::map_pointer()` with tests for monitor
   offsets, inverse zoom and edge clamping.
+- TopScreen Capture can output the click-sound bus on its own audio channel
+  (off by default, so the dedicated click source remains the safe default).
 
 ## 1.2.6
 

@@ -64,6 +64,9 @@ effects in **Filters → TopScreen FX**.
 - **Include native cursor** keeps the X11 pointer visible when the filter is
   removed or the effects are off. While the TopScreen custom cursor is active,
   the filter disables it automatically to avoid a double cursor.
+- **Output TopScreen click sounds from this source** routes clicks through the
+  capture source's audio channel. Leave it off if you already use the separate
+  `TopScreen Click Sound` source, otherwise the clicks will play twice.
 - Profiles, hotkeys and the dock target the **filter**, exactly as before.
 
 ---

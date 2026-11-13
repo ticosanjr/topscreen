@@ -228,3 +228,28 @@ TEST(mapping_display_rect_to_source_normalizes_corners)
 	CHECK_NEAR(x1, 0.5 + (0.8 - 0.5) / 2.0, 1e-9);
 	CHECK_NEAR(y1, 0.5 + (0.9 - 0.5) / 2.0, 1e-9);
 }
+
+TEST(mapping_pointer_uses_monitor_geometry_and_inverse_zoom)
+{
+	/* Monitor below the primary: global coordinates are offset. */
+	const Monitor below{0.0, 1080.0, 1920.0, 1080.0};
+	const PointerMapping p =
+		map_pointer(960.0, 1080.0 + 540.0, below, 1.0, 0.5, 0.5);
+	CHECK_NEAR(p.display.x, 0.5, 1e-9);
+	CHECK_NEAR(p.display.y, 0.5, 1e-9);
+	CHECK_NEAR(p.source.x, 0.5, 1e-9);
+	CHECK_NEAR(p.source.y, 0.5, 1e-9);
+
+	/* With zoom 2/focus 0.5, display 0.75 maps to source 0.625. */
+	const Monitor primary{0.0, 0.0, 1920.0, 1080.0};
+	const PointerMapping z = map_pointer(1440.0, 810.0, primary, 2.0, 0.5, 0.5);
+	CHECK_NEAR(z.display.x, 0.75, 1e-9);
+	CHECK_NEAR(z.display.y, 0.75, 1e-9);
+	CHECK_NEAR(z.source.x, 0.625, 1e-9);
+	CHECK_NEAR(z.source.y, 0.625, 1e-9);
+
+	/* Outside the monitor still clamps to the content edge. */
+	const PointerMapping edge = map_pointer(-100.0, 5000.0, primary, 1.0, 0.5, 0.5);
+	CHECK_NEAR(edge.display.x, 0.0, 1e-9);
+	CHECK_NEAR(edge.display.y, 1.0, 1e-9);
+}

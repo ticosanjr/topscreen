@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <cmath>
 
+#include "math.hpp"
+
 namespace topscreen::core {
 
 ContentArea content_area(double target_w, double target_h, double pad_x, double pad_y, bool keep_aspect)
@@ -73,6 +75,20 @@ void display_rect_to_source(double dx0, double dy0, double dx1, double dy1, doub
 		*sx1 = a.x < b.x ? b.x : a.x;
 	if (sy1)
 		*sy1 = a.y < b.y ? b.y : a.y;
+}
+
+PointerMapping map_pointer(double global_x, double global_y, const Monitor &monitor,
+			   double scene_zoom, double focus_x, double focus_y)
+{
+	const Vec2f raw = screen_to_content(global_x, global_y, monitor);
+	PointerMapping out;
+	out.display.x = clamp01(raw.x);
+	out.display.y = clamp01(raw.y);
+	const Vec2f source =
+		display_to_source(out.display.x, out.display.y, focus_x, focus_y, scene_zoom);
+	out.source.x = clamp01(source.x);
+	out.source.y = clamp01(source.y);
+	return out;
 }
 
 Vec2f pointer_to_content_output(double nx, double ny, const ContentArea &area,

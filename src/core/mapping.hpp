@@ -1,5 +1,6 @@
 #pragma once
 
+#include "coord.hpp"
 #include "types.hpp"
 
 namespace topscreen::core {
@@ -42,6 +43,22 @@ Vec2f display_to_source(double d_x, double d_y, double focus_x, double focus_y, 
 void display_rect_to_source(double dx0, double dy0, double dx1, double dy1, double focus_x,
 			    double focus_y, double zoom, double *sx0, double *sy0,
 			    double *sx1, double *sy1);
+
+/**
+ * Pointer in the two spaces used by the filter:
+ *  - display: physical pointer over the composed content (cursor/clicks/marks)
+ *  - source: captured pixel under it after the scene zoom (focus/targets)
+ *
+ * Global coordinates are normalized by the real monitor rectangle, then the
+ * display point is inverse-zoomed. Both points are clamped to 0..1.
+ */
+struct PointerMapping {
+	Vec2f display;
+	Vec2f source;
+};
+
+PointerMapping map_pointer(double global_x, double global_y, const Monitor &monitor,
+			   double scene_zoom, double focus_x, double focus_y);
 
 /**
  * Cursor position in OUTPUT coordinates (0..1) for a pointer normalized to the

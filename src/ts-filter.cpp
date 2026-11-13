@@ -932,22 +932,19 @@ void ts_filter_ctx::update_pointer(const core::ContentArea &content)
 	const InputState &st = input.state();
 	const core::Monitor mon{monitor_origin_.x(), monitor_origin_.y(),
 				monitor_origin_.width(), monitor_origin_.height()};
-	/* DISPLAY space: the physical pointer over the composed content. */
-	const core::Vec2f display = core::screen_to_content(st.x, st.y, mon);
-	const double dx = core::clamp01(display.x);
-	const double dy = core::clamp01(display.y);
 
-	/* SOURCE space: the captured pixel under the pointer after the current
-	 * zoom/pan (normal zoom + spotlight zoom). Clicks/highlights stay in
-	 * display space; zoom focus and selection targets use source space. */
+	/* Combined normal + spotlight transform, then the pointer in DISPLAY
+	 * (physical/composed) and SOURCE (captured pixel under it) spaces. */
 	double scene_zoom = 1.0;
 	double scene_focus_x = 0.5;
 	double scene_focus_y = 0.5;
 	scene_view(&scene_zoom, &scene_focus_x, &scene_focus_y);
-	const core::Vec2f source =
-		core::display_to_source(dx, dy, scene_focus_x, scene_focus_y, scene_zoom);
-	const double sx = core::clamp01(source.x);
-	const double sy = core::clamp01(source.y);
+	const core::PointerMapping pointer =
+		core::map_pointer(st.x, st.y, mon, scene_zoom, scene_focus_x, scene_focus_y);
+	const double dx = pointer.display.x;
+	const double dy = pointer.display.y;
+	const double sx = pointer.source.x;
+	const double sy = pointer.source.y;
 	pointer_display_x_ = dx;
 	pointer_display_y_ = dy;
 	pointer_source_x_ = sx;

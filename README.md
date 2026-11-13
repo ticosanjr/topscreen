@@ -53,7 +53,7 @@ ready-to-use looks (A–D everyday, E–I aggressive, J passthrough). The UI is 
 ### Quick tests
 
 ```bash
-./tests/run.sh            # Linux: 257 core tests
+./tests/run.sh            # Linux: 258 core tests
 ./tests/run-all.sh        # core + OBS headers + 71 integration tests
 pwsh -File tests\run.ps1  # Windows (or PowerShell on any OS)
 ```

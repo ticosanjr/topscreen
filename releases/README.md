@@ -9,11 +9,11 @@ GitHub Release attachments are the canonical downloadable copies.
 
 | Version | Linux | Windows | Highlights |
 |---------|-------|---------|------------|
+| **1.3.0** | [`topscreen-1.3.0-linux.tar.gz`](https://github.com/ticosanjr/topscreen/releases/download/v1.3.0/topscreen-1.3.0-linux.tar.gz) | [`topscreen-1.3.0-windows.zip`](https://github.com/ticosanjr/topscreen/releases/download/v1.3.0/topscreen-1.3.0-windows.zip) \* | **Embedded capture effects:** TopScreen Capture applies the effects itself (no child filter) and migrates 1.2.5 scenes; X11 native-cursor compositing with a non-persisted override; click-sound audio on the source; Reading/zoom/pointer accuracy fixes |
 | **1.2.6** | [`topscreen-1.2.6-linux.tar.gz`](https://github.com/ticosanjr/topscreen/releases/download/v1.2.6/topscreen-1.2.6-linux.tar.gz) | [`topscreen-1.2.6-windows.zip`](https://github.com/ticosanjr/topscreen/releases/download/v1.2.6/topscreen-1.2.6-windows.zip) \* | **Reading highlight + mouse accuracy:** Reading mode dims outside the selection and pins the fitted zoom until the next click; keep-until-click option for every other highlight/zoom mode; display/source coordinate split and zoom-aware pointer mapping; real monitor geometry, spotlight focus split and TopScreen Capture monitor index |
 | **1.2.5** | [`topscreen-1.2.5-linux.tar.gz`](https://github.com/ticosanjr/topscreen/releases/download/v1.2.5/topscreen-1.2.5-linux.tar.gz) | [`topscreen-1.2.5-windows.zip`](https://github.com/ticosanjr/topscreen/releases/download/v1.2.5/topscreen-1.2.5-windows.zip) \* | **Native capture + scene profiles:** experimental **TopScreen Capture** source on Linux/X11 (XShm, monitor picker, attached effects filter), scene profiles by UUID with startup apply and profile-backup export/import, Smart Zoom foreground-window toggle, webcam bubble source action and device frames, Stream Deck/OBS WebSocket guide |
-| **1.2.4** | [`topscreen-1.2.4-linux.tar.gz`](https://github.com/ticosanjr/topscreen/releases/download/v1.2.4/topscreen-1.2.4-linux.tar.gz) | [`topscreen-1.2.4-windows.zip`](https://github.com/ticosanjr/topscreen/releases/download/v1.2.4/topscreen-1.2.4-windows.zip) \* | **Live polish:** smart zoom, smooth cursor, optional motion blur, blurred-screen/bezel backgrounds, webcam bubble filter, click audio source in the OBS mixer, scene-profile actions/list/prune and a new Glass preset |
 
-> \* **Windows packages 0.2.18–1.2.6** are built by the `Release` workflow and include the Qt dock.
+> \* **Windows packages 0.2.18–1.3.0** are built by the `Release` workflow and include the Qt dock.
 > Local fallback cross-builds (if used) do not include it. They are the full filter (Properties, hotkeys,
 > presets, profiles, multi-screen fix). The Linux package includes the dock.
 

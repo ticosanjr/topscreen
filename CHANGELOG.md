@@ -3,7 +3,7 @@
 User-visible changes. Dates are in ISO form. The released packages are listed in
 [`releases/README.md`](releases/README.md).
 
-## Unreleased
+## 1.3.0
 
 - **TopScreen Capture:** native cursor compositing (X11/XFixes) with an
   in-memory override so hiding the cursor for the custom overlay is never
@@ -20,6 +20,7 @@ User-visible changes. Dates are in ISO form. The released packages are listed in
   (off by default, so the dedicated click source remains the safe default).
 - TopScreen Capture now applies the effects itself through a shared engine;
   the 1.2.5 child TopScreen FX filter is migrated into the source and removed.
+- Distribution assets: plugin icon and screenshots under `assets/`.
 
 ## 1.2.6
 

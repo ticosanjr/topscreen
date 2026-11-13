@@ -49,11 +49,10 @@ covered by tests) and the **OBS layer** (thin, it only wires the core to libobs)
 | Module | File | Responsibility |
 |--------|---------|------------------|
 | Plugin | `src/plugin-main.cpp` | `OBS_DECLARE_MODULE`, source registration, dock |
-| Filter | `src/ts-filter.cpp` | `obs_source_info`, lifecycle, tick/render, hotkeys |
+| Filter | `src/ts-filter.cpp` | `obs_source_info` for the filter (thin wrapper over the shared engine) |
 | Parent cursor | `src/ts-parent-cursor.{hpp,cpp}` | Process-wide native-cursor lease shared by filters |
 | Monitor origin | `src/ts-monitor-origin.{hpp,cpp}` | Global desktop offset of the captured monitor |
 | Settings | `src/ts-settings.{hpp,cpp}` | obs_data ↔ `core::Config` mapping |
-| Properties | `src/ts-properties.{hpp,cpp}` | Native UI (obs_properties), split into one builder per section |
 | Presets | `src/ts-presets.{hpp,cpp}` | Loads `data/presets/*.json` |
 | Compositor | `src/render/ts-compositor.{hpp,cpp}` | Shader effect + parameter upload |
 | Frame | `src/render/ts-frame.hpp` | Per-frame state (cursor/zoom/clicks) |
@@ -63,7 +62,9 @@ covered by tests) and the **OBS layer** (thin, it only wires the core to libobs)
 | Text | `src/render/ts-text.{hpp,cpp}` + `src/core/font_atlas.*` | Key overlay (font atlas + band) |
 | Profiles | `src/core/profiles.{hpp,cpp}` + `ts-profile-store.*` + `ts-profile-bundle.*` + `ts-scene-profiles.*` | A–J seeds, slot store, export/import bundle, scene mappings |
 | Audio | `src/audio/ts-click-sound.*` + `ts-click-audio.*` + `ts-click-source.*` | Click WAV decode, process-wide mix queue and OBS audio source |
-| Capture | `src/capture/ts-capture.*` + `ts-capture-x11.cpp` + `ts-capture-source.cpp` + `src/ts-engine.*` | Native monitor capture source (X11/XShm) that applies the shared effect engine directly |
+| Engine | `src/ts-engine.{hpp,cpp}` | Shared effect host: settings, profiles, hotkeys, input models, compositor and per-frame state (filter and capture source) |
+| Capture | `src/capture/ts-capture.*` + `ts-capture-x11.cpp` + `ts-capture-source.cpp` | Native monitor capture source (X11/XShm) that draws its texture through the shared engine |
+| Properties | `src/ts-properties.cpp` + `src/properties/*` | OBS properties tree, split by capture/pointer/focus/overlays |
 | Webcam | `src/webcam/ts-webcam-filter.*` + `ts-webcam-source.*` + `data/effects/webcam.effect` | Independent webcam bubble filter and source action |
 | UI | `src/ui/ts-dock.{hpp,cpp}` | Qt dock (optional) |
 

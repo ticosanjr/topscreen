@@ -96,7 +96,7 @@ DLL **without the Qt dock**.
 | Platform | Build environment |
 |----------|-------------------|
 | Linux | `ubuntu-24.04` + distro `libobs-dev` 30.0.2, `obs-frontend-api` and Qt6 (dock included) |
-| Windows | official OBS **sources** of the same version as the runtime (headers) + import libraries generated from `obs.dll` and `obs-frontend-api.dll`, plus Qt6 from obs-deps: CI-built packages include the **Qt dock** like Linux; local cross-builds (0.2.18–1.2.6) do not |
+| Windows | official OBS **sources** of the same version as the runtime (headers) + import libraries generated from `obs.dll` and `obs-frontend-api.dll`, plus Qt6 from obs-deps: CI-built packages include the **Qt dock** like Linux; local cross-builds (0.2.18–1.3.0) do not |
 
 > The local Linux build uses the distro OBS 30.0.2. The Windows cross-build script
 > pins OBS **31.1.1** (`OBS_VERSION` in `scripts/build-windows-cross.sh`); use the

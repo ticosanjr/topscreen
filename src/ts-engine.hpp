@@ -22,6 +22,7 @@ void ts_engine_update(void *engine, obs_data_t *settings);
 void ts_engine_defaults(obs_data_t *settings);
 void ts_engine_set_target(void *engine, uint32_t width, uint32_t height);
 void ts_engine_tick(void *engine, float seconds);
+void ts_engine_render_filter(void *engine, gs_effect_t *effect);
 void ts_engine_render_texture(void *engine, gs_texture_t *texture, uint32_t width,
 			      uint32_t height, gs_effect_t *effect);
 obs_properties_t *ts_engine_properties(void *engine, obs_source_t *source);

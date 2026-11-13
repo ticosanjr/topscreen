@@ -133,6 +133,7 @@ if(TOPSCREEN_BUILD_PLUGIN)
     set(TOPSCREEN_SOURCES
         src/plugin-main.cpp
         src/ts-filter.cpp
+        src/ts-engine.cpp
         src/ts-settings.cpp
         src/ts-monitor-origin.cpp
         src/ts-parent-cursor.cpp

@@ -18,6 +18,8 @@ User-visible changes. Dates are in ISO form. The released packages are listed in
   offsets, inverse zoom and edge clamping.
 - TopScreen Capture can output the click-sound bus on its own audio channel
   (off by default, so the dedicated click source remains the safe default).
+- TopScreen Capture now applies the effects itself through a shared engine;
+  the 1.2.5 child TopScreen FX filter is migrated into the source and removed.
 
 ## 1.2.6
 

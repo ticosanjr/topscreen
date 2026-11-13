@@ -5,11 +5,11 @@
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │                                                                     │
-│  Display Capture                   ┌────── TopScreen Filter ──────┐ │
-│  (choose screen) ─────────────────►│  Input      (cursor/clicks)  │ │
+│  Display Capture                   ┌────── TopScreen Engine ──────┐ │
+│  (choose screen) ─► TopScreen FX ─►│  Input      (cursor/clicks)  │ │
 │                                    │  Dynamics   (spring/zoom/pan)│ │
-│                                    │  Compositor (GPU shaders)    │ │
-│                                    │  Settings   (props/presets)  │ │
+│  TopScreen Capture (X11/XShm) ────►│  Compositor (GPU shaders)    │ │
+│  (effects embedded in the source)  │  Settings   (props/presets)  │ │
 │                                    │  Hotkeys    (OBS API)        │ │
 │                                    └────────────────┬─────────────┘ │
 │                                                     ▼               │
@@ -18,8 +18,10 @@
 ```
 
 The filter receives the already-rendered frame from the parent source
-(`obs_source_process_filter_*`), applies a chain of GPU passes and returns the
-result. Nothing leaves the OBS process.
+(`obs_source_process_filter_*`). The experimental TopScreen Capture source owns
+the texture instead: it draws the captured frame through the same shared engine
+(`src/ts-engine.hpp`) and composition effect, so no child filter is created.
+Nothing leaves the OBS process.
 
 ## Modules
 
@@ -61,7 +63,7 @@ covered by tests) and the **OBS layer** (thin, it only wires the core to libobs)
 | Text | `src/render/ts-text.{hpp,cpp}` + `src/core/font_atlas.*` | Key overlay (font atlas + band) |
 | Profiles | `src/core/profiles.{hpp,cpp}` + `ts-profile-store.*` + `ts-profile-bundle.*` + `ts-scene-profiles.*` | A–J seeds, slot store, export/import bundle, scene mappings |
 | Audio | `src/audio/ts-click-sound.*` + `ts-click-audio.*` + `ts-click-source.*` | Click WAV decode, process-wide mix queue and OBS audio source |
-| Capture | `src/capture/ts-capture.*` + `ts-capture-x11.cpp` + `ts-capture-source.cpp` | Native monitor capture source (X11/XShm) with the TopScreen FX filter attached |
+| Capture | `src/capture/ts-capture.*` + `ts-capture-x11.cpp` + `ts-capture-source.cpp` + `src/ts-engine.*` | Native monitor capture source (X11/XShm) that applies the shared effect engine directly |
 | Webcam | `src/webcam/ts-webcam-filter.*` + `ts-webcam-source.*` + `data/effects/webcam.effect` | Independent webcam bubble filter and source action |
 | UI | `src/ui/ts-dock.{hpp,cpp}` | Qt dock (optional) |
 
@@ -83,6 +85,8 @@ OBS frame (GPU texture)
 
 In the current implementation (F1), passes 1–4 are in the shader
 `data/effects/topscreen.effect`. The others come in the following phases.
+The capture source draws the same effect directly (`Compositor::render_texture`,
+one `gs_draw_sprite` per pass) instead of going through the filter API.
 
 ### Why a single `.effect` in F1
 
@@ -109,7 +113,8 @@ taking into account monitor position/scale and DPI.
 
 ## Persistence
 
-- Filter settings: `obs_data` (JSON) managed by OBS per source/scene.
+- Filter/source settings: `obs_data` (JSON) managed by OBS per source/scene.
+  TopScreen Capture stores the same effect keys plus its `capture_*` keys.
 - TopScreen presets: files in `data/presets/*.json`, applicable by hotkey.
 - Hotkeys: managed by OBS (Hotkeys tab) and, on Wayland, mirrored in the portal.
 

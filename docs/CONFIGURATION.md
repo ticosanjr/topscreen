@@ -276,9 +276,8 @@ These belong to the `topscreen_capture` source, not to the filter:
 | Option | Key | Type | Notes |
 |--------|-----|------|-------|
 | Captured monitor | `capture_monitor` | int | Index in the X11 monitor list |
-| Include native cursor | `capture_cursor` | bool | Composites the X11 cursor into the capture; the filter turns it off while its own cursor is active |
+| Include native cursor | `capture_cursor` | bool | Composites the X11 cursor into the capture; TopScreen turns it off while its own cursor is active |
 | Click sounds on this source | `capture_click_audio` | bool | Drains the TopScreen click bus through the source's audio channel instead of the dedicated click source |
-| Effects filter attached | `capture_effects_filter` | bool | Internal: prevents a duplicate TopScreen FX filter on reload |
 
 The effects themselves use the normal filter keys above. Windows and Wayland do
 not expose this source yet; use Display Capture + the filter there.

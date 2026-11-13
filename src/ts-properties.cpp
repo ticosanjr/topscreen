@@ -1415,7 +1415,7 @@ void add_tooltips(obs_properties_t *props)
 
 } // namespace
 
-obs_properties_t *properties_create(void *data, obs_data_t *settings)
+obs_properties_t *properties_create(void *data, obs_data_t *settings, bool include_monitor)
 {
 	obs_properties_t *props = obs_properties_create();
 	/* ---------------- Version (always visible, first thing) ---------------- */
@@ -1455,7 +1455,8 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings)
 	add_keys_section(props, overlays, settings);
 	add_webcam_section(props, overlays);
 
-	add_monitor_section(advanced);
+	if (include_monitor)
+		add_monitor_section(advanced);
 	add_profile_backup_section(props, data);
 	add_tooltips(props);
 	return props;

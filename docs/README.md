@@ -25,6 +25,7 @@ Start with the **user manual**.
 | [`ARCHITECTURE.md`](ARCHITECTURE.md) | Architecture, modules, pipeline |
 | [`ROADMAP.md`](ROADMAP.md) | Phases and acceptance criteria |
 | [`TASKS.md`](TASKS.md) | Task breakdown and status |
+| [`../assets/README.md`](../assets/README.md) | Distribution icon and screenshots |
 | [`../CHANGELOG.md`](../CHANGELOG.md) | User-visible changes per release |
 | [`../CONTRIBUTING.md`](../CONTRIBUTING.md) | How to contribute |
 

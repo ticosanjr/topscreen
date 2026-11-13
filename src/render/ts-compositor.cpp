@@ -773,4 +773,66 @@ void Compositor::render(obs_source_t *filter, obs_source_t *target, uint32_t wid
 		text_.draw(st.keys, st.key_count, cfg.keys, w, h);
 }
 
+void Compositor::render_texture(gs_texture_t *texture, uint32_t width, uint32_t height,
+				const core::Config &cfg, const FrameState &st,
+				gs_effect_t *effect)
+{
+	if (!texture || !width || !height)
+		return;
+
+	if (!logged_first_frame_) {
+		logged_first_frame_ = true;
+		blog(LOG_WARNING, "[TopScreen] first frame: source=%ux%u ready=%s technique=%s",
+		     width, height, ready_ ? "yes" : "no", use_passthrough_ ? "PassThrough" : "Draw");
+	}
+
+	gs_effect_t *fx = effect ? effect : obs_get_base_effect(OBS_EFFECT_DEFAULT);
+	if (!fx)
+		return;
+
+	/* Effects off: show the raw capture (which may already contain the native
+	 * cursor) instead of running the composition shader. */
+	if (!ready_ || use_passthrough_ || !cfg.effects_enabled) {
+		gs_eparam_t *image = gs_effect_get_param_by_name(fx, "image");
+		if (image)
+			gs_effect_set_texture(image, texture);
+		gs_draw_sprite(texture, 0, 0, 0);
+		return;
+	}
+
+	const bool active = true;
+	set_v2(p_target_size_, static_cast<float>(width), static_cast<float>(height));
+	upload_background(cfg, width, height, active);
+	upload_cursor(cfg, st, active);
+	upload_focus(cfg, st, active);
+	upload_highlight(st, active);
+	upload_clicks(st);
+	upload_line(st, width, active);
+
+	/* An input source owns the draw, so the composition uses the TopScreen
+	 * effect directly instead of obs_source_process_filter_*. */
+	gs_technique_t *tech = gs_effect_get_technique(effect_, "Draw");
+	if (!tech) {
+		gs_eparam_t *image = gs_effect_get_param_by_name(fx, "image");
+		if (image)
+			gs_effect_set_texture(image, texture);
+		gs_draw_sprite(texture, 0, 0, 0);
+		return;
+	}
+
+	const size_t passes = gs_technique_begin(tech);
+	for (size_t i = 0; i < passes; ++i) {
+		gs_technique_begin_pass(tech, i);
+		gs_eparam_t *image = gs_effect_get_param_by_name(effect_, "image");
+		if (image)
+			gs_effect_set_texture(image, texture);
+		gs_draw_sprite(texture, 0, 0, 0);
+		gs_technique_end_pass(tech);
+	}
+	gs_technique_end(tech);
+
+	if (cfg.keys.enabled && st.key_count > 0)
+		text_.draw(st.keys, st.key_count, cfg.keys, width, height);
+}
+
 } // namespace topscreen

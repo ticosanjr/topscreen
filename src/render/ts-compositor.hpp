@@ -37,6 +37,11 @@ public:
 	void render(obs_source_t *filter, obs_source_t *target, uint32_t width, uint32_t height,
 		    const core::Config &cfg, const FrameState &st);
 
+	/** Applies the effect to a source-owned texture (TopScreen Capture). */
+	void render_texture(gs_texture_t *texture, uint32_t width, uint32_t height,
+			    const core::Config &cfg, const FrameState &st,
+			    gs_effect_t *effect);
+
 	bool loaded() const { return ready_; }
 
 private:

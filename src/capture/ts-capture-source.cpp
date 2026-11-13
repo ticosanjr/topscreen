@@ -2,6 +2,11 @@
 
 #include "capture/ts-capture.hpp"
 #include "audio/ts-click-source.hpp"
+#include "ts-engine.hpp"
+#include "core/config.hpp"
+#include "core/keys.hpp"
+#include "ts-profile-store.hpp"
+#include "ts-settings.hpp"
 
 #include <obs-module.h>
 
@@ -21,12 +26,13 @@ namespace {
 constexpr const char *kMonitorKey = "capture_monitor";
 constexpr const char *kCursorKey = "capture_cursor";
 constexpr const char *kClickAudioKey = "capture_click_audio";
-constexpr const char *kFilterFlag = "capture_effects_filter";
 constexpr uint32_t kDefaultMixers = 0x3F;
 constexpr const char *kFilterId = "topscreen_filter";
 
 struct CaptureSource {
 	obs_source_t *source = nullptr;
+	void *engine = nullptr;
+	bool migrated_attached_filter = false;
 	std::unique_ptr<capture::Backend> backend;
 	std::atomic<int> pending_monitor{-1};
 	std::atomic<int> capture_failures{0};
@@ -69,6 +75,8 @@ bool effective_cursor(const CaptureSource *ctx)
 {
 	return ctx && ctx->capture_cursor.load() && !ctx->runtime_cursor_hidden.load();
 }
+
+void migrate_attached_filter(CaptureSource *ctx);
 
 void start_backend(CaptureSource *ctx)
 {
@@ -150,12 +158,9 @@ void render_frame(CaptureSource *ctx, gs_effect_t *effect)
 		ctx->restart_requested.store(true);
 	}
 
-	if (!ctx->texture || !effect)
+	if (!ctx->texture || !ctx->engine)
 		return;
-	gs_eparam_t *image = gs_effect_get_param_by_name(effect, "image");
-	if (image)
-		gs_effect_set_texture(image, ctx->texture);
-	gs_draw_sprite(ctx->texture, 0, 0, 0);
+	ts_engine_render_texture(ctx->engine, ctx->texture, ctx->width, ctx->height, effect);
 }
 
 const char *capture_name(void *)
@@ -178,27 +183,10 @@ void *capture_create(obs_data_t *settings, obs_source_t *source)
 	ctx->capture_cursor.store(obs_data_get_bool(settings, kCursorKey));
 	ctx->click_audio.store(obs_data_get_bool(settings, kClickAudioKey));
 	obs_source_set_audio_mixers(source, kDefaultMixers);
-	start_backend(ctx);
 
-	/* A single source that already carries the effects. The user can still
-	 * open the filter to change every TopScreen setting. Keeping the filter as
-	 * the effects owner means profiles, hotkeys and the dock keep working.
-	 *
-	 * OBS loads the saved filters AFTER create(). The flag prevents a duplicate
-	 * filter on the next load; the filter itself is saved with the source. */
-	const bool has_effects = obs_data_get_bool(settings, kFilterFlag);
-	if (!has_effects) {
-		obs_source_t *filter = obs_source_create(
-			kFilterId, obs_module_text("FilterName"), nullptr, nullptr);
-		if (filter) {
-			obs_source_filter_add(source, filter);
-			obs_source_release(filter);
-			obs_data_set_bool(settings, kFilterFlag, true);
-		} else {
-			blog(LOG_WARNING,
-			     "[TopScreen] could not add the effects filter to the capture source");
-		}
-	}
+	/* Effects are applied by the shared engine; there is no child filter. */
+	ctx->engine = ts_engine_create(settings, source, true);
+	start_backend(ctx);
 	return ctx;
 }
 
@@ -216,6 +204,8 @@ void capture_destroy(void *data)
 		release_texture(ctx);
 		obs_leave_graphics();
 	}
+	if (ctx->engine)
+		ts_engine_destroy(ctx->engine);
 	if (ctx->backend)
 		ctx->backend->stop();
 	delete ctx;
@@ -234,6 +224,8 @@ void capture_update(void *data, obs_data_t *settings)
 	ctx->click_audio.store(obs_data_get_bool(settings, kClickAudioKey));
 	if (ctx->backend)
 		ctx->backend->set_capture_cursor(effective_cursor(ctx));
+	if (ctx->engine)
+		ts_engine_update(ctx->engine, settings);
 }
 
 bool capture_audio_render(void *data, uint64_t *ts_out, struct obs_source_audio_mix *audio,
@@ -261,8 +253,16 @@ void capture_tick(void *data, float seconds)
 
 	ctx->elapsed_ms += static_cast<double>(seconds) * 1000.0;
 	++ctx->tick_serial;
+	migrate_attached_filter(ctx);
 	if (ctx->backend)
 		ctx->backend->set_capture_cursor(effective_cursor(ctx));
+	uint32_t engine_w = 0, engine_h = 0;
+	if (ctx->backend)
+		ctx->backend->size(&engine_w, &engine_h);
+	if (ctx->engine) {
+		ts_engine_set_target(ctx->engine, engine_w, engine_h);
+		ts_engine_tick(ctx->engine, seconds);
+	}
 	const int pending = ctx->pending_monitor.exchange(-1);
 	if (pending >= 0 && pending != ctx->monitor) {
 		ctx->monitor = pending;
@@ -300,62 +300,74 @@ uint32_t capture_height(void *data)
 
 void capture_defaults(obs_data_t *settings)
 {
+	ts_engine_defaults(settings);
 	obs_data_set_default_int(settings, kMonitorKey, 0);
 	obs_data_set_default_bool(settings, kCursorKey, true);
 	obs_data_set_default_bool(settings, kClickAudioKey, false);
 }
 
-void find_effects_filter(obs_source_t *, obs_source_t *filter, void *param)
+void migrate_attached_filter(CaptureSource *ctx)
 {
-	if (!filter || !param)
+	if (!ctx || ctx->migrated_attached_filter || !ctx->source || !ctx->engine)
 		return;
-	const char *id = obs_source_get_id(filter);
-	if (id && std::strcmp(id, kFilterId) == 0)
-		*static_cast<bool *>(param) = true;
-}
+	ctx->migrated_attached_filter = true;
 
-bool has_effects_filter(obs_source_t *source)
-{
-	if (!source)
-		return false;
-	bool found = false;
-	obs_source_enum_filters(source, find_effects_filter, &found);
-	return found;
-}
+	struct Found {
+		obs_source_t *filter = nullptr;
+	};
+	Found found;
+	obs_source_enum_filters(
+		ctx->source,
+		[](obs_source_t *, obs_source_t *filter, void *param) {
+			auto *out = static_cast<Found *>(param);
+			const char *id = obs_source_get_id(filter);
+			if (id && std::strcmp(id, kFilterId) == 0 && !out->filter)
+				out->filter = obs_source_get_ref(filter);
+		},
+		&found);
+	if (!found.filter)
+		return;
 
-bool add_effects_clicked(obs_properties_t *props, obs_property_t *property, void *data)
-{
-	(void)props;
-	(void)property;
-	auto *ctx = static_cast<CaptureSource *>(data);
-	if (!ctx || !ctx->source || has_effects_filter(ctx->source))
-		return false;
-
-	obs_source_t *filter = obs_source_create(kFilterId, obs_module_text("FilterName"),
-						 nullptr, nullptr);
-	if (!filter)
-		return false;
-	obs_source_filter_add(ctx->source, filter);
-	obs_source_release(filter);
-
-	obs_data_t *settings = obs_source_get_settings(ctx->source);
-	if (settings) {
-		obs_data_set_bool(settings, kFilterFlag, true);
-		obs_source_update(ctx->source, settings);
-		obs_data_release(settings);
+	/* 1.2.5 attached a real TopScreen FX filter to this source. Move its
+	 * settings/profiles into the source and remove the child filter so the
+	 * embedded engine does not process the effects twice. */
+	obs_data_t *filter_settings = obs_source_get_settings(found.filter);
+	obs_data_t *source_settings = obs_source_get_settings(ctx->source);
+	if (filter_settings && source_settings) {
+		core::Config cfg;
+		config_load(filter_settings, &cfg);
+		config_store(source_settings, cfg);
+		obs_data_set_int(source_settings, core::keys::kProfileCurrent,
+				 obs_data_get_int(filter_settings, core::keys::kProfileCurrent));
+		obs_data_set_int(source_settings, core::keys::kProfileSeedVersion,
+				 obs_data_get_int(filter_settings, core::keys::kProfileSeedVersion));
+		for (int i = 0; i < core::keys::kProfileCount; ++i) {
+			profile_store::store_slot(
+				source_settings, i,
+				profile_store::load_slot(filter_settings, i));
+		}
+		obs_source_update(ctx->source, source_settings);
+		ts_engine_update(ctx->engine, source_settings);
 	}
-	return true;
+	obs_data_release(filter_settings);
+	obs_data_release(source_settings);
+	obs_source_filter_remove(ctx->source, found.filter);
+	obs_source_release(found.filter);
+	blog(LOG_INFO, "[TopScreen] migrated attached effects filter into TopScreen Capture");
 }
 
 obs_properties_t *capture_properties(void *data)
 {
-	obs_properties_t *props = obs_properties_create();
 	auto *ctx = static_cast<CaptureSource *>(data);
-	obs_data_t *settings = ctx && ctx->source ? obs_source_get_settings(ctx->source) : nullptr;
-	const int current = settings ? static_cast<int>(obs_data_get_int(settings, kMonitorKey)) : 0;
+	obs_source_t *source = ctx ? ctx->source : nullptr;
+	obs_properties_t *props = ctx && ctx->engine
+		? ts_engine_properties(ctx->engine, source)
+		: obs_properties_create();
 
+	obs_properties_t *capture = obs_properties_create();
+	obs_data_t *settings = source ? obs_source_get_settings(source) : nullptr;
 	obs_property_t *monitor = obs_properties_add_list(
-		props, kMonitorKey, obs_module_text("Capture.Monitor"), OBS_COMBO_TYPE_LIST,
+		capture, kMonitorKey, obs_module_text("Capture.Monitor"), OBS_COMBO_TYPE_LIST,
 		OBS_COMBO_FORMAT_INT);
 	const auto monitors = capture::enumerate_monitors();
 	if (monitors.empty()) {
@@ -368,30 +380,20 @@ obs_properties_t *capture_properties(void *data)
 			obs_property_list_add_int(monitor, label.c_str(), info.index);
 		}
 	}
-	(void)current;
+	obs_properties_add_bool(capture, kCursorKey, obs_module_text("Capture.Cursor"));
+	obs_properties_add_bool(capture, kClickAudioKey, obs_module_text("Capture.ClickAudio"));
+	obs_properties_add_text(capture, "capture_effects_hint",
+				obs_module_text("Capture.EffectsHint"), OBS_TEXT_INFO);
+	obs_properties_add_group(props, "grp_capture_source",
+				 obs_module_text("Capture.SourceGroup"), OBS_GROUP_NORMAL,
+				 capture);
+	if (settings)
+		obs_data_release(settings);
 
-	obs_properties_add_bool(props, kCursorKey, obs_module_text("Capture.Cursor"));
-	obs_properties_add_bool(props, kClickAudioKey, obs_module_text("Capture.ClickAudio"));
-
-	if (ctx && ctx->source) {
-		obs_properties_add_text(props, "capture_effects_hint",
-					obs_module_text("Capture.EffectsHint"), OBS_TEXT_INFO);
-		if (!has_effects_filter(ctx->source)) {
-			obs_properties_add_button2(props, "capture_add_effects",
-						   obs_module_text("Capture.AddEffects"),
-						   add_effects_clicked, ctx);
-		} else {
-			obs_properties_add_text(props, "capture_effects_active",
-						obs_module_text("Capture.EffectsActive"),
-						OBS_TEXT_INFO);
-		}
-	}
 	if (ctx && !ctx->logged_creation) {
 		ctx->logged_creation = true;
 		blog(LOG_INFO, "[TopScreen] capture source properties opened");
 	}
-	if (settings)
-		obs_data_release(settings);
 	return props;
 }
 

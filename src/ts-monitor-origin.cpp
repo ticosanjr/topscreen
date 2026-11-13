@@ -20,10 +20,13 @@ void MonitorOrigin::tick(obs_source_t *filter, const core::Config &cfg, uint32_t
 	if (++check_ticks_ >= 30) {
 		check_ticks_ = 0;
 		int hint = -1;
-		if (obs_source_t *parent = obs_filter_get_parent(filter)) {
-			const char *id = obs_source_get_id(parent);
+		obs_source_t *host = obs_filter_get_parent(filter);
+		if (!host && obs_source_get_type(filter) == OBS_SOURCE_TYPE_INPUT)
+			host = filter;
+		if (host) {
+			const char *id = obs_source_get_id(host);
 			if (id && std::strcmp(id, "topscreen_capture") == 0) {
-				obs_data_t *s = obs_source_get_settings(parent);
+				obs_data_t *s = obs_source_get_settings(host);
 				if (s) {
 					hint = static_cast<int>(
 						obs_data_get_int(s, "capture_monitor"));
@@ -93,8 +96,11 @@ void MonitorOrigin::refresh(obs_source_t *filter, const core::Config &cfg,
 	int hint = -1;
 	bool trust_hint = false;
 	std::string device;
-	if (obs_source_t *parent = obs_filter_get_parent(filter)) {
-		obs_data_t *s = obs_source_get_settings(parent);
+	obs_source_t *host = obs_filter_get_parent(filter);
+	if (!host && obs_source_get_type(filter) == OBS_SOURCE_TYPE_INPUT)
+		host = filter;
+	if (host) {
+		obs_data_t *s = obs_source_get_settings(host);
 		if (s) {
 			/* Newer OBS identifies the monitor by device name
 			 * (alt_id/id, e.g. "\\.\DISPLAY2"); older builds use an
@@ -113,7 +119,7 @@ void MonitorOrigin::refresh(obs_source_t *filter, const core::Config &cfg,
 			}
 			/* Our own source knows the exact monitor index even when two
 			 * monitors have the same resolution. */
-			const char *id = obs_source_get_id(parent);
+			const char *id = obs_source_get_id(host);
 			if (id && std::strcmp(id, "topscreen_capture") == 0) {
 				hint = static_cast<int>(obs_data_get_int(s, "capture_monitor"));
 				trust_hint = true;

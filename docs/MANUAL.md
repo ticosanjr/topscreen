@@ -53,21 +53,21 @@ to proceed. Details in [`BUILD.md`](BUILD.md).
 
 Instead of Display Capture + filter, you can add **Sources → + → TopScreen
 Capture** on Linux/X11. The source captures the selected monitor natively
-(X11/XShm) and already carries a **TopScreen FX** filter, so the scene has a
-single source. Choose the monitor in the source properties and adjust the
-effects in **Filters → TopScreen FX**.
+(X11/XShm) and applies the TopScreen effects **directly** — there is no child
+filter. Choose the monitor and configure every effect in the source properties.
 
 - Windows and Wayland still use **Display Capture + TopScreen FX**.
-- Do not apply a second TopScreen FX filter on top of this source.
-- If you remove the effects filter, the source properties offer
-  **Add TopScreen effects** to put it back.
-- **Include native cursor** keeps the X11 pointer visible when the filter is
-  removed or the effects are off. While the TopScreen custom cursor is active,
-  the filter disables it automatically to avoid a double cursor.
+- Do not apply a TopScreen FX filter on top of this source; it would process the
+  effects twice.
+- Scenes saved by 1.2.5 with an attached filter are migrated once: the filter
+  settings/profiles are copied into the source and the child filter is removed.
+- **Include native cursor** keeps the X11 pointer visible when the effects are
+  off. While the TopScreen custom cursor is active, it is disabled
+  automatically to avoid a double cursor.
 - **Output TopScreen click sounds from this source** routes clicks through the
   capture source's audio channel. Leave it off if you already use the separate
   `TopScreen Click Sound` source, otherwise the clicks will play twice.
-- Profiles, hotkeys and the dock target the **filter**, exactly as before.
+- Profiles, hotkeys and the dock target the **source**, exactly like a filter.
 
 ---
 

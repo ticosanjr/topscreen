@@ -9,6 +9,7 @@ namespace topscreen {
  * `settings` (optional, may be null) is only read to pick the initial
  * visibility of the mode-dependent highlighter groups.
  */
-obs_properties_t *properties_create(void *data, obs_data_t *settings = nullptr);
+obs_properties_t *properties_create(void *data, obs_data_t *settings = nullptr,
+				    bool include_monitor = true);
 
 } // namespace topscreen

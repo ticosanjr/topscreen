@@ -1,4 +1,6 @@
 #include "ts-filter.hpp"
+#include "ts-engine.hpp"
+#include "capture/ts-capture-source.hpp"
 
 #include "audio/ts-click-sound.hpp"
 #include "core/coord.hpp"
@@ -77,6 +79,7 @@ enum ActionBits : uint32_t {
  */
 struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 	obs_source_t *source = nullptr;
+	bool source_mode_ = false; // true for TopScreen Capture, false for the filter
 	std::string source_name_; // cached OBS source name (dock target selector)
 	core::Config cfg;
 	Compositor compositor;
@@ -169,6 +172,9 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 	void scene_view(double *zoom, double *focus_x, double *focus_y) const;
 	void update_active_window();
 	void update_visual_state(const core::ContentArea &content);
+	void render_filter(gs_effect_t *effect);
+	void render_texture(gs_texture_t *texture, uint32_t width, uint32_t height,
+			    gs_effect_t *effect);
 	void sync_parent_cursor(bool hide);
 	void restore_parent_cursor();
 	void start_zoom_spot(double zx0, double zy0, double zx1, double zy1, bool immediate_out,
@@ -401,6 +407,11 @@ void ts_filter_ctx::do_import_profiles(const std::string &json_text)
  */
 void ts_filter_ctx::sync_parent_cursor(bool hide)
 {
+	if (source_mode_) {
+		/* The source owns the native cursor directly; no parent lease. */
+		set_native_cursor(source, !hide);
+		return;
+	}
 	obs_source_t *parent = obs_filter_get_parent(source);
 
 	if (parent != cursor_parent_) {
@@ -771,10 +782,11 @@ const char *ts_filter_name(void *unused)
 	return obs_module_text("FilterName");
 }
 
-void *ts_filter_create(obs_data_t *settings, obs_source_t *source)
+void *create_engine_impl(obs_data_t *settings, obs_source_t *source, bool source_mode)
 {
 	auto *ctx = new ts_filter_ctx();
 	ctx->source = source;
+	ctx->source_mode_ = source_mode;
 	const char *source_name = obs_source_get_name(source);
 	ctx->source_name_ = source_name ? source_name : "";
 
@@ -832,12 +844,18 @@ void *ts_filter_create(obs_data_t *settings, obs_source_t *source)
 	 * that is active at startup. Queued and applied on the next tick. */
 	Hotkeys::apply_scene_profile_to_current();
 
-	blog(LOG_INFO, "[TopScreen] filter created (presets=%d)", ctx->presets.count());
+	blog(LOG_INFO, "[TopScreen] %s created (presets=%d)",
+	     source_mode ? "capture engine" : "filter", ctx->presets.count());
 
 	return ctx;
 }
 
-void ts_filter_destroy(void *data)
+void *ts_filter_create(obs_data_t *settings, obs_source_t *source)
+{
+	return create_engine_impl(settings, source, false);
+}
+
+void destroy_engine_impl(void *data)
 {
 	auto *ctx = static_cast<ts_filter_ctx *>(data);
 
@@ -852,7 +870,12 @@ void ts_filter_destroy(void *data)
 	delete ctx;
 }
 
-void ts_filter_update(void *data, obs_data_t *settings)
+void ts_filter_destroy(void *data)
+{
+	destroy_engine_impl(data);
+}
+
+void update_engine_impl(void *data, obs_data_t *settings)
 {
 	UNUSED_PARAMETER(settings);
 	auto *ctx = static_cast<ts_filter_ctx *>(data);
@@ -860,6 +883,11 @@ void ts_filter_update(void *data, obs_data_t *settings)
 		return;
 	/* Does not touch cfg here (UI thread); the tick reloads. */
 	ctx->pending_reload_.store(true);
+}
+
+void ts_filter_update(void *data, obs_data_t *settings)
+{
+	update_engine_impl(data, settings);
 }
 
 void ts_filter_ctx::update_input()
@@ -1111,7 +1139,7 @@ void ts_filter_ctx::update_visual_state(const core::ContentArea &content)
 	input_tier_cache_.store(input.tier());
 }
 
-void ts_filter_tick(void *data, float seconds)
+void tick_engine_impl(void *data, float seconds)
 {
 	auto *ctx = static_cast<ts_filter_ctx *>(data);
 	ctx->time_ms += static_cast<double>(seconds) * 1000.0;
@@ -1133,29 +1161,48 @@ void ts_filter_tick(void *data, float seconds)
 	ctx->update_visual_state(content);
 }
 
-void ts_filter_render(void *data, gs_effect_t *effect)
+void ts_filter_ctx::render_filter(gs_effect_t *effect)
 {
 	UNUSED_PARAMETER(effect);
-	auto *ctx = static_cast<ts_filter_ctx *>(data);
-
-	if (!ctx->loaded) {
-		obs_source_skip_video_filter(ctx->source);
+	if (!loaded) {
+		obs_source_skip_video_filter(source);
 		return;
 	}
 
 	/* The target source is only guaranteed valid inside the render callbacks. */
-	obs_source_t *target = obs_filter_get_target(ctx->source);
+	obs_source_t *target = obs_filter_get_target(source);
 	if (target) {
-		ctx->target_w = obs_source_get_base_width(target);
-		ctx->target_h = obs_source_get_base_height(target);
+		target_w = obs_source_get_base_width(target);
+		target_h = obs_source_get_base_height(target);
 	}
 
 	/* The capture's native cursor follows the master switch and the TopScreen
 	 * cursor setting: hidden only while TopScreen actually draws its own. */
-	ctx->sync_parent_cursor(ctx->cfg.effects_enabled && ctx->cfg.cursor.enabled);
+	sync_parent_cursor(cfg.effects_enabled && cfg.cursor.enabled);
 
-	ctx->compositor.render(ctx->source, target, ctx->target_w, ctx->target_h, ctx->cfg,
-			       ctx->frame);
+	compositor.render(source, target, target_w, target_h, cfg, frame);
+}
+
+void ts_filter_ctx::render_texture(gs_texture_t *texture, uint32_t width, uint32_t height,
+				   gs_effect_t *effect)
+{
+	if (!loaded || !texture || !width || !height)
+		return;
+	target_w = width;
+	target_h = height;
+	sync_parent_cursor(cfg.effects_enabled && cfg.cursor.enabled);
+	compositor.render_texture(texture, width, height, cfg, frame, effect);
+}
+
+void ts_filter_render(void *data, gs_effect_t *effect)
+{
+	UNUSED_PARAMETER(effect);
+	static_cast<ts_filter_ctx *>(data)->render_filter(effect);
+}
+
+void ts_filter_tick(void *data, float seconds)
+{
+	tick_engine_impl(data, seconds);
 }
 
 void ts_filter_defaults(obs_data_t *settings)
@@ -1237,6 +1284,63 @@ bool profiles_import_from_properties(void *filter)
 		blog(LOG_WARNING, "[TopScreen] profiles import: invalid scene profile map");
 	ctx->import_profiles(text);
 	return true;
+}
+
+} // namespace topscreen
+
+namespace topscreen {
+
+void *ts_engine_create(obs_data_t *settings, obs_source_t *source, bool source_mode)
+{
+	return create_engine_impl(settings, source, source_mode);
+}
+
+void ts_engine_destroy(void *engine)
+{
+	destroy_engine_impl(engine);
+}
+
+void ts_engine_update(void *engine, obs_data_t *settings)
+{
+	update_engine_impl(engine, settings);
+}
+
+void ts_engine_defaults(obs_data_t *settings)
+{
+	config_defaults(settings);
+}
+
+void ts_engine_set_target(void *engine, uint32_t width, uint32_t height)
+{
+	auto *ctx = static_cast<ts_filter_ctx *>(engine);
+	if (!ctx)
+		return;
+	ctx->target_w = width;
+	ctx->target_h = height;
+}
+
+void ts_engine_tick(void *engine, float seconds)
+{
+	tick_engine_impl(engine, seconds);
+}
+
+void ts_engine_render_texture(void *engine, gs_texture_t *texture, uint32_t width,
+			      uint32_t height, gs_effect_t *effect)
+{
+	auto *ctx = static_cast<ts_filter_ctx *>(engine);
+	if (ctx)
+		ctx->render_texture(texture, width, height, effect);
+}
+
+obs_properties_t *ts_engine_properties(void *engine, obs_source_t *source)
+{
+	auto *ctx = static_cast<ts_filter_ctx *>(engine);
+	if (!ctx)
+		return obs_properties_create();
+	obs_data_t *settings = source ? obs_source_get_settings(source) : nullptr;
+	obs_properties_t *props = properties_create(engine, settings, !ctx->source_mode_);
+	obs_data_release(settings);
+	return props;
 }
 
 } // namespace topscreen

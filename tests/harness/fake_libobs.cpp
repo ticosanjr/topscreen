@@ -777,6 +777,11 @@ const char *obs_source_get_id(const obs_source_t *source)
 	return source && source->info && source->info->id ? source->info->id : "";
 }
 
+enum obs_source_type obs_source_get_type(const obs_source_t *source)
+{
+	return source && source->info ? source->info->type : OBS_SOURCE_TYPE_INPUT;
+}
+
 void obs_source_filter_add(obs_source_t *, obs_source_t *) {}
 
 obs_source_t *obs_source_get_filter_by_name(obs_source_t *, const char *)
@@ -791,6 +796,13 @@ size_t obs_source_filter_count(const obs_source_t *)
 
 void obs_source_enum_filters(obs_source_t *, obs_source_enum_proc_t, void *)
 {
+}
+
+void obs_source_filter_remove(obs_source_t *, obs_source_t *) {}
+
+obs_source_t *obs_source_get_ref(obs_source_t *source)
+{
+	return source;
 }
 
 bool obs_get_video_info(struct obs_video_info *)
@@ -1204,6 +1216,11 @@ gs_effect_t *gs_effect_create_from_file(const char *file, char **error)
 }
 
 void gs_effect_destroy(gs_effect_t *) {}
+
+gs_effect_t *obs_get_base_effect(enum obs_base_effect)
+{
+	return reinterpret_cast<gs_effect_t *>(&g_effect_dummy);
+}
 
 struct obs_param {
 	std::string name;

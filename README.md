@@ -1,5 +1,7 @@
 # TopScreen
 
+![TopScreen icon](assets/icon.png)
+
 **Live screen-capture effects for OBS Studio.**
 
 TopScreen is an OBS plugin that applies live effects over a screen capture — a
@@ -22,11 +24,17 @@ on Linux/X11. Everything is automatic or triggered by hotkeys.
 4. Profile hotkeys **Ctrl+Shift+Alt+A…J** are applied by default; customize them in **Settings → Hotkeys → TopScreen**.
 
 On Linux/X11 you can instead add **Sources → TopScreen Capture**, which picks a
-monitor and attaches the effects filter automatically. The effects pipeline runs
-on the GPU inside OBS; the filter does not copy frames, while the experimental
-capture source pulls pixels through XShm.
+monitor and applies the effects directly (no child filter). The effects pipeline
+runs on the GPU inside OBS; the filter does not copy frames, while the
+experimental capture source pulls pixels through XShm.
 
-📖 **Full user manual: [`docs/MANUAL.md`](docs/MANUAL.md).**
+![TopScreen effects preview](assets/screenshots/topscreen-scene.png)
+
+See a real OBS session with the effects in
+[`assets/screenshots/obs-overview.png`](assets/screenshots/obs-overview.png).
+
+📖 **Full user manual: [`docs/MANUAL.md`](docs/MANUAL.md).** Distribution assets
+(icon and screenshots) live in [`assets/`](assets/README.md).
 
 ---
 

@@ -101,6 +101,7 @@ Status: ✅ done · 🟡 partial · ⬜ pending.
 | T6.3 | Input source `obs_source_info` | ✅ (Linux/X11 `topscreen_capture`) |
 | T6.4 | Screen selection in the UI | ✅ (source monitor list) |
 | T6.5 | Own audio output (click sound on the channel) | ✅ (dedicated OBS audio source) |
+| T6.6 | Shared effect engine embedded in the capture source | ✅ (filter and source use `ts_engine`; no child filter) |
 
 ## F7 — Wayland parity + polish
 

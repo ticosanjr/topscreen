@@ -15,6 +15,7 @@
 #include <sys/shm.h>
 
 #include <algorithm>
+#include <atomic>
 #include <cstdlib>
 #include <cstring>
 #include <string>
@@ -290,7 +291,7 @@ private:
 	XShmSegmentInfo shm_ = {};
 	bool shm_attached_ = false;
 	bool use_shm_ = false;
-	bool capture_cursor_ = false;
+	std::atomic<bool> capture_cursor_{false};
 };
 
 #endif

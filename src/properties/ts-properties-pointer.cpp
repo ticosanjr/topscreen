@@ -87,14 +87,19 @@ void add_click_group(obs_properties_t *props, const char *group_key, const char 
 				  static_cast<int>(ClickEffect::WaterRipple));
 	obs_property_list_add_int(effect, obs_module_text("Click.Effect.WaterRippleClear"),
 				  static_cast<int>(ClickEffect::WaterRippleClear));
+	set_tip(effect, obs_module_text("Tooltip.ClickEffect"));
 
-	add_range_slider(
+	obs_property_t *size = add_range_slider(
 		g, size_key, obs_module_text("Click.Size"),
 		limits::kClickSizeRange);
-	obs_properties_add_color(g, color_key, obs_module_text("Click.Color"));
-	add_range_slider(
+	set_tip(size, obs_module_text("Tooltip.ClickSize"));
+	obs_property_t *color =
+		obs_properties_add_color(g, color_key, obs_module_text("Click.Color"));
+	set_tip(color, obs_module_text("Tooltip.ClickColor"));
+	obs_property_t *duration = add_range_slider(
 		g, duration_key, obs_module_text("Click.DurationMs"),
 		limits::kClickDurationRange);
+	set_tip(duration, obs_module_text("Tooltip.ClickDuration"));
 
 	obs_properties_add_group(props, group_key, title, OBS_GROUP_NORMAL, g);
 }
@@ -162,10 +167,6 @@ void add_cursor_section(obs_properties_t *props, obs_properties_t *pointer, obs_
 {
 	/* ---------------- Cursor ---------------- */
 	obs_properties_t *cur = obs_properties_create();
-	obs_property_t *cursor_on =
-		obs_properties_add_bool(cur, kCursorEnabled, obs_module_text("Cursor.Enabled"));
-	obs_property_set_modified_callback(cursor_on, cursor_options_changed);
-
 	obs_property_t *style = obs_properties_add_list(cur, kCursorStyle, obs_module_text("Cursor.Style"),
 							OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
 	/* One table drives the whole dropdown: same theme = adjacent entries and
@@ -215,7 +216,9 @@ void add_cursor_section(obs_properties_t *props, obs_properties_t *pointer, obs_
 		cur, kCursorIdleDelayMs, obs_module_text("Cursor.IdleDelayMs"),
 		limits::kCursorIdleDelayRange);
 	obs_property_set_modified_callback(hide_idle, cursor_options_changed);
-	obs_properties_add_group(pointer, "grp_cursor", obs_module_text("Group.Cursor"), OBS_GROUP_NORMAL, cur);
+	obs_property_t *cur_group = obs_properties_add_group(
+		pointer, kCursorEnabled, obs_module_text("Group.Cursor"), OBS_GROUP_CHECKABLE, cur);
+	obs_property_set_modified_callback(cur_group, cursor_options_changed);
 	cursor_options_changed(props, nullptr, settings);
 }
 
@@ -254,9 +257,10 @@ void add_click_sound_section(obs_properties_t *props, obs_properties_t *pointer,
 		obs_property_list_add_string(sndleft, s.label, s.path);
 		obs_property_list_add_string(sndright, s.label, s.path);
 	}
-	add_range_slider(
+	obs_property_t *volume = add_range_slider(
 		snd, kClickSoundVolume, obs_module_text("ClickSound.Volume"),
 		limits::kUnitRange);
+	set_tip(volume, obs_module_text("Tooltip.ClickSoundVolume"));
 	obs_property_t *add_audio = obs_properties_add_button2(
 		snd, "click_sound_add_btn", obs_module_text("ClickSound.AddAudioButton"),
 		add_click_audio_clicked, nullptr);

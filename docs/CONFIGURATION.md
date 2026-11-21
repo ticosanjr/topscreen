@@ -15,7 +15,7 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | Group (UI) | Option (UI) | Key | Type | Range | Default |
 |------------|------------|-------|------|-------|--------|
 | — | Effects enabled | `effects_enabled` | bool | — | `true` |
-| Background | Enable background | `bg_enabled` | bool | — | `true` |
+| Screen | Background (group checkbox) | `bg_enabled` | bool | — | `true` |
 | | Background type | `bg_type` | int | 0 solid · 1 gradient · 2 wallpaper · 3 local image · 4 transparent · 5 blurred screen | `1` |
 | | Legacy style (migrated) | `bg_mode` | int | old 0 solid · 1/2 gradient · 3 wallpaper | — |
 | | Color 1 (solid / gradient start) | `bg_color_a` | color | — | `0xFF20242E` |
@@ -33,12 +33,12 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Frame color | `frame_color` | color | — | `0xFF000000` |
 | | Frame width (px) | `frame_width` | double | 0–40 | `2` |
 | | Screen corner radius (px) | `bg_corner_radius` | double | 0–200 | `18` |
-| | Window shadow | `bg_shadow` | bool | — | `true` |
+| | Shadow (group checkbox) | `bg_shadow` | bool | — | `true` |
 | | Shadow opacity (0–1) | `bg_shadow_alpha` | double | 0–1 | `0.35` |
 | | Shadow blur (px) | `bg_shadow_blur` | double | 0–200 | `48` |
 | | Shadow offset X (px) | `bg_shadow_offset_x` | double | -100–100 | `0` |
 | | Shadow offset Y (px) | `bg_shadow_offset` | double | -100–100 | `12` |
-| Cursor | Show custom cursor | `cursor_enabled` | bool | — | `true` |
+| Cursor and clicks | Cursor (group checkbox) | `cursor_enabled` | bool | — | `true` |
 | | Cursor style (grouped by theme) | `cursor_style` | int | **Bibata** 3 · 27 · 10 · 32 · 11 · 33 · 22 · 36; **Breeze** 2 · 26 · 21 · 35; **Adwaita** 4 · 28; **Yaru** 8 · 30; **DMZ** 7 · 29 · 19 · 34; **Google Dot** 5 · 20; **XCursor Pro** 9 · 31; **macOS** 0; **Windows** 1; **Effects** 12 Neon · 15 Onyx · 13 Dot; **Custom** 50 styles (see [`CURSORS.md`](CURSORS.md)) | `0` |
 | | Cursor size (1 = default) | `cursor_size` | double | 0.5–4 | `1.4` |
 | | Rotation offset (degrees) | `cursor_rotation_offset_deg` | double | −180–180 | `0` |
@@ -75,7 +75,7 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Click sound volume (0–1) | `click_sound_volume` | double | 0–1 | `0.6` |
 | | Play on left click (legacy) | `click_sound_left` | bool | derived from the left file; Mute is an empty path | `true` |
 | | Play on right click (legacy) | `click_sound_right` | bool | derived from the right file; Mute is an empty path | `true` |
-| Spotlight | Enable spotlight | `spotlight_enabled` | bool | — | `false` |
+| Spotlight and magnifier | Spotlight (group checkbox) | `spotlight_enabled` | bool | — | `false` |
 | | Spotlight shape | `spotlight_shape` | int | 0 circle, 1 square | `0` |
 | | Radius (fraction of screen) | `spotlight_radius` | double | 0.05–1 | `0.30` |
 | | Square corner radius (px) | `spotlight_corner_radius` | double | px | `0` |
@@ -90,7 +90,7 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Drop/zoom in (ms) | `spotlight_in_ms` | double | ms | `250` |
 | | Drop/zoom out (ms) | `spotlight_out_ms` | double | ms | `300` |
 | | Show cursor during spotlight | `spotlight_show_cursor` | bool | — | `true` |
-| Magnifier | Enable magnifier lens | `magnifier_enabled` | bool | — | `false` |
+| Spotlight and magnifier | Magnifier (group checkbox) | `magnifier_enabled` | bool | — | `false` |
 | | Lens shape | `magnifier_shape` | int | 0 circle · 1 square | `0` |
 | | Lens radius | `magnifier_radius` | double | 0.05–1 (fraction of the shorter side) | `0.28` |
 | | Lens corner radius (px) | `magnifier_corner_radius` | double | 0–200 | `0` |
@@ -110,7 +110,7 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Zoom in (ms) | `magnifier_in_ms` | double | 0–2000 | `250` |
 | | Zoom out (ms) | `magnifier_out_ms` | double | 0–2000 | `300` |
 | | Show cursor during magnifier | `magnifier_show_cursor` | bool | — | `true` |
-| Keys | Show typed keys | `keys_enabled` | bool | — | `true` |
+| Keys and webcam | Keystrokes (group checkbox) | `keys_enabled` | bool | — | `true` (profile A ships with it off; C/G/I enable it) |
 | | Modifiers only | `keys_modifiers_only` | bool | — | `false` |
 | | Show special key names | `keys_show_special` | bool | — | `false` (off = ignore named keys; Space is always shown) |
 | | Show shortcuts | `keys_show_shortcuts` | bool | — | `true` (Ctrl + key as one entry) |
@@ -123,14 +123,14 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Text color | `keys_color` | color | — | `0xFFFFFFFF` |
 | | Text shadow | `keys_shadow` | bool | — | `true` |
 | | Show background band | `keys_band` | bool | — | `true` |
-| | Band color | `keys_band_color` | color | — | `0x99000000` |
-| Highlighter | Enable drag actions | `highlight_enabled` | bool | — | `true` |
+| | Band color (alpha = transparency) | `keys_band_color` | color+alpha | — | `0x99000000` |
+| Zoom and highlight | Highlighter (group checkbox) | `highlight_enabled` | bool | — | `true` |
 | | Enable hotkey highlight (toggle zoom) | `highlight_hotkey_enabled` | bool | — | `true` |
 | — | Drag action: box / line / zoom / box+zoom / line+zoom / reading | `highlight_mode` | int | 0 box, 1 line, 2 zoom, 3 box+zoom, 4 line+zoom, 6 reading (5 is retired and migrates to 2) | `0` |
 | — | Keep the mark/zoom until the next click | `highlight_lock_until_click` | bool | — | `false` |
 | Reading | Darken outside (0 = off, 1 = black) | `highlight_reading_dim` | double | 0–1 | `0.55` |
-| Mark appearance | Mark color | `highlight_color` | color | — | `0x6600E0FF` |
-| Mark appearance | Mark opacity (0 = invisible, 1 = solid) | `highlight_opacity` | double | 0–1 | `0.35` |
+| Mark appearance | Mark color (RGB; transparency is **Mark opacity**) | `highlight_color` | color | — | `0xFF00E0FF` |
+| Mark appearance | Mark opacity (0 = invisible, 1 = solid) | `highlight_opacity` | double | 0–1 | `0.14` |
 | Mark appearance | Line thickness (fraction of the screen) | `highlight_thickness` | double | 0.001–0.05 | `0.004` |
 | Mark timing | Mark stays on screen (ms) | `highlight_hold_ms` | double | 0–5000 | `900` |
 | Mark timing | Mark fade-out (ms) | `highlight_fade_ms` | double | 0–2000 | `300` |
@@ -188,7 +188,7 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 > Spotlight and Magnifier are mutually exclusive: enabling one disables the other. Both are full-screen focus effects and share the same transition/hotkey model.
 
 > Highlighter: the hotkey toggle is independent of the drag modes and of the
-> **Enable drag actions** switch. It uses the same Zoom settings above, so the
+> **Highlighter** group checkbox. It uses the same Zoom settings above, so the
 > Zoom group stays visible whenever the hotkey is enabled, even in Box/Line
 > mode. The global **Effects enabled** master still applies: with effects off
 > the hotkey is a no-op (and releases an active gesture). Highlight zoom is

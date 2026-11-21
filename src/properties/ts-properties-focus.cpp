@@ -105,9 +105,6 @@ void add_spotlight_section(obs_properties_t *props, obs_properties_t *focus, obs
 {
 	/* ---------------- Spotlight ---------------- */
 	obs_properties_t *spot = obs_properties_create();
-	obs_property_t *spot_enabled =
-		obs_properties_add_bool(spot, kSpotlightEnabled, obs_module_text("Spotlight.Enabled"));
-	obs_property_set_modified_callback(spot_enabled, spotlight_options_changed);
 	obs_properties_add_bool(spot, kSpotlightShowCursor, obs_module_text("Spotlight.ShowCursor"));
 
 	obs_property_t *sshape = obs_properties_add_list(
@@ -165,8 +162,10 @@ void add_spotlight_section(obs_properties_t *props, obs_properties_t *focus, obs
 				 obs_module_text("Spotlight.AnimationGroup"), OBS_GROUP_NORMAL,
 				 sanim);
 
-	obs_properties_add_group(focus, "grp_spotlight", obs_module_text("Group.Spotlight"), OBS_GROUP_NORMAL,
-				 spot);
+	obs_property_t *spot_group = obs_properties_add_group(
+		focus, kSpotlightEnabled, obs_module_text("Group.Spotlight"),
+		OBS_GROUP_CHECKABLE, spot);
+	obs_property_set_modified_callback(spot_group, spotlight_options_changed);
 	spotlight_options_changed(props, nullptr, settings);
 	spotlight_border_changed(props, nullptr, settings);
 }
@@ -175,8 +174,6 @@ void add_magnifier_section(obs_properties_t *props, obs_properties_t *focus, obs
 {
 	/* ---------------- Magnifier ---------------- */
 	obs_properties_t *mag = obs_properties_create();
-	obs_property_t *mag_enabled =
-		obs_properties_add_bool(mag, kMagnifierEnabled, obs_module_text("Magnifier.Enabled"));
 	obs_properties_add_bool(mag, kMagnifierShowCursor, obs_module_text("Magnifier.ShowCursor"));
 	obs_property_t *mshape = obs_properties_add_list(
 		mag, kMagnifierShape, obs_module_text("Magnifier.Shape"), OBS_COMBO_TYPE_LIST,
@@ -241,9 +238,10 @@ void add_magnifier_section(obs_properties_t *props, obs_properties_t *focus, obs
 	add_range_slider(
 		mag, kMagnifierOutMs, obs_module_text("Magnifier.OutMs"),
 		limits::kInOutMsRange);
-	obs_properties_add_group(focus, "grp_magnifier", obs_module_text("Group.Magnifier"),
-				 OBS_GROUP_NORMAL, mag);
-	obs_property_set_modified_callback(mag_enabled, magnifier_options_changed);
+	obs_property_t *mag_group = obs_properties_add_group(
+		focus, kMagnifierEnabled, obs_module_text("Group.Magnifier"),
+		OBS_GROUP_CHECKABLE, mag);
+	obs_property_set_modified_callback(mag_group, magnifier_options_changed);
 	magnifier_options_changed(props, nullptr, settings);
 	magnifier_border_changed(props, nullptr, settings);
 	magnifier_shadow_changed(props, nullptr, settings);

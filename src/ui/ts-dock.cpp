@@ -314,6 +314,8 @@ private:
 			const int cur = c->current_preset();
 			if (cur >= 0 && cur < preset_->count())
 				preset_->setCurrentIndex(cur);
+			else
+				preset_->setCurrentIndex(-1); /* no active preset */
 
 			const int pc = c->current_profile();
 			if (pc >= 0 && pc < profile_->count())

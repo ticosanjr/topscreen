@@ -3,6 +3,30 @@
 User-visible changes. Dates are in ISO form. The released packages are listed in
 [`releases/README.md`](releases/README.md).
 
+## Unreleased
+
+- Editing the highlight color no longer makes it opaque: legacy alpha is folded
+  into the explicit opacity. The keystroke band uses an alpha color picker, so
+  its transparency is preserved.
+- A profile seed revision no longer overwrites edits in profiles A-J; only
+  missing slots and missing keys are seeded.
+- The dock no longer shows a preset as active after switching profiles.
+- Applying a preset is now a temporary look: it appears immediately but is only
+  written into the active profile when you press **Save profile** or edit
+  another setting.
+- Properties groups are named by what they change (**Screen**, **Zoom and
+  highlight**, **Cursor and clicks**, **Spotlight and magnifier**, **Keys and
+  webcam**); the master switch is first and the version is last.
+- Background, Shadow, Cursor, Spotlight, Magnifier, Highlighter and Keystrokes
+  are now groups with a checkbox in the header, so each section can be turned
+  off without an extra row.
+- TopScreen Capture shows the monitor and capture controls before the effects.
+- New installs start with typed keys **off** (profile A), and the Keys group
+  warns while letters are being shown.
+- The TopScreen Capture properties no longer show an empty "Advanced" group.
+- Added the missing tooltips for click color, frame style/width/color and the
+  Smart zoom hold/motion-blur strength; fixed stale tooltip and manual text.
+
 ## 1.3.0
 
 - **TopScreen Capture:** native cursor compositing (X11/XFixes) with an

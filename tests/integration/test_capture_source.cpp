@@ -1,4 +1,5 @@
 #include "capture/ts-capture-source.hpp"
+#include "core/keys.hpp"
 #include "ts-filter.hpp"
 
 #include "harness/fake_libobs.hpp"
@@ -26,7 +27,7 @@ TEST(integration_capture_source_lifecycle_and_properties)
 	CHECK(obs_properties_get(props, "capture_cursor") != nullptr);
 	CHECK(obs_properties_get(props, "capture_click_audio") != nullptr);
 	/* The source embeds the shared effect properties. */
-	CHECK(obs_properties_get(props, "grp_highlight") != nullptr);
+	CHECK(obs_properties_get(props, topscreen::core::keys::kHighlightEnabled) != nullptr);
 	CHECK(obs_properties_get(props, "grp_zoom") != nullptr);
 	obs_properties_destroy(props);
 

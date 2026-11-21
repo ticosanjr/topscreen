@@ -187,6 +187,44 @@ std::string read_string(obs_data_t *s, const char *k, const std::string &d)
 	return v ? v : d;
 }
 
+/*
+ * OBS's plain color picker rewrites the stored value with alpha 255, so a
+ * translucent color edited in Properties would suddenly become opaque. The
+ * highlighter used to carry transparency in the color byte; fold it into the
+ * explicit opacity once and keep the color RGB-only from now on. (The key band
+ * has no separate opacity, so it uses an alpha color picker instead.) The
+ * marker lives in the same obs_data as the setting (the source or the profile
+ * slot), so older scenes migrate exactly once.
+ */
+constexpr const char *kColorAlphaMigrated = "color_alpha_rgb_v1";
+
+void migrate_translucent_colors(obs_data_t *s, Config *c)
+{
+	if (!s || !c || obs_data_has_user_value(s, kColorAlphaMigrated))
+		return;
+
+	bool changed = false;
+	auto fold = [&](uint32_t *color, double *opacity) {
+		const uint32_t alpha = (*color >> 24) & 0xFFu;
+		if (alpha == 0xFFu)
+			return;
+		if (opacity)
+			*opacity = std::clamp(*opacity * (static_cast<double>(alpha) / 255.0),
+					      0.0, 1.0);
+		*color |= 0xFF000000u;
+		changed = true;
+	};
+
+	fold(&c->highlight.color, &c->highlight.opacity);
+
+	if (!changed)
+		return;
+
+	obs_data_set_int(s, kHighlightColor, static_cast<long long>(c->highlight.color));
+	obs_data_set_double(s, kHighlightOpacity, c->highlight.opacity);
+	obs_data_set_bool(s, kColorAlphaMigrated, true);
+}
+
 } // namespace
 
 #define TS_LOAD_BOOL(k, m) c->m = read_bool(s, k, d.m)
@@ -271,6 +309,7 @@ void config_load(obs_data_t *s, Config *c, const Config *fallback)
 		c->spotlight.outside_mode = 1;
 
 	sanitize_config(c);
+	migrate_translucent_colors(s, c);
 }
 
 void config_store(obs_data_t *s, const Config &c)

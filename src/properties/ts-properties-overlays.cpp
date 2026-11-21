@@ -27,6 +27,7 @@ bool keys_options_changed(obs_properties_t *props, obs_property_t *p, obs_data_t
 	(void)p;
 	const bool on = setting_bool(settings, kKeysEnabled, true);
 	const bool band = setting_bool(settings, kKeysBand, true);
+	const bool modifiers = setting_bool(settings, kKeysModifiersOnly, false);
 	for (const char *key : {kKeysModifiersOnly, kKeysShowSpecial, kKeysShowShortcuts,
 			       kKeysTtlMs, kKeysMax, kKeysPosX, kKeysPosY, kKeysSize,
 			       kKeysFont, kKeysColor, kKeysShadow, kKeysBand,
@@ -36,6 +37,9 @@ bool keys_options_changed(obs_properties_t *props, obs_property_t *p, obs_data_t
 	}
 	if (obs_property_t *v = obs_properties_get(props, kKeysBandColor))
 		obs_property_set_visible(v, on && band);
+	/* Typing letters is global input: warn unless only modifiers are shown. */
+	if (obs_property_t *v = obs_properties_get(props, "keys_privacy_hint"))
+		obs_property_set_visible(v, on && !modifiers);
 	return true;
 }
 
@@ -86,9 +90,6 @@ void add_highlight_section(obs_properties_t *props, obs_properties_t *overlays, 
 	/* ---------------- Highlighter: action first, then only what applies.
 	 * The mode list below shows/hides the Look / Timing / Zoom groups. */
 	obs_properties_t *hl = obs_properties_create();
-	obs_property_t *hl_on =
-		obs_properties_add_bool(hl, kHighlightEnabled, obs_module_text("Highlight.Enabled"));
-	obs_property_set_modified_callback(hl_on, highlight_mode_changed);
 	obs_property_t *hkh = obs_properties_add_bool(hl, kHighlightHotkeyEnabled,
 						      obs_module_text("Highlight.HotkeyEnabled"));
 
@@ -168,8 +169,10 @@ void add_highlight_section(obs_properties_t *props, obs_properties_t *overlays, 
 	obs_properties_add_group(hl, "grp_hl_zoom", obs_module_text("Highlight.ZoomGroup"), OBS_GROUP_NORMAL,
 				 hl_zoom);
 
-	obs_properties_add_group(overlays, "grp_highlight", obs_module_text("Group.Highlight"), OBS_GROUP_NORMAL,
-				 hl);
+	obs_property_t *hl_group = obs_properties_add_group(
+		overlays, kHighlightEnabled, obs_module_text("Group.Highlight"),
+		OBS_GROUP_CHECKABLE, hl);
+	obs_property_set_modified_callback(hl_group, highlight_mode_changed);
 
 	/* Initial visibility matches the saved mode (the callback keeps it live). */
 	highlight_mode_changed(props, nullptr, settings);
@@ -179,10 +182,14 @@ void add_keys_section(obs_properties_t *props, obs_properties_t *overlays, obs_d
 {
 	/* ---------------- Keys ---------------- */
 	obs_properties_t *keys = obs_properties_create();
-	obs_property_t *keys_on =
-		obs_properties_add_bool(keys, kKeysEnabled, obs_module_text("Keys.Enabled"));
-	obs_property_set_modified_callback(keys_on, keys_options_changed);
-	obs_properties_add_bool(keys, kKeysModifiersOnly, obs_module_text("Keys.ModifiersOnly"));
+	obs_property_t *privacy = obs_properties_add_text(
+		keys, "keys_privacy_hint", obs_module_text("Keys.PrivacyHint"),
+		OBS_TEXT_INFO);
+	obs_property_text_set_info_type(privacy, OBS_TEXT_INFO_WARNING);
+	obs_property_text_set_info_word_wrap(privacy, true);
+	obs_property_t *modifiers =
+		obs_properties_add_bool(keys, kKeysModifiersOnly, obs_module_text("Keys.ModifiersOnly"));
+	obs_property_set_modified_callback(modifiers, keys_options_changed);
 	obs_properties_add_bool(keys, kKeysShowSpecial, obs_module_text("Keys.ShowSpecial"));
 	obs_properties_add_bool(keys, kKeysShowShortcuts, obs_module_text("Keys.ShowShortcuts"));
 	add_range_slider(
@@ -210,10 +217,12 @@ void add_keys_section(obs_properties_t *props, obs_properties_t *overlays, obs_d
 	obs_properties_add_bool(keys, kKeysShadow, obs_module_text("Keys.Shadow"));
 	obs_property_t *band =
 		obs_properties_add_bool(keys, kKeysBand, obs_module_text("Keys.Band"));
-	obs_properties_add_color(keys, kKeysBandColor, obs_module_text("Keys.BandColor"));
+	obs_properties_add_color_alpha(keys, kKeysBandColor, obs_module_text("Keys.BandColor"));
 	obs_property_set_modified_callback(band, keys_options_changed);
 
-	obs_properties_add_group(overlays, "grp_keys", obs_module_text("Group.Keys"), OBS_GROUP_NORMAL, keys);
+	obs_property_t *keys_group = obs_properties_add_group(
+		overlays, kKeysEnabled, obs_module_text("Group.Keys"), OBS_GROUP_CHECKABLE, keys);
+	obs_property_set_modified_callback(keys_group, keys_options_changed);
 	keys_options_changed(props, nullptr, settings);
 }
 

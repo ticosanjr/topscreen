@@ -45,8 +45,12 @@ bool ensure_slots(obs_data_t *settings, int revision)
 	const bool reseed = current < revision;
 	bool changed = false;
 
+	/* A revision bump only seeds the slots that are missing. Existing slots
+	 * are left untouched: load_slot() already falls back to the current seed
+	 * for any key a slot does not have, so new defaults reach old profiles
+	 * without overwriting the user's edits. */
 	for (int i = 0; i < kProfileCount; ++i) {
-		if (!reseed && slot_exists(settings, i))
+		if (slot_exists(settings, i))
 			continue;
 		seed_slot(settings, i);
 		changed = true;

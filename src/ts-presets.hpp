@@ -30,6 +30,9 @@ public:
 	int next();
 	int prev();
 
+	/** Forgets the last applied preset (a profile switch changes the look). */
+	void clear_current() { current_ = -1; }
+
 private:
 	std::vector<core::Preset> presets_;
 	int current_ = -1;

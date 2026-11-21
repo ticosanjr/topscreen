@@ -10,9 +10,11 @@
 #include "audio/ts-click-audio.hpp"
 #include "audio/ts-click-sound.hpp"
 #include "core/keys.hpp"
+#include "core/profiles.hpp"
 #include "core/types.hpp"
 #include "input/ts-input.hpp"
 #include "ts-properties.hpp"
+#include "ts-profile-store.hpp"
 #include "ts-settings.hpp"
 
 using namespace topscreen;
@@ -122,7 +124,9 @@ TEST(settings_store_load_roundtrip)
 	CHECK_EQ(b.bg.image_file, a.bg.image_file);
 	CHECK_NEAR(b.bg.shadow_offset_x, -17.0, 1e-9);
 	CHECK_NEAR(b.keys.pos_x, 0.25, 1e-9);
-	CHECK_EQ(b.highlight.color, a.highlight.color);
+	/* The translucent highlight color is folded into the explicit opacity. */
+	CHECK_EQ(b.highlight.color, 0xFF00E0FFu);
+	CHECK_NEAR(b.highlight.opacity, 0.35 * (102.0 / 255.0), 1e-6);
 	CHECK(b.highlight.lock_until_click);
 	CHECK_NEAR(b.highlight.reading_dim, 0.7, 1e-9);
 	CHECK_NEAR(b.cursor.size, 1.5, 1e-9);
@@ -352,13 +356,15 @@ TEST(properties_creates_expected_groups)
 	CHECK(p != nullptr);
 	CHECK(obs_properties_get(p, "grp_profiles") != nullptr);
 	CHECK(obs_properties_get(p, core::keys::kEffectsEnabled) != nullptr);
-	CHECK(obs_properties_get(p, "grp_bg") != nullptr);
+	CHECK(obs_properties_get(p, "grp_screen") != nullptr);
+	CHECK(obs_properties_get(p, "grp_zoom_highlight") != nullptr);
+	CHECK(obs_properties_get(p, core::keys::kBgEnabled) != nullptr);
 	CHECK(obs_properties_get(p, core::keys::kBgShadowOffsetX) != nullptr);
-	CHECK(obs_properties_get(p, "grp_cursor") != nullptr);
+	CHECK(obs_properties_get(p, core::keys::kCursorEnabled) != nullptr);
 	CHECK(obs_properties_get(p, "grp_zoom") != nullptr);
-	CHECK(obs_properties_get(p, "grp_keys") != nullptr);
-	CHECK(obs_properties_get(p, "grp_highlight") != nullptr);
-	CHECK(obs_properties_get(p, "grp_spotlight") != nullptr);
+	CHECK(obs_properties_get(p, core::keys::kKeysEnabled) != nullptr);
+	CHECK(obs_properties_get(p, core::keys::kHighlightEnabled) != nullptr);
+	CHECK(obs_properties_get(p, core::keys::kSpotlightEnabled) != nullptr);
 	CHECK(obs_properties_get(p, core::keys::kSpotlightShape) != nullptr);
 	CHECK(obs_properties_get(p, core::keys::kSpotlightBorderColor) != nullptr);
 	CHECK(obs_properties_get(p, core::keys::kSpotlightOutsideMode) != nullptr);
@@ -520,7 +526,7 @@ TEST(properties_background_type_visibility)
 		CHECK(fakeobs::property_visible(obs_properties_get(p, core::keys::kBgPaddingX)));
 		CHECK(fakeobs::property_visible(obs_properties_get(p, core::keys::kBgKeepAspect)));
 		CHECK(fakeobs::property_visible(obs_properties_get(p, core::keys::kBgCornerRadius)));
-		CHECK(fakeobs::property_visible(obs_properties_get(p, "grp_shadow")));
+		CHECK(fakeobs::property_visible(obs_properties_get(p, core::keys::kBgShadow)));
 		obs_properties_destroy(p);
 		obs_data_release(s);
 	}
@@ -750,4 +756,78 @@ TEST(properties_reading_and_lock_visibility)
 		obs_properties_destroy(p);
 		obs_data_release(s);
 	}
+}
+
+/* OBS's RGB color picker forces alpha 255, so legacy translucent colors are
+ * folded into the explicit opacity exactly once and persisted. */
+TEST(settings_translucent_colors_fold_into_opacity_once)
+{
+	obs_data_t *s = obs_data_create();
+	obs_data_set_int(s, core::keys::kHighlightColor, 0x6600E0FFu);
+	obs_data_set_double(s, core::keys::kHighlightOpacity, 0.5);
+	obs_data_set_int(s, core::keys::kKeysBandColor, 0x99000000u);
+
+	core::Config c;
+	config_load(s, &c);
+
+	CHECK_EQ(c.highlight.color, 0xFF00E0FFu);
+	CHECK_NEAR(c.highlight.opacity, 0.5 * (102.0 / 255.0), 1e-6);
+	/* The key band has no separate opacity: it keeps its color alpha. */
+	CHECK_EQ(c.keys.band_color, 0x99000000u);
+	CHECK(obs_data_get_bool(s, "color_alpha_rgb_v1"));
+	CHECK_EQ(obs_data_get_int(s, core::keys::kHighlightColor), 0xFF00E0FFLL);
+
+	/* A second load must not fold again. */
+	core::Config d;
+	config_load(s, &d);
+	CHECK_NEAR(d.highlight.opacity, c.highlight.opacity, 1e-9);
+	CHECK_EQ(d.highlight.color, c.highlight.color);
+
+	obs_data_release(s);
+}
+
+/* A seed revision bump fills missing slots and new keys, but never overwrites
+ * the values the user already edited in an existing slot. */
+TEST(profile_reseed_preserves_user_edits)
+{
+	obs_data_t *s = obs_data_create();
+	config_defaults(s);
+	CHECK(profile_store::ensure_slots(s, 1));
+
+	obs_data_t *slot = obs_data_get_obj(s, core::keys::kProfileSlots[0]);
+	CHECK(slot != nullptr);
+	obs_data_set_double(slot, core::keys::kZoomAmount, 2.75);
+	/* slot 3 is removed to simulate a source with a missing slot */
+	obs_data_set_obj(s, core::keys::kProfileSlots[3], nullptr);
+	obs_data_release(slot);
+
+	CHECK(profile_store::ensure_slots(s, 2));
+
+	const core::Config a = profile_store::load_slot(s, 0);
+	CHECK_NEAR(a.zoom.amount, 2.75, 1e-9);
+	const core::Config d = profile_store::load_slot(s, 3);
+	CHECK_NEAR(d.zoom.amount, core::make_profile_seed(3).zoom.amount, 1e-9);
+	CHECK_EQ(obs_data_get_int(s, core::keys::kProfileSeedVersion), 2);
+
+	obs_data_release(s);
+}
+
+/* The capture source embeds the effects but hides the filter-only monitor
+ * section, so it must not expose an empty "Advanced" group. */
+TEST(properties_capture_mode_has_no_empty_advanced_group)
+{
+	obs_data_t *s = obs_data_create();
+	config_defaults(s);
+
+	obs_properties_t *p = properties_create(nullptr, s, false);
+	CHECK(p != nullptr);
+	CHECK(obs_properties_get(p, "grp_advanced") == nullptr);
+	CHECK(obs_properties_get(p, "keys_privacy_hint") != nullptr);
+	obs_properties_destroy(p);
+
+	obs_properties_t *full = properties_create(nullptr, s, true);
+	CHECK(obs_properties_get(full, "grp_advanced") != nullptr);
+	obs_properties_destroy(full);
+
+	obs_data_release(s);
 }

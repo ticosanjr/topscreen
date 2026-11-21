@@ -356,13 +356,10 @@ void migrate_attached_filter(CaptureSource *ctx)
 	blog(LOG_INFO, "[TopScreen] migrated attached effects filter into TopScreen Capture");
 }
 
-obs_properties_t *capture_properties(void *data)
+void add_capture_source_section(obs_properties_t *props, void *data)
 {
 	auto *ctx = static_cast<CaptureSource *>(data);
 	obs_source_t *source = ctx ? ctx->source : nullptr;
-	obs_properties_t *props = ctx && ctx->engine
-		? ts_engine_properties(ctx->engine, source)
-		: obs_properties_create();
 
 	obs_properties_t *capture = obs_properties_create();
 	obs_data_t *settings = source ? obs_source_get_settings(source) : nullptr;
@@ -389,6 +386,16 @@ obs_properties_t *capture_properties(void *data)
 				 capture);
 	if (settings)
 		obs_data_release(settings);
+}
+
+obs_properties_t *capture_properties(void *data)
+{
+	auto *ctx = static_cast<CaptureSource *>(data);
+	obs_source_t *source = ctx ? ctx->source : nullptr;
+	obs_properties_t *props =
+		ctx && ctx->engine
+			? ts_engine_properties(ctx->engine, source, add_capture_source_section, ctx)
+			: obs_properties_create();
 
 	if (ctx && !ctx->logged_creation) {
 		ctx->logged_creation = true;

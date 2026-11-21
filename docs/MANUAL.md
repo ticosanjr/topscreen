@@ -79,7 +79,7 @@ The **Effects enabled** (top of Properties) is the "master": it turns everything
 off at once (useful as push-to-talk for effects).
 
 ### Own cursor
-When the effects are enabled **and Cursor → Show custom cursor is on**, TopScreen turns off
+When the effects are enabled **and the Cursor group is checked**, TopScreen turns off
 the native cursor of the capture and draws its own, smoothed and scalable. That
 is why you see **a single cursor**. Turning **Effects enabled** off, turning the
 TopScreen cursor off, or removing the filter restores the capture's original
@@ -93,6 +93,10 @@ to that area (assuming the capture is at the top-left corner of the screen).
 
 ## 5. Usage reference (by Properties group)
 
+The main groups are **Screen**, **Zoom and highlight**, **Cursor and clicks**,
+**Spotlight and magnifier**, **Keys and webcam**, **Profiles** and
+**Advanced**. **Effects enabled** is the master switch at the top.
+
 ### Effects enabled
 Turns **all** filter effects on/off.
 
@@ -101,7 +105,7 @@ Places the screen "floating" over a background, with corners and shadow.
 
 | Option | What it does |
 |-------|-----------|
-| **Enable background** | Turns on the background + corners + spacing |
+| **Background (group checkbox)** | Turns on the background + corners + spacing |
 | **Background type** | **Solid color**, **Two-color gradient**, **Wallpaper**, **Local image**, **Transparent** or **Blurred screen** |
 | **Color 1 (solid / gradient start)** | Background color for solid, or the first gradient color |
 | **Color 2 (gradient end)** | Second gradient color (gradient only) |
@@ -115,7 +119,7 @@ Places the screen "floating" over a background, with corners and shadow.
 | **Keep screen aspect ratio** | Avoids stretching the screen: it is scaled down proportionally (leave it on) |
 | **Screen corner radius (px)** | Radius of the captured screen corners |
 | **Window shadow** (sub-group) | |
-| ↳ **Enable shadow** | Turns the shadow behind the screen on/off |
+| ↳ **Shadow (group checkbox)** | Turns the shadow behind the screen on/off |
 | ↳ **Shadow opacity (0–1)** | How strong the shadow is (0 = invisible, 1 = strong) |
 | ↳ **Shadow blur (px)** | How soft and large the shadow is |
 | **Frame style** | `None`, `Inner border`, `Device bezel`, `Browser window`, `MacBook` or `iPhone` around the captured screen (shader-drawn) |
@@ -131,7 +135,7 @@ Places the screen "floating" over a background, with corners and shadow.
 ### Cursor
 | Option | What it does |
 |-------|-----------|
-| **Show custom cursor** | Draws the own cursor (turns off the native one) |
+| **Cursor (group checkbox)** | Draws the own cursor (turns off the native one) |
 | **Cursor style** | Primary cursor: one of the 79 cursors (see below) |
 | **Secondary cursor (links)** | Cursor used while the native pointer is over a link; "Same as primary" disables the swap |
 | **Change cursor over links** | Automatic on **Windows and X11**. Wayland has no portable link-cursor signal, so the primary stays active |
@@ -246,7 +250,7 @@ Zoom treats the whole scene as one image: the wallpaper, frame, shadow and captu
 ### Spotlight
 | Option | What it does |
 |-------|-----------|
-| **Enable spotlight** | Darkens everything except a shape that follows the cursor |
+| **Spotlight (group checkbox)** | Darkens everything except a shape that follows the cursor |
 | **Spotlight shape** | **Circle** or **Square** |
 | **Radius (fraction of screen)** | Size of the spotlight (fraction of the shorter screen side) |
 | **Square corner radius (px)** | Rounded corners for the square shape |
@@ -267,7 +271,7 @@ mask and zoom focus keep following the mouse while it is active. The global
 ### Magnifier
 | Option | What it does |
 |-------|-----------|
-| **Enable magnifier lens** | Zooms only inside a circle/square; the area outside stays normal |
+| **Magnifier (group checkbox)** | Zooms only inside a circle/square; the area outside stays normal |
 | **Lens shape** | **Circle** or **Square** |
 | **Radius (fraction of screen)** | Size of the lens |
 | **Magnification (x)** | Zoom inside the lens |
@@ -285,12 +289,17 @@ other. The global **Effects enabled** master still applies.
 ### Keys
 | Option | What it does |
 |-------|-----------|
-| **Show typed keys** | Shows what you type on screen |
+| **Keystrokes (group checkbox)** | Shows what you type on screen |
 | **Modifiers only** | Shows only Ctrl/Shift/Alt/Win |
 | **Show special keys** | On: Enter, Tab, arrows and similar keys appear by name. Off: those keys are ignored. Space is always shown as a blank space; modifiers are handled by the shortcut option |
 | **Show shortcuts** | On: held modifiers are folded into one entry such as `Ctrl + C`; Shift/Ctrl are not shown twice. Off: each modifier and key is shown individually |
 | **On-screen time per key (ms)** | How long each key stays |
 | **Maximum keys on screen** | How many simultaneous keys to show |
+
+> **Privacy:** typed keys are read from the whole system, not only from the
+> captured window. The built-in profile A starts with this **off**; C, G and I
+> turn it on. Keep **Modifiers only** or leave it off before typing passwords.
+> The Properties UI shows a warning while letters are being shown.
 
 The key overlay is drawn above the cursor so typed text always stays readable.
 Every keystroke appears as its own character (repeats included) exactly as typed,
@@ -312,7 +321,7 @@ section lists Highlighter before Keystrokes.
 
 | Group | Option | What it does |
 |-------|--------|--------------|
-| — | **Enable drag actions** | Master switch for what a left-drag does |
+| — | **Highlighter (group checkbox)** | Master switch for what a left-drag does |
 | — | **Enable hotkey highlight** | Independent extra: assign `TopScreen_ToggleHighlight`. First press zooms at the current cursor; second press releases/returns. It works with drag actions on or off, and the Zoom group stays visible so those values can be tuned in any drag mode. |
 | — | **Drag action** | **Filled box** (classic mark) · **Line** (draw freehand, fades out) · **Zoom to the selection** (no drawing) · **Zoom on mouse press** (hold the button, no drag) · **Box + zoom** (marks *and* zooms) · **Line + zoom** (draws freehand *and* zooms) · **Reading** (dims outside, stays until the next click) |
 | — | **Keep until the next click** | Keeps the mark/zoom pinned after you release, until the next click or an exit event (scene/profile change or effects off) |
@@ -418,15 +427,18 @@ Ready presets (files in `data/presets/`):
 | **Presentation** | Dark background, no zoom, no sound |
 | **Glass** | Blurred-screen background, device bezel, smooth cursor, smart zoom and soft motion blur |
 
-Switch with the *Next/Previous preset* hotkey (or via the dock). To create your
-own, copy a file and adjust it — the format is in [`CONFIGURATION.md`](CONFIGURATION.md).
+Switch with the *Next/Previous preset* hotkey (or via the dock). A preset is a
+**temporary look**: it is shown immediately, but it is written into the active
+profile only when you press **Save profile** or edit another setting. Switching
+profiles also discards it. To create your own, copy a file and adjust it — the
+format is in [`CONFIGURATION.md`](CONFIGURATION.md).
 
 ---
 
 ## 8. Profiles (A–J)
 
 The **10 profiles** store the entire configuration and switch everything at once.
-The selector is at the **top** of Properties (group **Profiles → Current profile**)
+The selector is near the **top** of Properties (group **Profiles → Current profile**)
 and in the dock as well. The dock also has a **Target filter** selector: all dock
 buttons and hotkeys act on the selected TopScreen filter (or the first one when
 nothing is selected).
@@ -434,6 +446,7 @@ nothing is selected).
 - **Switching profile applies EVERYTHING immediately** (background, cursor, clicks, zoom, keys, click sounds…).
 - **Your changes are saved into the active profile automatically** — no need to
   remember to save (the *Save to profile* button and hotkey exist to force it).
+  A temporary preset becomes part of the profile as soon as you edit anything.
   The auto-save is debounced by ~0.4 s, so dragging a slider does not rewrite
   the profile on every frame; switching profiles/saving/exporting flushes it.
 - The selected profile is re-applied **when OBS opens**, so the look comes back the same.
@@ -613,7 +626,7 @@ TOPSCREEN_DEBUG_KEY=Ctrl obs
   for `TopScreen` or `Activate profile`.
 - With several filters, the hotkey acts on the dock's **Target filter**
   (or the first active one when nothing is selected).
-- The log confirms registration: `[TopScreen] hotkeys registered: 20/20`.
+- The log confirms registration: `[TopScreen] hotkeys registered: 25/25`.
 
 **Zoom "jumps" or shakes**
 - Increase **Zoom transition time (ms)** and reduce **Zoom intensity**.
@@ -651,7 +664,7 @@ Yes: hotkey **Enable/disable background**.
 
 **I turned effects off (or the cursor off) and now there is no cursor**
 - TopScreen restores the capture's original native cursor when **Effects
-  enabled** is off, when **Cursor → Show custom cursor** is off, and when the filter is
+  enabled** is off, when the **Cursor group** is unchecked, and when the filter is
   removed. The "effects off" case was fixed in **0.3.0**; the cursor-off case
   and multiple filters sharing a capture were fixed in **0.3.1**.
 
@@ -662,10 +675,11 @@ No, the default installer uses the per-user plugins folder.
 
 ## 14. Current limitations
 
-- **Webcam bubble** and **zoom into a region** have not been implemented yet.
 - **Global hotkeys on Wayland** depend on the compositor (portal not implemented yet).
-- The **own capture source** (choosing the screen inside TopScreen) is
-  planned; today you use OBS's Display Capture.
+- The **TopScreen Capture** source is Linux/X11 only. Windows and Wayland use
+  **Display Capture + TopScreen FX**.
+- The key overlay needs read permission on `/dev/input` on Linux (see §10).
+- TopScreen is **live only**: there is no after-the-fact editing.
 
 See what is ready in [`TASKS.md`](TASKS.md) and how to verify it in
 [`VERIFICATION.md`](VERIFICATION.md).

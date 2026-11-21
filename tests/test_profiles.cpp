@@ -14,7 +14,8 @@ TEST(profiles_seed_a_is_balanced_default)
 	CHECK_EQ(a.cursor.style, static_cast<int>(CursorStyle::MacOs));
 	CHECK_EQ(a.zoom.mode, static_cast<int>(ZoomMode::Auto));
 	CHECK_NEAR(a.zoom.amount, 1.35, 1e-9);
-	CHECK(a.keys.enabled);
+	/* Typed keys are opt-in on new installs (privacy). */
+	CHECK(!a.keys.enabled);
 	CHECK(a.highlight.enabled);
 	CHECK(!a.spotlight.enabled);
 	CHECK(!a.magnifier.enabled);

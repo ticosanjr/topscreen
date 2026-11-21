@@ -97,7 +97,7 @@ bool background_enabled_changed(obs_properties_t *props, obs_property_t *p, obs_
 	for (const char *key : {kBgType, kBgColorA, kBgColorB, kBgGradientAngle,
 			       kBgGradientCenterX, kBgGradientCenterY, "grp_bg_image",
 			       kBgPaddingX, kBgPaddingY, kBgKeepAspect, kBgCornerRadius,
-			       "grp_shadow", "grp_frame"}) {
+			       kBgShadow, "grp_frame"}) {
 		if (obs_property_t *v = obs_properties_get(props, key))
 			obs_property_set_visible(v, on);
 	}
@@ -122,10 +122,6 @@ void add_background_section(obs_properties_t *props, obs_properties_t *capture, 
 {
 	/* ---------------- Background ---------------- */
 	obs_properties_t *bg = obs_properties_create();
-	obs_property_t *bg_on =
-		obs_properties_add_bool(bg, kBgEnabled, obs_module_text("Background.Enabled"));
-	obs_property_set_modified_callback(bg_on, background_enabled_changed);
-
 	obs_property_t *mode = obs_properties_add_list(bg, kBgType,
 						       obs_module_text("Background.Type"),
 						       OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
@@ -194,9 +190,6 @@ void add_background_section(obs_properties_t *props, obs_properties_t *capture, 
 
 	/* Window shadow (sub-group with clear names) */
 	obs_properties_t *sh = obs_properties_create();
-	obs_property_t *shadow_on =
-		obs_properties_add_bool(sh, kBgShadow, obs_module_text("Shadow.Enabled"));
-	obs_property_set_modified_callback(shadow_on, background_shadow_changed);
 	obs_property_t *shadow_alpha = add_range_slider(
 		sh, kBgShadowAlpha, obs_module_text("Shadow.Opacity"),
 		limits::kUnitRange);
@@ -210,7 +203,9 @@ void add_background_section(obs_properties_t *props, obs_properties_t *capture, 
 	add_range_slider(
 		sh, kBgShadowOffset, obs_module_text("Shadow.Offset"),
 		limits::kShadowOffsetRange);
-	obs_properties_add_group(bg, "grp_shadow", obs_module_text("Group.Shadow"), OBS_GROUP_NORMAL, sh);
+	obs_property_t *sh_group = obs_properties_add_group(
+		bg, kBgShadow, obs_module_text("Group.Shadow"), OBS_GROUP_CHECKABLE, sh);
+	obs_property_set_modified_callback(sh_group, background_shadow_changed);
 
 	obs_properties_t *frame = obs_properties_create();
 	obs_property_t *fstyle = obs_properties_add_list(
@@ -223,14 +218,20 @@ void add_background_section(obs_properties_t *props, obs_properties_t *capture, 
 	obs_property_list_add_int(fstyle, obs_module_text("Frame.Style.MacBook"), 4);
 	obs_property_list_add_int(fstyle, obs_module_text("Frame.Style.iPhone"), 5);
 	obs_property_set_modified_callback(fstyle, frame_style_changed);
-	obs_properties_add_color(frame, kFrameColor, obs_module_text("Frame.Color"));
-	add_range_slider(
+	set_tip(fstyle, obs_module_text("Tooltip.FrameStyle"));
+	obs_property_t *fcolor =
+		obs_properties_add_color(frame, kFrameColor, obs_module_text("Frame.Color"));
+	set_tip(fcolor, obs_module_text("Tooltip.FrameColor"));
+	obs_property_t *fwidth = add_range_slider(
 		frame, kFrameWidth, obs_module_text("Frame.Width"),
 		limits::kFrameWidthRange);
+	set_tip(fwidth, obs_module_text("Tooltip.FrameWidth"));
 	obs_properties_add_group(bg, "grp_frame", obs_module_text("Group.Frame"), OBS_GROUP_NORMAL, frame);
 	frame_style_changed(props, nullptr, settings);
 
-	obs_properties_add_group(capture, "grp_bg", obs_module_text("Group.Background"), OBS_GROUP_NORMAL, bg);
+	obs_property_t *bg_group = obs_properties_add_group(
+		capture, kBgEnabled, obs_module_text("Group.Background"), OBS_GROUP_CHECKABLE, bg);
+	obs_property_set_modified_callback(bg_group, background_enabled_changed);
 	background_enabled_changed(props, nullptr, settings);
 	background_shadow_changed(props, nullptr, settings);
 }
@@ -296,9 +297,10 @@ void add_zoom_section(obs_properties_t *props, obs_properties_t *capture, obs_da
 		zoom, kZoomCenterAmount, obs_module_text("Zoom.CenterAmount"),
 		limits::kUnitRange);
 	set_tip(center, obs_module_text("Tooltip.ZoomCentering"));
-	add_range_slider(
+	obs_property_t *smart_hold = add_range_slider(
 		zoom, kZoomSmartHoldMs, obs_module_text("Zoom.SmartHoldMs"),
 		limits::kZoomSmartHoldRange);
+	set_tip(smart_hold, obs_module_text("Tooltip.ZoomSmartHold"));
 	obs_property_t *active_window = obs_properties_add_bool(
 		zoom, kZoomActiveWindow, obs_module_text("Zoom.ActiveWindow"));
 	set_tip(active_window, obs_module_text("Tooltip.ZoomActiveWindow"));
@@ -306,9 +308,10 @@ void add_zoom_section(obs_properties_t *props, obs_properties_t *capture, obs_da
 		zoom, kZoomMotionBlur, obs_module_text("Zoom.MotionBlur"));
 	set_tip(mblur, obs_module_text("Tooltip.ZoomMotionBlur"));
 	obs_property_set_modified_callback(mblur, zoom_motion_blur_changed);
-	add_range_slider(
+	obs_property_t *mblur_amount = add_range_slider(
 		zoom, kZoomMotionBlurAmount, obs_module_text("Zoom.MotionBlurAmount"),
 		limits::kUnitRange);
+	set_tip(mblur_amount, obs_module_text("Tooltip.ZoomMotionBlurAmount"));
 	obs_properties_add_group(capture, "grp_zoom", obs_module_text("Group.Zoom"), OBS_GROUP_NORMAL, zoom);
 	zoom_mode_changed(props, nullptr, settings);
 }

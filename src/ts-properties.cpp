@@ -141,6 +141,11 @@ void add_profile_backup_section(obs_properties_t *props, void *data)
 	obs_properties_t *backup = obs_properties_create();
 	obs_properties_add_text(backup, "profile_backup_hint", obs_module_text("Profile.BackupHint"),
 				OBS_TEXT_INFO);
+	obs_property_t *warning = obs_properties_add_text(
+		backup, "profile_backup_warning", obs_module_text("Profile.BackupWarning"),
+		OBS_TEXT_INFO);
+	obs_property_text_set_info_type(warning, OBS_TEXT_INFO_WARNING);
+	obs_property_text_set_info_word_wrap(warning, true);
 	obs_properties_add_path(backup, kProfileExportPath, obs_module_text("Profile.ExportPath"),
 				OBS_PATH_FILE_SAVE, kJsonFilter, nullptr);
 	obs_properties_add_button2(backup, "profile_export_btn",
@@ -211,25 +216,25 @@ void add_tooltips(obs_properties_t *props)
 	};
 	tip("grp_profiles", obs_module_text("Tooltip.GroupProfiles"));
 	tip("grp_profile_backup", obs_module_text("Tooltip.GroupProfileBackup"));
-	tip("grp_bg", obs_module_text("Tooltip.GroupBackground"));
+	tip(kBgEnabled, obs_module_text("Tooltip.GroupBackground"));
 	tip("grp_bg_image", obs_module_text("Tooltip.GroupWallpaper"));
-	tip("grp_shadow", obs_module_text("Tooltip.GroupShadow"));
+	tip(kBgShadow, obs_module_text("Tooltip.GroupShadow"));
 	tip("grp_frame", obs_module_text("Tooltip.GroupFrame"));
 	tip("grp_webcam", obs_module_text("Tooltip.GroupWebcam"));
-	tip("grp_cursor", obs_module_text("Tooltip.GroupCursor"));
+	tip(kCursorEnabled, obs_module_text("Tooltip.GroupCursor"));
 	tip("grp_click_left", obs_module_text("Tooltip.GroupClickLeft"));
 	tip("grp_click_right", obs_module_text("Tooltip.GroupClickRight"));
 	tip("grp_sound", obs_module_text("Tooltip.GroupClickSound"));
 	tip("grp_zoom", obs_module_text("Tooltip.GroupZoom"));
-	tip("grp_spotlight", obs_module_text("Tooltip.GroupSpotlight"));
+	tip(kSpotlightEnabled, obs_module_text("Tooltip.GroupSpotlight"));
 	tip("grp_spotlight_border", obs_module_text("Tooltip.GroupSpotlightBorder"));
 	tip("grp_spotlight_blur", obs_module_text("Tooltip.GroupSpotlightBlur"));
 	tip("grp_spotlight_animation", obs_module_text("Tooltip.GroupSpotlightAnimation"));
-	tip("grp_magnifier", obs_module_text("Tooltip.GroupMagnifier"));
+	tip(kMagnifierEnabled, obs_module_text("Tooltip.GroupMagnifier"));
 	tip("grp_magnifier_border", obs_module_text("Tooltip.GroupMagnifierBorder"));
 	tip("grp_magnifier_shadow", obs_module_text("Tooltip.GroupMagnifierShadow"));
-	tip("grp_keys", obs_module_text("Tooltip.GroupKeys"));
-	tip("grp_highlight", obs_module_text("Tooltip.GroupHighlight"));
+	tip(kKeysEnabled, obs_module_text("Tooltip.GroupKeys"));
+	tip(kHighlightEnabled, obs_module_text("Tooltip.GroupHighlight"));
 	tip("grp_hl_look", obs_module_text("Tooltip.GroupHighlightLook"));
 	tip("grp_hl_timing", obs_module_text("Tooltip.GroupHighlightTiming"));
 	tip("grp_hl_zoom", obs_module_text("Tooltip.GroupHighlightZoom"));
@@ -255,20 +260,17 @@ void add_tooltips(obs_properties_t *props)
 	tip(kZoomMode, obs_module_text("Tooltip.ZoomMode"));
 	tip(kZoomAmount, obs_module_text("Tooltip.ZoomAmount"));
 	tip(kZoomIdleTimeoutMs, obs_module_text("Tooltip.ZoomIdleTimeout"));
-	tip(kSpotlightEnabled, obs_module_text("Tooltip.SpotlightEnabled"));
 	tip(kSpotlightOutsideMode, obs_module_text("Tooltip.SpotlightOutsideMode"));
 	tip(kSpotlightShape, obs_module_text("Tooltip.SpotlightShape"));
 	tip(kSpotlightRadius, obs_module_text("Tooltip.SpotlightRadius"));
 	tip(kSpotlightDim, obs_module_text("Tooltip.SpotlightDim"));
 	tip(kSpotlightZoomAmount, obs_module_text("Tooltip.SpotlightZoom"));
-	tip(kMagnifierEnabled, obs_module_text("Tooltip.MagnifierEnabled"));
 	tip(kMagnifierShape, obs_module_text("Tooltip.MagnifierShape"));
 	tip(kMagnifierRadius, obs_module_text("Tooltip.MagnifierRadius"));
 	tip(kMagnifierZoom, obs_module_text("Tooltip.MagnifierZoom"));
 	tip(kMagnifierFollowCursor, obs_module_text("Tooltip.MagnifierFollow"));
 	tip(kMagnifierInMs, obs_module_text("Tooltip.MagnifierIn"));
 	tip(kMagnifierOutMs, obs_module_text("Tooltip.MagnifierOut"));
-	tip(kKeysEnabled, obs_module_text("Tooltip.KeysEnabled"));
 	tip(kKeysModifiersOnly, obs_module_text("Tooltip.KeysModifiersOnly"));
 	tip(kKeysShowSpecial, obs_module_text("Tooltip.KeysShowSpecial"));
 	tip(kKeysShowShortcuts, obs_module_text("Tooltip.KeysShowShortcuts"));
@@ -286,7 +288,6 @@ void add_tooltips(obs_properties_t *props)
 	/* Secondary tooltips for the remaining controls. */
 	tip(kBgColorA, obs_module_text("Tooltip.kBgColorA"));
 	tip(kBgColorB, obs_module_text("Tooltip.kBgColorB"));
-	tip(kBgEnabled, obs_module_text("Tooltip.kBgEnabled"));
 	tip(kBgGradientAngle, obs_module_text("Tooltip.kBgGradientAngle"));
 	tip(kBgGradientCenterX, obs_module_text("Tooltip.kBgGradientCenterX"));
 	tip(kBgGradientCenterY, obs_module_text("Tooltip.kBgGradientCenterY"));
@@ -294,7 +295,6 @@ void add_tooltips(obs_properties_t *props)
 	tip(kBgImageBlur, obs_module_text("Tooltip.kBgImageBlur"));
 	tip(kBgImageFile, obs_module_text("Tooltip.kBgImageFile"));
 	tip(kBgKeepAspect, obs_module_text("Tooltip.kBgKeepAspect"));
-	tip(kBgShadow, obs_module_text("Tooltip.kBgShadow"));
 	tip(kBgShadowAlpha, obs_module_text("Tooltip.kBgShadowAlpha"));
 	tip(kBgShadowBlur, obs_module_text("Tooltip.kBgShadowBlur"));
 	tip(kBgShadowOffset, obs_module_text("Tooltip.kBgShadowOffset"));
@@ -302,11 +302,9 @@ void add_tooltips(obs_properties_t *props)
 	tip(kClickSoundEnabled, obs_module_text("Tooltip.kClickSoundEnabled"));
 	tip(kClickSoundFileLeft, obs_module_text("Tooltip.kClickSoundFileLeft"));
 	tip(kClickSoundFileRight, obs_module_text("Tooltip.kClickSoundFileRight"));
-	tip(kCursorEnabled, obs_module_text("Tooltip.kCursorEnabled"));
 	tip(kCursorIdleDelayMs, obs_module_text("Tooltip.kCursorIdleDelayMs"));
 	tip(kCursorShadow, obs_module_text("Tooltip.kCursorShadow"));
 	tip(kHighlightColor, obs_module_text("Tooltip.kHighlightColor"));
-	tip(kHighlightEnabled, obs_module_text("Tooltip.kHighlightEnabled"));
 	tip(kHighlightHotkeyEnabled, obs_module_text("Tooltip.kHighlightHotkeyEnabled"));
 	tip(kHighlightThickness, obs_module_text("Tooltip.kHighlightThickness"));
 	tip(kHighlightZoomDelayMs, obs_module_text("Tooltip.kHighlightZoomDelayMs"));
@@ -345,54 +343,62 @@ void add_tooltips(obs_properties_t *props)
 	tip(kZoomCenterAmount, obs_module_text("Tooltip.kZoomCenterAmount"));
 	tip(kZoomDurationMs, obs_module_text("Tooltip.kZoomDurationMs"));
 	tip(kZoomPanAmount, obs_module_text("Tooltip.kZoomPanAmount"));
-	tip("grp_capture", obs_module_text("Tooltip.GroupCapture"));
+	tip("grp_screen", obs_module_text("Tooltip.GroupCapture"));
 	tip(kSpotlightShowCursor, obs_module_text("Tooltip.SpotlightShowCursor"));
 	tip(kMagnifierShowCursor, obs_module_text("Tooltip.MagnifierShowCursor"));
 	tip("grp_pointer", obs_module_text("Tooltip.GroupPointer"));
 	tip("grp_focus", obs_module_text("Tooltip.GroupFocus"));
 	tip("grp_overlays", obs_module_text("Tooltip.GroupOverlays"));
+	tip("grp_zoom_highlight", obs_module_text("Tooltip.GroupZoomHighlight"));
 	tip("grp_advanced", obs_module_text("Tooltip.GroupAdvanced"));
 }
 
 } // namespace
 
-obs_properties_t *properties_create(void *data, obs_data_t *settings, bool include_monitor)
+obs_properties_t *properties_create(void *data, obs_data_t *settings, bool include_monitor,
+				    properties_prefix_fn prefix, void *prefix_data)
 {
 	obs_properties_t *props = obs_properties_create();
-	/* ---------------- Version (always visible, first thing) ---------------- */
-	const std::string version_line = std::string("TopScreen ") + kVersion;
-	obs_properties_add_text(props, "topscreen_version", version_line.c_str(), OBS_TEXT_INFO);
+	if (prefix)
+		prefix(props, prefix_data);
 
-	add_profiles_section(props, data);
+	/* The master switch is the first thing a user looks for. */
 	obs_properties_add_bool(props, kEffectsEnabled, obs_module_text("Enabled"));
+	add_profiles_section(props, data);
 
-	obs_properties_t *capture = obs_properties_create();
+	obs_properties_t *screen = obs_properties_create();
+	obs_properties_t *zoom_highlight = obs_properties_create();
 	obs_properties_t *pointer = obs_properties_create();
 	obs_properties_t *focus = obs_properties_create();
 	obs_properties_t *overlays = obs_properties_create();
-	obs_properties_t *advanced = obs_properties_create();
+	/* Only create the Advanced container when it will actually be added; an
+	 * orphan properties object would leak. */
+	obs_properties_t *advanced = include_monitor ? obs_properties_create() : nullptr;
 	/* Top-level sections group the detailed settings by purpose. They are added
 	 * before their children so the visibility callbacks can find nested groups. */
-	obs_properties_add_group(props, "grp_capture", obs_module_text("Group.Capture"),
-				 OBS_GROUP_NORMAL, capture);
+	obs_properties_add_group(props, "grp_screen", obs_module_text("Group.Capture"),
+				 OBS_GROUP_NORMAL, screen);
+	obs_properties_add_group(props, "grp_zoom_highlight", obs_module_text("Group.ZoomHighlight"),
+				 OBS_GROUP_NORMAL, zoom_highlight);
 	obs_properties_add_group(props, "grp_pointer", obs_module_text("Group.Pointer"),
 				 OBS_GROUP_NORMAL, pointer);
 	obs_properties_add_group(props, "grp_focus", obs_module_text("Group.Focus"),
 				 OBS_GROUP_NORMAL, focus);
 	obs_properties_add_group(props, "grp_overlays", obs_module_text("Group.Overlays"),
 				 OBS_GROUP_NORMAL, overlays);
-	obs_properties_add_group(props, "grp_advanced", obs_module_text("Group.Advanced"),
-				 OBS_GROUP_NORMAL, advanced);
-	properties::add_background_section(props, capture, settings);
-	properties::add_zoom_section(props, capture, settings);
+	/* The capture source hides the filter's monitor section, so it must not
+	 * show an empty "Advanced" group either. */
+	if (include_monitor)
+		obs_properties_add_group(props, "grp_advanced", obs_module_text("Group.Advanced"),
+					 OBS_GROUP_NORMAL, advanced);
+	properties::add_background_section(props, screen, settings);
+	properties::add_zoom_section(props, zoom_highlight, settings);
+	properties::add_highlight_section(props, zoom_highlight, settings);
 	properties::add_cursor_section(props, pointer, settings);
 	properties::add_clicks_section(props, pointer, settings);
 	properties::add_click_sound_section(props, pointer, settings);
 	properties::add_spotlight_section(props, focus, settings);
 	properties::add_magnifier_section(props, focus, settings);
-
-	/* Highlight is registered before keys to keep that UI order. */
-	properties::add_highlight_section(props, overlays, settings);
 	properties::add_keys_section(props, overlays, settings);
 	add_webcam_section(props, overlays);
 
@@ -400,6 +406,10 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings, bool inclu
 		add_monitor_section(advanced);
 	add_profile_backup_section(props, data);
 	add_tooltips(props);
+
+	/* Version last: useful for support, but not the first thing to read. */
+	const std::string version_line = std::string("TopScreen ") + kVersion;
+	obs_properties_add_text(props, "topscreen_version", version_line.c_str(), OBS_TEXT_INFO);
 	return props;
 }
 

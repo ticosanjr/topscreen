@@ -42,11 +42,13 @@ Config make_profile_seed(int index)
 		c.click_right.color = 0xFF7C5CFF;
 		c.click_right.size = 1.1;
 		c.click_sound.volume = 0.60;
-		c.keys.enabled = true;
+		/* Typed keys are opt-in: a new install must not broadcast a letter
+		 * the user types into a password field by accident. */
+		c.keys.enabled = false;
 		c.highlight.enabled = true;
 		c.highlight.mode = static_cast<int>(HighlightMode::Box);
-		c.highlight.color = 0x6600E0FF;
-		c.highlight.opacity = 0.35;
+		c.highlight.color = 0xFF00E0FF;
+		c.highlight.opacity = 0.14;
 		c.highlight.hold_ms = 900.0;
 		c.highlight.fade_ms = 300.0;
 		break;
@@ -108,8 +110,8 @@ Config make_profile_seed(int index)
 		c.keys.show_shortcuts = true;
 		c.highlight.enabled = true;
 		c.highlight.mode = static_cast<int>(HighlightMode::Box);
-		c.highlight.color = 0x6600E0FF;
-		c.highlight.opacity = 0.45;
+		c.highlight.color = 0xFF00E0FF;
+		c.highlight.opacity = 0.18;
 		c.highlight.thickness = 0.005;
 		c.highlight.hold_ms = 1200.0;
 		c.highlight.fade_ms = 300.0;
@@ -245,8 +247,8 @@ Config make_profile_seed(int index)
 		c.keys.max_keys = 8;
 		c.highlight.enabled = true;
 		c.highlight.mode = static_cast<int>(HighlightMode::Line);
-		c.highlight.color = 0x6633CCFF;
-		c.highlight.opacity = 0.40;
+		c.highlight.color = 0xFF33CCFF;
+		c.highlight.opacity = 0.16;
 		c.highlight.thickness = 0.006;
 		c.highlight.hold_ms = 900.0;
 		c.highlight.fade_ms = 250.0;
@@ -316,8 +318,8 @@ Config make_profile_seed(int index)
 		c.keys.max_keys = 8;
 		c.highlight.enabled = true;
 		c.highlight.mode = static_cast<int>(HighlightMode::LineZoom);
-		c.highlight.color = 0x6633CCFF;
-		c.highlight.opacity = 0.45;
+		c.highlight.color = 0xFF33CCFF;
+		c.highlight.opacity = 0.18;
 		c.highlight.thickness = 0.008;
 		c.highlight.hold_ms = 1200.0;
 		c.highlight.fade_ms = 300.0;

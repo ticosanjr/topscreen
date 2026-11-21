@@ -25,6 +25,8 @@ void ts_engine_tick(void *engine, float seconds);
 void ts_engine_render_filter(void *engine, gs_effect_t *effect);
 void ts_engine_render_texture(void *engine, gs_texture_t *texture, uint32_t width,
 			      uint32_t height, gs_effect_t *effect);
-obs_properties_t *ts_engine_properties(void *engine, obs_source_t *source);
+obs_properties_t *ts_engine_properties(void *engine, obs_source_t *source,
+				       void (*prefix)(obs_properties_t *, void *) = nullptr,
+				       void *prefix_data = nullptr);
 
 } // namespace topscreen

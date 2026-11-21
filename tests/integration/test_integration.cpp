@@ -182,6 +182,71 @@ TEST(integration_all_presets_and_toggle_background)
 	destroy_filter(ctx);
 }
 
+/* A preset is a temporary look: it must not overwrite the active profile until
+ * the user explicitly saves it. */
+TEST(integration_preset_is_temporary_until_saved)
+{
+	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
+	obs_source_t *parent = make_parent(1920, 1080);
+	obs_source_t *filter = fakeobs::make_source(&ts_filter_source_info, parent, 0, 0);
+	void *ctx = create_filter(filter);
+	REQUIRE(ctx != nullptr);
+	FilterControl *ctrl = registry_first();
+	REQUIRE(ctrl != nullptr);
+
+	obs_data_t *slot = obs_data_get_obj(filter->settings, core::keys::kProfileSlots[0]);
+	REQUIRE(slot != nullptr);
+	const long long saved_bg = obs_data_get_int(slot, core::keys::kBgType);
+	obs_data_release(slot);
+
+	ctrl->apply_preset(1); /* Tutorial: solid background */
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK_EQ(obs_data_get_int(filter->settings, core::keys::kBgType),
+		 static_cast<long long>(core::BgMode::Solid));
+
+	slot = obs_data_get_obj(filter->settings, core::keys::kProfileSlots[0]);
+	REQUIRE(slot != nullptr);
+	CHECK_EQ(obs_data_get_int(slot, core::keys::kBgType), saved_bg);
+	obs_data_release(slot);
+
+	ctrl->save_profile();
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	slot = obs_data_get_obj(filter->settings, core::keys::kProfileSlots[0]);
+	REQUIRE(slot != nullptr);
+	CHECK_EQ(obs_data_get_int(slot, core::keys::kBgType),
+		 static_cast<long long>(core::BgMode::Solid));
+	obs_data_release(slot);
+
+	destroy_filter(ctx);
+	obs_source_release(filter);
+	obs_source_release(parent);
+}
+
+/* Switching profiles changes the look, so the dock must stop claiming that a
+ * previously applied preset is still active. */
+TEST(integration_preset_is_cleared_on_profile_switch)
+{
+	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
+	obs_source_t *parent = make_parent(1920, 1080);
+	obs_source_t *filter = fakeobs::make_source(&ts_filter_source_info, parent, 0, 0);
+	void *ctx = create_filter(filter);
+	REQUIRE(ctx != nullptr);
+	FilterControl *ctrl = registry_first();
+	REQUIRE(ctrl != nullptr);
+
+	ctrl->apply_preset(1);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK_EQ(ctrl->current_preset(), 1);
+
+	set_profile_from_properties(filter, ctx, 2);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK_EQ(ctrl->current_preset(), -1);
+
+	destroy_filter(ctx);
+	obs_source_release(filter);
+	obs_source_release(parent);
+}
+
 TEST(integration_hotkeys_all_actions)
 {
 	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
@@ -1464,12 +1529,13 @@ TEST(integration_properties_parent_groups)
 
 	obs_properties_t *props = properties_create(ctx, filter->settings);
 	REQUIRE(props != nullptr);
-	for (const char *group : {"grp_capture", "grp_pointer", "grp_focus", "grp_overlays",
-				  "grp_advanced"})
+	for (const char *group : {"grp_screen", "grp_zoom_highlight", "grp_pointer", "grp_focus",
+				  "grp_overlays", "grp_advanced"})
 		CHECK(obs_properties_get(props, group) != nullptr);
-	for (const char *child : {"grp_bg", "grp_zoom", "grp_cursor", "grp_click_left",
-				  "grp_sound", "grp_spotlight", "grp_magnifier", "grp_keys",
-				  "grp_highlight", "grp_monitor"})
+	for (const char *child : {core::keys::kBgEnabled, "grp_zoom", core::keys::kCursorEnabled,
+				  "grp_click_left", "grp_sound", core::keys::kSpotlightEnabled,
+				  core::keys::kMagnifierEnabled, core::keys::kKeysEnabled,
+				  core::keys::kHighlightEnabled, "grp_monitor"})
 		CHECK(obs_properties_get(props, child) != nullptr);
 
 	/* Solid background hides the nested wallpaper group. */
@@ -1522,7 +1588,7 @@ TEST(integration_wallpaper_pipeline_polls_ready_texture)
 
 /* The new A..J seeds overwrite existing slots once (revision 1 -> 2), then
  * preserve later user edits. */
-TEST(integration_profile_seed_revision_overwrites_once)
+TEST(integration_profile_seed_revision_preserves_edits)
 {
 	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
 
@@ -1540,9 +1606,14 @@ TEST(integration_profile_seed_revision_overwrites_once)
 
 	obs_data_t *seed_slot = obs_data_get_obj(filter->settings, core::keys::kProfileSlots[0]);
 	REQUIRE(seed_slot != nullptr);
+	/* A revision bump no longer overwrites an existing slot. */
 	CHECK_EQ(obs_data_get_int(seed_slot, core::keys::kClickLeftColor),
-		 static_cast<long long>(0xFFFFFFFF));
+		 static_cast<long long>(0x112233));
 	CHECK_EQ(obs_data_get_int(filter->settings, core::keys::kProfileSeedVersion), 2);
+	/* Missing slots are still seeded. */
+	obs_data_t *missing = obs_data_get_obj(filter->settings, core::keys::kProfileSlots[1]);
+	CHECK(missing != nullptr);
+	obs_data_release(missing);
 
 	/* A later edit with the current revision must survive a restart. */
 	obs_data_set_int(seed_slot, core::keys::kClickLeftColor, 0x445566);

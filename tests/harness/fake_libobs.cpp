@@ -957,6 +957,12 @@ obs_property_t *obs_properties_add_color(obs_properties_t *props, const char *na
 	return add_prop(props, name);
 }
 
+obs_property_t *obs_properties_add_color_alpha(obs_properties_t *props, const char *name,
+					       const char *)
+{
+	return add_prop(props, name);
+}
+
 void obs_property_set_visible(obs_property_t *prop, bool visible)
 {
 	if (prop)
@@ -1018,6 +1024,10 @@ void obs_property_set_modified_callback(obs_property_t *prop, obs_property_modif
 }
 
 void obs_property_set_long_description(obs_property_t *, const char *) {}
+
+void obs_property_text_set_info_type(obs_property_t *, enum obs_text_info_type) {}
+
+void obs_property_text_set_info_word_wrap(obs_property_t *, bool) {}
 
 // ---- config / frontend hotkeys ----
 struct config_data {

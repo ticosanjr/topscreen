@@ -124,6 +124,9 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 	/* Auto-save debounce: a slider drag must not write the profile slot on
 	 * every tick. Flushed on profile switch/save/export/destroy. */
 	bool profile_dirty_ = false;
+	/* Set by a preset push: the next reload must not auto-save the temporary
+	 * look into the active profile. */
+	bool skip_profile_dirty_once_ = false;
 	double profile_dirty_since_ms_ = 0.0;
 	static constexpr double kProfileSaveDebounceMs = 400.0;
 
@@ -311,6 +314,8 @@ void ts_filter_ctx::apply_profile(int index)
 	zoom.set_manual(1.0);
 	zoom.spot_stop();
 	hotkey_highlight_active_.store(false);
+	/* The active look is now a profile, not the last applied preset. */
+	presets.clear_current();
 	click_sound.load(cfg.click_sound.file_left.c_str(), cfg.click_sound.file_right.c_str());
 }
 
@@ -551,22 +556,31 @@ void ts_filter_ctx::request_preset(int index)
 		return;
 	exit_locked_highlight(false);
 
+	/* Flush pending edits first so applying a preset never loses (or bakes in)
+	 * the previous slider change. */
+	flush_profile_if_dirty();
+
 	std::string err;
 	if (!presets.apply(index, &cfg)) {
 		blog(LOG_WARNING, "[TopScreen] invalid preset (%d)", index);
 		return;
 	}
 
+	/* A preset is a temporary look: it is shown immediately but only becomes
+	 * part of the active profile when the user saves it (Save profile) or
+	 * edits another setting. */
 	reconfigure_models();
 	click_sound.load(cfg.click_sound.file_left.c_str(), cfg.click_sound.file_right.c_str());
+	skip_profile_dirty_once_ = true;
 	push_settings();
 	refresh_properties();
-	mark_profile_dirty();
-	blog(LOG_INFO, "[TopScreen] preset applied: %s", presets.name(index).c_str());
+	blog(LOG_INFO, "[TopScreen] preset applied: %s (temporary until saved)", presets.name(index).c_str());
 }
 
 void ts_filter_ctx::reload_from_settings()
 {
+	const bool skip_dirty = skip_profile_dirty_once_;
+	skip_profile_dirty_once_ = false;
 	const int old_highlight_mode = cfg.highlight.mode;
 	obs_data_t *s = obs_source_get_settings(source);
 	config_load(s, &cfg);
@@ -612,7 +626,8 @@ void ts_filter_ctx::reload_from_settings()
 	/* Reloads the click sounds when the selection changed (slots keep the
 	 * unchanged side, so this is cheap). */
 	click_sound.load(cfg.click_sound.file_left.c_str(), cfg.click_sound.file_right.c_str());
-	mark_profile_dirty();
+	if (!skip_dirty)
+		mark_profile_dirty();
 }
 
 void ts_filter_ctx::process_actions()
@@ -1292,14 +1307,17 @@ void ts_engine_render_texture(void *engine, gs_texture_t *texture, uint32_t widt
 		ctx->render_texture(texture, width, height, effect);
 }
 
-obs_properties_t *ts_engine_properties(void *engine, obs_source_t *source)
+obs_properties_t *ts_engine_properties(void *engine, obs_source_t *source,
+				       void (*prefix)(obs_properties_t *, void *),
+				       void *prefix_data)
 {
 	auto *ctx = static_cast<ts_filter_ctx *>(engine);
 	if (!ctx)
 		return obs_properties_create();
 	obs_source_t *host = source ? source : ctx->source;
 	obs_data_t *settings = host ? obs_source_get_settings(host) : nullptr;
-	obs_properties_t *props = properties_create(engine, settings, !ctx->source_mode_);
+	obs_properties_t *props =
+		properties_create(engine, settings, !ctx->source_mode_, prefix, prefix_data);
 	obs_data_release(settings);
 	return props;
 }

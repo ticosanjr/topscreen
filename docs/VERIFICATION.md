@@ -40,13 +40,17 @@ Add a **Display Capture** and the **TopScreen FX** filter. Then:
 | 13 | Highlighter | dragging with the left button marks the region; `TopScreen_ToggleHighlight` zooms at the cursor on the first press and returns on the second; manual zoom/drag cancels the hotkey toggle; **Keep until the next click** pins marks/zoom |
 | 13b | Reading | drag a rectangle, release and check the outside dims + selection is fitted/zoomed; moving the mouse does not move the scene; the next left click exits without ripple/sound; scene/profile/effects-off also exit |
 | 13c | Mouse alignment | with zoom, spotlight and padding active, the cursor overlay, click and highlight must stay under the physical pointer; repeat on a second monitor, identical monitors and a scaled capture |
-| 14 | Presets (hotkey) | next/previous switch the look |
+| 14 | Presets (hotkey) | next/previous switch the look; switching profile discards it; **Save profile** keeps it |
 | 15 | Profiles | switching A–J also reloads the click sounds (test A vs. D with different WAVs) |
 | 15b | Scene profiles | assign profile B to a scene, switch scenes, and check that B is applied; restart OBS on that scene and check it applies on startup; rename the scene and check the assignment survives |
 | 15c | Smart Zoom active window | in Smart mode, focus another window and check the zoom follows it; turn **Focus the foreground window** off and check the zoom only reacts to actions/cursor |
 | 15d | Webcam bubble | **Add webcam bubble source** creates a draggable bottom-right bubble; a second click reuses it; configure the camera in the source properties |
 | 15e | Device frames | select Browser/MacBook/iPhone and check the frame is drawn around the captured screen (add padding if the base/notch is clipped) |
 | 15f | TopScreen Capture (Linux X11) | add **TopScreen Capture**, pick the monitor, confirm the scene shows the screen with effects applied directly by the source (no child filter); reload OBS and confirm there is only one source and no filter; turn effects off and confirm the native cursor returns (**Include native cursor**); enable **Output TopScreen click sounds from this source** and confirm clicks appear on the source's audio meter |
+| 15g | Properties groups | Screen, Zoom and highlight, Cursor and clicks, Spotlight and magnifier, Keys and webcam; the master switch is first and the version is last; each group checkbox hides/shows its section |
+| 15h | Preset is temporary | apply a preset, switch to another profile and back: the original profile returns; apply a preset and press **Save profile**: it persists after a restart |
+| 15i | Color transparency | edit the highlight color and confirm the look does not jump (alpha folded into opacity); edit the key band color and confirm the alpha picker preserves transparency |
+| 15j | Keys privacy | a new install starts with profile A and **Keystrokes** off; enabling it shows the warning; **Modifiers only** hides the warning |
 
 | 16 | Profile import | an older/partial `.json` imports with defaults instead of failing |
 | 17 | Effects off / cursor off / filter removed | the capture's native cursor comes back; with two TopScreen filters on the same capture it only returns after the last one releases it |

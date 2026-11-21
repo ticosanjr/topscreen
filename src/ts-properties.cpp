@@ -216,6 +216,7 @@ void add_tooltips(obs_properties_t *props)
 	};
 	tip("grp_profiles", obs_module_text("Tooltip.GroupProfiles"));
 	tip("grp_profile_backup", obs_module_text("Tooltip.GroupProfileBackup"));
+	tip("grp_screen", obs_module_text("Tooltip.GroupScreen"));
 	tip(kBgEnabled, obs_module_text("Tooltip.GroupBackground"));
 	tip("grp_bg_image", obs_module_text("Tooltip.GroupWallpaper"));
 	tip(kBgShadow, obs_module_text("Tooltip.GroupShadow"));

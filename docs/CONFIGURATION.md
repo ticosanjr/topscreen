@@ -327,8 +327,12 @@ See [`STREAMDECK.md`](STREAMDECK.md) for OBS WebSocket / Stream Deck examples.
 
 ## Preset format
 
-Files in `data/presets/*.json`. The `settings` block uses the same keys as the
-table above; missing keys keep the current value.
+Bundled looks are in `data/presets/*.json`. User looks saved from the dock are
+single files in the plugin config directory, `looks/*.json` (`plugin_config/
+topscreen/looks` inside the OBS config folder). Both use the same envelope; the
+`settings` block uses the same keys as the table above; missing keys keep the
+current value. A user-look file is also the way to export/import one isolated
+look.
 
 ```json
 {

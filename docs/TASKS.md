@@ -113,8 +113,10 @@ Status: ✅ done · 🟡 partial · ⬜ pending.
 | T7.4 | Graceful degradation + tier report | ✅ (readable tier in the dock + log warnings) |
 | T7.5 | CI: Win + Linux build against OBS | ✅ (release workflow builds both; header check covers OBS 30.0.2 and 31.1.1) |
 | T7.6 | Portable packaging + release | ✅ (packages in `releases/`, published as GitHub Release `v1.3.0`; Windows package includes the Qt dock) |
-| T7.7 | Final i18n + icon + screenshots | 🟡 (en-US + pt-BR ✅; icon/screenshots ⬜) |
+| T7.7 | Final i18n + icon + screenshots | ✅ (en-US + pt-BR; icon and screenshots in `assets/`) |
 | T7.8 | Automated release archive verification (`scripts/verify-release.sh`) | ✅ |
+| T7.9 | Named profiles, duplicate/revert and user looks | ✅ (names in slots/backups; looks in `plugin_config/topscreen/looks`) |
+| T7.10 | Single option schema for tooltips/sections | ✅ (`ts-option-schema.hpp` + validation tests) |
 
 ## Infrastructure / documentation
 

@@ -433,8 +433,15 @@ Ready presets (files in `data/presets/`):
 Switch with the *Next/Previous preset* hotkey (or via the dock). A preset is a
 **temporary look**: it is shown immediately, but it is written into the active
 profile only when you press **Save profile** or edit another setting. Switching
-profiles also discards it. To create your own, copy a file and adjust it — the
-format is in [`CONFIGURATION.md`](CONFIGURATION.md).
+profiles also discards it.
+
+**Saving your own look:** in the dock, press **Save look...**, type a name and
+confirm. The look is written as one JSON file in the plugin's `looks` folder,
+appears in the preset selector and in the next/previous cycle, and can be
+deleted with **Delete look** (only user looks; the bundled ones are read-only).
+**Open looks folder** shows the files, so a single look can be copied to another
+machine or kept as a backup. The file format is the same as the bundled presets;
+see [`CONFIGURATION.md`](CONFIGURATION.md).
 
 ---
 

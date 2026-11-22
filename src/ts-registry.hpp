@@ -29,6 +29,11 @@ struct FilterControl {
 	virtual std::string preset_name(int index) const = 0;
 	virtual int current_preset() const = 0;
 	virtual void apply_preset(int index) = 0;
+	/** User looks are files in the writable looks folder. */
+	virtual bool is_user_look(int index) const = 0;
+	virtual void save_look(const std::string &name) = 0;
+	virtual void delete_look(int index) = 0;
+	virtual std::string look_dir() const = 0;
 
 	virtual int input_tier() const = 0;
 	virtual bool is_capture_source() const = 0;

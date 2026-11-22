@@ -64,7 +64,7 @@ covered by tests) and the **OBS layer** (thin, it only wires the core to libobs)
 | Audio | `src/audio/ts-click-sound.*` + `ts-click-audio.*` + `ts-click-source.*` | Click WAV decode, process-wide mix queue and OBS audio source |
 | Engine | `src/ts-engine.{hpp,cpp}` | Shared effect host: settings, profiles, hotkeys, input models, compositor and per-frame state (filter and capture source) |
 | Capture | `src/capture/ts-capture.*` + `ts-capture-x11.cpp` + `ts-capture-source.cpp` | Native monitor capture source (X11/XShm) that draws its texture through the shared engine |
-| Properties | `src/ts-properties.cpp` + `src/properties/*` | OBS properties tree, split by capture/pointer/focus/overlays |
+| Properties | `src/ts-properties.cpp` + `src/properties/*` + `ts-option-schema.hpp` | OBS properties tree, split by capture/pointer/focus/overlays; one option registry feeds tooltips/tests |
 | Webcam | `src/webcam/ts-webcam-filter.*` + `ts-webcam-source.*` + `data/effects/webcam.effect` | Independent webcam bubble filter and source action |
 | UI | `src/ui/ts-dock.{hpp,cpp}` | Qt dock (optional) |
 

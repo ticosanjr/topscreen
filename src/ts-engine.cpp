@@ -69,6 +69,8 @@ enum ActionBits : uint32_t {
 	A_REVERT_PROFILE = 1u << 22,
 	A_DUPLICATE_PROFILE = 1u << 23,
 	A_TOGGLE_KEYS = 1u << 24,
+	A_SAVE_LOOK = 1u << 25,
+	A_DELETE_LOOK = 1u << 26,
 };
 
 /** Stable fingerprint of the saved config, used to recognize our own pushes. */
@@ -167,6 +169,11 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 	std::atomic<int> preset_cache_{-1};
 	std::atomic<int> profile_cache_{0};
 	std::atomic<int> input_tier_cache_{0};
+
+	/* User look requests (UI thread -> video thread). */
+	std::mutex look_mutex_;
+	std::string pending_look_name_;
+	std::atomic<int> pending_look_delete_{-1};
 
 	/* Profiles backup requests (UI thread -> video thread). */
 	std::mutex profile_io_mutex_;
@@ -295,6 +302,21 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 		pending_preset_.store(index);
 		actions_.fetch_or(A_APPLY_PRESET);
 	}
+	bool is_user_look(int index) const override { return presets.is_user(index); }
+	void save_look(const std::string &name) override
+	{
+		{
+			std::lock_guard<std::mutex> lock(look_mutex_);
+			pending_look_name_ = name;
+		}
+		actions_.fetch_or(A_SAVE_LOOK);
+	}
+	void delete_look(int index) override
+	{
+		pending_look_delete_.store(index);
+		actions_.fetch_or(A_DELETE_LOOK);
+	}
+	std::string look_dir() const override { return presets.user_dir(); }
 	int input_tier() const override { return input_tier_cache_.load(); }
 	bool is_capture_source() const override { return source_mode_; }
 	void monitor_origin(double *x, double *y) const override
@@ -879,6 +901,31 @@ void ts_filter_ctx::process_actions()
 		keys_paused_.store(!keys_paused_.load());
 		blog(LOG_INFO, "[TopScreen] keystrokes paused: %s",
 		     keys_paused_.load() ? "yes" : "no");
+	}
+	if (act & A_SAVE_LOOK) {
+		std::string name;
+		{
+			std::lock_guard<std::mutex> lock(look_mutex_);
+			name.swap(pending_look_name_);
+		}
+		std::string error;
+		const int index = presets.save_user(name, cfg, &error);
+		if (index >= 0) {
+			preset_cache_.store(index);
+			blog(LOG_INFO, "[TopScreen] look saved: %s", name.c_str());
+		} else {
+			blog(LOG_WARNING, "[TopScreen] could not save look: %s", error.c_str());
+		}
+	}
+	if (act & A_DELETE_LOOK) {
+		const int index = pending_look_delete_.exchange(-1);
+		std::string error;
+		if (presets.delete_user(index, &error)) {
+			preset_cache_.store(presets.current());
+			blog(LOG_INFO, "[TopScreen] look deleted");
+		} else {
+			blog(LOG_WARNING, "[TopScreen] could not delete look: %s", error.c_str());
+		}
 	}
 	if (act & A_RESET_PROFILES) {
 		obs_data_t *s = obs_source_get_settings(source);

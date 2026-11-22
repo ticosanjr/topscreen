@@ -77,6 +77,9 @@ void set_current_scene_uuid(const std::string &uuid);
 /** Sets the data directory resolved by obs_module_file(). */
 void set_data_dir(const std::string &dir);
 
+/** Sets the writable config directory resolved by obs_module_config_path(). */
+void set_config_dir(const std::string &dir);
+
 /** Creates a fake source (without registering). */
 obs_source_t *make_source(const obs_source_info *info, obs_source_t *parent, uint32_t w, uint32_t h);
 

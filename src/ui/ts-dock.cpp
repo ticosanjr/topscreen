@@ -14,6 +14,7 @@
 #include <QGroupBox>
 #include <QGuiApplication>
 #include <QHBoxLayout>
+#include <QInputDialog>
 #include <QLabel>
 #include <QLineEdit>
 #include <QMessageBox>
@@ -118,6 +119,47 @@ public:
 				c->apply_preset(index);
 		});
 		look_layout->addWidget(preset_);
+		auto *look_row = new QHBoxLayout();
+		save_look_btn_ = new QPushButton(obs_module_text("Dock.SaveLook"), look);
+		delete_look_btn_ = new QPushButton(obs_module_text("Dock.DeleteLook"), look);
+		open_looks_btn_ = new QPushButton(obs_module_text("Dock.OpenLooksFolder"), look);
+		QObject::connect(save_look_btn_, &QPushButton::clicked, this, [this]() {
+			bool ok = false;
+			const QString name = QInputDialog::getText(
+				this, QStringLiteral("TopScreen"),
+				obs_module_text("Dock.LookName"), QLineEdit::Normal,
+				QString(), &ok);
+			if (ok && !name.trimmed().isEmpty()) {
+				if (FilterControl *c = registry_first())
+					c->save_look(name.trimmed().toStdString());
+			}
+		});
+		QObject::connect(delete_look_btn_, &QPushButton::clicked, this, [this]() {
+			FilterControl *c = registry_first();
+			if (!c)
+				return;
+			const int index = c->current_preset();
+			if (index < 0 || !c->is_user_look(index))
+				return;
+			const auto answer = QMessageBox::question(
+				this, QStringLiteral("TopScreen"),
+				obs_module_text("Dock.DeleteLookConfirm"),
+				QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
+			if (answer == QMessageBox::Yes)
+				c->delete_look(index);
+		});
+		QObject::connect(open_looks_btn_, &QPushButton::clicked, this, [this]() {
+			if (FilterControl *c = registry_first()) {
+				const std::string dir = c->look_dir();
+				if (!dir.empty())
+					QDesktopServices::openUrl(
+						QUrl::fromLocalFile(QString::fromStdString(dir)));
+			}
+		});
+		look_row->addWidget(save_look_btn_);
+		look_row->addWidget(delete_look_btn_);
+		look_row->addWidget(open_looks_btn_);
+		look_layout->addLayout(look_row);
 		look_layout->addWidget(new QLabel(obs_module_text("Profile.Current"), look));
 		profile_ = new QComboBox(look);
 		for (int i = 0; i < core::keys::kProfileCount; ++i)
@@ -404,6 +446,8 @@ private:
 		effects_->setEnabled(has);
 		keys_pause_->setEnabled(has);
 		preset_->setEnabled(has);
+		save_look_btn_->setEnabled(has);
+		open_looks_btn_->setEnabled(has);
 		profile_->setEnabled(has);
 		profile_name_->setEnabled(has);
 		rename_btn_->setEnabled(has);
@@ -441,6 +485,7 @@ private:
 				preset_->setCurrentIndex(cur);
 			else
 				preset_->setCurrentIndex(-1); /* no active preset */
+			delete_look_btn_->setEnabled(cur >= 0 && c->is_user_look(cur));
 
 			const int pc = c->current_profile();
 			for (int i = 0; i < profile_->count(); ++i)
@@ -576,6 +621,9 @@ private:
 	QCheckBox *effects_ = nullptr;
 	QCheckBox *keys_pause_ = nullptr;
 	QComboBox *preset_ = nullptr;
+	QPushButton *save_look_btn_ = nullptr;
+	QPushButton *delete_look_btn_ = nullptr;
+	QPushButton *open_looks_btn_ = nullptr;
 	QComboBox *profile_ = nullptr;
 	QLineEdit *profile_name_ = nullptr;
 	QPushButton *rename_btn_ = nullptr;

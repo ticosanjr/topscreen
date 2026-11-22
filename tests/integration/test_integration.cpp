@@ -1171,6 +1171,41 @@ TEST(integration_profile_next_prev_and_click_sound_hotkeys)
 	destroy_filter(ctx);
 }
 
+/* The dock creates/deletes user looks through the FilterControl. */
+TEST(integration_user_look_via_filter_control)
+{
+	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
+	const std::filesystem::path dir =
+		std::filesystem::temp_directory_path() / "topscreen-looks-engine-test";
+	std::filesystem::remove_all(dir);
+	fakeobs::set_config_dir(dir.string());
+
+	obs_source_t *parent = make_parent(1280, 720);
+	obs_source_t *filter = fakeobs::make_source(&ts_filter_source_info, parent, 0, 0);
+	void *ctx = create_filter(filter);
+	REQUIRE(ctx != nullptr);
+	FilterControl *ctrl = registry_first();
+	REQUIRE(ctrl != nullptr);
+
+	const int before = ctrl->preset_count();
+	ctrl->save_look("Engine Look");
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK_EQ(ctrl->preset_count(), before + 1);
+	const int index = ctrl->current_preset();
+	REQUIRE(index >= 0);
+	CHECK(ctrl->is_user_look(index));
+	CHECK_EQ(ctrl->preset_name(index), std::string("Engine Look"));
+
+	ctrl->delete_look(index);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK_EQ(ctrl->preset_count(), before);
+
+	destroy_filter(ctx);
+	obs_source_release(filter);
+	obs_source_release(parent);
+	std::filesystem::remove_all(dir);
+}
+
 TEST(integration_hotkey_pauses_keys)
 {
 	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);

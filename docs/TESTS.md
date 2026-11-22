@@ -104,8 +104,8 @@ That is where all the math and the state logic live — what actually must be ri
 ## Current numbers
 
 ```
-258 tests | 9866 checks | 0 failures   (core)
-78 tests | 966 checks   | 0 failures   (integration with fake libobs, LeakSanitizer clean)
+260 tests | 10557 checks | 0 failures   (core)
+80 tests | 988 checks   | 0 failures   (integration with fake libobs, LeakSanitizer clean)
 ```
 
 ## What the integration layer covers
@@ -116,13 +116,15 @@ fake libobs:
 
 | File | Coverage |
 |------|----------|
-| `test_integration.cpp` | filter lifecycle (create/tick/render/destroy), preset apply, background toggle, all 26 hotkeys, native-cursor shutdown/restore on the parent (including effects/cursor-off and shared refcount), profiles (save/switch/seeds/list/auto-save/restart/export-import round-trip, **click-sound reload on switch**, **partial import fills missing fields/slots**), **independent hotkey highlight toggle (manual zoom/drag ownership)**, **profile names/duplicate/revert**, **temporary keystroke pause**, **temporary preset**, **lossless seed revision**, **spotlight hotkey**, **magnifier hotkey + Spotlight/Magnifier exclusion**, **Properties refresh after profile/preset changes**, **dock target selection (hotkeys follow it)**, **debounced auto-save with flush**, **scene → profile assignment applied on scene change, on filter creation and by scene UUID (with lazy migration of legacy name entries and name fallback)**, **empty scene lists never erase assignments**, and **scene map export/import round-trip** |
+| `test_integration.cpp` | filter lifecycle (create/tick/render/destroy), preset apply, background toggle, all 26 hotkeys, native-cursor shutdown/restore on the parent (including effects/cursor-off and shared refcount), profiles (save/switch/seeds/list/auto-save/restart/export-import round-trip, **click-sound reload on switch**, **partial import fills missing fields/slots**), **independent hotkey highlight toggle (manual zoom/drag ownership)**, **profile names/duplicate/revert**, **user look save/apply/delete**, **temporary keystroke pause**, **temporary preset**, **lossless seed revision**, **spotlight hotkey**, **magnifier hotkey + Spotlight/Magnifier exclusion**, **Properties refresh after profile/preset changes**, **dock target selection (hotkeys follow it)**, **debounced auto-save with flush**, **scene → profile assignment applied on scene change, on filter creation and by scene UUID (with lazy migration of legacy name entries and name fallback)**, **empty scene lists never erase assignments**, and **scene map export/import round-trip** |
 | `test_integration.cpp` hotkeys | `integration_registers_all_hotkeys` covers every hotkey id/name/callback; `integration_hotkeys_shared_between_filters` proves one process-wide set shared across filters; `integration_registry_target_selection` proves selection routing/fallback |
 | `test_uniforms.cpp` | every uniform declared by `topscreen.effect` is uploaded on a plain frame (D3D11 aborts the draw otherwise) |
 | `test_click_audio.cpp` | click WAV is decoded, queued and mixed by the `topscreen_click_audio` source; silence when idle, PCM when a click is queued |
 | `test_webcam_filter.cpp` | webcam bubble filter uploads its mask/border/shadow uniforms and exposes the mask properties |
 | `test_capture_source.cpp` | `topscreen_capture` lifecycle, embedded effect properties, monitor/cursor/audio settings and **native-cursor runtime override** (the real X11 frame pull/cursor compositing is verified in OBS) |
 | `test_text_render.cpp` | key-overlay text batches all glyphs + shadow quads into one vertex buffer (**1 draw total**, cache hit without rebuild) and falls back to per-glyph sprites if vertex-buffer creation fails |
+| `test_option_schema.cpp` | the shared option registry is unique, every tooltip exists in both locales, and every tooltip used by the Properties builders is registered |
+| `test_presets.cpp` | user looks: save one JSON file, discover it on reload, apply it, delete it, and refuse to delete bundled looks |
 | `test_settings.cpp` | defaults match `Config`, legacy source falls back, store/load roundtrip, partial-slot fallback, background type migration/visibility, migrations, properties tree/zoom-group visibility with the hotkey, **dependent-control visibility callbacks** (cursor idle, spotlight corner, keystroke band), input without a backend, click sound error handling |
 
 ## What is NOT covered (and why)

@@ -2,6 +2,7 @@
 
 #include "core/cursor_catalog.hpp"
 #include "hotkeys/ts-hotkey-actions.hpp"
+#include "properties/ts-option-schema.hpp"
 
 #include <filesystem>
 #include <fstream>
@@ -132,6 +133,9 @@ TEST(locale_en_has_no_orphan_keys)
 	 * obs_module_text("...") call. */
 	for (int i = 0; i < topscreen::kHotkeyCount; ++i)
 		code.insert(topscreen::kHotkeyLabelKeys[i]);
+	/* Tooltip keys live in the option schema table. */
+	for (const auto &spec : topscreen::options::kSpecs)
+		code.insert(spec.tooltip);
 
 	CHECK(!code.empty());
 	CHECK(!en.empty());

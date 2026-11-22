@@ -35,6 +35,12 @@ User-visible changes. Dates are in ISO form. The released packages are listed in
   monitor origin and keystroke state with a copy button.
 - New **Pause keystrokes** control and `TopScreen_ToggleKeys` hotkey hide the
   overlay for the current session without changing the saved setting.
+- The dock can save the current look as a user look (one JSON file in the
+  plugin config `looks` folder), delete user looks, and open that folder. User
+  looks join the preset selector and the next/previous hotkey cycle.
+- The filter options now have a single schema registry (key, section, tooltip);
+  tooltips are applied from it and a test rejects unregistered tooltip keys or
+  missing translations.
 
 ## 1.3.0
 

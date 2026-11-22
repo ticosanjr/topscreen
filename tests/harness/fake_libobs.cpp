@@ -20,6 +20,7 @@
 namespace {
 
 std::string g_data_dir;
+std::string g_config_dir;
 std::string g_current_scene_name = "Scene";
 std::string g_current_scene_uuid;
 const obs_source_info *g_registered = nullptr;
@@ -94,6 +95,11 @@ void cleanup()
 void set_data_dir(const std::string &dir)
 {
 	g_data_dir = dir;
+}
+
+void set_config_dir(const std::string &dir)
+{
+	g_config_dir = dir;
 }
 
 void set_current_scene_uuid(const std::string &uuid)
@@ -478,6 +484,18 @@ char *obs_find_module_file(obs_module_t *, const char *file)
 	return out;
 }
 
+char *obs_module_get_config_path(obs_module_t *, const char *file)
+{
+	if (!file || g_config_dir.empty())
+		return nullptr;
+	std::string path = g_config_dir + "/" + file;
+	char *out = static_cast<char *>(std::malloc(path.size() + 1));
+	if (!out)
+		return nullptr;
+	std::memcpy(out, path.c_str(), path.size() + 1);
+	return out;
+}
+
 void obs_register_source_s(const obs_source_info *info, size_t)
 {
 	g_registered = info;
@@ -725,6 +743,12 @@ bool obs_data_save_json_pretty_safe(obs_data_t *data, const char *file, const ch
 		return false;
 	out << text;
 	return static_cast<bool>(out);
+}
+
+bool obs_data_save_json_safe(obs_data_t *data, const char *file, const char *temp,
+			     const char *backup)
+{
+	return obs_data_save_json_pretty_safe(data, file, temp, backup);
 }
 
 // ---- obs_source ----

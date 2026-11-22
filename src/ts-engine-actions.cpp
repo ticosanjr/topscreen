@@ -8,9 +8,34 @@ void ts_filter_ctx::process_actions()
 	if (act == 0)
 		return;
 
+	action_cancel_highlight(act);
+	action_effects(act);
+	action_zoom(act);
+	action_presets(act);
+	action_profile_switch(act);
+	action_click_sound(act);
+	action_highlight(act);
+	action_spotlight(act);
+	action_magnifier(act);
+	action_revert_profile(act);
+	action_duplicate_profile(act);
+	action_keys(act);
+	action_save_look(act);
+	action_test_click(act);
+	action_delete_look(act);
+	action_reset_profiles(act);
+	action_save_profile(act);
+	action_profile_io(act);
+}
+
+void ts_filter_ctx::action_cancel_highlight(uint32_t act)
+{
 	if (act & A_CANCEL_HIGHLIGHT)
 		exit_locked_highlight(false);
+}
 
+void ts_filter_ctx::action_effects(uint32_t act)
+{
 	if (act & A_TOGGLE_EFFECTS) {
 		cfg.effects_enabled = !cfg.effects_enabled;
 		if (!cfg.effects_enabled)
@@ -33,6 +58,10 @@ void ts_filter_ctx::process_actions()
 		push_settings();
 		mark_profile_dirty();
 	}
+}
+
+void ts_filter_ctx::action_zoom(uint32_t act)
+{
 	if (act & (A_ZOOM_IN | A_ZOOM_OUT | A_RESET_ZOOM))
 		exit_locked_highlight(false);
 	if (act & A_ZOOM_IN)
@@ -46,6 +75,10 @@ void ts_filter_ctx::process_actions()
 		zoom.spot_stop();
 		hotkey_highlight_active_.store(false);
 	}
+}
+
+void ts_filter_ctx::action_presets(uint32_t act)
+{
 	if (act & A_NEXT_PRESET)
 		request_preset(presets.next());
 	if (act & A_PREV_PRESET)
@@ -55,6 +88,10 @@ void ts_filter_ctx::process_actions()
 		if (i >= 0)
 			request_preset(i);
 	}
+}
+
+void ts_filter_ctx::action_profile_switch(uint32_t act)
+{
 	int profile_target = -1;
 	if (act & A_PROFILE_SET)
 		profile_target = pending_profile_.exchange(-1);
@@ -74,6 +111,10 @@ void ts_filter_ctx::process_actions()
 		blog(LOG_INFO, "[TopScreen] profile activated: %s",
 		     core::profile_label(profile_target));
 	}
+}
+
+void ts_filter_ctx::action_click_sound(uint32_t act)
+{
 	if (act & A_TOGGLE_CLICK_SOUND) {
 		cfg.click_sound.enabled = !cfg.click_sound.enabled;
 		push_settings();
@@ -81,6 +122,10 @@ void ts_filter_ctx::process_actions()
 		blog(LOG_INFO, "[TopScreen] click sound: %s",
 		     cfg.click_sound.enabled ? "on" : "off");
 	}
+}
+
+void ts_filter_ctx::action_highlight(uint32_t act)
+{
 	if (act & A_TOGGLE_HIGHLIGHT) {
 		if (highlight.locked()) {
 			/* Do not let the hotkey replace a pinned Reading/locked spot. */
@@ -105,6 +150,10 @@ void ts_filter_ctx::process_actions()
 			     hotkey_highlight_active_.load() ? "active" : "no-op");
 		}
 	}
+}
+
+void ts_filter_ctx::action_spotlight(uint32_t act)
+{
 	if (act & A_TOGGLE_SPOTLIGHT) {
 		exit_locked_highlight(false);
 		cfg.spotlight.enabled = !cfg.spotlight.enabled;
@@ -117,6 +166,10 @@ void ts_filter_ctx::process_actions()
 		mark_profile_dirty();
 		blog(LOG_INFO, "[TopScreen] spotlight: %s", cfg.spotlight.enabled ? "on" : "off");
 	}
+}
+
+void ts_filter_ctx::action_magnifier(uint32_t act)
+{
 	if (act & A_TOGGLE_MAGNIFIER) {
 		exit_locked_highlight(false);
 		cfg.magnifier.enabled = !cfg.magnifier.enabled;
@@ -129,6 +182,10 @@ void ts_filter_ctx::process_actions()
 		mark_profile_dirty();
 		blog(LOG_INFO, "[TopScreen] magnifier: %s", cfg.magnifier.enabled ? "on" : "off");
 	}
+}
+
+void ts_filter_ctx::action_revert_profile(uint32_t act)
+{
 	if (act & A_REVERT_PROFILE) {
 		if (profile_baseline_valid_) {
 			exit_locked_highlight(false);
@@ -144,6 +201,10 @@ void ts_filter_ctx::process_actions()
 			     core::profile_label(current_profile_));
 		}
 	}
+}
+
+void ts_filter_ctx::action_duplicate_profile(uint32_t act)
+{
 	if (act & A_DUPLICATE_PROFILE) {
 		const int to = pending_duplicate_.exchange(-1);
 		if (to >= 0 && to < kProfileCount && to != current_profile_) {
@@ -162,11 +223,19 @@ void ts_filter_ctx::process_actions()
 			     core::profile_label(current_profile_), core::profile_label(to));
 		}
 	}
+}
+
+void ts_filter_ctx::action_keys(uint32_t act)
+{
 	if (act & A_TOGGLE_KEYS) {
 		keys_paused_.store(!keys_paused_.load());
 		blog(LOG_INFO, "[TopScreen] keystrokes paused: %s",
 		     keys_paused_.load() ? "yes" : "no");
 	}
+}
+
+void ts_filter_ctx::action_save_look(uint32_t act)
+{
 	if (act & A_SAVE_LOOK) {
 		std::string name;
 		{
@@ -182,11 +251,19 @@ void ts_filter_ctx::process_actions()
 			blog(LOG_WARNING, "[TopScreen] could not save look: %s", error.c_str());
 		}
 	}
+}
+
+void ts_filter_ctx::action_test_click(uint32_t act)
+{
 	if (act & A_TEST_CLICK) {
 		const int side = pending_click_test_.exchange(-1);
 		if (side >= 0)
 			click_sound.play(side == 1, cfg.click_sound.volume);
 	}
+}
+
+void ts_filter_ctx::action_delete_look(uint32_t act)
+{
 	if (act & A_DELETE_LOOK) {
 		const int index = pending_look_delete_.exchange(-1);
 		std::string error;
@@ -197,6 +274,10 @@ void ts_filter_ctx::process_actions()
 			blog(LOG_WARNING, "[TopScreen] could not delete look: %s", error.c_str());
 		}
 	}
+}
+
+void ts_filter_ctx::action_reset_profiles(uint32_t act)
+{
 	if (act & A_RESET_PROFILES) {
 		obs_data_t *s = obs_source_get_settings(source);
 		profile_store::reset_slots(s, kProfileSeedRevision);
@@ -209,8 +290,16 @@ void ts_filter_ctx::process_actions()
 		refresh_properties();
 		blog(LOG_INFO, "[TopScreen] profiles restored to defaults (A..J)");
 	}
+}
+
+void ts_filter_ctx::action_save_profile(uint32_t act)
+{
 	if (act & A_SAVE_PROFILE)
 		do_save_profile();
+}
+
+void ts_filter_ctx::action_profile_io(uint32_t act)
+{
 	if (act & (A_EXPORT_PROFILES | A_IMPORT_PROFILES)) {
 		std::string path;
 		std::string text;

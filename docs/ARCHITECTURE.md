@@ -43,6 +43,7 @@ covered by tests) and the **OBS layer** (thin, it only wires the core to libobs)
 | JSON | `json.{hpp,cpp}` | Dependency-free JSON parser |
 | Preset | `preset.{hpp,cpp}` | Preset parse + apply |
 | Config | `config.hpp`, `config_limits.hpp`, `keys.hpp` | `Config`, shared UI/sanitize ranges and key names |
+| Config fields | `config_fields.hpp` | One X-macro table of persisted keys shared by the settings loader and the preset reader |
 
 ### OBS layer
 

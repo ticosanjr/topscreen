@@ -53,6 +53,7 @@ TEST(preset_covers_all_keys)
             "zoom_idle_timeout_ms": 555,
             "zoom_pan_amount": 0.77,
             "zoom_center_amount": 0.5,
+            "zoom_active_window": false,
             "click_left_effect": 8,
             "click_left_size": 1.7,
             "click_left_color": 999,
@@ -122,6 +123,9 @@ TEST(preset_covers_all_keys)
             "highlight_hold_ms": 777,
             "highlight_fade_ms": 222,
             "highlight_color": 12345,
+            "highlight_opacity": 0.61,
+            "highlight_lock_until_click": true,
+            "highlight_reading_dim": 0.7,
             "highlight_mode": 2,
             "highlight_thickness": 0.012,
             "highlight_zoom_delay_ms": 1500,
@@ -182,6 +186,7 @@ TEST(preset_covers_all_keys)
 	CHECK_NEAR(c.zoom.idle_timeout_ms, 555.0, 1e-9);
 	CHECK_NEAR(c.zoom.pan_amount, 0.77, 1e-9);
 	CHECK_NEAR(c.zoom.center_amount, 0.5, 1e-9);
+	CHECK(!c.zoom.active_window);
 
 	CHECK_EQ(c.click_left.effect, 8);
 	CHECK_NEAR(c.click_left.size, 1.7, 1e-9);
@@ -258,6 +263,9 @@ TEST(preset_covers_all_keys)
 	CHECK_NEAR(c.highlight.hold_ms, 777.0, 1e-9);
 	CHECK_NEAR(c.highlight.fade_ms, 222.0, 1e-9);
 	CHECK_EQ(c.highlight.color, 12345u);
+	CHECK_NEAR(c.highlight.opacity, 0.61, 1e-9);
+	CHECK(c.highlight.lock_until_click);
+	CHECK_NEAR(c.highlight.reading_dim, 0.7, 1e-9);
 
 	CHECK_EQ(c.highlight.mode, 2);
 	CHECK_NEAR(c.highlight.thickness, 0.012, 1e-9);

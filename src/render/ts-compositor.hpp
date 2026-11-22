@@ -55,6 +55,13 @@ private:
 	void upload_highlight(const FrameState &st, bool active);
 	void upload_clicks(const FrameState &st);
 	void upload_line(const FrameState &st, uint32_t w, bool active);
+	void cache_transform_params();
+	void cache_background_params();
+	void cache_cursor_params();
+	void cache_spotlight_params();
+	void cache_magnifier_params();
+	void cache_highlight_params();
+	gs_eparam_t *param(const char *name) const;
 
 
 	gs_effect_t *effect_ = nullptr;

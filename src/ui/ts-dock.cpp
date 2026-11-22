@@ -67,6 +67,26 @@ public:
 		info_->setWordWrap(true);
 		root->addWidget(info_);
 
+		build_target_selector(root);
+		build_live_section(root);
+		build_look_section(root);
+		build_scene_section(root);
+		build_sources_section(root);
+		build_backup_section(root);
+		build_diagnostics_section(root);
+		root->addStretch(1);
+
+		timer_ = new QTimer(this);
+		QObject::connect(timer_, &QTimer::timeout, this, [this]() { refresh_ui(); });
+		timer_->start(500);
+
+		refresh_ui();
+	}
+
+private:
+
+	void build_target_selector(QVBoxLayout *root)
+	{
 		root->addWidget(new QLabel(obs_module_text("Dock.Target"), this));
 		target_ = new QComboBox(this);
 		QObject::connect(target_, &QComboBox::currentIndexChanged, this, [this](int index) {
@@ -81,7 +101,10 @@ public:
 			refresh_ui();
 		});
 		root->addWidget(target_);
+	}
 
+	void build_live_section(QVBoxLayout *root)
+	{
 		/* ---- Live ---------------------------------------------------- */
 		auto *live = new QGroupBox(obs_module_text("Dock.LiveGroup"), this);
 		auto *live_layout = new QVBoxLayout(live);
@@ -106,7 +129,10 @@ public:
 		keys_status_ = new QLabel(live);
 		live_layout->addWidget(keys_status_);
 		root->addWidget(live);
+	}
 
+	void build_look_section(QVBoxLayout *root)
+	{
 		/* ---- Look ---------------------------------------------------- */
 		auto *look = new QGroupBox(obs_module_text("Dock.LookGroup"), this);
 		auto *look_layout = new QVBoxLayout(look);
@@ -219,7 +245,10 @@ public:
 		});
 		look_layout->addWidget(save_btn_);
 		root->addWidget(look);
+	}
 
+	void build_scene_section(QVBoxLayout *root)
+	{
 		/* ---- Scene --------------------------------------------------- */
 		auto *scene = new QGroupBox(obs_module_text("Dock.SceneGroup"), this);
 		auto *scene_layout = new QVBoxLayout(scene);
@@ -247,7 +276,10 @@ public:
 		scene_status_->setWordWrap(true);
 		scene_layout->addWidget(scene_status_);
 		root->addWidget(scene);
+	}
 
+	void build_sources_section(QVBoxLayout *root)
+	{
 		/* ---- Sources ------------------------------------------------ */
 		auto *sources = new QGroupBox(obs_module_text("Dock.SourcesGroup"), this);
 		auto *sources_layout = new QVBoxLayout(sources);
@@ -274,7 +306,10 @@ public:
 		sources_layout->addWidget(test_click_btn_);
 		sources_layout->addWidget(add_webcam_btn_);
 		root->addWidget(sources);
+	}
 
+	void build_backup_section(QVBoxLayout *root)
+	{
 		/* ---- Backup ------------------------------------------------- */
 		auto *backup = new QGroupBox(obs_module_text("Dock.BackupGroup"), this);
 		auto *backup_layout = new QVBoxLayout(backup);
@@ -309,7 +344,10 @@ public:
 		io_status_->setWordWrap(true);
 		backup_layout->addWidget(io_status_);
 		root->addWidget(backup);
+	}
 
+	void build_diagnostics_section(QVBoxLayout *root)
+	{
 		/* ---- Diagnostics -------------------------------------------- */
 		auto *diag = new QGroupBox(obs_module_text("Dock.DiagnosticsGroup"), this);
 		auto *diag_layout = new QVBoxLayout(diag);
@@ -338,17 +376,7 @@ public:
 		auto *version = new QLabel(QString("TopScreen ") + QString::fromUtf8(kVersion), diag);
 		diag_layout->addWidget(version);
 		root->addWidget(diag);
-
-		root->addStretch(1);
-
-		timer_ = new QTimer(this);
-		QObject::connect(timer_, &QTimer::timeout, this, [this]() { refresh_ui(); });
-		timer_->start(500);
-
-		refresh_ui();
 	}
-
-private:
 	void export_profiles()
 	{
 		FilterControl *c = registry_first();
@@ -430,7 +458,17 @@ private:
 		const bool has = (c != nullptr);
 
 		syncing_ = true;
+		refresh_target_selector(has);
+		refresh_controls(c, has);
+		syncing_ = false;
 
+		refresh_io_status(c, has);
+		refresh_scene_status(has);
+		refresh_diagnostics(c, has);
+	}
+
+	void refresh_target_selector(bool has)
+	{
 		/* Rebuild the target selector only when the registry changed:
 		 * clearing it every 500 ms would steal focus and reset the popup.
 		 * The revision also avoids allocating a snapshot on every tick. */
@@ -476,6 +514,10 @@ private:
 		add_webcam_btn_->setEnabled(has);
 		test_click_btn_->setEnabled(has);
 		copy_diag_btn_->setEnabled(has);
+	}
+
+	void refresh_controls(FilterControl *c, bool has)
+	{
 
 		if (!has) {
 			rebuild_presets(nullptr);
@@ -536,8 +578,10 @@ private:
 			else
 				keys_status_->setText(QString(obs_module_text("Dock.KeysLive")));
 		}
-		syncing_ = false;
+	}
 
+	void refresh_io_status(FilterControl *c, bool has)
+	{
 		/* A message from the previous filter would be misleading. */
 		if (c != last_target_) {
 			last_target_ = c;
@@ -571,7 +615,10 @@ private:
 				}
 			}
 		}
+	}
 
+	void refresh_scene_status(bool has)
+	{
 		{
 			obs_source_t *scene = obs_frontend_get_current_scene();
 			const char *raw_name = scene ? obs_source_get_name(scene) : nullptr;
@@ -588,7 +635,10 @@ private:
 			else
 				scene_status_->setText(obs_module_text("Dock.NoSceneProfile"));
 		}
+	}
 
+	void refresh_diagnostics(FilterControl *c, bool has)
+	{
 		if (has) {
 			const int tier = c->input_tier();
 			const char *tier_text = obs_module_text("Tier.None");

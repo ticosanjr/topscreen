@@ -272,28 +272,11 @@ void ts_input_platform_stop(void *state)
 	delete s;
 }
 
-void ts_input_platform_poll(void *state, InputState *out)
+#if defined(TOPSCREEN_HAVE_X11)
+void poll_x11_pointer(LinuxInput *s, InputState *out, bool evdev)
 {
-	auto *s = static_cast<LinuxInput *>(state);
-	(void)s;
 
-#if defined(TOPSCREEN_HAVE_X11)
-	const bool x11 = (s->dpy != nullptr);
-#else
-	const bool x11 = false;
-#endif
-
-#if defined(TOPSCREEN_HAVE_EVDEV)
-	const bool evdev = (s->fd >= 0);
-#else
-	const bool evdev = false;
-#endif
-
-	out->key_count = 0;
-
-	/* Cursor and buttons (X11) */
-#if defined(TOPSCREEN_HAVE_X11)
-	if (x11) {
+	if (s->dpy) {
 		Window root = DefaultRootWindow(s->dpy);
 		Window child_ret;
 		int root_x = 0, root_y = 0, win_x = 0, win_y = 0;
@@ -318,13 +301,49 @@ void ts_input_platform_poll(void *state, InputState *out)
 		out->link = s->link;
 #endif
 	}
+}
+
+void poll_x11_keys(LinuxInput *s, InputState *out)
+{
+	{
+		char keys[32] = {};
+		XQueryKeymap(s->dpy, keys);
+		auto down = [&](KeyCode kc) {
+			const unsigned char bit = static_cast<unsigned char>(1u << (kc & 7));
+			return kc > 0 && (keys[kc >> 3] & bit) != 0;
+		};
+		const bool shift = down(s->shift_l) || down(s->shift_r);
+		for (int kc = 8; kc < 256; ++kc) {
+			const unsigned char bit = static_cast<unsigned char>(1u << (kc & 7));
+			const bool is_down = (keys[kc >> 3] & bit) != 0;
+			const bool was = (s->prev[kc >> 3] & bit) != 0;
+			if (is_down && !was) {
+				const KeySym ks = XkbKeycodeToKeysym(s->dpy, static_cast<KeyCode>(kc), 0,
+								      shift ? 1 : 0);
+				if (ks != NoSymbol) {
+					bool is_mod = false;
+					const std::string label = x11_label(ks, &is_mod);
+					if (!label.empty() && out->key_count < InputState::kMaxKeyEvents) {
+						out->key_labels[out->key_count] = label;
+						out->key_modifier[out->key_count] = is_mod;
+						out->key_modifiers[out->key_count] = out->modifiers;
+						++out->key_count;
+					}
+				}
+			}
+		}
+		std::memcpy(s->prev, keys, sizeof(keys));
+	}
+}
+#else
+void poll_x11_pointer(LinuxInput *, InputState *, bool) {}
+void poll_x11_keys(LinuxInput *, InputState *) {}
 #endif
 
-	/* Keys: evdev has priority (it also works on Wayland). */
-	bool keys_done = false;
-	(void)keys_done;
 #if defined(TOPSCREEN_HAVE_EVDEV)
-	if (evdev) {
+bool poll_evdev_keys(LinuxInput *s, InputState *out)
+{
+	{
 		for (;;) {
 			const ssize_t n = ::read(s->fd, s->buf + s->buflen, sizeof(s->buf) - s->buflen);
 			if (n <= 0)
@@ -418,42 +437,38 @@ void ts_input_platform_poll(void *state, InputState *out)
 			out->modifiers |= core::KeyModAlt;
 		if (s->meta)
 			out->modifiers |= core::KeyModWin;
-		keys_done = true;
 	}
+	return true;
+}
+#else
+bool poll_evdev_keys(LinuxInput *, InputState *) { return false; }
 #endif
 
-	/* X11 key fallback */
+void ts_input_platform_poll(void *state, InputState *out)
+{
+	auto *s = static_cast<LinuxInput *>(state);
+	(void)s;
+
 #if defined(TOPSCREEN_HAVE_X11)
-	if (x11 && !keys_done) {
-		char keys[32] = {};
-		XQueryKeymap(s->dpy, keys);
-		auto down = [&](KeyCode kc) {
-			const unsigned char bit = static_cast<unsigned char>(1u << (kc & 7));
-			return kc > 0 && (keys[kc >> 3] & bit) != 0;
-		};
-		const bool shift = down(s->shift_l) || down(s->shift_r);
-		for (int kc = 8; kc < 256; ++kc) {
-			const unsigned char bit = static_cast<unsigned char>(1u << (kc & 7));
-			const bool is_down = (keys[kc >> 3] & bit) != 0;
-			const bool was = (s->prev[kc >> 3] & bit) != 0;
-			if (is_down && !was) {
-				const KeySym ks = XkbKeycodeToKeysym(s->dpy, static_cast<KeyCode>(kc), 0,
-								      shift ? 1 : 0);
-				if (ks != NoSymbol) {
-					bool is_mod = false;
-					const std::string label = x11_label(ks, &is_mod);
-					if (!label.empty() && out->key_count < InputState::kMaxKeyEvents) {
-						out->key_labels[out->key_count] = label;
-						out->key_modifier[out->key_count] = is_mod;
-						out->key_modifiers[out->key_count] = out->modifiers;
-						++out->key_count;
-					}
-				}
-			}
-		}
-		std::memcpy(s->prev, keys, sizeof(keys));
-	}
+	const bool x11 = (s->dpy != nullptr);
+#else
+	const bool x11 = false;
 #endif
+#if defined(TOPSCREEN_HAVE_EVDEV)
+	const bool evdev = (s->fd >= 0);
+#else
+	const bool evdev = false;
+#endif
+
+	out->key_count = 0;
+	if (x11)
+		poll_x11_pointer(s, out, evdev);
+
+	bool keys_done = false;
+	if (evdev)
+		keys_done = poll_evdev_keys(s, out);
+	if (x11 && !keys_done)
+		poll_x11_keys(s, out);
 
 	/* Tier: 1 if there is a native cursor (X11); 3 if we only have keys via evdev. */
 	if (x11)

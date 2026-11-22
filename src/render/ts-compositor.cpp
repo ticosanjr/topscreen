@@ -43,6 +43,88 @@ inline void set_c(gs_eparam_t *p, uint32_t abgr)
 
 } // namespace
 
+/* Every uniform the shader declares: D3D11 aborts the draw when a name
+ * does not resolve, so the contract test and this list stay together. */
+const char *const kRequiredUniforms[] = {
+	"ViewProj",
+	"image",
+	"target_size",
+	"content_pad",
+	"corner_radius",
+	"zoom",
+	"motion_blur",
+	"zoom_focus",
+	"bg_a",
+	"bg_b",
+	"bg_mode",
+	"bg_gradient_center",
+	"bg_gradient_dir",
+	"bg_tex",
+	"bg_tex_enabled",
+	"bg_transparent",
+	"bg_tex_aspect",
+	"bg_keep_aspect",
+	"bg_blur",
+	"frame_style",
+	"frame_color",
+	"frame_width",
+	"shadow_alpha",
+	"shadow_blur",
+	"shadow_offset",
+	"cursor_enabled",
+	"cursor_pos",
+	"cursor_scale",
+	"cursor_opacity",
+	"cursor_rotation",
+	"cursor_shadow",
+	"cursor_tex",
+	"cursor_tex_enabled",
+	"cursor_cell_off",
+	"cursor_cell_scale",
+	"cursor_hotspot",
+	"spotlight_enabled",
+	"spotlight_amount",
+	"spotlight_shape",
+	"spotlight_radius",
+	"spotlight_corner",
+	"spotlight_dim",
+	"spotlight_border_enabled",
+	"spotlight_border_color",
+	"spotlight_border_width",
+	"spotlight_outside_mode",
+	"spotlight_blur",
+	"spotlight_zoom",
+	"spotlight_focus",
+	"spotlight_zoom_focus",
+	"magnifier_enabled",
+	"magnifier_amount",
+	"magnifier_shape",
+	"magnifier_radius",
+	"magnifier_corner",
+	"magnifier_zoom",
+	"magnifier_focus",
+	"magnifier_sample",
+	"magnifier_border_enabled",
+	"magnifier_border_color",
+	"magnifier_border_width",
+	"magnifier_shadow_enabled",
+	"magnifier_shadow_color",
+	"magnifier_shadow_alpha",
+	"magnifier_shadow_blur",
+	"magnifier_shadow_offset",
+	"highlight_active",
+	"highlight_rect",
+	"highlight_color",
+	"highlight_alpha",
+	"reading_active",
+	"reading_rect",
+	"reading_dim",
+	"click_count",
+	"line_count",
+	"line_width",
+};
+
+
 Compositor::~Compositor()
 {
 	release();
@@ -158,114 +240,143 @@ void Compositor::release_cursor_atlas()
 	}
 }
 
+gs_eparam_t *Compositor::param(const char *name) const
+{
+	return gs_effect_get_param_by_name(effect_, name);
+}
+
 void Compositor::cache_params()
 {
 	if (!effect_)
 		return;
 
-	auto P = [this](const char *name) { return gs_effect_get_param_by_name(effect_, name); };
+	cache_transform_params();
+	cache_background_params();
+	cache_cursor_params();
+	cache_spotlight_params();
+	cache_magnifier_params();
+	cache_highlight_params();
+}
 
-	p_image_ = P("image");
-	p_target_size_ = P("target_size");
-	p_pad_ = P("content_pad");
-	p_radius_ = P("corner_radius");
-	p_zoom_ = P("zoom");
-	p_motion_blur_ = P("motion_blur");
-	p_focus_ = P("zoom_focus");
-	p_bg_a_ = P("bg_a");
-	p_bg_b_ = P("bg_b");
-	p_bg_mode_ = P("bg_mode");
-	p_bg_gradient_center_ = P("bg_gradient_center");
-	p_bg_gradient_dir_ = P("bg_gradient_dir");
-	p_bg_tex_ = P("bg_tex");
-	p_bg_tex_enabled_ = P("bg_tex_enabled");
-	p_bg_tex_aspect_ = P("bg_tex_aspect");
-	p_bg_transparent_ = P("bg_transparent");
-	p_bg_keep_aspect_ = P("bg_keep_aspect");
-	p_bg_blur_ = P("bg_blur");
-	p_frame_style_ = P("frame_style");
-	p_frame_color_ = P("frame_color");
-	p_frame_width_ = P("frame_width");
-	p_shadow_alpha_ = P("shadow_alpha");
-	p_shadow_blur_ = P("shadow_blur");
-	p_shadow_offset_ = P("shadow_offset");
+void Compositor::cache_transform_params()
+{
+	p_image_ = param("image");
+	p_target_size_ = param("target_size");
+	p_pad_ = param("content_pad");
+	p_radius_ = param("corner_radius");
+	p_zoom_ = param("zoom");
+	p_motion_blur_ = param("motion_blur");
+	p_focus_ = param("zoom_focus");
+}
 
-	p_cursor_enabled_ = P("cursor_enabled");
-	p_cursor_pos_ = P("cursor_pos");
-	p_cursor_scale_ = P("cursor_scale");
-	p_cursor_opacity_ = P("cursor_opacity");
-	p_cursor_rotation_ = P("cursor_rotation");
-	p_cursor_shadow_ = P("cursor_shadow");
+void Compositor::cache_background_params()
+{
+	p_bg_a_ = param("bg_a");
+	p_bg_b_ = param("bg_b");
+	p_bg_mode_ = param("bg_mode");
+	p_bg_gradient_center_ = param("bg_gradient_center");
+	p_bg_gradient_dir_ = param("bg_gradient_dir");
+	p_bg_tex_ = param("bg_tex");
+	p_bg_tex_enabled_ = param("bg_tex_enabled");
+	p_bg_tex_aspect_ = param("bg_tex_aspect");
+	p_bg_transparent_ = param("bg_transparent");
+	p_bg_keep_aspect_ = param("bg_keep_aspect");
+	p_bg_blur_ = param("bg_blur");
+	p_frame_style_ = param("frame_style");
+	p_frame_color_ = param("frame_color");
+	p_frame_width_ = param("frame_width");
+	p_shadow_alpha_ = param("shadow_alpha");
+	p_shadow_blur_ = param("shadow_blur");
+	p_shadow_offset_ = param("shadow_offset");
+}
 
-	p_cursor_tex_ = P("cursor_tex");
-	p_cursor_tex_enabled_ = P("cursor_tex_enabled");
-	p_cursor_cell_off_ = P("cursor_cell_off");
-	p_cursor_cell_scale_ = P("cursor_cell_scale");
-	p_cursor_hotspot_ = P("cursor_hotspot");
+void Compositor::cache_cursor_params()
+{
+	p_cursor_enabled_ = param("cursor_enabled");
+	p_cursor_pos_ = param("cursor_pos");
+	p_cursor_scale_ = param("cursor_scale");
+	p_cursor_opacity_ = param("cursor_opacity");
+	p_cursor_rotation_ = param("cursor_rotation");
+	p_cursor_shadow_ = param("cursor_shadow");
 
-	p_spotlight_enabled_ = P("spotlight_enabled");
-	p_spotlight_amount_ = P("spotlight_amount");
-	p_spotlight_shape_ = P("spotlight_shape");
-	p_spotlight_radius_ = P("spotlight_radius");
-	p_spotlight_corner_ = P("spotlight_corner");
-	p_spotlight_dim_ = P("spotlight_dim");
-	p_spotlight_border_enabled_ = P("spotlight_border_enabled");
-	p_spotlight_border_color_ = P("spotlight_border_color");
-	p_spotlight_border_width_ = P("spotlight_border_width");
-	p_spotlight_outside_mode_ = P("spotlight_outside_mode");
-	p_spotlight_blur_ = P("spotlight_blur");
-	p_spotlight_zoom_ = P("spotlight_zoom");
-	p_spotlight_focus_ = P("spotlight_focus");
-	p_spotlight_zoom_focus_ = P("spotlight_zoom_focus");
+	p_cursor_tex_ = param("cursor_tex");
+	p_cursor_tex_enabled_ = param("cursor_tex_enabled");
+	p_cursor_cell_off_ = param("cursor_cell_off");
+	p_cursor_cell_scale_ = param("cursor_cell_scale");
+	p_cursor_hotspot_ = param("cursor_hotspot");
+}
 
-	p_magnifier_enabled_ = P("magnifier_enabled");
-	p_magnifier_amount_ = P("magnifier_amount");
-	p_magnifier_shape_ = P("magnifier_shape");
-	p_magnifier_radius_ = P("magnifier_radius");
-	p_magnifier_corner_ = P("magnifier_corner");
-	p_magnifier_zoom_ = P("magnifier_zoom");
-	p_magnifier_focus_ = P("magnifier_focus");
-	p_magnifier_sample_ = P("magnifier_sample");
-	p_magnifier_border_enabled_ = P("magnifier_border_enabled");
-	p_magnifier_border_color_ = P("magnifier_border_color");
-	p_magnifier_border_width_ = P("magnifier_border_width");
-	p_magnifier_shadow_enabled_ = P("magnifier_shadow_enabled");
-	p_magnifier_shadow_color_ = P("magnifier_shadow_color");
-	p_magnifier_shadow_alpha_ = P("magnifier_shadow_alpha");
-	p_magnifier_shadow_blur_ = P("magnifier_shadow_blur");
-	p_magnifier_shadow_offset_ = P("magnifier_shadow_offset");
+void Compositor::cache_spotlight_params()
+{
+	p_spotlight_enabled_ = param("spotlight_enabled");
+	p_spotlight_amount_ = param("spotlight_amount");
+	p_spotlight_shape_ = param("spotlight_shape");
+	p_spotlight_radius_ = param("spotlight_radius");
+	p_spotlight_corner_ = param("spotlight_corner");
+	p_spotlight_dim_ = param("spotlight_dim");
+	p_spotlight_border_enabled_ = param("spotlight_border_enabled");
+	p_spotlight_border_color_ = param("spotlight_border_color");
+	p_spotlight_border_width_ = param("spotlight_border_width");
+	p_spotlight_outside_mode_ = param("spotlight_outside_mode");
+	p_spotlight_blur_ = param("spotlight_blur");
+	p_spotlight_zoom_ = param("spotlight_zoom");
+	p_spotlight_focus_ = param("spotlight_focus");
+	p_spotlight_zoom_focus_ = param("spotlight_zoom_focus");
+}
 
-	p_highlight_active_ = P("highlight_active");
-	p_highlight_rect_ = P("highlight_rect");
-	p_highlight_color_ = P("highlight_color");
-	p_highlight_alpha_ = P("highlight_alpha");
-	p_reading_active_ = P("reading_active");
-	p_reading_rect_ = P("reading_rect");
-	p_reading_dim_ = P("reading_dim");
+void Compositor::cache_magnifier_params()
+{
+	p_magnifier_enabled_ = param("magnifier_enabled");
+	p_magnifier_amount_ = param("magnifier_amount");
+	p_magnifier_shape_ = param("magnifier_shape");
+	p_magnifier_radius_ = param("magnifier_radius");
+	p_magnifier_corner_ = param("magnifier_corner");
+	p_magnifier_zoom_ = param("magnifier_zoom");
+	p_magnifier_focus_ = param("magnifier_focus");
+	p_magnifier_sample_ = param("magnifier_sample");
+	p_magnifier_border_enabled_ = param("magnifier_border_enabled");
+	p_magnifier_border_color_ = param("magnifier_border_color");
+	p_magnifier_border_width_ = param("magnifier_border_width");
+	p_magnifier_shadow_enabled_ = param("magnifier_shadow_enabled");
+	p_magnifier_shadow_color_ = param("magnifier_shadow_color");
+	p_magnifier_shadow_alpha_ = param("magnifier_shadow_alpha");
+	p_magnifier_shadow_blur_ = param("magnifier_shadow_blur");
+	p_magnifier_shadow_offset_ = param("magnifier_shadow_offset");
+}
 
-	p_click_count_ = P("click_count");
+void Compositor::cache_highlight_params()
+{
+	p_highlight_active_ = param("highlight_active");
+	p_highlight_rect_ = param("highlight_rect");
+	p_highlight_color_ = param("highlight_color");
+	p_highlight_alpha_ = param("highlight_alpha");
+	p_reading_active_ = param("reading_active");
+	p_reading_rect_ = param("reading_rect");
+	p_reading_dim_ = param("reading_dim");
+
+	p_click_count_ = param("click_count");
 
 	char name[32];
 	for (int i = 0; i < 4; ++i) {
 		std::snprintf(name, sizeof(name), "click%d_pos", i);
-		click_[i].pos = P(name);
+		click_[i].pos = param(name);
 		std::snprintf(name, sizeof(name), "click%d_prog", i);
-		click_[i].prog = P(name);
+		click_[i].prog = param(name);
 		std::snprintf(name, sizeof(name), "click%d_size", i);
-		click_[i].size = P(name);
+		click_[i].size = param(name);
 		std::snprintf(name, sizeof(name), "click%d_color", i);
-		click_[i].color = P(name);
+		click_[i].color = param(name);
 		std::snprintf(name, sizeof(name), "click%d_type", i);
-		click_[i].type = P(name);
+		click_[i].type = param(name);
 	}
 
 	/* Freehand line: 32 explicit points (line_p0..line_p31), no arrays. */
 	for (int i = 0; i < 32; ++i) {
 		std::snprintf(name, sizeof(name), "line_p%d", i);
-		p_line_pts_[i] = P(name);
+		p_line_pts_[i] = param(name);
 	}
-	p_line_count_ = P("line_count");
-	p_line_width_ = P("line_width");
+	p_line_count_ = param("line_count");
+	p_line_width_ = param("line_width");
 }
 
 bool Compositor::validate_params() const
@@ -273,91 +384,10 @@ bool Compositor::validate_params() const
 	if (!effect_)
 		return false;
 
-	/* Every uniform the shader declares must resolve: on D3D11 a parameter
-	 * that is looked up (or uploaded) by the wrong name aborts the draw and
-	 * the filter's output stays empty. Keep this list in sync with
-	 * data/effects/topscreen.effect (the harness test also checks it). */
-	const char *const kNames[] = {
-		"ViewProj",
-		"image",
-		"target_size",
-		"content_pad",
-		"corner_radius",
-		"zoom",
-		"motion_blur",
-		"zoom_focus",
-		"bg_a",
-		"bg_b",
-		"bg_mode",
-		"bg_gradient_center",
-		"bg_gradient_dir",
-		"bg_tex",
-		"bg_tex_enabled",
-		"bg_transparent",
-		"bg_tex_aspect",
-		"bg_keep_aspect",
-		"bg_blur",
-		"frame_style",
-		"frame_color",
-		"frame_width",
-		"shadow_alpha",
-		"shadow_blur",
-		"shadow_offset",
-		"cursor_enabled",
-		"cursor_pos",
-		"cursor_scale",
-		"cursor_opacity",
-		"cursor_rotation",
-		"cursor_shadow",
-		"cursor_tex",
-		"cursor_tex_enabled",
-		"cursor_cell_off",
-		"cursor_cell_scale",
-		"cursor_hotspot",
-		"spotlight_enabled",
-		"spotlight_amount",
-		"spotlight_shape",
-		"spotlight_radius",
-		"spotlight_corner",
-		"spotlight_dim",
-		"spotlight_border_enabled",
-		"spotlight_border_color",
-		"spotlight_border_width",
-		"spotlight_outside_mode",
-		"spotlight_blur",
-		"spotlight_zoom",
-		"spotlight_focus",
-		"spotlight_zoom_focus",
-		"magnifier_enabled",
-		"magnifier_amount",
-		"magnifier_shape",
-		"magnifier_radius",
-		"magnifier_corner",
-		"magnifier_zoom",
-		"magnifier_focus",
-		"magnifier_sample",
-		"magnifier_border_enabled",
-		"magnifier_border_color",
-		"magnifier_border_width",
-		"magnifier_shadow_enabled",
-		"magnifier_shadow_color",
-		"magnifier_shadow_alpha",
-		"magnifier_shadow_blur",
-		"magnifier_shadow_offset",
-		"highlight_active",
-		"highlight_rect",
-		"highlight_color",
-		"highlight_alpha",
-		"reading_active",
-		"reading_rect",
-		"reading_dim",
-		"click_count",
-		"line_count",
-		"line_width",
-	};
+
 
 	int missing = 0;
-	for (const char *name : kNames) {
+	for (const char *name : kRequiredUniforms) {
 		if (!gs_effect_get_param_by_name(effect_, name)) {
 			blog(LOG_ERROR, "[TopScreen] shader uniform missing: %s", name);
 			++missing;

@@ -5,10 +5,10 @@
 /*
  * Single table of the persisted Config fields.
  *
- * X(kind, key, member) is expanded by the settings loader/store, by the preset
- * reader and by the defaults builder. Adding a Config field here updates every
- * path at once; fields with legacy handling (background type, click-sound
- * single file, spotlight outside mode) stay out of this list.
+ * X(kind, key, member) is expanded by the settings loader/store, the preset
+ * reader and the defaults builder. Adding a Config field here updates every
+ * path at once. Keys that need extra legacy handling (background type and the
+ * click-sound single file) are handled separately by the callers.
  */
 #define TS_CONFIG_FIELDS(X) \
 	X(BOOL, kEffectsEnabled, effects_enabled) \

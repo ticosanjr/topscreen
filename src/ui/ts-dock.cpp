@@ -84,7 +84,6 @@ public:
 	}
 
 private:
-
 	void build_target_selector(QVBoxLayout *root)
 	{
 		root->addWidget(new QLabel(obs_module_text("Dock.Target"), this));
@@ -136,6 +135,13 @@ private:
 		/* ---- Look ---------------------------------------------------- */
 		auto *look = new QGroupBox(obs_module_text("Dock.LookGroup"), this);
 		auto *look_layout = new QVBoxLayout(look);
+		build_look_presets(look, look_layout);
+		build_look_profiles(look, look_layout);
+		root->addWidget(look);
+	}
+
+	void build_look_presets(QGroupBox *look, QVBoxLayout *look_layout)
+	{
 		look_layout->addWidget(new QLabel(obs_module_text("Dock.Preset"), look));
 		preset_ = new QComboBox(look);
 		QObject::connect(preset_, &QComboBox::currentIndexChanged, this, [this](int index) {
@@ -186,6 +192,10 @@ private:
 		look_row->addWidget(delete_look_btn_);
 		look_row->addWidget(open_looks_btn_);
 		look_layout->addLayout(look_row);
+	}
+
+	void build_look_profiles(QGroupBox *look, QVBoxLayout *look_layout)
+	{
 		look_layout->addWidget(new QLabel(obs_module_text("Profile.Current"), look));
 		profile_ = new QComboBox(look);
 		for (int i = 0; i < core::keys::kProfileCount; ++i)
@@ -244,7 +254,6 @@ private:
 				c->save_profile();
 		});
 		look_layout->addWidget(save_btn_);
-		root->addWidget(look);
 	}
 
 	void build_scene_section(QVBoxLayout *root)

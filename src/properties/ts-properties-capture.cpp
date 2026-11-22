@@ -118,10 +118,10 @@ bool background_shadow_changed(obs_properties_t *props, obs_property_t *p, obs_d
 	return true;
 }
 
-void add_background_section(obs_properties_t *props, obs_properties_t *capture, obs_data_t *settings)
+namespace {
+
+void add_background_mode(obs_properties_t *bg)
 {
-	/* ---------------- Background ---------------- */
-	obs_properties_t *bg = obs_properties_create();
 	obs_property_t *mode = obs_properties_add_list(bg, kBgType,
 						       obs_module_text("Background.Type"),
 						       OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
@@ -153,7 +153,10 @@ void add_background_section(obs_properties_t *props, obs_properties_t *capture, 
 		bg, kBgGradientCenterY, obs_module_text("Background.GradientCenterY"),
 		limits::kUnitRange);
 	set_tip(gcentery, obs_module_text("Tooltip.GradientCenter"));
+}
 
+void add_wallpaper_group(obs_properties_t *bg)
+{
 	obs_properties_t *bgimg = obs_properties_create();
 	/* NON-editable list: shows the label, saves the path. */
 	obs_property_t *wp = obs_properties_add_list(bgimg, kBgImage,
@@ -176,7 +179,10 @@ void add_background_section(obs_properties_t *props, obs_properties_t *capture, 
 	set_tip(blur_amount, obs_module_text("Tooltip.WallpaperBlur"));
 	obs_properties_add_group(bg, "grp_bg_image", obs_module_text("Background.ImageGroup"),
 				 OBS_GROUP_NORMAL, bgimg);
+}
 
+void add_background_layout(obs_properties_t *bg)
+{
 	add_range_slider(
 		bg, kBgPaddingX, obs_module_text("Background.PaddingX"),
 		limits::kBgPaddingRange);
@@ -187,7 +193,10 @@ void add_background_section(obs_properties_t *props, obs_properties_t *capture, 
 	add_range_slider(
 		bg, kBgCornerRadius, obs_module_text("Background.CornerRadius"),
 		limits::kCornerRadiusRange);
+}
 
+void add_shadow_group(obs_properties_t *bg)
+{
 	/* Window shadow (sub-group with clear names) */
 	obs_properties_t *sh = obs_properties_create();
 	obs_property_t *shadow_alpha = add_range_slider(
@@ -206,7 +215,10 @@ void add_background_section(obs_properties_t *props, obs_properties_t *capture, 
 	obs_property_t *sh_group = obs_properties_add_group(
 		bg, kBgShadow, obs_module_text("Group.Shadow"), OBS_GROUP_CHECKABLE, sh);
 	obs_property_set_modified_callback(sh_group, background_shadow_changed);
+}
 
+void add_frame_group(obs_properties_t *bg)
+{
 	obs_properties_t *frame = obs_properties_create();
 	obs_property_t *fstyle = obs_properties_add_list(
 		frame, kFrameStyle, obs_module_text("Frame.Style"), OBS_COMBO_TYPE_LIST,
@@ -227,6 +239,18 @@ void add_background_section(obs_properties_t *props, obs_properties_t *capture, 
 		limits::kFrameWidthRange);
 	set_tip(fwidth, obs_module_text("Tooltip.FrameWidth"));
 	obs_properties_add_group(bg, "grp_frame", obs_module_text("Group.Frame"), OBS_GROUP_NORMAL, frame);
+}
+} // namespace
+
+void add_background_section(obs_properties_t *props, obs_properties_t *capture, obs_data_t *settings)
+{
+	/* ---------------- Background ---------------- */
+	obs_properties_t *bg = obs_properties_create();
+	add_background_mode(bg);
+	add_wallpaper_group(bg);
+	add_background_layout(bg);
+	add_shadow_group(bg);
+	add_frame_group(bg);
 	frame_style_changed(props, nullptr, settings);
 
 	obs_property_t *bg_group = obs_properties_add_group(

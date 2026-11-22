@@ -305,35 +305,33 @@ void poll_x11_pointer(LinuxInput *s, InputState *out, bool evdev)
 
 void poll_x11_keys(LinuxInput *s, InputState *out)
 {
-	{
-		char keys[32] = {};
-		XQueryKeymap(s->dpy, keys);
-		auto down = [&](KeyCode kc) {
-			const unsigned char bit = static_cast<unsigned char>(1u << (kc & 7));
-			return kc > 0 && (keys[kc >> 3] & bit) != 0;
-		};
-		const bool shift = down(s->shift_l) || down(s->shift_r);
-		for (int kc = 8; kc < 256; ++kc) {
-			const unsigned char bit = static_cast<unsigned char>(1u << (kc & 7));
-			const bool is_down = (keys[kc >> 3] & bit) != 0;
-			const bool was = (s->prev[kc >> 3] & bit) != 0;
-			if (is_down && !was) {
-				const KeySym ks = XkbKeycodeToKeysym(s->dpy, static_cast<KeyCode>(kc), 0,
-								      shift ? 1 : 0);
-				if (ks != NoSymbol) {
-					bool is_mod = false;
-					const std::string label = x11_label(ks, &is_mod);
-					if (!label.empty() && out->key_count < InputState::kMaxKeyEvents) {
-						out->key_labels[out->key_count] = label;
-						out->key_modifier[out->key_count] = is_mod;
-						out->key_modifiers[out->key_count] = out->modifiers;
-						++out->key_count;
-					}
+	char keys[32] = {};
+	XQueryKeymap(s->dpy, keys);
+	auto down = [&](KeyCode kc) {
+		const unsigned char bit = static_cast<unsigned char>(1u << (kc & 7));
+		return kc > 0 && (keys[kc >> 3] & bit) != 0;
+	};
+	const bool shift = down(s->shift_l) || down(s->shift_r);
+	for (int kc = 8; kc < 256; ++kc) {
+		const unsigned char bit = static_cast<unsigned char>(1u << (kc & 7));
+		const bool is_down = (keys[kc >> 3] & bit) != 0;
+		const bool was = (s->prev[kc >> 3] & bit) != 0;
+		if (is_down && !was) {
+			const KeySym ks = XkbKeycodeToKeysym(s->dpy, static_cast<KeyCode>(kc), 0,
+							      shift ? 1 : 0);
+			if (ks != NoSymbol) {
+				bool is_mod = false;
+				const std::string label = x11_label(ks, &is_mod);
+				if (!label.empty() && out->key_count < InputState::kMaxKeyEvents) {
+					out->key_labels[out->key_count] = label;
+					out->key_modifier[out->key_count] = is_mod;
+					out->key_modifiers[out->key_count] = out->modifiers;
+					++out->key_count;
 				}
 			}
 		}
-		std::memcpy(s->prev, keys, sizeof(keys));
 	}
+	std::memcpy(s->prev, keys, sizeof(keys));
 }
 #else
 void poll_x11_pointer(LinuxInput *, InputState *, bool) {}
@@ -341,103 +339,107 @@ void poll_x11_keys(LinuxInput *, InputState *) {}
 #endif
 
 #if defined(TOPSCREEN_HAVE_EVDEV)
+void emit_evdev_events(LinuxInput *s, InputState *out,
+		       const std::vector<core::EvdevKey> &events)
+{
+	auto current_modifiers = [&]() {
+		uint32_t mods = 0;
+		if (s->shift)
+			mods |= core::KeyModShift;
+		if (s->ctrl)
+			mods |= core::KeyModCtrl;
+		if (s->alt)
+			mods |= core::KeyModAlt;
+		if (s->meta)
+			mods |= core::KeyModWin;
+		return mods;
+	};
+	auto emit = [&](std::string_view label, bool is_modifier) {
+		if (label.empty() || out->key_count >= InputState::kMaxKeyEvents)
+			return;
+		out->key_labels[out->key_count] = std::string(label);
+		out->key_modifier[out->key_count] = is_modifier;
+		out->key_modifiers[out->key_count] = current_modifiers();
+		++out->key_count;
+	};
+
+	for (const core::EvdevKey &k : events) {
+		if (k.code == KEY_LEFTSHIFT || k.code == KEY_RIGHTSHIFT) {
+			const bool was = s->shift;
+			s->shift = k.pressed;
+			if (k.pressed && !was)
+				emit("Shift", true);
+			continue;
+		}
+		if (k.code == KEY_LEFTCTRL || k.code == KEY_RIGHTCTRL) {
+			const bool was = s->ctrl;
+			s->ctrl = k.pressed;
+			if (k.pressed && !was)
+				emit("Ctrl", true);
+			continue;
+		}
+		if (k.code == KEY_LEFTALT || k.code == KEY_RIGHTALT) {
+			const bool was = s->alt;
+			s->alt = k.pressed;
+			if (k.code == KEY_RIGHTALT)
+				s->altgr = k.pressed;
+			if (k.pressed && !was)
+				emit("Alt", true);
+			continue;
+		}
+		if (k.code == KEY_LEFTMETA || k.code == KEY_RIGHTMETA) {
+			const bool was = s->meta;
+			s->meta = k.pressed;
+			if (k.pressed && !was)
+				emit("Win", true);
+			continue;
+		}
+		if (!k.pressed)
+			continue;
+
+		std::string label;
+#if defined(TOPSCREEN_HAVE_X11)
+		label = x11_label_from_keycode(s->dpy, k.code, s->shift, s->altgr);
+#endif
+		if (label.empty())
+			label = core::evdev_key_label_with_shift(k.code, s->shift, s->altgr);
+		if (label.empty())
+			continue;
+		emit(label, core::evdev_key_is_modifier(k.code));
+	}
+}
+
 bool poll_evdev_keys(LinuxInput *s, InputState *out)
 {
-	{
-		for (;;) {
-			const ssize_t n = ::read(s->fd, s->buf + s->buflen, sizeof(s->buf) - s->buflen);
-			if (n <= 0)
-				break;
-			s->buflen += static_cast<size_t>(n);
-			if (s->buflen >= sizeof(s->buf))
-				break;
-		}
-
-		const size_t rec = sizeof(struct input_event);
-		if (s->buflen >= rec) {
-			const size_t usable = (s->buflen / rec) * rec;
-			static thread_local std::vector<core::EvdevKey> events;
-			events.clear();
-			core::evdev_decode(s->buf, usable, rec, &events);
-			std::memmove(s->buf, s->buf + usable, s->buflen - usable);
-			s->buflen -= usable;
-
-			auto current_modifiers = [&]() {
-				uint32_t mods = 0;
-				if (s->shift)
-					mods |= core::KeyModShift;
-				if (s->ctrl)
-					mods |= core::KeyModCtrl;
-				if (s->alt)
-					mods |= core::KeyModAlt;
-				if (s->meta)
-					mods |= core::KeyModWin;
-				return mods;
-			};
-			auto emit = [&](std::string_view label, bool is_modifier) {
-				if (label.empty() || out->key_count >= InputState::kMaxKeyEvents)
-					return;
-				out->key_labels[out->key_count] = std::string(label);
-				out->key_modifier[out->key_count] = is_modifier;
-				out->key_modifiers[out->key_count] = current_modifiers();
-				++out->key_count;
-			};
-
-			for (const core::EvdevKey &k : events) {
-				if (k.code == KEY_LEFTSHIFT || k.code == KEY_RIGHTSHIFT) {
-					const bool was = s->shift;
-					s->shift = k.pressed;
-					if (k.pressed && !was)
-						emit("Shift", true);
-					continue;
-				}
-				if (k.code == KEY_LEFTCTRL || k.code == KEY_RIGHTCTRL) {
-					const bool was = s->ctrl;
-					s->ctrl = k.pressed;
-					if (k.pressed && !was)
-						emit("Ctrl", true);
-					continue;
-				}
-				if (k.code == KEY_LEFTALT || k.code == KEY_RIGHTALT) {
-					const bool was = s->alt;
-					s->alt = k.pressed;
-					if (k.code == KEY_RIGHTALT)
-						s->altgr = k.pressed;
-					if (k.pressed && !was)
-						emit("Alt", true);
-					continue;
-				}
-				if (k.code == KEY_LEFTMETA || k.code == KEY_RIGHTMETA) {
-					const bool was = s->meta;
-					s->meta = k.pressed;
-					if (k.pressed && !was)
-						emit("Win", true);
-					continue;
-				}
-				if (!k.pressed)
-					continue;
-
-				std::string label;
-#if defined(TOPSCREEN_HAVE_X11)
-				label = x11_label_from_keycode(s->dpy, k.code, s->shift, s->altgr);
-#endif
-				if (label.empty())
-					label = core::evdev_key_label_with_shift(k.code, s->shift, s->altgr);
-				if (label.empty())
-					continue;
-				emit(label, core::evdev_key_is_modifier(k.code));
-			}
-		}
-		out->modifiers = 0;
-		if (s->shift)
-			out->modifiers |= core::KeyModShift;
-		if (s->ctrl)
-			out->modifiers |= core::KeyModCtrl;
-		if (s->alt)
-			out->modifiers |= core::KeyModAlt;
-		if (s->meta)
-			out->modifiers |= core::KeyModWin;
+	for (;;) {
+		const ssize_t n = ::read(s->fd, s->buf + s->buflen, sizeof(s->buf) - s->buflen);
+		if (n <= 0)
+			break;
+		s->buflen += static_cast<size_t>(n);
+		if (s->buflen >= sizeof(s->buf))
+			break;
 	}
+
+	const size_t rec = sizeof(struct input_event);
+	if (s->buflen >= rec) {
+		const size_t usable = (s->buflen / rec) * rec;
+		static thread_local std::vector<core::EvdevKey> events;
+		events.clear();
+		core::evdev_decode(s->buf, usable, rec, &events);
+		std::memmove(s->buf, s->buf + usable, s->buflen - usable);
+		s->buflen -= usable;
+
+		emit_evdev_events(s, out, events);
+	}
+	out->modifiers = 0;
+	if (s->shift)
+		out->modifiers |= core::KeyModShift;
+	if (s->ctrl)
+		out->modifiers |= core::KeyModCtrl;
+	if (s->alt)
+		out->modifiers |= core::KeyModAlt;
+	if (s->meta)
+		out->modifiers |= core::KeyModWin;
 	return true;
 }
 #else

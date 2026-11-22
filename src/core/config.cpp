@@ -50,13 +50,10 @@ void sanitize_click(ClickConfig *c, const ClickConfig &def)
 
 } // namespace
 
-void sanitize_config(Config *cfg)
+namespace {
+
+void sanitize_background(Config *cfg, const Config &def)
 {
-	if (!cfg)
-		return;
-
-	const Config def;
-
 	/* Background */
 	cfg->bg.mode = bounded_int(cfg->bg.mode, static_cast<int>(BgMode::Solid),
 				   static_cast<int>(BgMode::BlurredScreen));
@@ -76,7 +73,10 @@ void sanitize_config(Config *cfg)
 		bounded(cfg->bg.shadow_offset_x, limits::kShadowOffsetRange, def.bg.shadow_offset_x);
 	cfg->bg.shadow_offset =
 		bounded(cfg->bg.shadow_offset, limits::kShadowOffsetRange, def.bg.shadow_offset);
+}
 
+void sanitize_cursor(Config *cfg, const Config &def)
+{
 	/* Cursor */
 	cfg->cursor.style = cursor_style_resolve(cfg->cursor.style);
 	if (cfg->cursor.secondary_style < -1)
@@ -99,7 +99,10 @@ void sanitize_config(Config *cfg)
 					 def.cursor.smooth_ms);
 	cfg->cursor.idle_delay_ms =
 		bounded(cfg->cursor.idle_delay_ms, limits::kCursorIdleDelayRange, def.cursor.idle_delay_ms);
+}
 
+void sanitize_zoom(Config *cfg, const Config &def)
+{
 	/* Zoom */
 	/* Retired "Manual" (2) is a plain Off; hotkeys still adjust the manual
 	 * zoom independently of the mode. */
@@ -117,13 +120,19 @@ void sanitize_config(Config *cfg)
 					       def.zoom.motion_blur_amount);
 	cfg->zoom.pan_amount = bounded(cfg->zoom.pan_amount, limits::kUnitRange, def.zoom.pan_amount);
 	cfg->zoom.center_amount = bounded(cfg->zoom.center_amount, limits::kUnitRange, def.zoom.center_amount);
+}
 
+void sanitize_clicks(Config *cfg, const Config &def)
+{
 	/* Clicks */
 	sanitize_click(&cfg->click_left, def.click_left);
 	sanitize_click(&cfg->click_right, def.click_right);
 	cfg->click_sound.volume =
 		bounded(cfg->click_sound.volume, limits::kUnitRange, def.click_sound.volume);
+}
 
+void sanitize_spotlight(Config *cfg, const Config &def)
+{
 	/* Spotlight */
 	cfg->spotlight.shape = bounded_int(cfg->spotlight.shape,
 					   static_cast<int>(SpotlightShape::Circle),
@@ -145,7 +154,10 @@ void sanitize_config(Config *cfg)
 		bounded(cfg->spotlight.zoom_amount, limits::kZoomAmountRange, def.spotlight.zoom_amount);
 	cfg->spotlight.in_ms = bounded(cfg->spotlight.in_ms, limits::kInOutMsRange, def.spotlight.in_ms);
 	cfg->spotlight.out_ms = bounded(cfg->spotlight.out_ms, limits::kInOutMsRange, def.spotlight.out_ms);
+}
 
+void sanitize_magnifier(Config *cfg, const Config &def)
+{
 	/* Magnifier */
 	cfg->magnifier.shape = bounded_int(cfg->magnifier.shape,
 					   static_cast<int>(SpotlightShape::Circle),
@@ -174,18 +186,20 @@ void sanitize_config(Config *cfg)
 		bounded(cfg->magnifier.in_ms, limits::kInOutMsRange, def.magnifier.in_ms);
 	cfg->magnifier.out_ms =
 		bounded(cfg->magnifier.out_ms, limits::kInOutMsRange, def.magnifier.out_ms);
+}
 
-	/* The two full-screen focus effects are mutually exclusive by design. */
-	if (cfg->magnifier.enabled)
-		cfg->spotlight.enabled = false;
-
+void sanitize_keys(Config *cfg, const Config &def)
+{
 	/* Key overlay */
 	cfg->keys.ttl_ms = bounded(cfg->keys.ttl_ms, limits::kKeysTtlRange, def.keys.ttl_ms);
 	cfg->keys.max_keys = bounded_int(cfg->keys.max_keys, limits::kKeysMaxRange);
 	cfg->keys.pos_x = bounded(cfg->keys.pos_x, limits::kUnitRange, def.keys.pos_x);
 	cfg->keys.pos_y = bounded(cfg->keys.pos_y, limits::kUnitRange, def.keys.pos_y);
 	cfg->keys.size = bounded(cfg->keys.size, limits::kKeysSizeRange, def.keys.size);
+}
 
+void sanitize_highlight(Config *cfg, const Config &def)
+{
 	/* Highlighter */
 	/* PressZoom (legacy value 5) was removed: migrate to plain Zoom. */
 	if (cfg->highlight.mode == 5)
@@ -211,6 +225,28 @@ void sanitize_config(Config *cfg)
 			def.highlight.zoom_hold_ms);
 	cfg->highlight.zoom_out_ms = bounded(cfg->highlight.zoom_out_ms,
 					     limits::kHighlightZoomOutRange, def.highlight.zoom_out_ms);
+}
+} // namespace
+
+void sanitize_config(Config *cfg)
+{
+	if (!cfg)
+		return;
+
+	const Config def;
+	sanitize_background(cfg, def);
+	sanitize_cursor(cfg, def);
+	sanitize_zoom(cfg, def);
+	sanitize_clicks(cfg, def);
+	sanitize_spotlight(cfg, def);
+	sanitize_magnifier(cfg, def);
+
+	/* The two full-screen focus effects are mutually exclusive by design. */
+	if (cfg->magnifier.enabled)
+		cfg->spotlight.enabled = false;
+
+	sanitize_keys(cfg, def);
+	sanitize_highlight(cfg, def);
 }
 
 } // namespace topscreen::core

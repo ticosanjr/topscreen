@@ -286,12 +286,10 @@ bool shape_changed(obs_properties_t *props, obs_property_t *, obs_data_t *settin
 	return true;
 }
 
-obs_properties_t *webcam_properties(void *data)
+namespace {
+
+void add_webcam_mask_group(obs_properties_t *props)
 {
-	obs_properties_t *props = obs_properties_create();
-
-	obs_properties_add_text(props, "webcam_info", obs_module_text("Webcam.Info"), OBS_TEXT_INFO);
-
 	obs_properties_t *mask = obs_properties_create();
 	obs_property_t *shape = obs_properties_add_list(
 		mask, kWebcamShape, obs_module_text("Webcam.Shape"), OBS_COMBO_TYPE_LIST,
@@ -343,7 +341,10 @@ obs_properties_t *webcam_properties(void *data)
 					limits::kWebcamOffsetRange.step);
 	obs_properties_add_group(props, "webcam_mask", obs_module_text("Webcam.MaskGroup"),
 				 OBS_GROUP_NORMAL, mask);
+}
 
+void add_webcam_border_group(obs_properties_t *props)
+{
 	obs_properties_t *border = obs_properties_create();
 	obs_property_t *border_on = obs_properties_add_bool(
 		border, kWebcamBorderEnabled, obs_module_text("Webcam.BorderEnabled"));
@@ -356,7 +357,10 @@ obs_properties_t *webcam_properties(void *data)
 					limits::kWebcamBorderWidthRange.step);
 	obs_properties_add_group(props, "webcam_border", obs_module_text("Webcam.BorderGroup"),
 				 OBS_GROUP_NORMAL, border);
+}
 
+void add_webcam_shadow_group(obs_properties_t *props)
+{
 	obs_properties_t *shadow = obs_properties_create();
 	obs_property_t *shadow_on = obs_properties_add_bool(
 		shadow, kWebcamShadowEnabled, obs_module_text("Webcam.ShadowEnabled"));
@@ -383,6 +387,17 @@ obs_properties_t *webcam_properties(void *data)
 					limits::kWebcamShadowOffsetRange.step);
 	obs_properties_add_group(props, "webcam_shadow", obs_module_text("Webcam.ShadowGroup"),
 				 OBS_GROUP_NORMAL, shadow);
+}
+} // namespace
+
+obs_properties_t *webcam_properties(void *data)
+{
+	obs_properties_t *props = obs_properties_create();
+
+	obs_properties_add_text(props, "webcam_info", obs_module_text("Webcam.Info"), OBS_TEXT_INFO);
+	add_webcam_mask_group(props);
+	add_webcam_border_group(props);
+	add_webcam_shadow_group(props);
 
 	set_tip(obs_properties_get(props, kWebcamSize), obs_module_text("Webcam.Tip.Size"));
 	set_tip(obs_properties_get(props, kWebcamAnchor), obs_module_text("Webcam.Tip.Anchor"));

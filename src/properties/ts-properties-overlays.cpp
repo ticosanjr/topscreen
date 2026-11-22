@@ -99,11 +99,10 @@ bool highlight_mode_changed(obs_properties_t *props, obs_property_t *property, o
 	return true;
 }
 
-void add_highlight_section(obs_properties_t *props, obs_properties_t *overlays, obs_data_t *settings)
+namespace {
+
+void add_highlight_mode(obs_properties_t *hl)
 {
-	/* ---------------- Highlighter: action first, then only what applies.
-	 * The mode list below shows/hides the Look / Timing / Zoom groups. */
-	obs_properties_t *hl = obs_properties_create();
 	obs_property_t *hkh = obs_properties_add_bool(hl, kHighlightHotkeyEnabled,
 						      obs_module_text("Highlight.HotkeyEnabled"));
 
@@ -129,7 +128,10 @@ void add_highlight_section(obs_properties_t *props, obs_properties_t *overlays, 
 		hl, kHighlightLockUntilClick, obs_module_text("Highlight.LockUntilClick"));
 	set_tip(lock, obs_module_text("Tooltip.HighlightLockUntilClick"));
 	obs_property_set_modified_callback(lock, highlight_mode_changed);
+}
 
+void add_highlight_look(obs_properties_t *hl)
+{
 	/* Look (box + line). */
 	obs_properties_t *hl_look = obs_properties_create();
 	obs_properties_add_color(hl_look, kHighlightColor, obs_module_text("Highlight.Color"));
@@ -161,7 +163,10 @@ void add_highlight_section(obs_properties_t *props, obs_properties_t *overlays, 
 	set_tip(reading_dim, obs_module_text("Tooltip.HighlightReadingDim"));
 	obs_properties_add_group(hl, "grp_hl_reading", obs_module_text("Highlight.ReadingGroup"),
 				 OBS_GROUP_NORMAL, hl_reading);
+}
 
+void add_highlight_zoom(obs_properties_t *hl)
+{
 	/* Zoom gesture: one fixed IN sequence with ease-in-out cubic. */
 	obs_properties_t *hl_zoom = obs_properties_create();
 	obs_property_t *zoom_delay = add_range_slider(
@@ -182,6 +187,17 @@ void add_highlight_section(obs_properties_t *props, obs_properties_t *overlays, 
 		limits::kHighlightZoomOutRange);
 	obs_properties_add_group(hl, "grp_hl_zoom", obs_module_text("Highlight.ZoomGroup"), OBS_GROUP_NORMAL,
 				 hl_zoom);
+}
+} // namespace
+
+void add_highlight_section(obs_properties_t *props, obs_properties_t *overlays, obs_data_t *settings)
+{
+	/* ---------------- Highlighter: action first, then only what applies.
+	 * The mode list below shows/hides the Look / Timing / Zoom groups. */
+	obs_properties_t *hl = obs_properties_create();
+	add_highlight_mode(hl);
+	add_highlight_look(hl);
+	add_highlight_zoom(hl);
 
 	obs_property_t *hl_group = obs_properties_add_group(
 		overlays, kHighlightEnabled, obs_module_text("Group.Highlight"),

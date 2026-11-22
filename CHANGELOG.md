@@ -3,6 +3,12 @@
 User-visible changes. Dates are in ISO form. The released packages are listed in
 [`releases/README.md`](releases/README.md).
 
+## Unreleased
+
+- Presets and saved looks now apply **Zoom active window** and the highlighter
+  opacity, lock-until-click and reading-dim settings instead of silently
+  ignoring them.
+
 ## 1.4.0
 
 - Editing the highlight color no longer makes it opaque: legacy alpha is folded

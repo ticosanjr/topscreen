@@ -47,6 +47,9 @@ User-visible changes. Dates are in ISO form. The released packages are listed in
   Properties and the dock.
 - Automatic scene-to-profile switching now has a global toggle (dock and
   Properties) that keeps the assignments when disabled.
+- Profile slots are now stored sparsely: only values that differ from the A-J
+  seed are saved. Older full slots are compacted once on load, reducing the
+  scene JSON size without changing the profiles.
 
 ## 1.3.0
 

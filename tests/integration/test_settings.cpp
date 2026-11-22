@@ -217,6 +217,18 @@ TEST(settings_migrates_legacy_background_modes)
 		CHECK_EQ(c.bg.mode, static_cast<int>(core::BgMode::Solid));
 		obs_data_release(s);
 	}
+	{
+		/* OBS always supplies defaults; they must not hide a legacy user
+		 * value (or mask the migration). */
+		obs_data_t *s = obs_data_create();
+		config_defaults(s);
+		obs_data_set_int(s, core::keys::kBgMode, 1);
+		core::Config c;
+		config_load(s, &c);
+		CHECK_EQ(c.bg.mode, static_cast<int>(core::BgMode::Gradient));
+		CHECK_NEAR(c.bg.gradient_angle, 90.0, 1e-9);
+		obs_data_release(s);
+	}
 }
 
 /* Background source types are first-class: local image and transparent are
@@ -829,5 +841,99 @@ TEST(properties_capture_mode_has_no_empty_advanced_group)
 	CHECK(obs_properties_get(full, "grp_advanced") != nullptr);
 	obs_properties_destroy(full);
 
+	obs_data_release(s);
+}
+
+/* Sparse storage: a profile slot only carries the fields that differ from its
+ * seed, so a default slot stays empty and scene JSON stays small. */
+TEST(settings_sparse_store_only_writes_differences)
+{
+	core::Config base;
+	core::Config changed = base;
+	changed.zoom.amount = 3.0;
+	changed.bg.mode = static_cast<int>(core::BgMode::Solid);
+
+	obs_data_t *s = obs_data_create();
+	config_store_sparse(s, changed, base);
+	CHECK(obs_data_has_user_value(s, core::keys::kZoomAmount));
+	CHECK(obs_data_has_user_value(s, core::keys::kBgType));
+	CHECK(!obs_data_has_user_value(s, core::keys::kBgColorA));
+	CHECK(!obs_data_has_user_value(s, core::keys::kCursorSize));
+	CHECK(!obs_data_has_user_value(s, core::keys::kZoomPanAmount));
+	obs_data_release(s);
+}
+
+/* Sparse slots must be transparent: loading a sparse slot over its seed gives
+ * back every field of the saved configuration, including the derived ones
+ * (click side flags, spotlight blur flag). */
+TEST(settings_sparse_store_load_roundtrip)
+{
+	const core::Config seed = core::make_profile_seed(0);
+	core::Config a = seed;
+	a.effects_enabled = false;
+	a.bg.mode = static_cast<int>(core::BgMode::Solid);
+	a.bg.color_a = 0xFF102030u;
+	a.bg.image_file = "wallpapers/fiber.jpg";
+	a.zoom.amount = 2.1;
+	a.zoom.mode = static_cast<int>(core::ZoomMode::Auto);
+	a.cursor.size = 1.75;
+	a.spotlight.outside_mode = 1;
+	a.spotlight.blur_enabled = true;
+	a.spotlight.blur_amount = 18.0;
+	a.click_sound.file_right.clear();
+	a.click_sound.right = false;
+	core::sanitize_config(&a);
+
+	obs_data_t *s = obs_data_create();
+	config_store_sparse(s, a, seed);
+
+	core::Config b = seed;
+	config_load(s, &b, &seed);
+	CHECK(b.effects_enabled == a.effects_enabled);
+	CHECK_EQ(b.bg.mode, a.bg.mode);
+	CHECK_EQ(b.bg.color_a, a.bg.color_a);
+	CHECK_EQ(b.bg.image_file, a.bg.image_file);
+	CHECK_EQ(b.bg.image, a.bg.image);
+	CHECK_NEAR(b.zoom.amount, a.zoom.amount, 1e-9);
+	CHECK_EQ(b.zoom.mode, a.zoom.mode);
+	CHECK_NEAR(b.cursor.size, a.cursor.size, 1e-9);
+	CHECK_EQ(b.spotlight.outside_mode, a.spotlight.outside_mode);
+	CHECK_EQ(b.spotlight.blur_enabled, a.spotlight.blur_enabled);
+	CHECK_NEAR(b.spotlight.blur_amount, a.spotlight.blur_amount, 1e-9);
+	CHECK_EQ(b.click_sound.file_right, a.click_sound.file_right);
+	CHECK_EQ(b.click_sound.right, a.click_sound.right);
+	CHECK_EQ(b.click_sound.file_left, a.click_sound.file_left);
+	CHECK_EQ(b.click_sound.left, a.click_sound.left);
+	obs_data_release(s);
+}
+
+/* Existing full slots are compacted once on load without losing values or the
+ * custom profile name. */
+TEST(profile_slots_compact_existing_full_slots)
+{
+	obs_data_t *s = obs_data_create();
+	config_defaults(s);
+
+	core::Config seed = core::make_profile_seed(0);
+	seed.zoom.amount = 2.75;
+	obs_data_t *slot = obs_data_create();
+	config_store(slot, seed);
+	obs_data_set_string(slot, "profile_name", "Old Full");
+	obs_data_set_obj(s, core::keys::kProfileSlots[0], slot);
+	obs_data_release(slot);
+
+	CHECK(profile_store::ensure_slots(s, 2));
+
+	obs_data_t *out = obs_data_get_obj(s, core::keys::kProfileSlots[0]);
+	REQUIRE(out != nullptr);
+	CHECK(std::string(obs_data_get_json(out)).size() < 300);
+	CHECK(obs_data_has_user_value(out, core::keys::kZoomAmount));
+	CHECK(!obs_data_has_user_value(out, core::keys::kBgColorA));
+	CHECK_EQ(std::string(obs_data_get_string(out, "profile_name")),
+		 std::string("Old Full"));
+	obs_data_release(out);
+
+	CHECK_NEAR(profile_store::load_slot(s, 0).zoom.amount, 2.75, 1e-9);
+	CHECK_EQ(obs_data_get_int(s, "profile_storage_version"), 1);
 	obs_data_release(s);
 }

@@ -12,6 +12,8 @@ using namespace topscreen::core;
 using namespace topscreen::core::keys;
 
 constexpr const char *kNameKey = "profile_name";
+constexpr const char *kStorageVersionKey = "profile_storage_version";
+constexpr int kStorageVersion = 1;
 
 bool slot_exists(obs_data_t *settings, int index)
 {
@@ -31,9 +33,8 @@ void seed_slot(obs_data_t *settings, int index)
 	if (!settings || index < 0 || index >= kProfileCount)
 		return;
 
+	/* An empty slot is the seed: load_slot() starts from make_profile_seed(). */
 	obs_data_t *slot = obs_data_create();
-	const Config seed = make_profile_seed(index);
-	config_store(slot, seed);
 	obs_data_set_obj(settings, kProfileSlots[index], slot);
 	obs_data_release(slot);
 }
@@ -59,6 +60,17 @@ bool ensure_slots(obs_data_t *settings, int revision)
 	}
 	if (reseed) {
 		obs_data_set_int(settings, kProfileSeedVersion, revision);
+		changed = true;
+	}
+
+	/* Compact slots written by older builds (full Config objects) into the
+	 * sparse representation. load_slot() keeps every user value; store_slot()
+	 * writes only the differences from the current seed. */
+	if (static_cast<int>(obs_data_get_int(settings, kStorageVersionKey)) <
+	    kStorageVersion) {
+		for (int i = 0; i < kProfileCount; ++i)
+			store_slot(settings, i, load_slot(settings, i));
+		obs_data_set_int(settings, kStorageVersionKey, kStorageVersion);
 		changed = true;
 	}
 	return changed;
@@ -130,12 +142,22 @@ void store_slot(obs_data_t *settings, int index, const Config &cfg)
 	if (!settings || index < 0 || index >= kProfileCount)
 		return;
 
-	obs_data_t *slot = obs_data_get_obj(settings, kProfileSlots[index]);
-	if (!slot) {
-		slot = obs_data_create();
-		obs_data_set_obj(settings, kProfileSlots[index], slot);
+	/* Keep the slot metadata (the custom name) but store only the fields that
+	 * differ from this slot's seed. A missing field already falls back to the
+	 * seed in load_slot(), so default profiles become empty objects. */
+	std::string name;
+	obs_data_t *old = obs_data_get_obj(settings, kProfileSlots[index]);
+	if (old) {
+		const char *stored = obs_data_get_string(old, kNameKey);
+		name = stored ? stored : "";
+		obs_data_release(old);
 	}
-	config_store(slot, cfg);
+
+	obs_data_t *slot = obs_data_create();
+	if (!name.empty())
+		obs_data_set_string(slot, kNameKey, name.c_str());
+	config_store_sparse(slot, cfg, make_profile_seed(index));
+	obs_data_set_obj(settings, kProfileSlots[index], slot);
 	obs_data_release(slot);
 }
 

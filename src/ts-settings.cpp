@@ -248,15 +248,22 @@ void config_load(obs_data_t *s, Config *c, const Config *fallback)
 	TS_SIMPLE_FIELDS(X)
 #undef X
 
-	const long long legacy_mode = read_int(s, kBgMode, legacy_bg_mode_value(d.bg.mode));
+	/* Defaults are not enough to tell a legacy source from a sparse profile
+	 * slot: only a value the user actually wrote means "migrate me". When
+	 * neither key is present, keep the fallback (the profile seed). */
 	const bool has_type = obs_data_has_user_value(s, kBgType);
+	const bool has_legacy = obs_data_has_user_value(s, kBgMode);
+	const long long legacy_mode = has_legacy
+		? read_int(s, kBgMode, legacy_bg_mode_value(d.bg.mode))
+		: legacy_bg_mode_value(d.bg.mode);
 	int mode = static_cast<int>(d.bg.mode);
 	if (has_type) {
 		mode = static_cast<int>(read_int(s, kBgType, d.bg.mode));
-	} else {
+	} else if (has_legacy) {
 		const bool has_wallpaper = !c->bg.image.empty() || !c->bg.image_file.empty();
 		mode = bg_mode_from_legacy(static_cast<int>(legacy_mode), has_wallpaper);
 	}
+	/* An empty/sparse slot with no background keys keeps the fallback seed. */
 	/* Migrate the old "wallpaper with special image value" representation. */
 	if (mode == static_cast<int>(BgMode::Wallpaper)) {
 		if (c->bg.image == kTransparentWallpaper || c->bg.image == kLocalImageMarker)
@@ -269,7 +276,7 @@ void config_load(obs_data_t *s, Config *c, const Config *fallback)
 	c->bg.mode = std::clamp(mode, static_cast<int>(BgMode::Solid),
 				static_cast<int>(BgMode::Transparent));
 
-	if (!has_type && !obs_data_has_user_value(s, kBgGradientAngle))
+	if (!has_type && has_legacy && !obs_data_has_user_value(s, kBgGradientAngle))
 		c->bg.gradient_angle =
 			bg_gradient_angle_from_legacy(static_cast<int>(legacy_mode),
 						      c->bg.gradient_angle);
@@ -320,6 +327,19 @@ void config_store(obs_data_t *s, const Config &c)
 #undef X
 	obs_data_set_int(s, kBgType, c.bg.mode);
 	obs_data_set_int(s, kBgMode, legacy_bg_mode_value(c.bg.mode));
+}
+
+void config_store_sparse(obs_data_t *s, const Config &c, const Config &base)
+{
+#define X(kind, key, member) \
+	if (c.member != base.member) \
+		TS_STORE_##kind(key, member);
+	TS_SIMPLE_FIELDS(X)
+#undef X
+	if (c.bg.mode != base.bg.mode) {
+		obs_data_set_int(s, kBgType, c.bg.mode);
+		obs_data_set_int(s, kBgMode, legacy_bg_mode_value(c.bg.mode));
+	}
 }
 
 } // namespace topscreen

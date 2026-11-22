@@ -116,6 +116,8 @@ taking into account monitor position/scale and DPI.
 
 - Filter/source settings: `obs_data` (JSON) managed by OBS per source/scene.
   TopScreen Capture stores the same effect keys plus its `capture_*` keys.
+- Profile slots store only the fields that differ from their A-J seed; a default
+  slot is `{}`, and older full slots are compacted once on load.
 - TopScreen presets: files in `data/presets/*.json`, applicable by hotkey.
 - Hotkeys: managed by OBS (Hotkeys tab) and, on Wayland, mirrored in the portal.
 

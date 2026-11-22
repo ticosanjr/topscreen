@@ -165,6 +165,7 @@ void Compositor::cache_params()
 
 	auto P = [this](const char *name) { return gs_effect_get_param_by_name(effect_, name); };
 
+	p_image_ = P("image");
 	p_target_size_ = P("target_size");
 	p_pad_ = P("content_pad");
 	p_radius_ = P("corner_radius");
@@ -423,7 +424,7 @@ void Compositor::release()
 	obs_leave_graphics();
 
 	effect_ = nullptr;
-	p_target_size_ = p_pad_ = p_radius_ = p_zoom_ = p_focus_ = nullptr;
+	p_image_ = p_target_size_ = p_pad_ = p_radius_ = p_zoom_ = p_focus_ = nullptr;
 	p_bg_a_ = p_bg_b_ = p_bg_mode_ = nullptr;
 	p_bg_gradient_center_ = p_bg_gradient_dir_ = nullptr;
 	p_bg_tex_ = p_bg_tex_enabled_ = p_bg_tex_aspect_ = p_bg_transparent_ = nullptr;
@@ -823,9 +824,8 @@ void Compositor::render_texture(gs_texture_t *texture, uint32_t width, uint32_t 
 	const size_t passes = gs_technique_begin(tech);
 	for (size_t i = 0; i < passes; ++i) {
 		gs_technique_begin_pass(tech, i);
-		gs_eparam_t *image = gs_effect_get_param_by_name(effect_, "image");
-		if (image)
-			gs_effect_set_texture(image, texture);
+		if (p_image_)
+			gs_effect_set_texture(p_image_, texture);
 		gs_draw_sprite(texture, 0, 0, 0);
 		gs_technique_end_pass(tech);
 	}

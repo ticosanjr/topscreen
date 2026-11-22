@@ -67,6 +67,7 @@ private:
 	/* Diagnostic: TOPSCREEN_TECH=passthrough draws only the source. */
 	bool use_passthrough_ = false;
 
+	gs_eparam_t *p_image_ = nullptr;
 	gs_eparam_t *p_target_size_ = nullptr;
 	gs_eparam_t *p_pad_ = nullptr;
 	gs_eparam_t *p_radius_ = nullptr;

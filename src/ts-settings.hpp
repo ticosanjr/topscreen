@@ -18,4 +18,8 @@ void config_load(obs_data_t *settings, core::Config *out,
 /** Writes the configuration to obs_data (used by presets/hotkeys). */
 void config_store(obs_data_t *settings, const core::Config &cfg);
 
+/** Writes only the fields that differ from `base` (sparse profile slots). */
+void config_store_sparse(obs_data_t *settings, const core::Config &cfg,
+			 const core::Config &base);
+
 } // namespace topscreen

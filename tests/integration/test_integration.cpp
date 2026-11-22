@@ -89,12 +89,8 @@ void set_profile_from_properties(obs_source_t *filter, void *ctx, int index)
 
 bool slot_effects_enabled(obs_source_t *filter, int index)
 {
-	obs_data_t *slot = obs_data_get_obj(filter->settings, core::keys::kProfileSlots[index]);
-	if (!slot)
-		return false;
-	const bool value = obs_data_get_bool(slot, core::keys::kEffectsEnabled);
-	obs_data_release(slot);
-	return value;
+	/* Slots are sparse: absent fields come from the slot seed. */
+	return profile_store::load_slot(filter->settings, index).effects_enabled;
 }
 
 } // namespace
@@ -1387,6 +1383,44 @@ TEST(profile_bundle_carries_the_scene_map)
 
 /* Names are stored inside the slot, duplicate copies the look and name, and
  * Revert restores the state from activation. */
+/* Default slots are seed-only and therefore empty objects; after a save only
+ * the edited fields are written. */
+TEST(integration_profile_slots_are_sparse)
+{
+	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
+	obs_source_t *parent = make_parent(1920, 1080);
+	obs_source_t *filter = fakeobs::make_source(&ts_filter_source_info, parent, 0, 0);
+	void *ctx = create_filter(filter);
+	REQUIRE(ctx != nullptr);
+	FilterControl *ctrl = registry_first();
+	REQUIRE(ctrl != nullptr);
+
+	obs_data_t *slot = obs_data_get_obj(filter->settings, core::keys::kProfileSlots[0]);
+	REQUIRE(slot != nullptr);
+	CHECK(std::string(obs_data_get_json(slot)).size() < 10);
+	CHECK(!obs_data_has_user_value(slot, core::keys::kZoomAmount));
+	CHECK(!obs_data_has_user_value(slot, core::keys::kBgColorA));
+	obs_data_release(slot);
+
+	obs_data_set_double(filter->settings, core::keys::kZoomAmount, 3.0);
+	ts_filter_source_info.update(ctx, filter->settings);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	ctrl->save_profile();
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+
+	slot = obs_data_get_obj(filter->settings, core::keys::kProfileSlots[0]);
+	REQUIRE(slot != nullptr);
+	CHECK(obs_data_has_user_value(slot, core::keys::kZoomAmount));
+	CHECK(!obs_data_has_user_value(slot, core::keys::kBgColorA));
+	CHECK(!obs_data_has_user_value(slot, core::keys::kCursorSize));
+	obs_data_release(slot);
+	CHECK_NEAR(profile_store::load_slot(filter->settings, 0).zoom.amount, 3.0, 1e-9);
+
+	destroy_filter(ctx);
+	obs_source_release(filter);
+	obs_source_release(parent);
+}
+
 TEST(integration_profile_names_duplicate_and_revert)
 {
 	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
@@ -1857,14 +1891,11 @@ TEST(integration_profile_reset_button_restores_seeds)
 	REQUIRE(profiles_reset_from_properties(ctx));
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
 
-	obs_data_t *restored = obs_data_get_obj(filter->settings, core::keys::kProfileSlots[3]);
-	REQUIRE(restored != nullptr);
-	CHECK_EQ(obs_data_get_int(restored, core::keys::kClickLeftColor),
-		 static_cast<long long>(0xFF00D7FF));
+	const core::Config restored = profile_store::load_slot(filter->settings, 3);
+	CHECK_EQ(restored.click_left.color, 0xFF00D7FFu);
 	CHECK_EQ(obs_data_get_int(filter->settings, core::keys::kClickLeftColor),
 		 static_cast<long long>(0xFF00D7FF));
 	CHECK_EQ(obs_data_get_int(filter->settings, core::keys::kProfileSeedVersion), 2);
-	obs_data_release(restored);
 
 	destroy_filter(ctx);
 }

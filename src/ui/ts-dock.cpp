@@ -543,6 +543,10 @@ private:
 				QString(obs_module_text("Dock.Input")) + ": " + QString(tier_text);
 			if (tier == 0)
 				input += "\n" + QString(obs_module_text("Dock.InputUnavailable"));
+#if defined(__linux__)
+			if (c->keys_enabled() && tier != 3)
+				input += "\n" + QString(obs_module_text("Dock.KeysNeedEvdev"));
+#endif
 			status_->setText(input);
 
 			source_status_->setText(

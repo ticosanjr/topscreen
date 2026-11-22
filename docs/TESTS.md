@@ -104,7 +104,7 @@ That is where all the math and the state logic live — what actually must be ri
 ## Current numbers
 
 ```
-258 tests | 9858 checks | 0 failures   (core)
+258 tests | 9866 checks | 0 failures   (core)
 78 tests | 966 checks   | 0 failures   (integration with fake libobs, LeakSanitizer clean)
 ```
 

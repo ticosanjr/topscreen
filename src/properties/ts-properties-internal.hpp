@@ -40,4 +40,8 @@ void add_highlight_section(obs_properties_t *props, obs_properties_t *overlays,
 			   obs_data_t *settings);
 void add_keys_section(obs_properties_t *props, obs_properties_t *overlays, obs_data_t *settings);
 
+/* Profiles / backup / scene assignment sections. */
+void add_profiles_section(obs_properties_t *props, void *data, obs_data_t *settings);
+void add_profile_backup_section(obs_properties_t *props, void *data);
+
 } // namespace topscreen::properties

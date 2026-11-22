@@ -134,6 +134,10 @@ if(TOPSCREEN_BUILD_PLUGIN)
         src/plugin-main.cpp
         src/ts-filter.cpp
         src/ts-engine.cpp
+        src/ts-engine-profiles.cpp
+        src/ts-engine-actions.cpp
+        src/ts-engine-pointer.cpp
+        src/ts-engine-render.cpp
         src/ts-settings.cpp
         src/ts-monitor-origin.cpp
         src/ts-parent-cursor.cpp
@@ -142,6 +146,7 @@ if(TOPSCREEN_BUILD_PLUGIN)
         src/ts-scene-profiles.cpp
         src/ts-properties.cpp
         src/properties/ts-properties-common.cpp
+        src/properties/ts-properties-profiles.cpp
         src/properties/ts-properties-capture.cpp
         src/properties/ts-properties-pointer.cpp
         src/properties/ts-properties-focus.cpp

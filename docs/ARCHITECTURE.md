@@ -62,9 +62,9 @@ covered by tests) and the **OBS layer** (thin, it only wires the core to libobs)
 | Text | `src/render/ts-text.{hpp,cpp}` + `src/core/font_atlas.*` | Key overlay (font atlas + band) |
 | Profiles | `src/core/profiles.{hpp,cpp}` + `ts-profile-store.*` + `ts-profile-bundle.*` + `ts-scene-profiles.*` | A–J seeds, slot store, export/import bundle, scene mappings |
 | Audio | `src/audio/ts-click-sound.*` + `ts-click-audio.*` + `ts-click-source.*` | Click WAV decode, process-wide mix queue and OBS audio source |
-| Engine | `src/ts-engine.{hpp,cpp}` | Shared effect host: settings, profiles, hotkeys, input models, compositor and per-frame state (filter and capture source) |
+| Engine | `src/ts-engine.{hpp,cpp}` + `ts-engine-{profiles,actions,pointer,render}.cpp` + `ts-engine-internal.hpp` | Shared effect host: settings, profiles, hotkeys, input models, compositor and per-frame state (filter and capture source) |
 | Capture | `src/capture/ts-capture.*` + `ts-capture-x11.cpp` + `ts-capture-source.cpp` | Native monitor capture source (X11/XShm) that draws its texture through the shared engine |
-| Properties | `src/ts-properties.cpp` + `src/properties/*` + `ts-option-schema.hpp` | OBS properties tree, split by capture/pointer/focus/overlays; one option registry feeds tooltips/tests |
+| Properties | `src/ts-properties.cpp` + `src/properties/*` + `ts-option-schema.hpp` | OBS properties tree, split by capture/pointer/focus/overlays/profiles; one option registry feeds tooltips/tests |
 | Webcam | `src/webcam/ts-webcam-filter.*` + `ts-webcam-source.*` + `data/effects/webcam.effect` | Independent webcam bubble filter and source action |
 | UI | `src/ui/ts-dock.{hpp,cpp}` | Qt dock (optional) |
 

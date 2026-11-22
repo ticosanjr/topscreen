@@ -3,7 +3,7 @@
 User-visible changes. Dates are in ISO form. The released packages are listed in
 [`releases/README.md`](releases/README.md).
 
-## Unreleased
+## 1.4.0
 
 - Editing the highlight color no longer makes it opaque: legacy alpha is folded
   into the explicit opacity. The keystroke band uses an alpha color picker, so

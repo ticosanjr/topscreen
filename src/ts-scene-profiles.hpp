@@ -11,6 +11,12 @@ namespace topscreen::scene_profiles {
 /** OBS profile-config section used for the scene -> TopScreen profile map. */
 inline constexpr const char *kSection = "TopScreen.Scenes";
 
+/** Automatic scene -> profile switching (default true). */
+bool enabled();
+
+/** Enables/disables automatic switching without deleting the mappings. */
+void set_enabled(bool on);
+
 /** Returns the assigned profile (0..9), or -1 when the scene has none. */
 int get(const std::string &scene);
 

@@ -987,6 +987,11 @@ obs_property_t *obs_properties_add_color_alpha(obs_properties_t *props, const ch
 	return add_prop(props, name);
 }
 
+const char *obs_property_name(obs_property_t *prop)
+{
+	return prop ? prop->name.c_str() : "";
+}
+
 void obs_property_set_visible(obs_property_t *prop, bool visible)
 {
 	if (prop)
@@ -1091,6 +1096,31 @@ void config_set_int(config_t *, const char *section, const char *name, int64_t v
 {
 	const std::string text = std::to_string(value);
 	config_set_string(nullptr, section, name, text.c_str());
+}
+
+bool config_get_bool(config_t *, const char *section, const char *name)
+{
+	const char *value = config_get_string(nullptr, section, name);
+	if (!value || !*value)
+		return false;
+	return std::strcmp(value, "true") == 0 || std::atoi(value) != 0;
+}
+
+void config_set_bool(config_t *, const char *section, const char *name, bool value)
+{
+	config_set_string(nullptr, section, name, value ? "true" : "false");
+}
+
+bool config_has_user_value(config_t *, const char *section, const char *name)
+{
+	if (!section || !name)
+		return false;
+	return g_profile_config.count(std::string(section) + "/" + name) > 0;
+}
+
+bool config_has_default_value(config_t *, const char *, const char *)
+{
+	return false;
 }
 
 bool config_remove_value(config_t *, const char *section, const char *name)

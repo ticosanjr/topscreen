@@ -57,6 +57,8 @@ struct FilterControl {
 	/** Temporary mute of the keystroke overlay (not persisted). */
 	virtual bool keys_paused() const = 0;
 	virtual void toggle_keys_pause() = 0;
+	/** Plays the configured left/right click sound for preview. */
+	virtual void test_click_sound(bool right) = 0;
 	virtual bool keys_enabled() const = 0;
 	virtual void toggle_highlight() = 0;
 	/** Ends a pinned highlight/zoom on scene changes/build exit. */

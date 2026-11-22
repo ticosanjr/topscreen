@@ -8,6 +8,7 @@ inline constexpr const char *kProfileImportPath = "profile_import_path";
 inline constexpr const char *kProfileNameInput = "profile_name_input";
 inline constexpr const char *kProfileDuplicateTarget = "profile_duplicate_target";
 inline constexpr const char *kProfileConfirmOverwrite = "profile_confirm_overwrite";
+inline constexpr const char *kSceneSwitchEnabled = "scene_switch_enabled";
 
 /**
  * Properties buttons: read the path selected in the source settings and queue

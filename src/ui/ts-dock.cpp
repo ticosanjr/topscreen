@@ -223,6 +223,12 @@ public:
 		/* ---- Scene --------------------------------------------------- */
 		auto *scene = new QGroupBox(obs_module_text("Dock.SceneGroup"), this);
 		auto *scene_layout = new QVBoxLayout(scene);
+		scene_switch_ = new QCheckBox(obs_module_text("Dock.SceneSwitch"), scene);
+		QObject::connect(scene_switch_, &QCheckBox::toggled, this, [this](bool on) {
+			if (!syncing_)
+				scene_profiles::set_enabled(on);
+		});
+		scene_layout->addWidget(scene_switch_);
 		assign_scene_btn_ = new QPushButton(obs_module_text("Dock.AssignSceneProfile"), scene);
 		QObject::connect(assign_scene_btn_, &QPushButton::clicked, this, [this]() {
 			FilterControl *c = registry_first();
@@ -247,6 +253,7 @@ public:
 		auto *sources_layout = new QVBoxLayout(sources);
 		add_audio_btn_ = new QPushButton(obs_module_text("Dock.AddClickSound"), sources);
 		add_webcam_btn_ = new QPushButton(obs_module_text("Dock.AddWebcam"), sources);
+		test_click_btn_ = new QPushButton(obs_module_text("Dock.TestClick"), sources);
 		QObject::connect(add_audio_btn_, &QPushButton::clicked, this, [this]() {
 			if (ts_click_audio_add_to_current_scene())
 				io_status_->setText(obs_module_text("Dock.ClickSoundAdded"));
@@ -259,7 +266,12 @@ public:
 			else
 				io_status_->setText(obs_module_text("Dock.WebcamFailed"));
 		});
+		QObject::connect(test_click_btn_, &QPushButton::clicked, this, [this]() {
+			if (FilterControl *c = registry_first())
+				c->test_click_sound(false);
+		});
 		sources_layout->addWidget(add_audio_btn_);
+		sources_layout->addWidget(test_click_btn_);
 		sources_layout->addWidget(add_webcam_btn_);
 		root->addWidget(sources);
 
@@ -460,7 +472,9 @@ private:
 		reset_btn_->setEnabled(has);
 		add_audio_btn_->setEnabled(has);
 		assign_scene_btn_->setEnabled(has);
+		scene_switch_->setEnabled(has);
 		add_webcam_btn_->setEnabled(has);
+		test_click_btn_->setEnabled(has);
 		copy_diag_btn_->setEnabled(has);
 
 		if (!has) {
@@ -511,6 +525,7 @@ private:
 					i, QString::fromStdString(c->profile_name(slot)));
 			}
 
+			scene_switch_->setChecked(scene_profiles::enabled());
 			revert_btn_->setEnabled(c->can_revert_profile());
 			keys_pause_->setEnabled(c->keys_enabled());
 			keys_pause_->setChecked(c->keys_paused());
@@ -635,8 +650,10 @@ private:
 	QPushButton *import_btn_ = nullptr;
 	QPushButton *reset_btn_ = nullptr;
 	QPushButton *add_audio_btn_ = nullptr;
+	QCheckBox *scene_switch_ = nullptr;
 	QPushButton *assign_scene_btn_ = nullptr;
 	QPushButton *add_webcam_btn_ = nullptr;
+	QPushButton *test_click_btn_ = nullptr;
 	QPushButton *copy_diag_btn_ = nullptr;
 	QLabel *io_status_ = nullptr;
 	QLabel *source_status_ = nullptr;

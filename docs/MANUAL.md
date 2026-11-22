@@ -221,6 +221,7 @@ scene like any other source.
 | **Enable click sound** | Plays a short click |
 | **Left / Right click sound** | 26 bundled sounds — real mouse recordings (tight/single/right), Retro, Optical, Muted, Soft, Hard, Tick, Bubble, Thock, plus the remaining custom pack (typewriter, stapler, old camera, etc.) |
 | **Click sound volume (0–1)** | Sound volume inside OBS |
+| **Test left/right click** | Plays the selected click sound immediately (also in the dock) |
 | **Add click sound to the current scene** | Adds the `TopScreen Click Sound` audio source, which routes clicks through the OBS mixer |
 | **Add click sound to all scenes** | Adds the audio source to every scene in the collection |
 | **Play on left / right click** | Which buttons trigger it |
@@ -291,6 +292,7 @@ other. The global **Effects enabled** master still applies.
 |-------|-----------|
 | **Keystrokes (group checkbox)** | Shows what you type on screen |
 | **Modifiers only** | Shows only Ctrl/Shift/Alt/Win |
+| **Only show shortcuts** | Shows only Ctrl/Alt/Win + key shortcuts; plain typing and Shift+letter are hidden |
 | **Show special keys** | On: Enter, Tab, arrows and similar keys appear by name. Off: those keys are ignored. Space is always shown as a blank space; modifiers are handled by the shortcut option |
 | **Show shortcuts** | On: held modifiers are folded into one entry such as `Ctrl + C`; Shift/Ctrl are not shown twice. Off: each modifier and key is shown individually |
 | **On-screen time per key (ms)** | How long each key stays |
@@ -301,7 +303,9 @@ other. The global **Effects enabled** master still applies.
 > turn it on. Keep **Modifiers only** or leave it off before typing passwords.
 > The Properties UI shows a warning while letters are being shown. The dock's
 > **Pause keystrokes** button and the `TopScreen_ToggleKeys` hotkey hide the
-> overlay for the current session without changing the saved setting.
+> overlay for the current session without changing the saved setting. For a
+> stricter privacy mode, enable **Only show shortcuts**: plain typing and
+> Shift+letter are never displayed, only Ctrl/Alt/Win shortcuts.
 
 The key overlay is drawn above the cursor so typed text always stays readable.
 Every keystroke appears as its own character (repeats included) exactly as typed,
@@ -470,6 +474,9 @@ one when nothing is selected).
   restores the active profile to the state it had when it was activated or last
   saved. A temporary preset is also discarded.
 - Hotkeys: **Activate profile A … J** and **Save to current profile**.
+- **Automatic scene switching:** the **Switch profile when the scene changes**
+  checkbox (dock: **Switch profile on scene change**) can be turned off without
+  deleting the assignments; TopScreen then keeps the current profile.
 - **Scene profiles:** assign the current profile to the current OBS scene in
   **Profiles → Assign current profile to this scene** (or **Assign profile to scene**
   in the dock). The assignment is stored by the scene UUID, so renaming a scene

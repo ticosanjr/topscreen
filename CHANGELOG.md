@@ -41,6 +41,12 @@ User-visible changes. Dates are in ISO form. The released packages are listed in
 - The filter options now have a single schema registry (key, section, tooltip);
   tooltips are applied from it and a test rejects unregistered tooltip keys or
   missing translations.
+- New **Only show shortcuts** keystroke mode shows Ctrl/Alt/Win shortcuts but
+  never plain typing or Shift+letter.
+- **Test left/right click** buttons preview the selected click sound in
+  Properties and the dock.
+- Automatic scene-to-profile switching now has a global toggle (dock and
+  Properties) that keeps the assignments when disabled.
 
 ## 1.3.0
 

@@ -39,6 +39,12 @@ void KeyOverlayModel::press(std::string_view label, bool is_modifier, double now
 	if (cfg_.modifiers_only) {
 		if (!is_modifier)
 			return;
+	} else if (cfg_.shortcuts_only) {
+		/* Privacy mode: no plain typing and no standalone modifiers. */
+		if (is_modifier)
+			return;
+		if (!(modifiers & (KeyModCtrl | KeyModAlt | KeyModWin)))
+			return;
 	} else if (!is_modifier && !cfg_.show_special && is_special_key_label(label)) {
 		return;
 	}
@@ -48,7 +54,8 @@ void KeyOverlayModel::press(std::string_view label, bool is_modifier, double now
 
 	/* With shortcuts on, modifiers are folded into the non-modifier key that
 	 * follows them. Modifier-only mode still shows each modifier by name. */
-	if (cfg_.show_shortcuts && !cfg_.modifiers_only && !is_modifier && modifiers) {
+	const bool shortcut_mode = cfg_.show_shortcuts || cfg_.shortcuts_only;
+	if (shortcut_mode && !cfg_.modifiers_only && !is_modifier && modifiers) {
 		char combo[KeyLabel::kCapacity];
 		size_t used = 0;
 		auto append = [&](std::string_view part) {
@@ -80,7 +87,7 @@ void KeyOverlayModel::press(std::string_view label, bool is_modifier, double now
 		entry.born_ms = now_ms;
 		entry.modifier = false;
 		entries_.push_back(entry);
-	} else if (cfg_.show_shortcuts && !cfg_.modifiers_only && is_modifier) {
+	} else if (shortcut_mode && !cfg_.modifiers_only && is_modifier) {
 		/* Shortcut mode: a standalone modifier is never a key entry. */
 		return;
 	} else {

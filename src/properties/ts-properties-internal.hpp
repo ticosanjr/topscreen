@@ -29,7 +29,7 @@ void add_zoom_section(obs_properties_t *props, obs_properties_t *capture, obs_da
 void add_cursor_section(obs_properties_t *props, obs_properties_t *pointer, obs_data_t *settings);
 void add_clicks_section(obs_properties_t *props, obs_properties_t *pointer, obs_data_t *settings);
 void add_click_sound_section(obs_properties_t *props, obs_properties_t *pointer,
-			     obs_data_t *settings);
+			     obs_data_t *settings, void *data);
 
 void add_spotlight_section(obs_properties_t *props, obs_properties_t *focus,
 			   obs_data_t *settings);

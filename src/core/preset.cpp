@@ -255,6 +255,7 @@ bool Preset::apply(Config *cfg, std::string *error) const
 	/* Keys */
 	cfg->keys.enabled = read_bool(o, kKeysEnabled, cfg->keys.enabled);
 	cfg->keys.modifiers_only = read_bool(o, kKeysModifiersOnly, cfg->keys.modifiers_only);
+	cfg->keys.shortcuts_only = read_bool(o, kKeysShortcutsOnly, cfg->keys.shortcuts_only);
 	cfg->keys.show_special = read_bool(o, kKeysShowSpecial, cfg->keys.show_special);
 	cfg->keys.show_shortcuts =
 		read_bool(o, kKeysShowShortcuts, cfg->keys.show_shortcuts);

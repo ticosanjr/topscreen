@@ -1250,6 +1250,15 @@ TEST(integration_scene_profiles_switch_on_scene_change)
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
 	CHECK_EQ(ctrl->current_profile(), 4);
 
+	/* Turning automatic switching off keeps the current profile. */
+	scene_profiles::set_enabled(false);
+	ctrl->select_profile(0);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	fakeobs::fire_frontend_event(OBS_FRONTEND_EVENT_SCENE_CHANGED);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK_EQ(ctrl->current_profile(), 0);
+	scene_profiles::set_enabled(true);
+
 	scene_profiles::clear("Scene A");
 	CHECK_EQ(scene_profiles::get("Scene A"), -1);
 	fakeobs::set_current_scene_name("Scene");

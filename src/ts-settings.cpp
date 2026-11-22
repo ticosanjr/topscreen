@@ -107,6 +107,7 @@ namespace topscreen {
 	X(BOOL, kMagnifierShowCursor, magnifier.show_cursor) \
 	X(BOOL, kKeysEnabled, keys.enabled) \
 	X(BOOL, kKeysModifiersOnly, keys.modifiers_only) \
+	X(BOOL, kKeysShortcutsOnly, keys.shortcuts_only) \
 	X(BOOL, kKeysShowSpecial, keys.show_special) \
 	X(BOOL, kKeysShowShortcuts, keys.show_shortcuts) \
 	X(DOUBLE, kKeysTtlMs, keys.ttl_ms) \

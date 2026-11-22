@@ -71,6 +71,7 @@ enum ActionBits : uint32_t {
 	A_TOGGLE_KEYS = 1u << 24,
 	A_SAVE_LOOK = 1u << 25,
 	A_DELETE_LOOK = 1u << 26,
+	A_TEST_CLICK = 1u << 27,
 };
 
 /** Stable fingerprint of the saved config, used to recognize our own pushes. */
@@ -164,6 +165,7 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 	std::atomic<int> pending_preset_{-1};
 	std::atomic<int> pending_profile_{-1};
 	std::atomic<int> pending_duplicate_{-1};
+	std::atomic<int> pending_click_test_{-1};
 	std::atomic<bool> pending_reload_{false};
 	std::atomic<bool> effects_cache_{true};
 	std::atomic<int> preset_cache_{-1};
@@ -288,6 +290,11 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 	bool keys_paused() const override { return keys_paused_.load(); }
 	void toggle_keys_pause() override { actions_.fetch_or(A_TOGGLE_KEYS); }
 	bool keys_enabled() const override { return keys_enabled_cache_.load(); }
+	void test_click_sound(bool right) override
+	{
+		pending_click_test_.store(right ? 1 : 0);
+		actions_.fetch_or(A_TEST_CLICK);
+	}
 	bool effects_enabled() const override { return effects_cache_.load(); }
 	void set_effects_enabled(bool on) override
 	{
@@ -916,6 +923,11 @@ void ts_filter_ctx::process_actions()
 		} else {
 			blog(LOG_WARNING, "[TopScreen] could not save look: %s", error.c_str());
 		}
+	}
+	if (act & A_TEST_CLICK) {
+		const int side = pending_click_test_.exchange(-1);
+		if (side >= 0)
+			click_sound.play(side == 1, cfg.click_sound.volume);
 	}
 	if (act & A_DELETE_LOOK) {
 		const int index = pending_look_delete_.exchange(-1);

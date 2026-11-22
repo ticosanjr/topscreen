@@ -14,6 +14,8 @@ namespace topscreen::core {
 struct KeyOverlayConfig {
 	bool enabled = true;
 	bool modifiers_only = false;
+	/* Only Ctrl/Alt/Win + key shortcuts; plain typing and Shift+letter are hidden. */
+	bool shortcuts_only = false;
 	/** Keep named keys (Enter/arrows/modifiers) in the overlay. Space is always shown. */
 	bool show_special = false;
 	/** Combine a key with the modifiers held at that moment (Ctrl + C). */

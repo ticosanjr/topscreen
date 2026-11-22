@@ -7,6 +7,7 @@
 #include "core/keys.hpp"
 #include "core/sound_catalog.hpp"
 #include "core/types.hpp"
+#include "ts-registry.hpp"
 
 using namespace topscreen::core;
 using namespace topscreen::core::keys;
@@ -237,9 +238,11 @@ void add_clicks_section(obs_properties_t *props, obs_properties_t *pointer, obs_
 	click_right_effect_changed(props, nullptr, settings);
 }
 
-void add_click_sound_section(obs_properties_t *props, obs_properties_t *pointer, obs_data_t *settings)
+void add_click_sound_section(obs_properties_t *props, obs_properties_t *pointer,
+			     obs_data_t *settings, void *data)
 {
 	/* ---------------- Click sound ---------------- */
+	void *props_data = data;
 	obs_properties_t *snd = obs_properties_create();
 	obs_property_t *snd_on = obs_properties_add_bool(snd, kClickSoundEnabled, obs_module_text("ClickSound.Enabled"));
 	obs_property_set_modified_callback(snd_on, click_sound_changed);
@@ -261,6 +264,26 @@ void add_click_sound_section(obs_properties_t *props, obs_properties_t *pointer,
 		snd, kClickSoundVolume, obs_module_text("ClickSound.Volume"),
 		limits::kUnitRange);
 	set_tip(volume, obs_module_text("Tooltip.ClickSoundVolume"));
+	obs_property_t *test_left = obs_properties_add_button2(
+		snd, "click_sound_test_left", obs_module_text("ClickSound.TestLeft"),
+		[](obs_properties_t *, obs_property_t *, void *data) {
+			auto *control = static_cast<FilterControl *>(data);
+			if (control)
+				control->test_click_sound(false);
+			return false;
+		},
+		props_data);
+	obs_property_t *test_right = obs_properties_add_button2(
+		snd, "click_sound_test_right", obs_module_text("ClickSound.TestRight"),
+		[](obs_properties_t *, obs_property_t *, void *data) {
+			auto *control = static_cast<FilterControl *>(data);
+			if (control)
+				control->test_click_sound(true);
+			return false;
+		},
+		props_data);
+	set_tip(test_left, obs_module_text("Tooltip.ClickSoundTest"));
+	set_tip(test_right, obs_module_text("Tooltip.ClickSoundTest"));
 	obs_property_t *add_audio = obs_properties_add_button2(
 		snd, "click_sound_add_btn", obs_module_text("ClickSound.AddAudioButton"),
 		add_click_audio_clicked, nullptr);

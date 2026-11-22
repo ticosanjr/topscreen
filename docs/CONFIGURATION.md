@@ -112,6 +112,7 @@ E.g.: `0xFF3A2E5C` = A=FF, B=3A, G=2E, R=5C.
 | | Show cursor during magnifier | `magnifier_show_cursor` | bool | — | `true` |
 | Keys and webcam | Keystrokes (group checkbox) | `keys_enabled` | bool | — | `true` (profile A ships with it off; C/G/I enable it) |
 | | Modifiers only | `keys_modifiers_only` | bool | — | `false` |
+| | Only show shortcuts (Ctrl/Alt/Win) | `keys_shortcuts_only` | bool | — | `false` |
 | | Show special key names | `keys_show_special` | bool | — | `false` (off = ignore named keys; Space is always shown) |
 | | Show shortcuts | `keys_show_shortcuts` | bool | — | `true` (Ctrl + key as one entry) |
 | | On-screen time per key (ms) | `keys_ttl_ms` | double | 500–8000 | `2000` |

@@ -105,6 +105,26 @@ std::map<std::string, std::string> current_scene_names()
 
 } // namespace
 
+bool enabled()
+{
+	config_t *cfg = obs_frontend_get_profile_config();
+	if (!cfg)
+		return true;
+	const bool has = config_has_user_value(cfg, kSection, "enabled") ||
+			 config_has_default_value(cfg, kSection, "enabled");
+	return has ? config_get_bool(cfg, kSection, "enabled") : true;
+}
+
+void set_enabled(bool on)
+{
+	config_t *cfg = obs_frontend_get_profile_config();
+	if (!cfg)
+		return;
+	config_set_bool(cfg, kSection, "enabled", on);
+	config_save_safe(cfg, "tmp", nullptr);
+	blog(LOG_INFO, "[TopScreen] scene profile switching: %s", on ? "on" : "off");
+}
+
 int get(const std::string &scene)
 {
 	if (scene.empty())

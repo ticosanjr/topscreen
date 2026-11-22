@@ -7,6 +7,8 @@
 #include "core/profiles.hpp"
 #include "core/types.hpp"
 
+#include <cstring>
+
 using namespace topscreen::core;
 using namespace topscreen::core::keys;
 
@@ -27,19 +29,31 @@ bool keys_options_changed(obs_properties_t *props, obs_property_t *p, obs_data_t
 	(void)p;
 	const bool on = setting_bool(settings, kKeysEnabled, true);
 	const bool band = setting_bool(settings, kKeysBand, true);
-	const bool modifiers = setting_bool(settings, kKeysModifiersOnly, false);
-	for (const char *key : {kKeysModifiersOnly, kKeysShowSpecial, kKeysShowShortcuts,
-			       kKeysTtlMs, kKeysMax, kKeysPosX, kKeysPosY, kKeysSize,
-			       kKeysFont, kKeysColor, kKeysShadow, kKeysBand,
-			       kKeysBandColor}) {
+	bool modifiers = setting_bool(settings, kKeysModifiersOnly, false);
+	bool shortcuts = setting_bool(settings, kKeysShortcutsOnly, false);
+	/* The two safety modes are alternatives; the last one clicked wins. */
+	if (p && obs_property_name(p)) {
+		const char *name = obs_property_name(p);
+		if (std::strcmp(name, kKeysShortcutsOnly) == 0 && shortcuts) {
+			obs_data_set_bool(settings, kKeysModifiersOnly, false);
+			modifiers = false;
+		} else if (std::strcmp(name, kKeysModifiersOnly) == 0 && modifiers) {
+			obs_data_set_bool(settings, kKeysShortcutsOnly, false);
+			shortcuts = false;
+		}
+	}
+	for (const char *key : {kKeysModifiersOnly, kKeysShortcutsOnly, kKeysShowSpecial,
+			       kKeysShowShortcuts, kKeysTtlMs, kKeysMax, kKeysPosX,
+			       kKeysPosY, kKeysSize, kKeysFont, kKeysColor, kKeysShadow,
+			       kKeysBand, kKeysBandColor}) {
 		if (obs_property_t *v = obs_properties_get(props, key))
 			obs_property_set_visible(v, on);
 	}
 	if (obs_property_t *v = obs_properties_get(props, kKeysBandColor))
 		obs_property_set_visible(v, on && band);
-	/* Typing letters is global input: warn unless only modifiers are shown. */
+	/* Typing letters is global input: warn unless a safe mode is active. */
 	if (obs_property_t *v = obs_properties_get(props, "keys_privacy_hint"))
-		obs_property_set_visible(v, on && !modifiers);
+		obs_property_set_visible(v, on && !modifiers && !shortcuts);
 	return true;
 }
 
@@ -190,6 +204,9 @@ void add_keys_section(obs_properties_t *props, obs_properties_t *overlays, obs_d
 	obs_property_t *modifiers =
 		obs_properties_add_bool(keys, kKeysModifiersOnly, obs_module_text("Keys.ModifiersOnly"));
 	obs_property_set_modified_callback(modifiers, keys_options_changed);
+	obs_property_t *shortcuts = obs_properties_add_bool(
+		keys, kKeysShortcutsOnly, obs_module_text("Keys.ShortcutsOnly"));
+	obs_property_set_modified_callback(shortcuts, keys_options_changed);
 	obs_properties_add_bool(keys, kKeysShowSpecial, obs_module_text("Keys.ShowSpecial"));
 	obs_properties_add_bool(keys, kKeysShowShortcuts, obs_module_text("Keys.ShowShortcuts"));
 	add_range_slider(

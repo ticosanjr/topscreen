@@ -285,3 +285,41 @@ TEST(key_without_shortcuts_shows_modifier_once)
 	m.press("C", false, 2.0, KeyModCtrl);
 	CHECK_EQ(m.active_count(), 2);
 }
+
+TEST(key_shortcuts_only_hides_plain_typing)
+{
+	KeyOverlayModel m;
+	KeyOverlayConfig cfg;
+	cfg.shortcuts_only = true;
+	m.configure(cfg);
+
+	/* Plain letters, Shift+letter and standalone modifiers are hidden. */
+	m.press("A", false, 0.0, 0);
+	m.press("B", false, 1.0, KeyModShift);
+	m.press("Shift", true, 2.0, 0);
+	CHECK_EQ(m.active_count(), 0);
+
+	m.press("A", false, 10.0, KeyModCtrl);
+	m.press("Enter", false, 11.0, KeyModAlt);
+	CHECK_EQ(m.active_count(), 2);
+
+	KeyRender out[4];
+	const int n = m.collect(11.0, out, 4);
+	REQUIRE(n == 2);
+	CHECK_EQ(out[0].label.view(), std::string_view("Ctrl + A"));
+	CHECK_EQ(out[1].label.view(), std::string_view("Alt + Enter"));
+}
+
+TEST(key_shortcuts_only_modifiers_only_wins)
+{
+	KeyOverlayModel m;
+	KeyOverlayConfig cfg;
+	cfg.shortcuts_only = true;
+	cfg.modifiers_only = true;
+	m.configure(cfg);
+
+	m.press("A", false, 0.0, KeyModCtrl);
+	CHECK_EQ(m.active_count(), 0);
+	m.press("Ctrl", true, 1.0, 0);
+	CHECK_EQ(m.active_count(), 1);
+}

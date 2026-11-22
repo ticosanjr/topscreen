@@ -90,7 +90,7 @@ void frontend_profile_event(enum obs_frontend_event event, void *data);
 
 void apply_scene_profile(obs_source_t *scene)
 {
-	if (!scene)
+	if (!scene || !scene_profiles::enabled())
 		return;
 	const int profile = scene_profiles::get(scene);
 	if (profile < 0)

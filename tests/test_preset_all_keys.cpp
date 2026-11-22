@@ -104,6 +104,7 @@ TEST(preset_covers_all_keys)
             "magnifier_show_cursor": false,
             "keys_enabled": false,
             "keys_modifiers_only": true,
+            "keys_shortcuts_only": true,
             "keys_show_special": false,
             "keys_show_shortcuts": false,
             "keys_ttl_ms": 1234,
@@ -238,6 +239,7 @@ TEST(preset_covers_all_keys)
 
 	CHECK(!c.keys.enabled);
 	CHECK(c.keys.modifiers_only);
+	CHECK(c.keys.shortcuts_only);
 	CHECK(!c.keys.show_special);
 	CHECK(!c.keys.show_shortcuts);
 	CHECK_NEAR(c.keys.ttl_ms, 1234.0, 1e-9);

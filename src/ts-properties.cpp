@@ -90,6 +90,14 @@ bool default_hotkeys_clicked(obs_properties_t *props, obs_property_t *p, void *d
 	return false;
 }
 
+bool scene_switch_changed(obs_properties_t *props, obs_property_t *p, obs_data_t *settings)
+{
+	UNUSED_PARAMETER(props);
+	UNUSED_PARAMETER(p);
+	scene_profiles::set_enabled(obs_data_get_bool(settings, kSceneSwitchEnabled));
+	return false;
+}
+
 bool assign_scene_profile_clicked(obs_properties_t *props, obs_property_t *p, void *data)
 {
 	(void)props;
@@ -170,6 +178,11 @@ void add_profiles_section(obs_properties_t *props, void *data, obs_data_t *setti
 	obs_properties_add_text(prof, "profile_hint", obs_module_text("Profile.Hint"), OBS_TEXT_INFO);
 	obs_properties_add_text(prof, "profile_scene_hint", obs_module_text("Profile.SceneHint"),
 				OBS_TEXT_INFO);
+	if (settings)
+		obs_data_set_bool(settings, kSceneSwitchEnabled, scene_profiles::enabled());
+	obs_property_t *scene_switch = obs_properties_add_bool(
+		prof, kSceneSwitchEnabled, obs_module_text("Profile.SceneSwitch"));
+	obs_property_set_modified_callback(scene_switch, scene_switch_changed);
 	std::string scene_list;
 	for (const auto &entry : scene_profiles::list()) {
 		scene_list += entry.first;
@@ -325,7 +338,7 @@ obs_properties_t *properties_create(void *data, obs_data_t *settings, bool inclu
 	properties::add_highlight_section(props, zoom_highlight, settings);
 	properties::add_cursor_section(props, pointer, settings);
 	properties::add_clicks_section(props, pointer, settings);
-	properties::add_click_sound_section(props, pointer, settings);
+	properties::add_click_sound_section(props, pointer, settings, data);
 	properties::add_spotlight_section(props, focus, settings);
 	properties::add_magnifier_section(props, focus, settings);
 	properties::add_keys_section(props, overlays, settings);

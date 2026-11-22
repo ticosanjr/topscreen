@@ -56,6 +56,9 @@ Add a **Display Capture** and the **TopScreen FX** filter. Then:
 | 15m | Destructive confirmation | in Properties, importing or restoring without ticking the confirmation does nothing; with it ticked the action runs; the dock asks in a dialog |
 | 15n | Dock panel | sections Live/Look/Scene/Sources/Backup/Diagnostics; target shows `Source › Filter`; status shows input, monitor origin and keys; **Copy diagnostics** copies the text |
 | 15o | User looks | **Save look...** creates a file in the looks folder and adds it to the selector/hotkey cycle; **Delete look** removes it; bundled looks cannot be deleted; **Open looks folder** shows the single-look files |
+| 15p | Shortcuts-only keys | enable **Only show shortcuts** and confirm plain letters/Shift+letter and standalone modifiers are hidden while Ctrl/Alt/Win shortcuts appear; **Modifiers only** remains the stricter alternative |
+| 15q | Click sound preview | **Test left/right click** in Properties and the dock plays the selected WAV immediately |
+| 15r | Scene switching toggle | uncheck **Switch profile when the scene changes**, switch scenes and confirm the current profile is kept; re-enable and confirm assignments still apply |
 
 | 16 | Profile import | an older/partial `.json` imports with defaults instead of failing |
 | 17 | Effects off / cursor off / filter removed | the capture's native cursor comes back; with two TopScreen filters on the same capture it only returns after the last one releases it |

@@ -61,7 +61,7 @@ covered by tests) and the **OBS layer** (thin, it only wires the core to libobs)
 | Active window | `src/input/ts-active-window.*` | Foreground window rect for Smart Zoom (Windows/X11) |
 | Hotkeys | `src/hotkeys/ts-hotkeys.{hpp,cpp}` | Hotkey registration + callbacks |
 | Text | `src/render/ts-text.{hpp,cpp}` + `src/core/font_atlas.*` | Key overlay (font atlas + band) |
-| Profiles | `src/core/profiles.{hpp,cpp}` + `ts-profile-store.*` + `ts-profile-bundle.*` + `ts-scene-profiles.*` | A–J seeds, slot store, export/import bundle, scene mappings |
+| Profiles | `src/core/profiles.{hpp,cpp}` + `ts-profile-store.*` + `ts-profile-bundle.*` + `ts-scene-profiles.*` + `ts-scene-profile-map.cpp` | A–J seeds, slot store, export/import bundle, scene mappings |
 | Audio | `src/audio/ts-click-sound.*` + `ts-click-audio.*` + `ts-click-source.*` | Click WAV decode, process-wide mix queue and OBS audio source |
 | Engine | `src/ts-engine.{hpp,cpp}` + `ts-engine-{profiles,actions,pointer,render}.cpp` + `ts-engine-internal.hpp` | Shared effect host: settings, profiles, hotkeys, input models, compositor and per-frame state (filter and capture source) |
 | Capture | `src/capture/ts-capture.*` + `ts-capture-x11.cpp` + `ts-capture-source.cpp` | Native monitor capture source (X11/XShm) that draws its texture through the shared engine |

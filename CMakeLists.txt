@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 
-project(TopScreen VERSION 1.4.0 LANGUAGES C CXX)
+project(TopScreen VERSION 1.4.1 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -144,6 +144,7 @@ if(TOPSCREEN_BUILD_PLUGIN)
         src/ts-profile-bundle.cpp
         src/ts-profile-store.cpp
         src/ts-scene-profiles.cpp
+        src/ts-scene-profile-map.cpp
         src/ts-properties.cpp
         src/properties/ts-properties-common.cpp
         src/properties/ts-properties-profiles.cpp

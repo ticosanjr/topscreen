@@ -9,11 +9,11 @@ GitHub Release attachments are the canonical downloadable copies.
 
 | Version | Linux | Windows | Highlights |
 |---------|-------|---------|------------|
+| **1.4.1** | [`topscreen-1.4.1-linux.tar.gz`](https://github.com/ticosanjr/topscreen/releases/download/v1.4.1/topscreen-1.4.1-linux.tar.gz) | [`topscreen-1.4.1-windows.zip`](https://github.com/ticosanjr/topscreen/releases/download/v1.4.1/topscreen-1.4.1-windows.zip) \* | **Refactor + preset fix:** presets and saved looks apply Zoom active window and the highlighter opacity/lock/reading settings; internal monolith splits with no look changes |
 | **1.4.0** | [`topscreen-1.4.0-linux.tar.gz`](https://github.com/ticosanjr/topscreen/releases/download/v1.4.0/topscreen-1.4.0-linux.tar.gz) | [`topscreen-1.4.0-windows.zip`](https://github.com/ticosanjr/topscreen/releases/download/v1.4.0/topscreen-1.4.0-windows.zip) \* | **Profiles and dock overhaul:** named profiles with copy/revert and overwrite confirmation, sparse slot storage, organized dock with diagnostics, user looks, temporary presets, shortcuts-only keystrokes, checkable option groups and a single tooltip schema |
 | **1.3.0** | [`topscreen-1.3.0-linux.tar.gz`](https://github.com/ticosanjr/topscreen/releases/download/v1.3.0/topscreen-1.3.0-linux.tar.gz) | [`topscreen-1.3.0-windows.zip`](https://github.com/ticosanjr/topscreen/releases/download/v1.3.0/topscreen-1.3.0-windows.zip) \* | **Embedded capture effects:** TopScreen Capture applies the effects itself (no child filter) and migrates 1.2.5 scenes; X11 native-cursor compositing with a non-persisted override; click-sound audio on the source; Reading/zoom/pointer accuracy fixes |
-| **1.2.6** | [`topscreen-1.2.6-linux.tar.gz`](https://github.com/ticosanjr/topscreen/releases/download/v1.2.6/topscreen-1.2.6-linux.tar.gz) | [`topscreen-1.2.6-windows.zip`](https://github.com/ticosanjr/topscreen/releases/download/v1.2.6/topscreen-1.2.6-windows.zip) \* | **Reading highlight + mouse accuracy:** Reading mode dims outside the selection and pins the fitted zoom until the next click; keep-until-click option for every other highlight/zoom mode; display/source coordinate split and zoom-aware pointer mapping; real monitor geometry, spotlight focus split and TopScreen Capture monitor index |
 
-> \* **Windows packages 0.2.18–1.4.0** are built by the `Release` workflow and include the Qt dock.
+> \* **Windows packages 0.2.18–1.4.1** are built by the `Release` workflow and include the Qt dock.
 > Local fallback cross-builds (if used) do not include it. They are the full filter (Properties, hotkeys,
 > presets, profiles, multi-screen fix). The Linux package includes the dock.
 

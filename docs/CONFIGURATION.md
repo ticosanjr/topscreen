@@ -252,7 +252,7 @@ with the backup and never changes the look:
 {
   "topscreen_profiles": 1,
   "plugin": "TopScreen",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "current": 0,
   "profile_slot_0": { "effects_enabled": true },
   "profile_slot_1": { "effects_enabled": true },

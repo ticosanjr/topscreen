@@ -2,6 +2,7 @@
 #include "test_framework.hpp"
 
 #include "ts-profile-bundle.hpp"
+#include "ts-profile-store.hpp"
 
 #include <obs-frontend-api.h>
 #include <obs-module.h>
@@ -241,6 +242,8 @@ TEST(integration_preset_is_cleared_on_profile_switch)
 	set_profile_from_properties(filter, ctx, 2);
 	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
 	CHECK_EQ(ctrl->current_preset(), -1);
+	/* The profile switch itself is not a look edit. */
+	CHECK(!ctrl->can_revert_profile());
 
 	destroy_filter(ctx);
 	obs_source_release(filter);
@@ -274,7 +277,8 @@ TEST(integration_hotkeys_all_actions)
 			       "TopScreen_ToggleHighlight",
 			       "TopScreen_ToggleSpotlight", "TopScreen_ToggleMagnifier",
 			       "TopScreen_ToggleCursor",    "TopScreen_ProfileNext",
-			       "TopScreen_ProfilePrev",     "TopScreen_ToggleClickSound"};
+			       "TopScreen_ProfilePrev",     "TopScreen_ToggleClickSound",
+			       "TopScreen_ToggleKeys"};
 	for (const char *n : names)
 		REQUIRE(fakeobs::find_hotkey(n) >= 0);
 
@@ -515,8 +519,8 @@ TEST(integration_registry_target_selection)
 
 	const std::vector<FilterEntry> entries = registry_list();
 	REQUIRE(entries.size() == 2);
-	CHECK_EQ(entries[0].name, std::string("TopScreen A"));
-	CHECK_EQ(entries[1].name, std::string("TopScreen B"));
+	CHECK_EQ(entries[0].name, std::string("fake-parent › TopScreen A"));
+	CHECK_EQ(entries[1].name, std::string("fake-parent › TopScreen B"));
 	FilterControl *a = entries[0].control;
 	FilterControl *b = entries[1].control;
 	CHECK(registry_first() == a); // first registered is the default target
@@ -688,7 +692,8 @@ TEST(integration_registers_all_hotkeys)
 			       "TopScreen_ToggleHighlight",
 			       "TopScreen_ToggleSpotlight", "TopScreen_ToggleMagnifier",
 			       "TopScreen_ToggleCursor",    "TopScreen_ProfileNext",
-			       "TopScreen_ProfilePrev",     "TopScreen_ToggleClickSound"};
+			       "TopScreen_ProfilePrev",     "TopScreen_ToggleClickSound",
+			       "TopScreen_ToggleKeys"};
 	const int expected = static_cast<int>(sizeof(names) / sizeof(names[0]));
 
 	/* The harness keeps earlier registrations, so measure this filter's delta. */
@@ -705,7 +710,7 @@ TEST(integration_registers_all_hotkeys)
 }
 
 /* Frontend hotkeys are process-wide: a second filter must NOT register a
- * second set of 25, and destroying one filter must keep them alive. */
+ * second set of 26, and destroying one filter must keep them alive. */
 TEST(integration_hotkeys_shared_between_filters)
 {
 	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
@@ -720,7 +725,7 @@ TEST(integration_hotkeys_shared_between_filters)
 	REQUIRE(ctx1 != nullptr);
 	REQUIRE(ctx2 != nullptr);
 
-	CHECK_EQ(fakeobs::hotkey_count() - before, 25);
+	CHECK_EQ(fakeobs::hotkey_count() - before, 26);
 	CHECK(fakeobs::hotkeys_active_from(before));
 
 	/* Destroying one filter keeps the shared hotkeys working. */
@@ -1166,6 +1171,29 @@ TEST(integration_profile_next_prev_and_click_sound_hotkeys)
 	destroy_filter(ctx);
 }
 
+TEST(integration_hotkey_pauses_keys)
+{
+	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
+	obs_source_t *parent = make_parent(1280, 720);
+	obs_source_t *filter = fakeobs::make_source(&ts_filter_source_info, parent, 0, 0);
+	void *ctx = create_filter(filter);
+	REQUIRE(ctx != nullptr);
+	FilterControl *ctrl = registry_first();
+	REQUIRE(ctrl != nullptr);
+
+	const bool before = ctrl->keys_paused();
+	fakeobs::invoke_hotkey(fakeobs::find_hotkey("TopScreen_ToggleKeys"), true);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK(ctrl->keys_paused() != before);
+	fakeobs::invoke_hotkey(fakeobs::find_hotkey("TopScreen_ToggleKeys"), true);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK_EQ(ctrl->keys_paused(), before);
+
+	destroy_filter(ctx);
+	obs_source_release(filter);
+	obs_source_release(parent);
+}
+
 TEST(integration_scene_profiles_switch_on_scene_change)
 {
 	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
@@ -1300,7 +1328,7 @@ TEST(profile_bundle_carries_the_scene_map)
 {
 	const std::string text =
 		R"({"topscreen_profiles":1,"plugin":"TopScreen","version":"test","current":0,)"
-		R"("profile_slot_0":{},"scene_profiles":"{\"Scene X\":3}"})";
+		R"("profile_slot_0":{"profile_name":"Main"},"scene_profiles":"{\"Scene X\":3}"})";
 	obs_data_t *target = obs_data_create();
 	REQUIRE(target != nullptr);
 
@@ -1309,7 +1337,67 @@ TEST(profile_bundle_carries_the_scene_map)
 	std::string error;
 	CHECK(profile_bundle::import_from_text(text, target, &info, &scenes, &error));
 	CHECK_EQ(scenes, std::string("{\"Scene X\":3}"));
+	CHECK_EQ(profile_store::load_name(target, 0), std::string("Main"));
 	obs_data_release(target);
+}
+
+/* Names are stored inside the slot, duplicate copies the look and name, and
+ * Revert restores the state from activation. */
+TEST(integration_profile_names_duplicate_and_revert)
+{
+	fakeobs::set_data_dir(TOPSCREEN_TEST_DATA_DIR);
+
+	obs_source_t *parent = make_parent(1920, 1080);
+	obs_source_t *filter = fakeobs::make_source(&ts_filter_source_info, parent, 0, 0);
+	void *ctx = create_filter(filter);
+	REQUIRE(ctx != nullptr);
+	FilterControl *ctrl = registry_first();
+	REQUIRE(ctrl != nullptr);
+
+	ctrl->rename_profile(0, "Stream");
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK_EQ(ctrl->profile_name(0), std::string("Stream"));
+
+	ctrl->duplicate_profile(5);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK_EQ(ctrl->profile_name(5), std::string("Stream (copy)"));
+
+	/* Editing enables Revert; restoring returns to the activation snapshot. */
+	ctrl->set_effects_enabled(false);
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK(!ctrl->effects_enabled());
+	CHECK(ctrl->can_revert_profile());
+	ctrl->revert_profile();
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK(ctrl->effects_enabled());
+	CHECK(!ctrl->can_revert_profile());
+
+	/* The temporary key pause is not a profile edit. */
+	CHECK(!ctrl->keys_paused());
+	ctrl->toggle_keys_pause();
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK(ctrl->keys_paused());
+	ctrl->toggle_keys_pause();
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK(!ctrl->keys_paused());
+
+	/* Properties fallback paths and the destructive-action confirmation. */
+	CHECK(!profiles_overwrite_confirmed(ctx));
+	obs_data_set_bool(filter->settings, kProfileConfirmOverwrite, true);
+	CHECK(profiles_overwrite_confirmed(ctx));
+
+	obs_data_set_string(filter->settings, kProfileNameInput, "Via UI");
+	CHECK(profiles_rename_from_properties(ctx));
+	CHECK_EQ(ctrl->profile_name(0), std::string("Via UI"));
+
+	obs_data_set_int(filter->settings, kProfileDuplicateTarget, 6);
+	CHECK(profiles_duplicate_from_properties(ctx));
+	ts_filter_source_info.video_tick(ctx, 1.0f / 60.0f);
+	CHECK_EQ(ctrl->profile_name(6), std::string("Via UI (copy)"));
+
+	destroy_filter(ctx);
+	obs_source_release(filter);
+	obs_source_release(parent);
 }
 
 TEST(integration_chosen_profile_survives_restart)

@@ -243,7 +243,9 @@ in the scene; its level follows **Click sound volume**.
 
 ### Profiles backup
 
-`Export profiles` writes a `.json` with the 10 slots and the active index:
+`Export profiles` writes a `.json` with the 10 slots and the active index.
+Each slot may also carry the optional `profile_name` set in the UI; it travels
+with the backup and never changes the look:
 
 ```json
 {
@@ -319,6 +321,7 @@ they act on the filter selected in the dock, or the first active one):
 | `TopScreen_ProfileNext` | `TopScreen_ProfileNext — Next profile` |
 | `TopScreen_ProfilePrev` | `TopScreen_ProfilePrev — Previous profile` |
 | `TopScreen_ToggleClickSound` | `TopScreen_ToggleClickSound — Toggle click sound` |
+| `TopScreen_ToggleKeys` | `TopScreen_ToggleKeys — Pause or resume the keystroke overlay` |
 
 See [`STREAMDECK.md`](STREAMDECK.md) for OBS WebSocket / Stream Deck examples.
 

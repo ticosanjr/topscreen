@@ -51,6 +51,10 @@ Add a **Display Capture** and the **TopScreen FX** filter. Then:
 | 15h | Preset is temporary | apply a preset, switch to another profile and back: the original profile returns; apply a preset and press **Save profile**: it persists after a restart |
 | 15i | Color transparency | edit the highlight color and confirm the look does not jump (alpha folded into opacity); edit the key band color and confirm the alpha picker preserves transparency |
 | 15j | Keys privacy | a new install starts with profile A and **Keystrokes** off; enabling it shows the warning; **Modifiers only** hides the warning |
+| 15k | Profile names/copy/revert | rename A, copy it to another slot, switch profiles and check the names; edit a slider, **Revert changes** and confirm the activation state returns |
+| 15l | Keys pause | with Keystrokes on, click **Pause keystrokes** (or press `TopScreen_ToggleKeys`) and confirm the overlay stops without changing the saved setting; press again to resume |
+| 15m | Destructive confirmation | in Properties, importing or restoring without ticking the confirmation does nothing; with it ticked the action runs; the dock asks in a dialog |
+| 15n | Dock panel | sections Live/Look/Scene/Sources/Backup/Diagnostics; target shows `Source › Filter`; status shows input, monitor origin and keys; **Copy diagnostics** copies the text |
 
 | 16 | Profile import | an older/partial `.json` imports with defaults instead of failing |
 | 17 | Effects off / cursor off / filter removed | the capture's native cursor comes back; with two TopScreen filters on the same capture it only returns after the last one releases it |
@@ -58,11 +62,11 @@ Add a **Display Capture** and the **TopScreen FX** filter. Then:
 
 ## 3. Hotkeys
 
-**Settings → Hotkeys → TopScreen** must list the 25 actions
+**Settings → Hotkeys → TopScreen** must list the 26 actions
 (`ToggleEffects`, `ToggleBackground`, `ZoomIn`, `ZoomOut`, `ResetZoom`,
 `NextPreset`, `PrevPreset`, `ProfileA` … `ProfileJ`, `ProfileNext`,
 `ProfilePrev`, `ProfileSave`, `ToggleClickSound`, `ToggleCursor`,
-`ToggleHighlight`, `ToggleSpotlight`, `ToggleMagnifier`).
+`ToggleHighlight`, `ToggleSpotlight`, `ToggleMagnifier`, `ToggleKeys`).
 
 ## 4. Input per platform
 

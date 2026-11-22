@@ -53,6 +53,7 @@ void invoke_toggle_cursor(HotkeyContext *t) { t->toggle_cursor(); }
 void invoke_next_profile(HotkeyContext *t) { t->next_profile(); }
 void invoke_prev_profile(HotkeyContext *t) { t->prev_profile(); }
 void invoke_toggle_click_sound(HotkeyContext *t) { t->toggle_click_sound(); }
+void invoke_toggle_keys(HotkeyContext *t) { t->toggle_keys(); }
 
 const HotkeyInvoke kHotkeyInvoke[HK_Count] = {
 	invoke_toggle_effects,
@@ -80,6 +81,7 @@ const HotkeyInvoke kHotkeyInvoke[HK_Count] = {
 	invoke_next_profile,
 	invoke_prev_profile,
 	invoke_toggle_click_sound,
+	invoke_toggle_keys,
 };
 } // namespace
 

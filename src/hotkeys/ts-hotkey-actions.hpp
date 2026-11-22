@@ -39,6 +39,7 @@ enum HotkeyAction {
 	HK_ProfileNext,
 	HK_ProfilePrev,
 	HK_ToggleClickSound,
+	HK_ToggleKeys,
 	HK_Count,
 };
 
@@ -60,6 +61,7 @@ inline constexpr const char *kHotkeyNames[HK_Count] = {
 	"TopScreen_ProfileNext",
 	"TopScreen_ProfilePrev",
 	"TopScreen_ToggleClickSound",
+	"TopScreen_ToggleKeys",
 };
 
 /** Locale keys, index = HotkeyAction. */
@@ -89,6 +91,7 @@ inline constexpr const char *kHotkeyLabelKeys[HK_Count] = {
 	"Hotkey.ProfileNext",
 	"Hotkey.ProfilePrev",
 	"Hotkey.ToggleClickSound",
+	"Hotkey.ToggleKeys",
 };
 
 inline constexpr int kHotkeyCount = HK_Count;

@@ -26,6 +26,15 @@ User-visible changes. Dates are in ISO form. The released packages are listed in
 - The TopScreen Capture properties no longer show an empty "Advanced" group.
 - Added the missing tooltips for click color, frame style/width/color and the
   Smart zoom hold/motion-blur strength; fixed stale tooltip and manual text.
+- Profiles can be renamed, copied to another slot and reverted to their
+  activation state. Names are stored in the slot and included in backups.
+- Importing a backup or restoring the defaults now requires an explicit
+  overwrite confirmation (a dialog in the dock, a checkbox in Properties).
+- The dock is organized into Live, Look, Scene, Sources, Backup and Diagnostics
+  sections; targets show `Source › Filter`, and diagnostics include input,
+  monitor origin and keystroke state with a copy button.
+- New **Pause keystrokes** control and `TopScreen_ToggleKeys` hotkey hide the
+  overlay for the current session without changing the saved setting.
 
 ## 1.3.0
 

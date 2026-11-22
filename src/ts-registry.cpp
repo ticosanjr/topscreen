@@ -67,7 +67,7 @@ std::vector<FilterEntry> registry_list()
 	auto &v = items();
 	out.reserve(v.size());
 	for (FilterControl *control : v)
-		out.push_back({control, control ? control->source_name() : std::string()});
+		out.push_back({control, control ? control->display_name() : std::string()});
 	return out;
 }
 

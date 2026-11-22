@@ -2,6 +2,8 @@
 
 #include <obs-module.h>
 
+#include <string>
+
 #include "core/config.hpp"
 
 namespace topscreen::profile_store {
@@ -24,5 +26,14 @@ void store_slot(obs_data_t *settings, int index, const core::Config &cfg);
 
 /** Writes a single seed slot. */
 void seed_slot(obs_data_t *settings, int index);
+
+/** Custom name stored inside the slot (empty when the user did not set one). */
+std::string load_name(obs_data_t *settings, int index);
+
+/** Stores a custom name inside the slot (empty restores the A..J label). */
+void store_name(obs_data_t *settings, int index, const std::string &name);
+
+/** Menu label: the custom name when present, otherwise the A..J label. */
+std::string display_name(obs_data_t *settings, int index);
 
 } // namespace topscreen::profile_store

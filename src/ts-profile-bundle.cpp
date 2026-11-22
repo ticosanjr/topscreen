@@ -38,6 +38,8 @@ bool export_to_file(obs_data_t *source_settings, int current, const std::string 
 		 * newer version, and the exported bundle must always be complete. */
 		profile_store::store_slot(bundle, i,
 					  profile_store::load_slot(source_settings, i));
+		profile_store::store_name(bundle, i,
+					  profile_store::load_name(source_settings, i));
 	}
 
 	const bool ok = obs_data_save_json_pretty_safe(bundle, path.c_str(), "tmp", "bak");
@@ -71,6 +73,8 @@ bool import_from_text(const std::string &json_text, obs_data_t *target_settings,
 		 * instead of becoming 0/false. This keeps old/new bundles valid. */
 		profile_store::store_slot(target_settings, i,
 					  profile_store::load_slot(bundle, i));
+		profile_store::store_name(target_settings, i,
+					  profile_store::load_name(bundle, i));
 	}
 	obs_data_set_int(target_settings, core::keys::kProfileCurrent, parsed.current);
 

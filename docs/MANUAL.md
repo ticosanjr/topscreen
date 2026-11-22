@@ -299,7 +299,9 @@ other. The global **Effects enabled** master still applies.
 > **Privacy:** typed keys are read from the whole system, not only from the
 > captured window. The built-in profile A starts with this **off**; C, G and I
 > turn it on. Keep **Modifiers only** or leave it off before typing passwords.
-> The Properties UI shows a warning while letters are being shown.
+> The Properties UI shows a warning while letters are being shown. The dock's
+> **Pause keystrokes** button and the `TopScreen_ToggleKeys` hotkey hide the
+> overlay for the current session without changing the saved setting.
 
 The key overlay is drawn above the cursor so typed text always stays readable.
 Every keystroke appears as its own character (repeats included) exactly as typed,
@@ -391,7 +393,7 @@ section lists Highlighter before Keystrokes.
 
 ## 6. Hotkeys
 
-Default profile hotkeys are **Ctrl+Shift+Alt+A…J**. In **Settings → Hotkeys**, search for `TopScreen`: all 25 actions are labelled
+Default profile hotkeys are **Ctrl+Shift+Alt+A…J**. In **Settings → Hotkeys**, search for `TopScreen`: all 26 actions are labelled
 **`TopScreen_...`** (for example `TopScreen_ProfileA — Activate profile A`), so
 they are easy to spot. They are global hotkeys, so they
 act on the **target filter selected in the dock** (or the first active one
@@ -408,6 +410,7 @@ WebSocket / Stream Deck action names:
 | **Next / previous profile** | Cycles the ten profiles without pressing A–J |
 | **Save to current profile** | Writes the adjustments to the active profile |
 | **Toggle click sound** | Enables/disables the click audio without opening Properties |
+| **Toggle keystroke overlay** | Pauses/resumes the key overlay for the current session (does not change the saved setting) |
 | **Toggle highlight** | Independent zoom toggle: first press zooms at the cursor, second press releases/returns (enable it under Highlighter) |
 | **Toggle spotlight** | Drops/zooms the spotlight in or out at the cursor |
 
@@ -439,9 +442,9 @@ format is in [`CONFIGURATION.md`](CONFIGURATION.md).
 
 The **10 profiles** store the entire configuration and switch everything at once.
 The selector is near the **top** of Properties (group **Profiles → Current profile**)
-and in the dock as well. The dock also has a **Target filter** selector: all dock
-buttons and hotkeys act on the selected TopScreen filter (or the first one when
-nothing is selected).
+and in the dock as well. The dock also has a **Target** selector: all dock
+buttons and hotkeys act on the selected TopScreen filter/source (or the first
+one when nothing is selected).
 
 - **Switching profile applies EVERYTHING immediately** (background, cursor, clicks, zoom, keys, click sounds…).
 - **Your changes are saved into the active profile automatically** — no need to
@@ -450,6 +453,15 @@ nothing is selected).
   The auto-save is debounced by ~0.4 s, so dragging a slider does not rewrite
   the profile on every frame; switching profiles/saving/exporting flushes it.
 - The selected profile is re-applied **when OBS opens**, so the look comes back the same.
+- **Names:** type a name in **Profiles → Profile name** and press **Rename** (or
+  use the dock's name field). The name is stored in the slot, appears in both
+  selectors and travels in the backup file. Empty restores the A–J label.
+- **Copy:** choose a target slot in **Profiles → Copy current profile to** and
+  press **Copy current profile here** (or the dock's **Copy here**). The active
+  profile does not change.
+- **Revert:** **Revert changes since activation** (dock: **Revert changes**)
+  restores the active profile to the state it had when it was activated or last
+  saved. A temporary preset is also discarded.
 - Hotkeys: **Activate profile A … J** and **Save to current profile**.
 - **Scene profiles:** assign the current profile to the current OBS scene in
   **Profiles → Assign current profile to this scene** (or **Assign profile to scene**
@@ -462,9 +474,11 @@ nothing is selected).
   Bindings reload when the OBS profile changes. The Properties backup section
   has **Restore default profile hotkeys**, which persists the defaults to the
   active OBS profile.
-- **Restore default profiles A-J** overwrites all ten slots with the built-in
-  configurations. Existing sources are reseeded once when the profile seed
-  revision changes.
+- **Restore default profiles A-J** overwrites all ten slots (including custom
+  names and edits) with the built-in configurations. The dock asks for
+  confirmation; in Properties, tick **I understand import and restore replace
+  all ten profiles A-J** first. Existing sources are reseeded once when the
+  profile seed revision changes.
 
 ### Backup / transfer
 
@@ -473,11 +487,11 @@ nothing is selected).
   replaces profiles **A–J** and activates the profile that was active in the
   file.
 - **Properties (no Qt dock):** group **Profiles → Backup / transfer** — choose
-  the file in *Export to file* / *Import from file* and click the corresponding
-  button.
-- The file stores **settings only** (background, cursor, clicks, zoom, keys,
-  highlighter, profiles). Custom images and sounds are referenced by path and
-  are **not embedded**.
+  the file in *Export to file* / *Import from file*, tick the overwrite
+  confirmation, and click the corresponding button.
+- The file stores **settings and profile names only** (background, cursor,
+  clicks, zoom, keys, highlighter, profiles). Custom images and sounds are
+  referenced by path and are **not embedded**.
 - Export includes the edits currently on screen (the active profile is saved
   into the file first).
 - Older or partial files import safely: a missing `current` starts at A,
@@ -626,7 +640,7 @@ TOPSCREEN_DEBUG_KEY=Ctrl obs
   for `TopScreen` or `Activate profile`.
 - With several filters, the hotkey acts on the dock's **Target filter**
   (or the first active one when nothing is selected).
-- The log confirms registration: `[TopScreen] hotkeys registered: 25/25`.
+- The log confirms registration: `[TopScreen] hotkeys registered: 26/26`.
 
 **Zoom "jumps" or shakes**
 - Increase **Zoom transition time (ms)** and reduce **Zoom intensity**.

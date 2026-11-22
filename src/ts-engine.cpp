@@ -66,7 +66,21 @@ enum ActionBits : uint32_t {
 	A_PROFILE_PREV = 1u << 19,
 	A_TOGGLE_CLICK_SOUND = 1u << 20,
 	A_CANCEL_HIGHLIGHT = 1u << 21,
+	A_REVERT_PROFILE = 1u << 22,
+	A_DUPLICATE_PROFILE = 1u << 23,
+	A_TOGGLE_KEYS = 1u << 24,
 };
+
+/** Stable fingerprint of the saved config, used to recognize our own pushes. */
+std::string config_fingerprint(const core::Config &cfg)
+{
+	obs_data_t *s = obs_data_create();
+	config_store(s, cfg);
+	const char *json = obs_data_get_json(s);
+	std::string out = json ? json : "";
+	obs_data_release(s);
+	return out;
+}
 
 /**
  * TopScreen filter instance.
@@ -124,9 +138,15 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 	/* Auto-save debounce: a slider drag must not write the profile slot on
 	 * every tick. Flushed on profile switch/save/export/destroy. */
 	bool profile_dirty_ = false;
-	/* Set by a preset push: the next reload must not auto-save the temporary
-	 * look into the active profile. */
-	bool skip_profile_dirty_once_ = false;
+	/* Fingerprint of the last settings we pushed. A reload that loads the
+	 * same values is self-induced and must not turn into a profile edit. */
+	std::string pushed_fingerprint_;
+	/* Snapshot taken when a profile is activated; Revert restores it. */
+	core::Config profile_baseline_;
+	std::atomic<bool> profile_baseline_valid_{false};
+	std::atomic<bool> profile_edited_{false};
+	std::atomic<bool> keys_paused_{false};
+	std::atomic<bool> keys_enabled_cache_{true};
 	double profile_dirty_since_ms_ = 0.0;
 	static constexpr double kProfileSaveDebounceMs = 400.0;
 
@@ -141,6 +161,7 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 	std::atomic<int> pending_effects_{-1};
 	std::atomic<int> pending_preset_{-1};
 	std::atomic<int> pending_profile_{-1};
+	std::atomic<int> pending_duplicate_{-1};
 	std::atomic<bool> pending_reload_{false};
 	std::atomic<bool> effects_cache_{true};
 	std::atomic<int> preset_cache_{-1};
@@ -198,6 +219,7 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 		actions_.fetch_or(A_PROFILE_SET);
 	}
 	void save_profile() override { actions_.fetch_or(A_SAVE_PROFILE); }
+	void toggle_keys() override { actions_.fetch_or(A_TOGGLE_KEYS); }
 	void toggle_highlight() override { actions_.fetch_or(A_TOGGLE_HIGHLIGHT); }
 	void toggle_spotlight() override { actions_.fetch_or(A_TOGGLE_SPOTLIGHT); }
 	void toggle_magnifier() override { actions_.fetch_or(A_TOGGLE_MAGNIFIER); }
@@ -205,12 +227,60 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 	void next_profile() override { actions_.fetch_or(A_PROFILE_NEXT); }
 	void prev_profile() override { actions_.fetch_or(A_PROFILE_PREV); }
 	void toggle_click_sound() override { actions_.fetch_or(A_TOGGLE_CLICK_SOUND); }
-	void reset_profiles() { actions_.fetch_or(A_RESET_PROFILES); }
+	void reset_profiles() override { actions_.fetch_or(A_RESET_PROFILES); }
 	void cancel_highlight() override { actions_.fetch_or(A_CANCEL_HIGHLIGHT); }
 	FilterControl *filter_control() override { return this; }
 
 	/* ---- FilterControl (UI thread: only queues / reads atomic) ---- */
 	std::string source_name() const override { return source_name_; }
+	std::string display_name() const override
+	{
+		if (source_mode_ || !source)
+			return source_name_;
+		obs_source_t *parent = obs_filter_get_parent(source);
+		const char *parent_name = parent ? obs_source_get_name(parent) : nullptr;
+		if (parent_name && *parent_name)
+			return std::string(parent_name) + " › " + source_name_;
+		return source_name_;
+	}
+	std::string profile_name(int index) const override
+	{
+		if (!source)
+			return core::profile_label(index);
+		obs_data_t *s = obs_source_get_settings(source);
+		const std::string name =
+			s ? profile_store::display_name(s, index) : core::profile_label(index);
+		obs_data_release(s);
+		return name;
+	}
+	void rename_profile(int index, const std::string &name) override
+	{
+		if (!source || index < 0 || index >= kProfileCount)
+			return;
+		obs_data_t *s = obs_source_get_settings(source);
+		profile_store::store_name(s, index, name);
+		/* Persist the slot metadata with the source. */
+		obs_source_update(source, s);
+		obs_data_release(s);
+		refresh_properties();
+	}
+	void duplicate_profile(int index) override
+	{
+		pending_duplicate_.store(index);
+		actions_.fetch_or(A_DUPLICATE_PROFILE);
+	}
+	void revert_profile() override
+	{
+		if (can_revert_profile())
+			actions_.fetch_or(A_REVERT_PROFILE);
+	}
+	bool can_revert_profile() const override
+	{
+		return profile_baseline_valid_ && profile_edited_.load();
+	}
+	bool keys_paused() const override { return keys_paused_.load(); }
+	void toggle_keys_pause() override { actions_.fetch_or(A_TOGGLE_KEYS); }
+	bool keys_enabled() const override { return keys_enabled_cache_.load(); }
 	bool effects_enabled() const override { return effects_cache_.load(); }
 	void set_effects_enabled(bool on) override
 	{
@@ -226,6 +296,7 @@ struct ts_filter_ctx final : public HotkeyContext, public FilterControl {
 		actions_.fetch_or(A_APPLY_PRESET);
 	}
 	int input_tier() const override { return input_tier_cache_.load(); }
+	bool is_capture_source() const override { return source_mode_; }
 	void monitor_origin(double *x, double *y) const override
 	{
 		*x = monitor_origin_.x();
@@ -267,6 +338,7 @@ void ts_filter_ctx::push_settings()
 {
 	obs_data_t *s = obs_source_get_settings(source);
 	config_store(s, cfg);
+	pushed_fingerprint_ = config_fingerprint(cfg);
 	obs_data_set_int(s, kProfileCurrent, current_profile_);
 
 	/* OBS defers the update callback for video sources; the next tick reloads
@@ -310,6 +382,10 @@ void ts_filter_ctx::apply_profile(int index)
 	cfg.monitor_x = monitor_x;
 	cfg.monitor_y = monitor_y;
 
+	profile_baseline_ = cfg;
+	profile_baseline_valid_ = true;
+	profile_edited_.store(false);
+
 	/* Session state: resets the manual zoom and reloads the sound if it changed. */
 	zoom.set_manual(1.0);
 	zoom.spot_stop();
@@ -335,6 +411,7 @@ void ts_filter_ctx::store_profile_slot(int index)
 
 void ts_filter_ctx::mark_profile_dirty()
 {
+	profile_edited_.store(true);
 	profile_dirty_ = true;
 	profile_dirty_since_ms_ = time_ms;
 }
@@ -350,6 +427,9 @@ void ts_filter_ctx::flush_profile_if_dirty()
 void ts_filter_ctx::do_save_profile()
 {
 	store_profile_slot(current_profile_);
+	profile_baseline_ = cfg;
+	profile_baseline_valid_ = true;
+	profile_edited_.store(false);
 	profile_dirty_ = false;
 	blog(LOG_INFO, "[TopScreen] profile saved: %s", core::profile_label(current_profile_));
 }
@@ -533,6 +613,8 @@ void ts_filter_ctx::exit_locked_highlight(bool animate)
 
 void ts_filter_ctx::reconfigure_models()
 {
+	if (!cfg.keys.enabled)
+		keys_paused_.store(false);
 	cursor.configure(cfg.cursor);
 	zoom.configure(cfg.zoom);
 	clicks.set_left(cfg.click_left);
@@ -571,7 +653,6 @@ void ts_filter_ctx::request_preset(int index)
 	 * edits another setting. */
 	reconfigure_models();
 	click_sound.load(cfg.click_sound.file_left.c_str(), cfg.click_sound.file_right.c_str());
-	skip_profile_dirty_once_ = true;
 	push_settings();
 	refresh_properties();
 	blog(LOG_INFO, "[TopScreen] preset applied: %s (temporary until saved)", presets.name(index).c_str());
@@ -579,13 +660,17 @@ void ts_filter_ctx::request_preset(int index)
 
 void ts_filter_ctx::reload_from_settings()
 {
-	const bool skip_dirty = skip_profile_dirty_once_;
-	skip_profile_dirty_once_ = false;
 	const int old_highlight_mode = cfg.highlight.mode;
 	obs_data_t *s = obs_source_get_settings(source);
 	config_load(s, &cfg);
 	const long long pc = obs_data_get_int(s, kProfileCurrent);
 	obs_data_release(s);
+
+	/* A reload that matches the values we just pushed is our own update; it
+	 * must not be mistaken for a user edit. */
+	const bool self_update =
+		!pushed_fingerprint_.empty() && config_fingerprint(cfg) == pushed_fingerprint_;
+	pushed_fingerprint_.clear();
 
 	/* A setting edit can change/disable the active drag mode. A pinned
 	 * highlight must not survive that; ordinary edits (e.g. click sound) do. */
@@ -626,7 +711,7 @@ void ts_filter_ctx::reload_from_settings()
 	/* Reloads the click sounds when the selection changed (slots keep the
 	 * unchanged side, so this is cheap). */
 	click_sound.load(cfg.click_sound.file_left.c_str(), cfg.click_sound.file_right.c_str());
-	if (!skip_dirty)
+	if (!self_update)
 		mark_profile_dirty();
 }
 
@@ -756,6 +841,44 @@ void ts_filter_ctx::process_actions()
 		push_settings();
 		mark_profile_dirty();
 		blog(LOG_INFO, "[TopScreen] magnifier: %s", cfg.magnifier.enabled ? "on" : "off");
+	}
+	if (act & A_REVERT_PROFILE) {
+		if (profile_baseline_valid_) {
+			exit_locked_highlight(false);
+			cfg = profile_baseline_;
+			reconfigure_models();
+			click_sound.load(cfg.click_sound.file_left.c_str(),
+					 cfg.click_sound.file_right.c_str());
+			push_settings();
+			refresh_properties();
+			profile_dirty_ = false;
+			profile_edited_.store(false);
+			blog(LOG_INFO, "[TopScreen] profile reverted to activation state: %s",
+			     core::profile_label(current_profile_));
+		}
+	}
+	if (act & A_DUPLICATE_PROFILE) {
+		const int to = pending_duplicate_.exchange(-1);
+		if (to >= 0 && to < kProfileCount && to != current_profile_) {
+			flush_profile_if_dirty();
+			obs_data_t *s = obs_source_get_settings(source);
+			const core::Config copy = profile_store::load_slot(s, current_profile_);
+			profile_store::store_slot(s, to, copy);
+			std::string name = profile_store::load_name(s, current_profile_);
+			if (name.empty())
+				name = core::profile_label(current_profile_);
+			profile_store::store_name(s, to, name + " (copy)");
+			obs_source_update(source, s);
+			obs_data_release(s);
+			refresh_properties();
+			blog(LOG_INFO, "[TopScreen] profile duplicated: %s -> %s",
+			     core::profile_label(current_profile_), core::profile_label(to));
+		}
+	}
+	if (act & A_TOGGLE_KEYS) {
+		keys_paused_.store(!keys_paused_.load());
+		blog(LOG_INFO, "[TopScreen] keystrokes paused: %s",
+		     keys_paused_.load() ? "yes" : "no");
 	}
 	if (act & A_RESET_PROFILES) {
 		obs_data_t *s = obs_source_get_settings(source);
@@ -1123,10 +1246,13 @@ void ts_filter_ctx::update_visual_state(const core::ContentArea &content)
 	frame.click_count = clicks.collect(time_ms, frame.clicks, kShaderClickSlots);
 	frame.key_count =
 		keys.collect(time_ms, frame.keys, FrameState::kMaxKeys);
+	if (keys_paused_.load())
+		frame.key_count = 0;
 	frame.highlight = highlight.render();
 
 	/* Publishes state to the dock (UI thread). */
 	effects_cache_.store(cfg.effects_enabled);
+	keys_enabled_cache_.store(cfg.keys.enabled);
 	preset_cache_.store(presets.current());
 	profile_cache_.store(current_profile_);
 	input_tier_cache_.store(input.tier());
@@ -1216,6 +1342,52 @@ bool profiles_reset_from_properties(void *filter)
 		return false;
 	ctx->reset_profiles();
 	return true;
+}
+
+bool profiles_rename_from_properties(void *filter)
+{
+	auto *ctx = static_cast<ts_filter_ctx *>(filter);
+	if (!ctx || !ctx->source)
+		return false;
+	obs_data_t *s = obs_source_get_settings(ctx->source);
+	std::string name = s ? obs_data_get_string(s, kProfileNameInput) : "";
+	const int current = s ? static_cast<int>(obs_data_get_int(s, kProfileCurrent))
+			      : ctx->current_profile();
+	obs_data_release(s);
+	ctx->rename_profile(current, name);
+	return true;
+}
+
+bool profiles_duplicate_from_properties(void *filter)
+{
+	auto *ctx = static_cast<ts_filter_ctx *>(filter);
+	if (!ctx || !ctx->source)
+		return false;
+	obs_data_t *s = obs_source_get_settings(ctx->source);
+	const int target = s ? static_cast<int>(obs_data_get_int(s, kProfileDuplicateTarget)) : -1;
+	obs_data_release(s);
+	ctx->duplicate_profile(target);
+	return true;
+}
+
+bool profiles_revert_from_properties(void *filter)
+{
+	auto *ctx = static_cast<ts_filter_ctx *>(filter);
+	if (!ctx)
+		return false;
+	ctx->revert_profile();
+	return true;
+}
+
+bool profiles_overwrite_confirmed(void *filter)
+{
+	auto *ctx = static_cast<ts_filter_ctx *>(filter);
+	if (!ctx || !ctx->source)
+		return false;
+	obs_data_t *s = obs_source_get_settings(ctx->source);
+	const bool confirmed = s && obs_data_get_bool(s, kProfileConfirmOverwrite);
+	obs_data_release(s);
+	return confirmed;
 }
 
 bool profiles_import_from_properties(void *filter)

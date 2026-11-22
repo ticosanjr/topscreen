@@ -11,6 +11,8 @@ namespace {
 using namespace topscreen::core;
 using namespace topscreen::core::keys;
 
+constexpr const char *kNameKey = "profile_name";
+
 bool slot_exists(obs_data_t *settings, int index)
 {
 	if (!settings)
@@ -60,6 +62,42 @@ bool ensure_slots(obs_data_t *settings, int revision)
 		changed = true;
 	}
 	return changed;
+}
+
+std::string load_name(obs_data_t *settings, int index)
+{
+	if (!settings || index < 0 || index >= kProfileCount)
+		return {};
+	obs_data_t *slot = obs_data_get_obj(settings, kProfileSlots[index]);
+	if (!slot)
+		return {};
+	const char *name = obs_data_get_string(slot, kNameKey);
+	std::string out = name ? name : "";
+	obs_data_release(slot);
+	return out;
+}
+
+void store_name(obs_data_t *settings, int index, const std::string &name)
+{
+	if (!settings || index < 0 || index >= kProfileCount)
+		return;
+	obs_data_t *slot = obs_data_get_obj(settings, kProfileSlots[index]);
+	if (!slot) {
+		seed_slot(settings, index);
+		slot = obs_data_get_obj(settings, kProfileSlots[index]);
+	}
+	if (!slot)
+		return;
+	obs_data_set_string(slot, kNameKey, name.c_str());
+	obs_data_release(slot);
+}
+
+std::string display_name(obs_data_t *settings, int index)
+{
+	const std::string name = load_name(settings, index);
+	if (!name.empty())
+		return name;
+	return core::profile_label(index);
 }
 
 void reset_slots(obs_data_t *settings, int revision)

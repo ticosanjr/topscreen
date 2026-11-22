@@ -104,8 +104,8 @@ That is where all the math and the state logic live — what actually must be ri
 ## Current numbers
 
 ```
-258 tests | 9564 checks | 0 failures   (core)
-76 tests | 941 checks   | 0 failures   (integration with fake libobs, LeakSanitizer clean)
+258 tests | 9858 checks | 0 failures   (core)
+78 tests | 966 checks   | 0 failures   (integration with fake libobs, LeakSanitizer clean)
 ```
 
 ## What the integration layer covers
@@ -116,7 +116,7 @@ fake libobs:
 
 | File | Coverage |
 |------|----------|
-| `test_integration.cpp` | filter lifecycle (create/tick/render/destroy), preset apply, background toggle, all 25 hotkeys, native-cursor shutdown/restore on the parent (including effects/cursor-off and shared refcount), profiles (save/switch/seeds/list/auto-save/restart/export-import round-trip, **click-sound reload on switch**, **partial import fills missing fields/slots**), **independent hotkey highlight toggle (manual zoom/drag ownership)**, **spotlight hotkey**, **magnifier hotkey + Spotlight/Magnifier exclusion**, **Properties refresh after profile/preset changes**, **dock target selection (hotkeys follow it)**, **debounced auto-save with flush**, **scene → profile assignment applied on scene change, on filter creation and by scene UUID (with lazy migration of legacy name entries and name fallback)**, **empty scene lists never erase assignments**, and **scene map export/import round-trip** |
+| `test_integration.cpp` | filter lifecycle (create/tick/render/destroy), preset apply, background toggle, all 26 hotkeys, native-cursor shutdown/restore on the parent (including effects/cursor-off and shared refcount), profiles (save/switch/seeds/list/auto-save/restart/export-import round-trip, **click-sound reload on switch**, **partial import fills missing fields/slots**), **independent hotkey highlight toggle (manual zoom/drag ownership)**, **profile names/duplicate/revert**, **temporary keystroke pause**, **temporary preset**, **lossless seed revision**, **spotlight hotkey**, **magnifier hotkey + Spotlight/Magnifier exclusion**, **Properties refresh after profile/preset changes**, **dock target selection (hotkeys follow it)**, **debounced auto-save with flush**, **scene → profile assignment applied on scene change, on filter creation and by scene UUID (with lazy migration of legacy name entries and name fallback)**, **empty scene lists never erase assignments**, and **scene map export/import round-trip** |
 | `test_integration.cpp` hotkeys | `integration_registers_all_hotkeys` covers every hotkey id/name/callback; `integration_hotkeys_shared_between_filters` proves one process-wide set shared across filters; `integration_registry_target_selection` proves selection routing/fallback |
 | `test_uniforms.cpp` | every uniform declared by `topscreen.effect` is uploaded on a plain frame (D3D11 aborts the draw otherwise) |
 | `test_click_audio.cpp` | click WAV is decoded, queued and mixed by the `topscreen_click_audio` source; silence when idle, PCM when a click is queued |

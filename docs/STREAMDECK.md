@@ -12,6 +12,7 @@ selected in the TopScreen dock (or the first active TopScreen filter).
 | Background on/off | `TopScreen_ToggleBackground` |
 | Cursor on/off | `TopScreen_ToggleCursor` |
 | Click sound on/off | `TopScreen_ToggleClickSound` |
+| Pause/resume keys | `TopScreen_ToggleKeys` |
 | Next profile | `TopScreen_ProfileNext` |
 | Previous profile | `TopScreen_ProfilePrev` |
 | Profile A … J | `TopScreen_ProfileA` … `TopScreen_ProfileJ` |

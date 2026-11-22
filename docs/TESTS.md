@@ -104,7 +104,7 @@ That is where all the math and the state logic live — what actually must be ri
 ## Current numbers
 
 ```
-260 tests | 10557 checks | 0 failures   (core)
+261 tests | 10682 checks | 0 failures   (core)
 80 tests | 988 checks   | 0 failures   (integration with fake libobs, LeakSanitizer clean)
 ```
 
@@ -123,7 +123,7 @@ fake libobs:
 | `test_webcam_filter.cpp` | webcam bubble filter uploads its mask/border/shadow uniforms and exposes the mask properties |
 | `test_capture_source.cpp` | `topscreen_capture` lifecycle, embedded effect properties, monitor/cursor/audio settings and **native-cursor runtime override** (the real X11 frame pull/cursor compositing is verified in OBS) |
 | `test_text_render.cpp` | key-overlay text batches all glyphs + shadow quads into one vertex buffer (**1 draw total**, cache hit without rebuild) and falls back to per-glyph sprites if vertex-buffer creation fails |
-| `test_option_schema.cpp` | the shared option registry is unique, every tooltip exists in both locales, and every tooltip used by the Properties builders is registered |
+| `test_option_schema.cpp` | the shared option registry is unique, every config key is registered, every tooltip exists in both locales, and every tooltip used by the Properties builders is registered |
 | `test_presets.cpp` | user looks: save one JSON file, discover it on reload, apply it, delete it, and refuse to delete bundled looks |
 | `test_settings.cpp` | defaults match `Config`, legacy source falls back, store/load roundtrip, partial-slot fallback, background type migration/visibility, migrations, properties tree/zoom-group visibility with the hotkey, **dependent-control visibility callbacks** (cursor idle, spotlight corner, keystroke band), input without a backend, click sound error handling |
 

@@ -4,6 +4,7 @@
 
 #include <filesystem>
 #include <fstream>
+#include <algorithm>
 #include <set>
 #include <sstream>
 #include <string>
@@ -16,6 +17,25 @@
 #endif
 
 namespace {
+
+std::set<std::string> string_values(const std::string &path)
+{
+	std::ifstream in(path);
+	std::ostringstream ss;
+	ss << in.rdbuf();
+	const std::string text = ss.str();
+	std::set<std::string> values;
+	size_t pos = 0;
+	while ((pos = text.find('"', pos)) != std::string::npos) {
+		const auto end = text.find('"', pos + 1);
+		if (end == std::string::npos)
+			break;
+		if (end > pos + 1)
+			values.insert(text.substr(pos + 1, end - pos - 1));
+		pos = end + 1;
+	}
+	return values;
+}
 
 std::set<std::string> tooltip_names(const std::string &text)
 {
@@ -126,5 +146,32 @@ TEST(option_schema_covers_property_tooltips)
 		if (!registered.count(name))
 			tst::fail(__FILE__, __LINE__,
 				  "tooltip missing from the option schema: " + name);
+	}
+}
+
+/* Every config key exposed by the filter must be in the registry. Legacy or
+ * internal keys and the separate webcam-filter options are excluded. */
+TEST(option_schema_covers_config_keys)
+{
+	using namespace topscreen::options;
+	std::set<std::string> registered;
+	for (std::size_t i = 0; i < kSpecCount; ++i)
+		registered.insert(kSpecs[i].key);
+
+	const std::set<std::string> allowed = {
+		"bg_mode", "click_sound_file", "click_sound_left", "click_sound_right",
+		"spotlight_blur_enabled", "profile_seed_version"};
+
+	const std::set<std::string> keys =
+		string_values(std::string(TOPSCREEN_SOURCE_DIR) + "/src/core/keys.hpp");
+	CHECK(!keys.empty());
+	for (const auto &key : keys) {
+		if (allowed.count(key) || key.rfind("profile_slot_", 0) == 0 ||
+		    key.rfind("webcam_", 0) == 0)
+			continue;
+		++tst::checks();
+		if (!registered.count(key))
+			tst::fail(__FILE__, __LINE__,
+				  "config key missing from the option schema: " + key);
 	}
 }
